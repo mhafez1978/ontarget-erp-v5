@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE `EmailProvider` ADD COLUMN `googleClientId` VARCHAR(191) NULL,
+    ADD COLUMN `googleClientSecret` VARCHAR(191) NULL,
+    ADD COLUMN `googleFromEmail` VARCHAR(191) NULL,
+    ADD COLUMN `googleRefreshToken` VARCHAR(191) NULL,
+    MODIFY `provider` ENUM('SMTP', 'GMAIL', 'GOOGLE_OAUTH', 'OFFICE365', 'SENDGRID', 'MAILGUN', 'AWS_SES', 'RESEND') NOT NULL DEFAULT 'SMTP';

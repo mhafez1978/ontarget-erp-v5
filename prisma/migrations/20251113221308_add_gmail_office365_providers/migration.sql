@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `EmailProvider` MODIFY `provider` ENUM('SMTP', 'GMAIL', 'OFFICE365', 'SENDGRID', 'MAILGUN', 'AWS_SES', 'RESEND') NOT NULL DEFAULT 'SMTP';

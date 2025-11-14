@@ -1,0 +1,31 @@
+import {
+  LayoutDashboard,
+  Users,
+  ShoppingCart,
+  BarChart3,
+  Settings,
+  FileText,
+  Briefcase,
+  Building2,
+  Tags,
+  Shield,
+  User,
+  Palette,
+  UsersRound,
+} from "lucide-react";
+
+export const adminMenuItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/profile", label: "Profile", icon: User },
+  { href: "/dashboard/customers", label: "Customers", icon: Users },
+  { href: "/dashboard/catalog", label: "Catalog", icon: Tags },
+  { href: "/dashboard/workforce", label: "Workforce", icon: UsersRound },
+  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
+  { href: "/dashboard/contractors", label: "Contractors", icon: Briefcase },
+  { href: "/dashboard/suppliers", label: "Suppliers", icon: Building2 },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard/security", label: "Security", icon: Shield },
+  { href: "/dashboard/branding", label: "Branding", icon: Palette },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+];

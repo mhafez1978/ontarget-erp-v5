@@ -1,0 +1,81 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { createAuditLog } from "@/lib/audit-log";
+
+// DELETE - Unblock an IP (Super Admin only)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Check authentication
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("userId")?.value;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user is Super Admin
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { role: true, name: true },
+    });
+
+    if (!user || user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden - Super Admin only" },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await params;
+
+    // Find blacklist entry
+    const blacklistEntry = await db.ipBlacklist.findUnique({
+      where: { id },
+    });
+
+    if (!blacklistEntry) {
+      return NextResponse.json(
+        { error: "Blacklist entry not found" },
+        { status: 404 }
+      );
+    }
+
+    // Delete the blacklist entry
+    await db.ipBlacklist.delete({
+      where: { id },
+    });
+
+    // Log audit event
+    await createAuditLog({
+      userId,
+      action: "IP_UNBLOCKED",
+      description: `IP ${blacklistEntry.ipAddress} unblocked by ${user.name}`,
+      ipAddress: blacklistEntry.ipAddress,
+      city: blacklistEntry.city,
+      state: blacklistEntry.state,
+      country: blacklistEntry.country,
+      countryFlag: blacklistEntry.countryFlag,
+      metadata: {
+        unblockedBy: user.name,
+        wasAutoBlocked: blacklistEntry.isAutoBlocked,
+        wasPermanent: blacklistEntry.isPermanent,
+        originalReason: blacklistEntry.reason,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `IP ${blacklistEntry.ipAddress} has been unblocked`,
+    });
+  } catch (error) {
+    console.error("Error unblocking IP:", error);
+    return NextResponse.json(
+      { error: "Failed to unblock IP" },
+      { status: 500 }
+    );
+  }
+}
