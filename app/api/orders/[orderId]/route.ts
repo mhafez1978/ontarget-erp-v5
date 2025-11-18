@@ -165,12 +165,13 @@ export async function updateOrderForUser(
 // GET /api/orders/[orderId] - Fetch single order details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
+    const { orderId } = await params;
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
-    const { status, body } = await getOrderForUser(userId, params.orderId);
+    const { status, body } = await getOrderForUser(userId, orderId);
     return NextResponse.json(body, { status });
   } catch (error) {
     console.error("Error fetching order:", error);
@@ -184,13 +185,14 @@ export async function GET(
 // PATCH /api/orders/[orderId] - Update order status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
+    const { orderId } = await params;
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
     const body = await request.json();
-    const result = await updateOrderForUser(userId, params.orderId, body);
+    const result = await updateOrderForUser(userId, orderId, body);
     return NextResponse.json(result.body, { status: result.status });
   } catch (error) {
     console.error("Error updating order:", error);

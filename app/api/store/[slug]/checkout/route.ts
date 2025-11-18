@@ -217,10 +217,10 @@ export async function processCheckout(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
     const sessionId = cookieStore.get("cartSessionId")?.value;

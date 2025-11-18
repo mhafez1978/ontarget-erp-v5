@@ -4,9 +4,11 @@ import { cookies } from "next/headers";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { accountId: string } }
+  { params }: { params: Promise<{ accountId: string }> }
 ) {
   try {
+    const { accountId } = await params;
+
     // Get user from cookie
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
@@ -17,7 +19,7 @@ export async function DELETE(
 
     // Fetch the account
     const account = await db.plaidAccount.findUnique({
-      where: { id: params.accountId },
+      where: { id: accountId },
       include: { company: true },
     });
 
@@ -55,7 +57,7 @@ export async function DELETE(
 
     // Delete the account
     await db.plaidAccount.delete({
-      where: { id: params.accountId },
+      where: { id: accountId },
     });
 
     return NextResponse.json({

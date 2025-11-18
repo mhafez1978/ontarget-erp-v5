@@ -427,7 +427,10 @@ export function ManagerWorkforceView() {
                     <div className="flex items-start justify-between space-x-4">
                       <div className="flex items-start space-x-4 flex-1 min-w-0">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={member.user.image || undefined} />
+                          <AvatarImage
+                            src={member.user.image || undefined}
+                            alt={member.user.name || "User"}
+                          />
                           <AvatarFallback>
                             {member.user.name
                               ?.split(" ")
@@ -540,7 +543,10 @@ export function ManagerWorkforceView() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={member.user.image || undefined} />
+                            <AvatarImage
+                              src={member.user.image || undefined}
+                              alt={member.user.name || "User"}
+                            />
                             <AvatarFallback>
                               {member.user.name
                                 ?.split(" ")

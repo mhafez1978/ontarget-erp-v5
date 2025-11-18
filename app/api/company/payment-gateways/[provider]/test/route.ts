@@ -5,9 +5,10 @@ import { createPaymentProvider } from "@/lib/payment-providers";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { provider: string } }
+  { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
+    const { provider } = await params;
     // Get user from cookie
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
@@ -56,7 +57,7 @@ export async function POST(
     }
 
     // Create payment provider instance
-    const paymentProvider = createPaymentProvider(params.provider, {
+    const paymentProvider = createPaymentProvider(provider, {
       publicKey,
       secretKey,
       webhookSecret,
@@ -70,7 +71,7 @@ export async function POST(
     const gateway = await db.paymentGateway.findFirst({
       where: {
         companyId,
-        provider: params.provider,
+        provider: provider,
       },
     });
 

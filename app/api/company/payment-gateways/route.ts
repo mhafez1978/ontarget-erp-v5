@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user has access to this company
-    const user = await db.user.findUnique({
-      where: { id: userId },
+    const userWithCompanies = await db.user.findUnique({
+      where: { id: user.id },
       include: {
         ownedCompanies: true,
         companyMemberships: {
@@ -35,15 +35,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!userWithCompanies) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Check if user owns the company or is a member with appropriate role
     const hasAccess =
       user.role === "SUPER_ADMIN" ||
-      user.ownedCompanies.some((c) => c.id === companyId) ||
-      user.companyMemberships.some(
+      userWithCompanies.ownedCompanies.some((c) => c.id === companyId) ||
+      userWithCompanies.companyMemberships.some(
         (m) =>
           m.companyId === companyId &&
           ["ADMIN", "MANAGER"].includes(m.role as string)
@@ -87,13 +87,13 @@ export async function GET(request: NextRequest) {
 // POST - Create or update payment gateway
 export async function POST(request: NextRequest) {
   try {
-    // Get user from cookie
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Validate session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
+
+    const { user } = validation;
 
     const body = await request.json();
     const {
@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has access to this company
-    const user = await db.user.findUnique({
-      where: { id: userId },
+    const userWithCompanies = await db.user.findUnique({
+      where: { id: user.id },
       include: {
         ownedCompanies: true,
         companyMemberships: {
@@ -123,15 +123,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!userWithCompanies) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Check if user owns the company or is an admin/manager
     const hasAccess =
       user.role === "SUPER_ADMIN" ||
-      user.ownedCompanies.some((c) => c.id === companyId) ||
-      user.companyMemberships.some(
+      userWithCompanies.ownedCompanies.some((c) => c.id === companyId) ||
+      userWithCompanies.companyMemberships.some(
         (m) =>
           m.companyId === companyId &&
           ["ADMIN", "MANAGER"].includes(m.role as string)
@@ -202,13 +202,13 @@ export async function POST(request: NextRequest) {
 // PUT - Update gateway (toggle enable/disable, etc.)
 export async function PUT(request: NextRequest) {
   try {
-    // Get user from cookie
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Validate session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
+
+    const { user } = validation;
 
     const { searchParams } = new URL(request.url);
     const gatewayId = searchParams.get("gatewayId");
@@ -234,8 +234,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify user has access
-    const user = await db.user.findUnique({
-      where: { id: userId },
+    const userWithCompanies = await db.user.findUnique({
+      where: { id: user.id },
       include: {
         ownedCompanies: true,
         companyMemberships: {
@@ -244,14 +244,16 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!userWithCompanies) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const hasAccess =
       user.role === "SUPER_ADMIN" ||
-      user.ownedCompanies.some((c) => c.id === gateway.companyId) ||
-      user.companyMemberships.some(
+      userWithCompanies.ownedCompanies.some(
+        (c) => c.id === gateway.companyId
+      ) ||
+      userWithCompanies.companyMemberships.some(
         (m) =>
           m.companyId === gateway.companyId &&
           ["ADMIN", "MANAGER"].includes(m.role as string)

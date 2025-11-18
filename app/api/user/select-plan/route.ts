@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     // Update user's plan
     await db.user.update({
-      where: { id: userId },
+      where: { id: user.id },
       data: {
         plan: plan,
       },
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     // Create audit log
     await createAuditLog({
-      userId: userId,
+      userId: user.id,
       action: "USER_PLAN_SELECTED",
       description: `User selected plan: ${plan}`,
     });

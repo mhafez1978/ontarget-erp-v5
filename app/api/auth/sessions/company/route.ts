@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     const adminCompanies = await db.companyMember.findMany({
       where: {
         userId: user.id,
-        role: { in: ["OWNER", "ADMIN"] },
+        role: "ADMIN",
       },
       select: {
         companyId: true,

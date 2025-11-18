@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
           phone: phone?.trim() || null,
           email: email?.trim() || null,
           website: website?.trim() || null,
-          ownerId: userId,
+          ownerId: user.id,
           addressLine1: address?.addressLine1 || null,
           addressLine2: address?.addressLine2 || null,
           city: address?.city || null,
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       // Add user as ADMIN member
       await tx.companyMember.create({
         data: {
-          userId: userId,
+          userId: user.id,
           companyId: company.id,
           role: "ADMIN",
         },
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       // Add user as ADMIN staff (for employee pane)
       await tx.companyStaff.create({
         data: {
-          userId: userId,
+          userId: user.id,
           companyId: company.id,
           role: "ADMIN",
           jobTitle: "MANAGER_ROLE",
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       // Promote user to ADMIN role if they're ERP_CUSTOMER
       if (user.role === "ERP_CUSTOMER") {
         await tx.user.update({
-          where: { id: userId },
+          where: { id: user.id },
           data: { role: "ADMIN" },
         });
       }
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
             name: "OnTarget ERP",
             description: "OnTarget ERP SaaS Platform",
             isRoot: true,
-            ownerId: userId, // Temporary owner, should be SUPER_ADMIN
+            ownerId: user.id, // Temporary owner, should be SUPER_ADMIN
           },
         });
       }
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
 
     // Get updated user info
     const updatedUser = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: user.id },
       select: {
         id: true,
         name: true,
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
       // Create single audit log for company creation
       await createAuditLog({
         action: AUDIT_ACTIONS.COMPANY_CREATED,
-        userId: userId,
+        userId: user.id,
         companyId: result.company.id,
         entityType: ENTITY_TYPES.COMPANY,
         entityId: result.company.id,
