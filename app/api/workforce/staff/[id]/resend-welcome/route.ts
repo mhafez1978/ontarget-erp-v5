@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { sendEmail, getWelcomeStaffEmailHtml } from "@/lib/email-service";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
+import { validateSession } from "@/lib/session-manager";
 
 // POST /api/workforce/staff/[id]/resend-welcome
 export async function POST(
@@ -12,16 +13,22 @@ export async function POST(
 ) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { id: true, role: true },
-    });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
+    const user = validation.user;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

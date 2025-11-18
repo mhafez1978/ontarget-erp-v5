@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { encrypt } from "@/lib/crypto";
+import { validateSession } from "@/lib/session-manager";
 
 const emailProviderSchema = z.object({
   provider: z.enum([
@@ -64,21 +65,22 @@ const emailProviderSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const scope = searchParams.get("scope");
-    const companyId = searchParams.get("companyId");
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
 
-    // Fetch user with role
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
+    const userId = validation.user.id;
+    const user = validation.user;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -132,20 +134,22 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const data = emailProviderSchema.parse(body);
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
 
-    // Fetch user with role
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
+    const userId = validation.user.id;
+    const user = validation.user;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

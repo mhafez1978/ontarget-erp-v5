@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
+import { validateSession } from "@/lib/session-manager";
 
 export async function PATCH(
   request: NextRequest,
@@ -9,18 +10,24 @@ export async function PATCH(
 ) {
   try {
     const cookieStore = await cookies();
-    const currentUserId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!currentUserId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUser = await db.user.findUnique({
-      where: { id: currentUserId },
-      select: { id: true, email: true, role: true },
-    });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
 
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    const currentUserId = validation.user.id;
+    const currentUser = validation.user;
+
+    if (currentUser.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Only super admins can modify user account status" },
         { status: 403 }

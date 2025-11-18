@@ -2,32 +2,27 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { updateCompanyStorage } from "@/lib/storage-service";
-import { validateSession } from "@/lib/session-manager";
 
 // GET - Fetch company storage configuration
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
+    const userId = cookieStore.get("userId")?.value;
 
-    if (!sessionToken) {
+    if (!userId) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
     }
 
-    // Validate session
-    const validation = await validateSession(sessionToken);
+    // Get user and verify they're ADMIN or SUPER_ADMIN
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true },
+    });
 
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const user = validation.user;"ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Access Denied: Only admins can view storage settings" },
         { status: 403 }
@@ -112,26 +107,22 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
+    const userId = cookieStore.get("userId")?.value;
 
-    if (!sessionToken) {
+    if (!userId) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
     }
 
-    // Validate session
-    const validation = await validateSession(sessionToken);
+    // Get user and verify they're ADMIN or SUPER_ADMIN
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true },
+    });
 
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const user = validation.user;["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Access Denied: Only admins can update storage settings" },
         { status: 403 }
