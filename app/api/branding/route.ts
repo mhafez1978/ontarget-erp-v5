@@ -11,10 +11,10 @@ export async function GET() {
     // If user is authenticated, check for company-specific white-label branding
     if (sessionToken) {
       const validation = await validateSession(sessionToken);
-      
+
       if (validation.valid && validation.user) {
         const userId = validation.user.id;
-        
+
         const user = await db.user.findUnique({
           where: { id: userId },
           select: {
@@ -47,27 +47,27 @@ export async function GET() {
           },
         });
 
-      // Check if user has a company with white-label eligible subscription
-      const membership = user?.companyMemberships[0];
-      if (
-        membership &&
-        membership.company.subscriberSubscriptions.length > 0 &&
-        (membership.company.logoLight ||
-          membership.company.logoDark ||
-          membership.company.logo)
-      ) {
-        // Return company-specific branding
-        return NextResponse.json({
-          name: membership.company.name,
-          slogan: membership.company.slogan || "People Driven & AI Insight",
-          logo: membership.company.logo,
-          logoLight: membership.company.logoLight,
-          logoDark: membership.company.logoDark,
-          isWhiteLabel: true,
-        });
+        // Check if user has a company with white-label eligible subscription
+        const membership = user?.companyMemberships[0];
+        if (
+          membership &&
+          membership.company.subscriberSubscriptions.length > 0 &&
+          (membership.company.logoLight ||
+            membership.company.logoDark ||
+            membership.company.logo)
+        ) {
+          // Return company-specific branding
+          return NextResponse.json({
+            name: membership.company.name,
+            slogan: membership.company.slogan || "People Driven & AI Insight",
+            logo: membership.company.logo,
+            logoLight: membership.company.logoLight,
+            logoDark: membership.company.logoDark,
+            isWhiteLabel: true,
+          });
+        }
       }
     }
-  }
 
     // Fallback to root company (OnTarget ERP branding)
     const rootCompany = await db.company.findFirst({

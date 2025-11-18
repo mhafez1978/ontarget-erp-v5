@@ -809,9 +809,9 @@ export function AddressAutocomplete({
 
         <div className="space-y-2">
           <Label htmlFor="country">Country</Label>
-          <div className="flex gap-2 items-center">
+          <div className="relative">
             {value.countryCode && (
-              <span className="text-2xl">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xl pointer-events-none">
                 {getCountryFlag(value.countryCode)}
               </span>
             )}
@@ -821,7 +821,7 @@ export function AddressAutocomplete({
               placeholder="United States"
               value={value.country}
               onChange={(e) => onChange({ ...value, country: e.target.value })}
-              className="flex-1"
+              className={value.countryCode ? "pl-12" : ""}
             />
           </div>
         </div>
