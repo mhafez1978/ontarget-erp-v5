@@ -17,35 +17,35 @@ export async function GET() {
         
         const user = await db.user.findUnique({
           where: { id: userId },
-        select: {
-          companyMemberships: {
-            select: {
-              companyId: true,
-              company: {
-                select: {
-                  name: true,
-                  slogan: true,
-                  logo: true,
-                  logoLight: true,
-                  logoDark: true,
-                  subscriberSubscriptions: {
-                    where: {
-                      OR: [{ status: "ACTIVE" }, { status: "TRIAL" }],
-                      plan: {
-                        in: ["GROWTH", "ENTERPRISE"],
+          select: {
+            companyMemberships: {
+              select: {
+                companyId: true,
+                company: {
+                  select: {
+                    name: true,
+                    slogan: true,
+                    logo: true,
+                    logoLight: true,
+                    logoDark: true,
+                    subscriberSubscriptions: {
+                      where: {
+                        OR: [{ status: "ACTIVE" }, { status: "TRIAL" }],
+                        plan: {
+                          in: ["GROWTH", "ENTERPRISE"],
+                        },
                       },
-                    },
-                    select: {
-                      id: true,
+                      select: {
+                        id: true,
+                      },
                     },
                   },
                 },
               },
+              take: 1,
             },
-            take: 1,
           },
-        },
-      });
+        });
 
       // Check if user has a company with white-label eligible subscription
       const membership = user?.companyMemberships[0];
@@ -67,6 +67,7 @@ export async function GET() {
         });
       }
     }
+  }
 
     // Fallback to root company (OnTarget ERP branding)
     const rootCompany = await db.company.findFirst({
