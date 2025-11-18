@@ -4,16 +4,26 @@ import {
   getUserOAuthAccounts,
   disconnectOAuthAccount,
 } from "@/lib/oauth-tokens";
+import { validateSession } from "@/lib/session-manager";
 
 // GET /api/user/oauth-accounts - Get user's connected OAuth accounts
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = validation.user.id;
 
     const accounts = await getUserOAuthAccounts(userId);
 
@@ -40,11 +50,20 @@ export async function GET() {
 export async function DELETE(req: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = validation.user.id;
 
     const { provider } = await req.json();
 
