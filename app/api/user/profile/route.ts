@@ -2,18 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
+import { validateSession } from "@/lib/session-manager";
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: validation.user.id },
       select: {
         id: true,
         name: true,
@@ -53,14 +61,21 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: validation.user.id },
       select: { id: true, email: true, name: true },
     });
 
@@ -109,7 +124,7 @@ export async function PATCH(request: NextRequest) {
 
     // Update user in database
     const updatedUser = await db.user.update({
-      where: { id: userId },
+      where: { id: user.id },
       data: updateData,
       select: {
         id: true,
@@ -138,7 +153,7 @@ export async function PATCH(request: NextRequest) {
       userId: user.id,
       action: "PROFILE_UPDATED",
       entityType: "USER",
-      entityId: userId,
+      entityId: user.id,
       metadata: {
         updatedFields: Object.keys(updateData),
       },
