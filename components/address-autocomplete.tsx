@@ -620,19 +620,32 @@ export function AddressAutocomplete({
       return;
     }
 
+    console.log("🔍 Searching for address:", query);
     setIsSearching(true);
     try {
       const response = await fetch(
         `/api/geocode/search?q=${encodeURIComponent(query)}&limit=5`
       );
 
+      console.log("📡 Response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log("📦 Response data:", data);
+        console.log("📍 Features count:", data.features?.length || 0);
         setSuggestions(data.features || []);
         setShowSuggestions(true);
+      } else {
+        console.error(
+          "❌ Response not OK:",
+          response.status,
+          response.statusText
+        );
+        const errorData = await response.json().catch(() => null);
+        console.error("Error data:", errorData);
       }
     } catch (error) {
-      console.error("Address search error:", error);
+      console.error("❌ Address search error:", error);
     } finally {
       setIsSearching(false);
     }
@@ -687,7 +700,7 @@ export function AddressAutocomplete({
   return (
     <div className="space-y-4">
       {/* Address Search */}
-      <div className="space-y-2" ref={wrapperRef}>
+      <div className="space-y-2 relative" ref={wrapperRef}>
         <Label htmlFor="address-search">
           {label} {required && "*"}
         </Label>
@@ -707,54 +720,56 @@ export function AddressAutocomplete({
           {isSearching && (
             <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
           )}
-        </div>
 
-        {/* Suggestions */}
-        {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg">
-            <ul className="max-h-60 overflow-auto p-1">
-              {suggestions.map((suggestion, index) => {
-                const p = suggestion.properties;
-                const flag = p.countrycode ? getCountryFlag(p.countrycode) : "";
+          {/* Suggestions */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg top-full left-0">
+              <ul className="max-h-60 overflow-auto p-1">
+                {suggestions.map((suggestion, index) => {
+                  const p = suggestion.properties;
+                  const flag = p.countrycode
+                    ? getCountryFlag(p.countrycode)
+                    : "";
 
-                const line1 = `${p.housenumber ? p.housenumber + " " : ""}${
-                  p.street || p.name || "Unknown Address"
-                }`.trim();
+                  const line1 = `${p.housenumber ? p.housenumber + " " : ""}${
+                    p.street || p.name || "Unknown Address"
+                  }`.trim();
 
-                const line2 = [p.city, p.state, p.country]
-                  .filter(Boolean)
-                  .join(", ");
+                  const line2 = [p.city, p.state, p.country]
+                    .filter(Boolean)
+                    .join(", ");
 
-                return (
-                  <li
-                    key={index}
-                    className="cursor-pointer rounded-sm px-3 py-2 text-sm hover:bg-accent"
-                    onClick={() => handleSelectSuggestion(suggestion)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-4 w-4 text-primary mt-1 shrink-0" />
+                  return (
+                    <li
+                      key={index}
+                      className="cursor-pointer rounded-sm px-3 py-2 text-sm hover:bg-accent"
+                      onClick={() => handleSelectSuggestion(suggestion)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <MapPin className="h-4 w-4 text-primary mt-1 shrink-0" />
 
-                      <div className="flex flex-col">
-                        {/* Main Row */}
-                        <div className="flex items-center gap-2">
-                          {flag && <span className="text-lg">{flag}</span>}
-                          <span className="font-medium text-foreground">
-                            {line1}
+                        <div className="flex flex-col">
+                          {/* Main Row */}
+                          <div className="flex items-center gap-2">
+                            {flag && <span className="text-lg">{flag}</span>}
+                            <span className="font-medium text-foreground">
+                              {line1}
+                            </span>
+                          </div>
+
+                          {/* Subline */}
+                          <span className="text-xs text-muted-foreground ml-7">
+                            {line2}
                           </span>
                         </div>
-
-                        {/* Subline */}
-                        <span className="text-xs text-muted-foreground ml-7">
-                          {line2}
-                        </span>
                       </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Manual Inputs */}
