@@ -2,27 +2,33 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { updateCompanyStorage } from "@/lib/storage-service";
+import { validateSession } from "@/lib/session-manager";
 
 // GET - Fetch company storage configuration
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
     }
 
-    // Get user and verify they're ADMIN or SUPER_ADMIN
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { id: true, role: true },
-    });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
 
-    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    const userId = validation.user.id;
+    const user = validation.user;
+
+    if (!["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Access Denied: Only admins can view storage settings" },
         { status: 403 }
@@ -107,22 +113,27 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
     }
 
-    // Get user and verify they're ADMIN or SUPER_ADMIN
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { id: true, role: true },
-    });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
 
-    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    const userId = validation.user.id;
+    const user = validation.user;
+
+    if (!["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Access Denied: Only admins can update storage settings" },
         { status: 403 }

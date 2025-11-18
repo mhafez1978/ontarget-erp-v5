@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 
 export type CheckoutDb = {
   company: {
@@ -222,8 +223,16 @@ export async function POST(
   try {
     const { slug } = await params;
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
     const sessionId = cookieStore.get("cartSessionId")?.value;
+
+    let userId;
+    if (sessionToken) {
+      const validation = await validateSession(sessionToken);
+      if (validation.valid && validation.user) {
+        userId = validation.user.id;
+      }
+    }
 
     const body = await request.json();
     const result = await processCheckout(slug, userId, sessionId, body);

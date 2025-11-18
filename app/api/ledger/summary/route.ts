@@ -1,31 +1,36 @@
 import { NextResponse, NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { validateSession } from "@/lib/session-manager";
 
 export async function GET(req: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
     }
 
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
+
     // Get companyId from query params (for SUPER_ADMIN with multiple companies)
     const { searchParams } = new URL(req.url);
     const requestedCompanyId = searchParams.get("companyId");
 
     // Fetch user with role
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        role: true,
-      },
-    });
+    const user = validation.user;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

@@ -7,13 +7,10 @@ export async function GET() {
     // Get session token from cookie
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get("sessionToken")?.value;
-    const userId = cookieStore.get("userId")?.value;
 
     console.log(
       "[/api/auth/me] Checking auth - sessionToken:",
-      sessionToken ? "EXISTS" : "MISSING",
-      "userId:",
-      userId ? "EXISTS" : "MISSING"
+      sessionToken ? "EXISTS" : "MISSING"
     );
 
     if (!sessionToken) {

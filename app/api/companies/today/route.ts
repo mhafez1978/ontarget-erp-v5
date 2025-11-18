@@ -1,24 +1,29 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 
 export async function GET() {
   try {
-    // Get user from cookie
+    // Get user from session
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user and check if SUPER_ADMIN
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
 
-    if (!user || user.role !== "SUPER_ADMIN") {
+    const user = validation.user;
+
+    if (user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Forbidden - SUPER_ADMIN only" },
         { status: 403 }
