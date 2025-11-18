@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import sharp from "sharp";
+import { validateSession } from "@/lib/session-manager";
 
 // POST - Upload multiple service images
 export async function POST(
@@ -13,11 +14,21 @@ export async function POST(
   try {
     const { id } = await params;
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
 
     // Get user and check permissions
     const user = await db.user.findUnique({

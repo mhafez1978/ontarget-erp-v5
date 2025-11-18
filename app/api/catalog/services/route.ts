@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 
 // GET /api/catalog/services?companyId=xxx
 export async function GET(request: Request) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
 
     // Get user with role
     const user = await db.user.findUnique({
@@ -132,11 +143,21 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
 
     // Get user with role
     const user = await db.user.findUnique({

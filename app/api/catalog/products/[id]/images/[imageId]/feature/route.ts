@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { validateSession } from "@/lib/session-manager";
 
 // PATCH - Set image as featured (unset all others)
 export async function PATCH(
@@ -10,11 +11,21 @@ export async function PATCH(
   try {
     const { id: productId, imageId } = await params;
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
 
     // Get user and check permissions
     const user = await db.user.findUnique({

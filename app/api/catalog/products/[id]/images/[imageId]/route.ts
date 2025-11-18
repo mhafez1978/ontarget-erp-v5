@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { unlink } from "fs/promises";
 import { join } from "path";
+import { validateSession } from "@/lib/session-manager";
 
 // DELETE - Delete a product image
 export async function DELETE(
@@ -12,11 +13,21 @@ export async function DELETE(
   try {
     const { id, imageId } = await params;
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
 
     // Get user and check permissions
     const user = await db.user.findUnique({
