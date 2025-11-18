@@ -809,7 +809,7 @@ export function AddressAutocomplete({
 
         <div className="space-y-2">
           <Label htmlFor="country">Country</Label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             {value.countryCode && (
               <span className="text-2xl">
                 {getCountryFlag(value.countryCode)}

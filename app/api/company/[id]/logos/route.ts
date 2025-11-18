@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { writeFile, unlink, readdir } from "fs/promises";
+import { writeFile, unlink, readdir, mkdir } from "fs/promises";
 import { join, extname } from "path";
 import { createAuditLog } from "@/lib/audit-log";
 
@@ -85,12 +85,20 @@ export async function POST(
       const extension = extname(file.name);
       const filename = `logo-${uniqueSuffix}${extension}`;
 
-      const uploadDir = join(process.cwd(), "public", "uploads", "logos");
-      const filepath = join(uploadDir, filename);
+      // Create company-specific directory
+      const uploadDir = join(process.cwd(), "public", "uploads", "logos", id);
 
+      // Ensure directory exists
+      try {
+        await mkdir(uploadDir, { recursive: true });
+      } catch {
+        // Directory might already exist, ignore error
+      }
+
+      const filepath = join(uploadDir, filename);
       await writeFile(filepath, buffer);
 
-      const logoUrl = `/uploads/logos/${filename}`;
+      const logoUrl = `/uploads/logos/${id}/${filename}`;
       uploadedLogos.push({ url: logoUrl, filename });
     }
 
@@ -164,15 +172,15 @@ export async function GET(
       );
     }
 
-    // Read logos directory
-    const uploadDir = join(process.cwd(), "public", "uploads", "logos");
+    // Read logos directory for this specific company
+    const uploadDir = join(process.cwd(), "public", "uploads", "logos", id);
 
     try {
       const files = await readdir(uploadDir);
       const logos = files
         .filter((file) => file !== ".gitkeep")
         .map((filename) => ({
-          url: `/uploads/logos/${filename}`,
+          url: `/uploads/logos/${id}/${filename}`,
           filename,
         }));
 
@@ -250,18 +258,20 @@ export async function DELETE(
       );
     }
 
-    // Extract filename from URL
-    const filename = logoUrl.split("/").pop();
+    // Extract filename from URL (handle company-specific path)
+    const urlParts = logoUrl.split("/");
+    const filename = urlParts.pop();
     if (!filename) {
       return NextResponse.json({ error: "Invalid logo URL" }, { status: 400 });
     }
 
-    // Delete file
+    // Delete file from company-specific directory
     const filepath = join(
       process.cwd(),
       "public",
       "uploads",
       "logos",
+      id,
       filename
     );
 

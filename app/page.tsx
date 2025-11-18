@@ -153,7 +153,7 @@ export default function Home() {
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Essential</h3>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl text-destructive line-through font-semibold">
+                  <span className="text-2xl text-yellow-300 line-through font-semibold">
                     $39.99
                   </span>
                   <span className="text-4xl font-bold">$24.99</span>

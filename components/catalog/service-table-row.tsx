@@ -3,6 +3,7 @@
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import Image from "next/image";
 import {
   Copy,
   Pencil,
@@ -74,13 +75,14 @@ export function ServiceTableRow({
   return (
     <TableRow>
       <TableCell>
-        <div className="w-16 h-16 bg-muted rounded overflow-hidden">
+        <div className="relative w-16 h-16 bg-muted rounded overflow-hidden">
           {getFeaturedImage() ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={getFeaturedImage()!}
               alt={service.name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="64px"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

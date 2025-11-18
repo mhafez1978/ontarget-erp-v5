@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
@@ -217,12 +218,15 @@ export function UserManagementTable() {
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         {user.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={user.image}
-                            alt={user.name || "User"}
-                            className="h-8 w-8 rounded-full"
-                          />
+                          <div className="relative h-8 w-8 rounded-full overflow-hidden">
+                            <Image
+                              src={user.image}
+                              alt={user.name || "User"}
+                              fill
+                              className="object-cover"
+                              sizes="32px"
+                            />
+                          </div>
                         ) : (
                           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                             <span className="text-xs font-medium">

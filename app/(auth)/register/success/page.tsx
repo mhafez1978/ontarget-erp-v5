@@ -11,19 +11,18 @@ export default function RegisterSuccessPage() {
   useEffect(() => {
     // Countdown timer
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          // Redirect to login after countdown
-          router.push("/login?registered=true");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 3000);
+      setCountdown((prev) => prev - 1);
+    }, 1000);
 
     return () => clearInterval(timer);
-  }, [router]);
+  }, []);
+
+  // Separate effect for redirect when countdown reaches 0
+  useEffect(() => {
+    if (countdown === 0) {
+      router.push("/login?registered=true");
+    }
+  }, [countdown, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">

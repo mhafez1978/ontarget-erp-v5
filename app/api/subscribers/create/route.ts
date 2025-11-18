@@ -206,6 +206,23 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Add user as company staff with ADMIN role (for employee pane)
+      await tx.companyStaff.create({
+        data: {
+          userId: user.id,
+          companyId: company.id,
+          role: "ADMIN",
+          jobTitle: "MANAGER_ROLE",
+          employmentType: "FULL_TIME",
+          status: "ACTIVE",
+          hireDate: new Date(),
+          city: address?.city || geoData?.city || null,
+          state: address?.state || geoData?.region || null,
+          country: address?.country || geoData?.country_name || null,
+          countryCode: address?.countryCode || geoData?.country_code || null,
+        },
+      });
+
       // Create subscription record
       const subscription = await tx.subscription.create({
         data: {

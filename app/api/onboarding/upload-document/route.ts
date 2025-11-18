@@ -1,0 +1,166 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { uploadDocument } from "@/lib/storage-service";
+
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const token = formData.get("token") as string;
+    const docType = formData.get("docType") as string;
+    const file = formData.get("file") as File;
+
+    if (!token || !docType || !file) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Verify onboarding token
+    const onboardingToken = await db.onboardingToken.findUnique({
+      where: { token },
+      include: {
+        staff: {
+          include: {
+            company: true,
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!onboardingToken) {
+      return NextResponse.json(
+        { error: "Invalid onboarding token" },
+        { status: 404 }
+      );
+    }
+
+    if (onboardingToken.isUsed) {
+      return NextResponse.json(
+        { error: "Onboarding already completed" },
+        { status: 400 }
+      );
+    }
+
+    if (new Date() > onboardingToken.expiresAt) {
+      return NextResponse.json(
+        { error: "Onboarding token expired" },
+        { status: 400 }
+      );
+    }
+
+    // Validate document type
+    const validDocTypes = [
+      "SSN_CARD",
+      "DRIVERS_LICENSE",
+      "PASSPORT",
+      "BIRTH_CERTIFICATE",
+      "WORK_AUTHORIZATION",
+      "W4_TAX_FORM",
+      "STATE_TAX_FORM",
+      "I9_FORM",
+      "DIRECT_DEPOSIT_FORM",
+      "EMPLOYEE_HANDBOOK_SIGNED",
+      "NDA_SIGNED",
+      "CONTRACT_SIGNED",
+      "INSURANCE_CARD",
+      "OTHER",
+    ];
+
+    if (!validDocTypes.includes(docType)) {
+      return NextResponse.json(
+        { error: "Invalid document type" },
+        { status: 400 }
+      );
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "File size exceeds 10MB limit" },
+        { status: 400 }
+      );
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json(
+        { error: "Invalid file type. Allowed: PDF, JPEG, PNG, WebP" },
+        { status: 400 }
+      );
+    }
+
+    // Convert file to buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const fileName = `${docType}_${timestamp}_${sanitizedName}`;
+
+    // Upload document
+    const { primaryPath, backupPath, storageProvider } = await uploadDocument(
+      onboardingToken.staff.companyId,
+      "HR-Docs",
+      fileName,
+      buffer,
+      file.type
+    );
+
+    // Create employment document record
+    const employmentDoc = await db.employmentDocument.create({
+      data: {
+        staffId: onboardingToken.staffId,
+        docType: docType as
+          | "SSN_CARD"
+          | "DRIVERS_LICENSE"
+          | "PASSPORT"
+          | "BIRTH_CERTIFICATE"
+          | "WORK_AUTHORIZATION"
+          | "W4_TAX_FORM"
+          | "STATE_TAX_FORM"
+          | "I9_FORM"
+          | "DIRECT_DEPOSIT_FORM"
+          | "EMPLOYEE_HANDBOOK_SIGNED"
+          | "NDA_SIGNED"
+          | "CONTRACT_SIGNED"
+          | "INSURANCE_CARD"
+          | "OTHER",
+        fileName: fileName,
+        fileSize: file.size,
+        mimeType: file.type,
+        primaryPath,
+        backupPath,
+        storageProvider,
+        status: "PENDING",
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      document: {
+        id: employmentDoc.id,
+        docType: employmentDoc.docType,
+        fileName: employmentDoc.fileName,
+        status: employmentDoc.status,
+        uploadedAt: employmentDoc.uploadedAt,
+      },
+    });
+  } catch (error) {
+    console.error("[Upload Document Error]:", error);
+    return NextResponse.json(
+      { error: "Failed to upload document" },
+      { status: 500 }
+    );
+  }
+}

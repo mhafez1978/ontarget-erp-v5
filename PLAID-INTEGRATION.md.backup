@@ -1,0 +1,542 @@
+# Plaid Bank Account Integration
+
+> **Last Updated:** November 17, 2025  
+> **Status:** ✅ Core integration complete, webhook handlers pending  
+> **Version:** 1.0.0
+
+This document outlines the Plaid bank account integration in the OnTarget ERP system.
+
+## Overview
+
+The Plaid integration allows company administrators to securely link their business bank accounts to the ERP system. This enables features like:
+
+- ✅ Secure bank account linking via Plaid Link
+- ✅ Multi-account management per company
+- ✅ Encrypted access token storage (AES-256-GCM)
+- 🔄 ACH payment processing (planned)
+- 🔄 Automated payroll disbursement (planned)
+- 🔄 Supplier payments (planned)
+- 🔄 Transaction tracking and reconciliation (planned)
+
+## Architecture
+
+### Configuration Layer (Settings Page)
+
+**Location:** `/app/dashboard/settings` - Plaid Bank Account Configuration accordion
+
+**Status:** ✅ **Fully Implemented**
+
+**Features:**
+
+- ✅ Link new bank accounts via Plaid Link modal
+- ✅ View connected accounts with institution details
+- ✅ Disconnect accounts with confirmation
+- ✅ Multi-company support with company selector
+- ✅ Real-time account metadata display (mask, type, institution)
+
+**Components:**
+
+- `PlaidLinkButton` - Client component that loads Plaid SDK from CDN and handles Link flow
+- `Settings Page` - Accordion section with Plaid integration UI
+
+### Operations Layer (Payments Page)
+
+**Location:** `/app/dashboard/payments` - Payment Gateways & Bank Accounts tab
+
+**Status:** ✅ **Fully Implemented**
+
+**Features:**
+
+- ✅ View all linked Plaid accounts for selected company
+- ✅ Display account metadata (name, mask, type, institution, status)
+- ✅ Link new accounts via PlaidLinkButton
+- ✅ Disconnect accounts functionality
+- 🔄 ACH payment initiation (planned for Ledger page)
+
+**Features:**
+
+- View linked accounts with balances
+- Initiate ACH payments
+- Process payroll through linked accounts
+- Pay suppliers
+- View transaction history
+
+**Status:** 🔄 **Planned** - Bank account operations will be added to Ledger page in future iteration
+
+## Component Architecture
+
+### PlaidLinkButton Component
+
+**Location:** `/components/plaid-link-button.tsx`
+
+**Type:** Client Component (`"use client"`)
+
+**Status:** ✅ **Fully Implemented with TypeScript**
+
+**Interfaces:**
+
+```typescript
+interface PlaidWindow extends Window {
+  Plaid?: {
+    create: (config: PlaidLinkConfig) => PlaidHandler;
+  };
+}
+
+interface PlaidLinkConfig {
+  token: string;
+  onSuccess: (publicToken: string, metadata: PlaidMetadata) => void;
+  onExit: (err: PlaidError | null) => void;
+  onEvent: (eventName: string, metadata: PlaidMetadata) => void;
+}
+
+interface PlaidHandler {
+  open: () => void;
+}
+
+interface PlaidMetadata {
+  institution: {
+    name: string;
+    institution_id: string;
+  };
+  accounts: Array<{
+    id: string;
+    name: string;
+    mask: string;
+    type: string;
+    subtype: string;
+  }>;
+  link_session_id: string;
+  [key: string]: unknown;
+}
+
+interface PlaidError {
+  error_type: string;
+  error_code: string;
+  error_message: string;
+  display_message: string | null;
+}
+```
+
+**Props:**
+
+- `companyId: string` - The company to link the account to
+- `onSuccess?: () => void` - Callback after successful link
+- `disabled?: boolean` - Disable the button
+
+**Behavior:**
+
+1. Loads Plaid SDK from CDN (`https://cdn.plaid.com/link/v2/stable/link-initialize.js`)
+2. Calls `/api/plaid/create-link-token` to get link token
+3. Opens Plaid Link modal with company-specific configuration
+4. On success: Calls `/api/plaid/exchange-public-token` with metadata
+5. Shows toast notifications for success/error states
+6. Triggers parent component refresh via onSuccess callback
+
+## API Endpoints
+
+### 1. Create Link Token
+
+**Endpoint:** `POST /api/plaid/create-link-token`
+
+**Status:** ✅ **Fully Implemented**
+
+**Purpose:** Initialize Plaid Link flow by creating a link token
+
+**Request Body:**
+
+```json
+{
+  "companyId": "clx123abc..."
+}
+```
+
+**Response (Success - 200):**
+
+```json
+{
+  "linkToken": "link-sandbox-abc123...",
+  "expiration": "2025-11-17T10:30:00.000Z"
+}
+```
+
+**Response (Error):**
+
+```json
+{
+  "error": "Access denied"  // 403
+  "error": "Unauthorized"   // 401
+  "error": "Company ID is required"  // 400
+  "error": "Plaid is not configured. Please set environment variables."  // 500
+  "error": "Plaid integration is not available. Please run: npm install plaid"  // 500
+}
+```
+
+**Access Control:** 
+- ✅ SUPER_ADMIN: Full access to all companies
+- ✅ Company Owner: Access to owned companies
+- ✅ ADMIN/MANAGER members: Access to member companies
+
+**Implementation Details:**
+
+- Dynamically imports Plaid SDK (allows graceful failure if not installed)
+- Creates Plaid configuration with Products.Auth (for ACH)
+- Sets redirect_uri to `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings`
+- Uses company name in configuration
+- Returns link token valid for 30 minutes
+
+---
+
+### 2. Exchange Public Token
+
+**Endpoint:** `POST /api/plaid/exchange-public-token`
+
+**Status:** ✅ **Fully Implemented**
+
+**Purpose:** Exchange Plaid public token for access token and store account details
+
+**Request Body:**
+
+```json
+{
+  "companyId": "clx123abc...",
+  "publicToken": "public-sandbox-xyz789...",
+  "metadata": {
+    "institution": {
+      "name": "Chase",
+      "institution_id": "ins_3"
+    },
+    "accounts": [
+      {
+        "id": "abc123",
+        "name": "Plaid Checking",
+        "mask": "0000",
+        "type": "depository",
+        "subtype": "checking"
+      }
+    ],
+    "link_session_id": "session-abc123"
+  }
+}
+```
+
+**Response (Success - 200):**
+
+```json
+{
+  "success": true,
+  "accounts": [
+    {
+      "id": "clx_plaid_account_123",
+      "accountName": "Plaid Checking",
+      "accountMask": "0000",
+      "accountType": "checking",
+      "institutionName": "Chase",
+      "isActive": true
+    }
+  ],
+  "message": "Successfully linked 1 account(s)"
+}
+```
+
+**Response (Error):**
+      "accountType": "checking",
+      "institutionName": "Chase",
+      "isActive": true
+    }
+  ],
+  "message": "Successfully linked 1 account(s)"
+}
+```
+
+**Process:**
+
+1. Verifies user access to company
+2. Exchanges public token with Plaid API
+3. Retrieves account and institution details
+4. Encrypts access token using AES-256-GCM
+5. Stores PlaidAccount records in database
+6. Returns safe account data (no sensitive tokens)
+
+---
+
+### 3. Get Plaid Accounts
+
+**Endpoint:** `GET /api/company/plaid-accounts?companyId={id}`
+
+**Purpose:** Fetch all linked bank accounts for a company
+
+**Response:**
+
+```json
+{
+  "accounts": [
+    {
+      "id": "string",
+      "accountName": "Business Checking",
+      "accountMask": "1234",
+      "accountType": "checking",
+      "institutionName": "Chase",
+      "institutionId": "ins_123",
+      "isActive": true,
+      "lastSyncAt": "ISO date string",
+      "createdAt": "ISO date string"
+    }
+  ]
+}
+```
+
+**Security:** Access tokens are excluded from response
+
+---
+
+### 4. Disconnect Account
+
+**Endpoint:** `DELETE /api/company/plaid-accounts/{accountId}`
+
+**Purpose:** Disconnect a linked bank account
+
+**Response:**
+
+```json
+{
+  "message": "Bank account disconnected successfully"
+}
+```
+
+**Access Control:** SUPER_ADMIN, company owner, or ADMIN/MANAGER member
+
+## Database Schema
+
+### PlaidAccount Model
+
+```prisma
+model PlaidAccount {
+  id              String   @id @default(cuid())
+  companyId       String
+  accessToken     String   @db.Text  // Encrypted with AES-256-GCM
+  itemId          String
+  accountId       String
+  accountName     String?
+  accountMask     String?  // Last 4 digits
+  accountType     String?  // "checking", "savings", etc.
+  institutionId   String?
+  institutionName String?
+  isActive        Boolean  @default(true)
+  linkedBy        String?
+  lastSyncAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  linkedByUser    User?    @relation(fields: [linkedBy], references: [id])
+
+  @@index([companyId])
+  @@index([linkedBy])
+}
+```
+
+## Security
+
+### Encryption
+
+All Plaid access tokens are encrypted before storage using:
+
+- **Algorithm:** AES-256-GCM
+- **Library:** `/lib/encryption.ts`
+- **Key Storage:** `ENCRYPTION_KEY` environment variable
+
+### Access Control
+
+Access to Plaid configuration is restricted to:
+
+- **SUPER_ADMIN:** Full access to all companies
+- **Company Owner:** Access to owned companies
+- **ADMIN/MANAGER:** Access to companies they're members of with appropriate role
+
+## Setup Instructions
+
+### 1. Install Plaid SDK
+
+```bash
+npm install plaid
+```
+
+### 2. Set Environment Variables
+
+Add to `.env.local`:
+
+```env
+# Plaid Configuration
+PLAID_CLIENT_ID=your_plaid_client_id
+PLAID_SECRET=your_plaid_secret
+PLAID_ENV=sandbox  # or development, or production
+
+# Encryption (required for storing access tokens)
+ENCRYPTION_KEY=your-32-character-encryption-key-here
+
+# App URL (for Plaid redirects)
+NEXT_PUBLIC_APP_URL=http://localhost:3000  # or your production URL
+```
+
+### 3. Get Plaid Credentials
+
+1. Sign up at [Plaid Dashboard](https://dashboard.plaid.com/signup)
+2. Create a new application
+3. Copy your `client_id` and `secret`
+4. Start with `sandbox` environment for testing
+
+### 4. Generate Encryption Key
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+Copy the output to `ENCRYPTION_KEY`.
+
+### 5. Run Database Migration
+
+The Plaid models are already in the schema, but ensure migrations are up to date:
+
+```bash
+npx prisma migrate dev --name add_plaid_accounts
+```
+
+## Testing
+
+### Sandbox Mode
+
+In sandbox mode, Plaid provides test credentials:
+
+- **Username:** `user_good`
+- **Password:** `pass_good`
+- **Institution:** Any (Search for "Chase", "Wells Fargo", etc.)
+
+### Test Flow
+
+1. Navigate to Settings page
+2. Select a company
+3. Click "Link Bank Account"
+4. Select a test institution
+5. Use sandbox credentials
+6. Select accounts to link
+7. Verify accounts appear in "Connected Bank Accounts"
+8. Test disconnect functionality
+
+## Integration with Ledger
+
+### Bank Accounts Tab (To Be Implemented)
+
+**Location:** `/app/dashboard/ledger` - Bank Accounts tab
+
+**Features:**
+
+- Display all linked Plaid accounts
+- Show account balances (requires additional Plaid API calls)
+- Initiate ACH payments
+- Process payroll
+- Pay suppliers
+
+**API Endpoints Needed:**
+
+- `POST /api/payments/ach/initiate` - Start ACH payment
+- `GET /api/plaid/accounts/balance` - Fetch account balances
+- `GET /api/plaid/transactions` - Fetch transaction history
+
+### Transaction Processing Flow
+
+```
+1. User initiates payment in Ledger
+   ↓
+2. System calls POST /api/payments/ach/initiate
+   ↓
+3. API decrypts Plaid access token
+   ↓
+4. API calls Plaid to initiate ACH transfer
+   ↓
+5. API creates Payment record in database
+   ↓
+6. Plaid webhook updates payment status
+   ↓
+7. UI displays updated status in Transactions tab
+```
+
+## Plaid Products Used
+
+- **Auth:** Bank account and routing numbers for ACH
+- **Transactions:** Transaction history for reconciliation
+
+## Webhooks (To Be Implemented)
+
+**Endpoint:** `POST /api/plaid/webhook`
+
+**Events to Handle:**
+
+- `TRANSACTIONS_SYNC_UPDATES_AVAILABLE` - New transactions available
+- `ITEM_ERROR` - Authentication errors
+- `PENDING_DISCONNECT` - Account being disconnected
+- `ITEM_LOGIN_REQUIRED` - Requires re-authentication
+
+## Error Handling
+
+### Common Errors
+
+1. **Plaid SDK not installed**
+
+   - Error: "Plaid integration is not available"
+   - Solution: Run `npm install plaid`
+
+2. **Missing environment variables**
+
+   - Error: "Plaid is not configured"
+   - Solution: Add PLAID_CLIENT_ID, PLAID_SECRET, PLAID_ENV to `.env.local`
+
+3. **Invalid credentials**
+
+   - Error: "INVALID_CREDENTIALS"
+   - Solution: Verify Plaid credentials in dashboard
+
+4. **Item login required**
+   - Error: "ITEM_LOGIN_REQUIRED"
+   - Solution: User needs to re-authenticate through Plaid Link
+
+## Compliance
+
+### SOC 2 Considerations
+
+- ✅ Encryption at rest (AES-256-GCM)
+- ✅ Encryption in transit (HTTPS)
+- ✅ Access control (role-based)
+- ✅ Audit logging (linkedBy, lastSyncAt)
+- ✅ Token exclusion from API responses
+- ⚠️ Webhook signature verification (to be implemented)
+- ⚠️ Token rotation (consider implementing)
+
+### PCI DSS
+
+Plaid is PCI DSS Level 1 certified. By using Plaid, you avoid handling raw payment credentials directly.
+
+## Future Enhancements
+
+- [ ] Implement webhook handler for real-time updates
+- [ ] Add balance checking in Ledger
+- [ ] Implement ACH payment initiation
+- [ ] Add transaction history syncing
+- [ ] Implement automatic reconciliation
+- [ ] Add multi-currency support
+- [ ] Implement token rotation
+- [ ] Add account health monitoring
+- [ ] Create admin dashboard for Plaid metrics
+
+## Support
+
+For Plaid-specific issues:
+
+- [Plaid Documentation](https://plaid.com/docs/)
+- [Plaid Support](https://support.plaid.com/)
+- [Plaid Status](https://status.plaid.com/)
+
+For implementation issues:
+
+- Check server logs for detailed error messages
+- Verify environment variables are set correctly
+- Test with sandbox credentials first
+- Check Plaid Dashboard for API logs

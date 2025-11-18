@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
       user: userWithoutPassword,
     });
 
-    // Set cookie with user ID (temporary until NextAuth is set up)
-    response.cookies.set("userId", user.id, {
+    // Set secure session token cookie
+    response.cookies.set("sessionToken", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

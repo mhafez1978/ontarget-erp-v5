@@ -21,6 +21,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
 
   const initialFormData = {
     email: "",
@@ -65,6 +67,32 @@ export default function LoginPage() {
     fetchEnabledProviders();
   }, []);
 
+  // Check for OAuth errors in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get("error");
+
+    if (errorParam) {
+      const errorMessages: Record<string, string> = {
+        oauth_cancelled: "OAuth authentication was cancelled",
+        oauth_failed: "OAuth authentication failed",
+        oauth_config_error: "OAuth is not properly configured",
+        oauth_token_failed: "Failed to exchange OAuth token",
+        oauth_profile_failed: "Failed to fetch user profile",
+        no_email: "No email address found in OAuth profile",
+        account_disabled: "Your account has been disabled",
+        use_credentials:
+          "Please login with your email and password. This account was created with credentials.",
+        oauth_error: "An error occurred during OAuth authentication",
+      };
+
+      setError(errorMessages[errorParam] || "Authentication error occurred");
+
+      // Clear error from URL
+      window.history.replaceState({}, "", "/login");
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -80,6 +108,13 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle email not verified
+        if (response.status === 403 && data.emailNotVerified) {
+          setUnverifiedEmail(data.email || formData.email);
+          setShowResendVerification(true);
+          throw new Error(data.error);
+        }
+
         // Handle blocked IP with special formatting
         if (response.status === 403 && data.blocked) {
           const blockedUntil = new Date(data.blockedUntil);
@@ -125,6 +160,41 @@ export default function LoginPage() {
             {error && (
               <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-md border border-red-200 dark:border-red-900">
                 {error}
+                {showResendVerification && (
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(
+                            "/api/auth/send-verification-public",
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ email: unverifiedEmail }),
+                            }
+                          );
+                          if (res.ok) {
+                            setError(
+                              "Verification email sent! Check your inbox."
+                            );
+                            setShowResendVerification(false);
+                          } else {
+                            setError(
+                              "Failed to resend verification email. Try again later."
+                            );
+                          }
+                        } catch {
+                          setError("Failed to resend verification email.");
+                        }
+                      }}
+                    >
+                      Resend Verification Email
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -236,6 +306,10 @@ export default function LoginPage() {
                       variant="outline"
                       type="button"
                       disabled={isLoading}
+                      onClick={() => {
+                        setIsLoading(true);
+                        window.location.href = "/api/auth/google/login";
+                      }}
                     >
                       <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                         <path
@@ -263,6 +337,10 @@ export default function LoginPage() {
                       variant="outline"
                       type="button"
                       disabled={isLoading}
+                      onClick={() => {
+                        setIsLoading(true);
+                        window.location.href = "/api/auth/microsoft/login";
+                      }}
                     >
                       <svg
                         className="mr-2 h-4 w-4"

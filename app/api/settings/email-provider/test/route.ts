@@ -7,6 +7,7 @@ const testSchema = z.object({
     "SMTP",
     "GMAIL",
     "GOOGLE_OAUTH",
+    "NODEMAILER",
     "OFFICE365",
     "SENDGRID",
     "MAILGUN",
@@ -51,14 +52,15 @@ export async function POST(req: NextRequest) {
     // TODO: Implement actual email provider testing logic
     // For now, return mock success
     switch (data.provider) {
+      case "NODEMAILER":
       case "SMTP":
         if (!data.smtpHost || !data.smtpPort || !data.smtpUsername) {
           return NextResponse.json(
-            { error: "Missing required SMTP fields" },
+            { error: "Missing required SMTP fields (host, port, username)" },
             { status: 400 }
           );
         }
-        // Mock SMTP test
+        // Mock SMTP/Nodemailer test
         return NextResponse.json({
           success: true,
           message: "SMTP connection successful",

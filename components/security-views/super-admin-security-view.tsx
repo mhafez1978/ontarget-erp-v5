@@ -22,6 +22,7 @@ import {
   TrendingUp,
   BarChart3,
   PieChart,
+  Monitor,
 } from "lucide-react";
 import {
   LineChart,
@@ -38,6 +39,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { SessionManager } from "@/components/session-manager";
 import { Globe } from "@/components/ui/globe";
 
 // Simple time ago formatter
@@ -147,7 +149,7 @@ export function SuperAdminSecurityView({
   const [isLoadingAttempts, setIsLoadingAttempts] = useState(true);
   const [isLoadingBlacklist, setIsLoadingBlacklist] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "attempts" | "blacklist" | "analytics"
+    "attempts" | "blacklist" | "analytics" | "sessions"
   >("attempts");
   const [attackOrigins, setAttackOrigins] = useState<
     Array<{
@@ -399,6 +401,14 @@ export function SuperAdminSecurityView({
         >
           <TrendingUp className="h-4 w-4 mr-2" />
           Analytics
+        </Button>
+        <Button
+          variant={activeTab === "sessions" ? "default" : "ghost"}
+          onClick={() => setActiveTab("sessions")}
+          className="rounded-b-none"
+        >
+          <Monitor className="h-4 w-4 mr-2" />
+          Active Sessions
         </Button>
       </div>
 
@@ -841,6 +851,16 @@ export function SuperAdminSecurityView({
               </CardContent>
             </Card>
           </div>
+        </div>
+      )}
+
+      {/* Active Sessions */}
+      {activeTab === "sessions" && (
+        <div className="space-y-6">
+          <SessionManager
+            userRole="SUPER_ADMIN"
+            currentUserId={userName || ""}
+          />
         </div>
       )}
     </div>

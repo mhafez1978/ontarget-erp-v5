@@ -1,13 +1,15 @@
 /**
  * Subscription Plan Limits
- * All limits for COMPANY_CUSTOMER, ESSENTIAL, GROWTH, and ENTERPRISE plans
+ * All limits for SUPER_USER, GUEST, COMPANY_CUSTOMER, ESSENTIAL, GROWTH, and ENTERPRISE plans
  */
 
 export type PlanType =
-  | "COMPANY_CUSTOMER"
-  | "ESSENTIAL"
-  | "GROWTH"
-  | "ENTERPRISE";
+  | "SUPER_USER" // SUPER_ADMIN only - free unlimited
+  | "GUEST" // Temporary - no company creation until plan selected
+  | "COMPANY_CUSTOMER" // Customers of companies - no company creation
+  | "ESSENTIAL" // Paid: 1 company
+  | "GROWTH" // Paid: 3 companies
+  | "ENTERPRISE"; // Paid: Unlimited companies
 
 export interface PlanLimits {
   companies: number;
@@ -20,6 +22,24 @@ export interface PlanLimits {
 }
 
 export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
+  SUPER_USER: {
+    companies: Infinity, // SUPER_ADMIN can create unlimited companies
+    adminAccounts: Infinity,
+    managerAccounts: Infinity,
+    staffAccounts: Infinity,
+    contractorAccounts: Infinity,
+    supplierAccounts: Infinity,
+    customers: Infinity,
+  },
+  GUEST: {
+    companies: 0, // GUEST users cannot create companies until they select a plan
+    adminAccounts: 0,
+    managerAccounts: 0,
+    staffAccounts: 0,
+    contractorAccounts: 0,
+    supplierAccounts: 0,
+    customers: 0,
+  },
   COMPANY_CUSTOMER: {
     companies: 0, // Company customers can't create companies
     adminAccounts: 0,
@@ -71,6 +91,18 @@ export interface PlanPricing {
 }
 
 export const PLAN_PRICING: Record<PlanType, PlanPricing> = {
+  SUPER_USER: {
+    name: "Super User",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+  },
+  GUEST: {
+    name: "Guest",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+  },
   COMPANY_CUSTOMER: {
     name: "Company Customer",
     monthlyPrice: 0,

@@ -1,0 +1,389 @@
+/**
+ * Session Management Library
+ *
+ * Provides secure session management for SOC 2 and FedRAMP compliance.
+ *
+ * Features:
+ * - Session creation with geo-tracking
+ * - Session validation and expiration
+ * - Session refresh/extension
+ * - Session revocation (single or all)
+ * - Suspicious activity detection
+ * - Multi-session management
+ *
+ * Security:
+ * - Random session tokens (UUID v4)
+ * - IP address validation
+ * - Geographic location tracking
+ * - Automatic expiration
+ * - Activity tracking
+ */
+
+import { db } from "@/lib/db";
+import crypto from "crypto";
+
+export interface GeoLocation {
+  ip?: string;
+  ipv4?: string;
+  ipv6?: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  country_name?: string;
+  country_code?: string;
+  flag?: string;
+}
+
+export interface SessionData {
+  id: string;
+  sessionToken: string;
+  userId: string;
+  expires: Date;
+  sessionIpAddress: string | null;
+  sessionIpv4: string | null;
+  sessionIpv6: string | null;
+  sessionCity: string | null;
+  sessionState: string | null;
+  sessionCountry: string | null;
+  sessionCountryFlag: string | null;
+}
+
+export interface CreateSessionOptions {
+  userId: string;
+  geoLocation?: GeoLocation;
+  expiresInDays?: number; // Default: 7 days
+}
+
+export interface ValidateSessionResult {
+  valid: boolean;
+  session?: SessionData;
+  user?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: string;
+    plan: string;
+    image: string | null;
+  };
+  reason?: string;
+}
+
+/**
+ * Create a new session for a user
+ */
+export async function createSession(
+  options: CreateSessionOptions
+): Promise<SessionData> {
+  const { userId, geoLocation, expiresInDays = 7 } = options;
+
+  // Generate random session token
+  const sessionToken = crypto.randomUUID();
+
+  // Calculate expiration
+  const expires = new Date();
+  expires.setDate(expires.getDate() + expiresInDays);
+
+  // Create session record
+  const session = await db.session.create({
+    data: {
+      sessionToken,
+      userId,
+      expires,
+      sessionIpAddress: geoLocation?.ip || null,
+      sessionIpv4: geoLocation?.ipv4 || null,
+      sessionIpv6: geoLocation?.ipv6 || null,
+      sessionCity: geoLocation?.city || null,
+      sessionState: geoLocation?.region || null,
+      sessionCountry: geoLocation?.country_name || geoLocation?.country || null,
+      sessionCountryFlag: geoLocation?.flag || null,
+    },
+  });
+
+  return session;
+}
+
+/**
+ * Validate a session token and return user data
+ */
+export async function validateSession(
+  sessionToken: string,
+  options?: {
+    validateIp?: boolean;
+    currentIp?: string;
+  }
+): Promise<ValidateSessionResult> {
+  if (!sessionToken) {
+    return { valid: false, reason: "No session token provided" };
+  }
+
+  try {
+    // Get session with user data
+    const session = await db.session.findUnique({
+      where: { sessionToken },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            plan: true,
+            image: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!session) {
+      return { valid: false, reason: "Session not found" };
+    }
+
+    // Check if session is expired
+    if (session.expires < new Date()) {
+      // Clean up expired session
+      await db.session.delete({ where: { id: session.id } });
+      return { valid: false, reason: "Session expired" };
+    }
+
+    // Check if user account is active
+    if (!session.user.isActive) {
+      return { valid: false, reason: "User account is inactive" };
+    }
+
+    // Optional: Validate IP address hasn't changed (stricter security)
+    if (options?.validateIp && options?.currentIp) {
+      if (
+        session.sessionIpAddress &&
+        session.sessionIpAddress !== options.currentIp
+      ) {
+        // IP changed - potential session hijacking
+        // For now, we'll allow it but log it
+        console.warn(
+          `[Security] IP address changed for session ${session.id}:`,
+          {
+            original: session.sessionIpAddress,
+            current: options.currentIp,
+            userId: session.userId,
+          }
+        );
+        // In stricter mode, you would return { valid: false, reason: "IP address mismatch" }
+      }
+    }
+
+    return {
+      valid: true,
+      session: session as SessionData,
+      user: session.user,
+    };
+  } catch (error) {
+    console.error("[Session Validation Error]:", error);
+    return { valid: false, reason: "Session validation failed" };
+  }
+}
+
+/**
+ * Refresh/extend a session (update expiration)
+ */
+export async function refreshSession(
+  sessionToken: string,
+  expiresInDays: number = 7
+): Promise<boolean> {
+  try {
+    const newExpires = new Date();
+    newExpires.setDate(newExpires.getDate() + expiresInDays);
+
+    await db.session.update({
+      where: { sessionToken },
+      data: { expires: newExpires },
+    });
+
+    return true;
+  } catch (error) {
+    console.error("[Session Refresh Error]:", error);
+    return false;
+  }
+}
+
+/**
+ * Revoke a specific session
+ */
+export async function revokeSession(sessionToken: string): Promise<boolean> {
+  try {
+    await db.session.delete({
+      where: { sessionToken },
+    });
+    return true;
+  } catch (error) {
+    console.error("[Session Revoke Error]:", error);
+    return false;
+  }
+}
+
+/**
+ * Revoke a specific session by ID
+ */
+export async function revokeSessionById(sessionId: string): Promise<boolean> {
+  try {
+    await db.session.delete({
+      where: { id: sessionId },
+    });
+    return true;
+  } catch (error) {
+    console.error("[Session Revoke Error]:", error);
+    return false;
+  }
+}
+
+/**
+ * Revoke all sessions for a user (except optionally the current one)
+ */
+export async function revokeAllUserSessions(
+  userId: string,
+  exceptSessionToken?: string
+): Promise<number> {
+  try {
+    const result = await db.session.deleteMany({
+      where: {
+        userId,
+        ...(exceptSessionToken && {
+          sessionToken: { not: exceptSessionToken },
+        }),
+      },
+    });
+    return result.count;
+  } catch (error) {
+    console.error("[Revoke All Sessions Error]:", error);
+    return 0;
+  }
+}
+
+/**
+ * Get all active sessions for a user
+ */
+export async function getUserSessions(userId: string): Promise<SessionData[]> {
+  try {
+    const sessions = await db.session.findMany({
+      where: {
+        userId,
+        expires: { gte: new Date() }, // Only active sessions
+      },
+      orderBy: {
+        expires: "desc",
+      },
+    });
+
+    return sessions;
+  } catch (error) {
+    console.error("[Get User Sessions Error]:", error);
+    return [];
+  }
+}
+
+/**
+ * Clean up expired sessions (run this periodically via cron)
+ */
+export async function cleanupExpiredSessions(): Promise<number> {
+  try {
+    const result = await db.session.deleteMany({
+      where: {
+        expires: { lt: new Date() },
+      },
+    });
+    return result.count;
+  } catch (error) {
+    console.error("[Cleanup Expired Sessions Error]:", error);
+    return 0;
+  }
+}
+
+/**
+ * Detect suspicious activity for a user
+ * Returns true if suspicious patterns detected
+ */
+export async function detectSuspiciousActivity(userId: string): Promise<{
+  suspicious: boolean;
+  reasons: string[];
+}> {
+  const reasons: string[] = [];
+
+  try {
+    const sessions = await db.session.findMany({
+      where: {
+        userId,
+        expires: { gte: new Date() },
+      },
+    });
+
+    // Check 1: Too many active sessions (> 10)
+    if (sessions.length > 10) {
+      reasons.push(`Unusual number of active sessions: ${sessions.length}`);
+    }
+
+    // Check 2: Multiple different countries
+    const countries = new Set(
+      sessions
+        .map((s) => s.sessionCountry)
+        .filter((c): c is string => c !== null)
+    );
+    if (countries.size > 3) {
+      reasons.push(
+        `Sessions from multiple countries: ${Array.from(countries).join(", ")}`
+      );
+    }
+
+    // Check 3: Multiple different cities in short time
+    const recentSessions = sessions.filter(
+      (s) =>
+        new Date(s.expires).getTime() - new Date().getTime() <
+        24 * 60 * 60 * 1000
+    );
+    const cities = new Set(
+      recentSessions
+        .map((s) => s.sessionCity)
+        .filter((c): c is string => c !== null)
+    );
+    if (cities.size > 5) {
+      reasons.push(
+        `Many different locations in 24 hours: ${Array.from(cities).join(", ")}`
+      );
+    }
+
+    return {
+      suspicious: reasons.length > 0,
+      reasons,
+    };
+  } catch (error) {
+    console.error("[Detect Suspicious Activity Error]:", error);
+    return { suspicious: false, reasons: [] };
+  }
+}
+
+/**
+ * Get session statistics for a user
+ */
+export async function getSessionStats(userId: string) {
+  try {
+    const sessions = await getUserSessions(userId);
+
+    const countries = new Set(
+      sessions
+        .map((s) => s.sessionCountry)
+        .filter((c): c is string => c !== null)
+    );
+    const cities = new Set(
+      sessions.map((s) => s.sessionCity).filter((c): c is string => c !== null)
+    );
+
+    return {
+      totalSessions: sessions.length,
+      countries: Array.from(countries),
+      cities: Array.from(cities),
+      oldestSession: sessions[sessions.length - 1],
+      newestSession: sessions[0],
+    };
+  } catch (error) {
+    console.error("[Get Session Stats Error]:", error);
+    return null;
+  }
+}

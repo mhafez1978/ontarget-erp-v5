@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
           email,
           password: hashedPassword,
           role: "SUPER_ADMIN",
+          plan: "SUPER_USER", // Super admins get free unlimited SUPER_USER plan
           emailVerified: new Date(), // Auto-verify super admin
         },
       });
@@ -76,6 +77,20 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           companyId: company.id,
           role: "ADMIN",
+        },
+      });
+
+      // Add the super admin as a company staff member (employee)
+      // Super admin is also an employee of the root company and needs to get paid
+      await tx.companyStaff.create({
+        data: {
+          userId: user.id,
+          companyId: company.id,
+          role: "ADMIN",
+          jobTitle: "MANAGER_ROLE",
+          employmentType: "FULL_TIME",
+          status: "ACTIVE",
+          hireDate: new Date(),
         },
       });
 
@@ -195,8 +210,8 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
 
-    // Set cookie with user ID for auto-login
-    response.cookies.set("userId", result.user.id, {
+    // Set secure session token cookie for auto-login
+    response.cookies.set("sessionToken", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

@@ -27,6 +27,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [companyCount, setCompanyCount] = React.useState(0);
+  const [userImage, setUserImage] = React.useState(user?.image);
   const [branding, setBranding] = React.useState({
     name: "OnTarget ERP",
     slogan: "People Driven & AI Insight",
@@ -107,6 +108,37 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
     };
   }, [fetchBranding]);
 
+  // Listen for profile image updates
+  React.useEffect(() => {
+    const handleProfileUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.imageUrl) {
+        console.log(
+          "🔔 Profile updated event received:",
+          customEvent.detail.imageUrl
+        );
+        setUserImage(customEvent.detail.imageUrl);
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdate);
+    };
+  }, []);
+
+  // Update local user image when prop changes
+  React.useEffect(() => {
+    console.log("👤 User image changed:", user?.image);
+    setUserImage(user?.image);
+  }, [user?.image]);
+
+  // Debug userImage state changes
+  React.useEffect(() => {
+    console.log("🖼️ UserImage state updated:", userImage);
+  }, [userImage]);
+
   // Fetch company count for menu
   React.useEffect(() => {
     if (
@@ -175,14 +207,15 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
               )}
             >
               {hasThemeLogo ? (
-                // Theme-specific logo: Show ONLY the image (larger)
-                <div className="relative w-full flex items-center justify-center py-2">
+                // Theme-specific logo: Show ONLY the image (235px wide)
+                <div className="relative w-full flex items-center justify-center p-5">
                   <Image
                     src={currentLogo!}
                     alt={branding.name}
-                    width={320}
-                    height={80}
-                    className="object-contain w-full max-w-60 h-auto mt-6 -ml-8"
+                    width={235}
+                    height={65}
+                    className="object-contain w-full max-w-[235px] h-auto"
+                    style={{ aspectRatio: "auto" }}
                   />
                 </div>
               ) : (
@@ -288,8 +321,8 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         <div className="border-t p-4">
           {!isCollapsed ? (
             <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={user?.image || undefined} alt={displayName} />
+              <Avatar className="h-9 w-9" key={userImage || "no-image"}>
+                <AvatarImage src={userImage || undefined} alt={displayName} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {getInitials(user?.name)}
                 </AvatarFallback>
@@ -307,8 +340,11 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
             </div>
           ) : (
             <div className="flex justify-center">
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={user?.image || undefined} alt={displayName} />
+              <Avatar
+                className="h-9 w-9"
+                key={userImage || "no-image-collapsed"}
+              >
+                <AvatarImage src={userImage || undefined} alt={displayName} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {getInitials(user?.name)}
                 </AvatarFallback>

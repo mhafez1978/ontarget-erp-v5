@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import Image from "next/image";
 import {
   Image as ImageIcon,
   Copy,
@@ -73,13 +74,14 @@ export function ServiceGridCard({
 
   return (
     <Card className="overflow-hidden group">
-      <div className="aspect-video bg-muted relative">
+      <div className="relative aspect-video bg-muted">
         {getFeaturedImage() ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={getFeaturedImage()!}
             alt={service.name}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

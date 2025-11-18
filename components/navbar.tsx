@@ -112,14 +112,18 @@ export function Navbar() {
         <Link href="/" className="flex items-center space-x-2">
           {currentLogo ? (
             hasThemeLogo ? (
-              /* Theme-specific logo only */
-              <div className="relative h-10 w-40">
+              /* Theme-specific logo only - maintain aspect ratio */
+              <div className="relative h-10">
                 <Image
                   src={currentLogo}
                   alt={branding.name}
-                  fill
-                  className="object-contain object-left"
+                  width={110}
+                  height={30}
+                  className="object-contain h-10 w-auto"
+                  style={{ aspectRatio: "auto" }}
                   unoptimized
+                  priority
+                  loading="eager"
                 />
               </div>
             ) : (
@@ -132,6 +136,8 @@ export function Navbar() {
                     fill
                     className="object-contain"
                     unoptimized
+                    priority
+                    loading="eager"
                   />
                 </div>
                 <div className="hidden sm:flex flex-col">
@@ -217,6 +223,8 @@ export function Navbar() {
                             fill
                             className="object-contain object-left"
                             unoptimized
+                            priority
+                            loading="eager"
                           />
                         </div>
                       ) : (
@@ -229,6 +237,8 @@ export function Navbar() {
                               fill
                               className="object-contain"
                               unoptimized
+                              priority
+                              loading="eager"
                             />
                           </div>
                           <div className="flex flex-col">

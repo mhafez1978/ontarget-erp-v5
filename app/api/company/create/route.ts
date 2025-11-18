@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
+import { validateSessionForAPI } from "@/lib/validate-session";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { PLAN_LIMITS } from "@/lib/plan-limits";
 
 export async function POST(request: NextRequest) {
   try {
-    // Get user from cookie
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Validate session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
+
+    const { user: sessionUser } = validation;
 
     // Get user with plan and companies
     const user = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: sessionUser.id },
       include: {
         ownedCompanies: true,
         companyMemberships: {
@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
 
     // Check plan limits (SUPER_ADMIN bypasses limits)
     if (user.role !== "SUPER_ADMIN") {
-      const companyLimit = PLAN_LIMITS[user.plan].companies;
+      const planLimits = PLAN_LIMITS[user.plan as keyof typeof PLAN_LIMITS];
+      const companyLimit = planLimits?.companies ?? 0;
 
       if (currentCompanyCount >= companyLimit) {
         return NextResponse.json(
@@ -112,6 +113,23 @@ export async function POST(request: NextRequest) {
           userId: userId,
           companyId: company.id,
           role: "ADMIN",
+        },
+      });
+
+      // Add user as ADMIN staff (for employee pane)
+      await tx.companyStaff.create({
+        data: {
+          userId: userId,
+          companyId: company.id,
+          role: "ADMIN",
+          jobTitle: "MANAGER_ROLE",
+          employmentType: "FULL_TIME",
+          status: "ACTIVE",
+          hireDate: new Date(),
+          city: address?.city || geoData?.city || null,
+          state: address?.state || geoData?.region || null,
+          country: address?.country || geoData?.country_name || null,
+          countryCode: address?.countryCode || geoData?.country_code || null,
         },
       });
 

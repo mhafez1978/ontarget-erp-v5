@@ -18,6 +18,7 @@ export async function GET() {
       where: { id: userId },
       select: {
         plan: true,
+        role: true,
       },
     });
 
@@ -25,10 +26,11 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Fetch companies owned by this specific user
+    // Fetch ONLY companies owned by this user (regardless of role)
+    // "My Personal Companies" means companies I own, not all companies in system
     const companies = await db.company.findMany({
       where: {
-        ownerId: userId,
+        ownerId: userId, // Everyone sees only companies they own
       },
       include: {
         _count: {
@@ -52,7 +54,11 @@ export async function GET() {
     }));
 
     const companyCount = formattedCompanies.length;
-    const limit = PLAN_LIMITS[user.plan].companies;
+
+    // Get plan limits
+    // SUPER_USER plan has unlimited companies (like ENTERPRISE)
+    const planLimits = PLAN_LIMITS[user.plan as keyof typeof PLAN_LIMITS];
+    const limit = planLimits?.companies ?? 0;
     const canCreateMore = companyCount < limit;
 
     return NextResponse.json({

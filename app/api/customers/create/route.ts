@@ -140,6 +140,7 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         role: "COMPANY_CUSTOMER",
         plan: "COMPANY_CUSTOMER", // Company customers don't have subscription plans
+        emailVerified: new Date(), // Auto-verify customers created by company admins
         addressLine1: address?.addressLine1,
         addressLine2: address?.addressLine2,
         city: address?.city,

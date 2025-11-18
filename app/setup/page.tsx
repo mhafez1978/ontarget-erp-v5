@@ -13,21 +13,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Loader2,
-  Rocket,
-  Building2,
-  User,
-  Mail,
-  Lock,
-  Briefcase,
-  MessageSquare,
-} from "lucide-react";
+import { Loader2, Rocket, Building2, User, Briefcase } from "lucide-react";
 
 export default function SetupPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [isDirty, setIsDirty] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -130,7 +122,11 @@ export default function SetupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-2xl">
+      <Card
+        className={`w-full max-w-2xl ${
+          isDirty ? "animate-[heartbeat_2s_ease-in-out_infinite]" : ""
+        }`}
+      >
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
             <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center">
@@ -165,9 +161,10 @@ export default function SetupPage() {
                   id="systemName"
                   type="text"
                   value={formData.systemName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, systemName: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, systemName: e.target.value });
+                    setIsDirty(true);
+                  }}
                   disabled={isLoading}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -191,9 +188,10 @@ export default function SetupPage() {
                     type="text"
                     placeholder="John Doe"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      setIsDirty(true);
+                    }}
                     required
                     disabled={isLoading}
                   />
@@ -206,9 +204,10 @@ export default function SetupPage() {
                     type="email"
                     placeholder="admin@company.com"
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      setIsDirty(true);
+                    }}
                     required
                     disabled={isLoading}
                   />
@@ -223,9 +222,10 @@ export default function SetupPage() {
                     type="password"
                     placeholder="••••••••"
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, password: e.target.value });
+                      setIsDirty(true);
+                    }}
                     required
                     minLength={8}
                     disabled={isLoading}
@@ -242,12 +242,13 @@ export default function SetupPage() {
                     type="password"
                     placeholder="••••••••"
                     value={formData.confirmPassword}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({
                         ...formData,
                         confirmPassword: e.target.value,
-                      })
-                    }
+                      });
+                      setIsDirty(true);
+                    }}
                     required
                     minLength={8}
                     disabled={isLoading}
@@ -270,9 +271,10 @@ export default function SetupPage() {
                   type="text"
                   placeholder="Acme Corporation"
                   value={formData.companyName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, companyName: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, companyName: e.target.value });
+                    setIsDirty(true);
+                  }}
                   required
                   disabled={isLoading}
                 />
@@ -285,9 +287,10 @@ export default function SetupPage() {
                   type="text"
                   placeholder="Innovating for tomorrow"
                   value={formData.companySlogan}
-                  onChange={(e) =>
-                    setFormData({ ...formData, companySlogan: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, companySlogan: e.target.value });
+                    setIsDirty(true);
+                  }}
                   disabled={isLoading}
                 />
                 <p className="text-xs text-muted-foreground">

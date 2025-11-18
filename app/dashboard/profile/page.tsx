@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { EmailVerificationBanner } from "@/components/email-verification-banner";
+import { MfaSettings } from "@/components/mfa-settings";
 import {
   Card,
   CardContent,
@@ -35,6 +38,10 @@ interface UserProfile {
   postalCode: string | null;
   latitude: number | null;
   longitude: number | null;
+  // Email verification / MFA
+  emailVerified?: string | null;
+  mfaEnabled?: boolean;
+  mfaSetupAt?: string | null;
 }
 
 interface FormData {
@@ -119,6 +126,8 @@ export default function ProfilePage() {
         }
 
         const data = await response.json();
+        console.log("🔍 Initial profile data loaded:", data);
+        console.log("🖼️ User image from API:", data.image);
         setUser(data);
 
         const profileData = {
@@ -146,6 +155,11 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [router]);
+
+  // Debug: Track user.image changes
+  useEffect(() => {
+    console.log("👁️ user.image changed in profile page:", user?.image);
+  }, [user?.image]);
 
   // Check if form is dirty
   useEffect(() => {
@@ -198,7 +212,28 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to upload image");
       }
 
-      setUser((prev) => (prev ? { ...prev, image: data.imageUrl } : null));
+      console.log("✅ Image uploaded successfully:", data.imageUrl);
+
+      // Refetch user profile to get updated image
+      const userResponse = await fetch("/api/user/profile");
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        // Add cache-busting timestamp to force browser to reload image
+        const imageUrlWithCache = `${userData.image}?t=${Date.now()}`;
+        console.log("📤 Updating user with fresh image:", imageUrlWithCache);
+
+        setUser((prev) =>
+          prev ? { ...prev, image: imageUrlWithCache } : null
+        );
+
+        // Dispatch event to notify dashboard layout
+        window.dispatchEvent(
+          new CustomEvent("profile-updated", {
+            detail: { imageUrl: imageUrlWithCache },
+          })
+        );
+      }
+
       toast.success("Profile image updated successfully!");
     } catch (error) {
       console.error("Image upload error:", error);
@@ -290,219 +325,264 @@ export default function ProfilePage() {
   return (
     <DashboardLayout user={user}>
       <div className="p-6 max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">My Profile</h1>
-          <p className="text-muted-foreground">
-            Manage your personal information and preferences
-          </p>
-        </div>
+        <Tabs defaultValue="profile">
+          <TabsList>
+            <TabsTrigger value="profile">Profile information</TabsTrigger>
+            <TabsTrigger value="security">Account security</TabsTrigger>
+          </TabsList>
 
-        {/* Profile Completion Progress */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Profile Completion</CardTitle>
-            <CardDescription>
-              Complete your profile to unlock all features ({progress}%)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Progress value={progress} className="h-3" />
-          </CardContent>
-        </Card>
-
-        {/* Profile Image Upload */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Profile Picture</CardTitle>
-            <CardDescription>
-              Upload a profile picture. Recommended size: 400x400px, max 5MB
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-6">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={user.image || ""} alt={user.name || "User"} />
-                <AvatarFallback className="text-2xl">
-                  {user.name?.charAt(0).toUpperCase() || <User />}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <input
-                  type="file"
-                  id="profile-image"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                  disabled={uploadingImage}
-                />
-                <label htmlFor="profile-image">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={uploadingImage}
-                    onClick={() =>
-                      document.getElementById("profile-image")?.click()
-                    }
-                  >
-                    {uploadingImage ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Image
-                      </>
-                    )}
-                  </Button>
-                </label>
-                <p className="text-xs text-muted-foreground mt-2">
-                  JPG, PNG or GIF. Max 5MB.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Profile Form */}
-        <form onSubmit={handleSubmit}>
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>
-                Update your personal details and contact information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={user.email || ""}
-                    disabled
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Email cannot be changed
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Input
-                    id="role"
-                    value={user.role}
-                    disabled
-                    className="bg-muted"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="plan">Subscription Plan</Label>
-                  <Input
-                    id="plan"
-                    value={user.plan}
-                    disabled
-                    className="bg-muted"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Address Information</CardTitle>
-              <CardDescription>
-                Search and select your address using the autocomplete below
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AddressAutocomplete
-                label="Search Address"
-                value={{
-                  addressLine1: formData.addressLine1,
-                  addressLine2: formData.addressLine2,
-                  city: formData.city,
-                  state: formData.state,
-                  country: formData.country,
-                  countryCode: formData.countryCode,
-                  postalCode: formData.postalCode,
-                  latitude: formData.latitude ?? undefined,
-                  longitude: formData.longitude ?? undefined,
-                }}
-                onChange={handleAddressChange}
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                Start typing to search for your address. The selected address
-                will be saved automatically.
+          <TabsContent value="profile">
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold mb-2">My Profile</h1>
+              <p className="text-muted-foreground">
+                Manage your personal information and preferences
               </p>
+            </div>
 
-              {formData.addressLine1 && (
-                <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <p className="text-sm font-medium mb-2">Current Address:</p>
-                  <p className="text-sm">{formData.addressLine1}</p>
-                  {formData.addressLine2 && (
-                    <p className="text-sm">{formData.addressLine2}</p>
-                  )}
-                  <p className="text-sm">
-                    {formData.city}, {formData.state} {formData.postalCode}
-                  </p>
-                  <p className="text-sm">{formData.country}</p>
+            {/* Profile Completion Progress */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Profile Completion</CardTitle>
+                <CardDescription>
+                  Complete your profile to unlock all features ({progress}%)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Progress value={progress} className="h-3" />
+              </CardContent>
+            </Card>
+
+            {/* Profile Image Upload */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Profile Picture</CardTitle>
+                <CardDescription>
+                  Upload a profile picture. Recommended size: 400x400px, max 5MB
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-6">
+                  <Avatar
+                    className="h-24 w-24"
+                    key={user.image || "no-profile-image"}
+                  >
+                    <AvatarImage
+                      src={user.image || ""}
+                      alt={user.name || "User"}
+                    />
+                    <AvatarFallback className="text-2xl">
+                      {user.name?.charAt(0).toUpperCase() || <User />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <input
+                      type="file"
+                      id="profile-image"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                    />
+                    <label htmlFor="profile-image">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploadingImage}
+                        onClick={() =>
+                          document.getElementById("profile-image")?.click()
+                        }
+                      >
+                        {uploadingImage ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload Image
+                          </>
+                        )}
+                      </Button>
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      JPG, PNG or GIF. Max 5MB.
+                    </p>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <div className="flex gap-3">
-            <Button
-              type="submit"
-              disabled={!isDirty || saving}
-              className="flex-1"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setFormData(originalData)}
-              disabled={!isDirty || saving}
-            >
-              Reset
-            </Button>
-          </div>
+            {/* Profile Form */}
+            <form onSubmit={handleSubmit}>
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Personal Information</CardTitle>
+                  <CardDescription>
+                    Update your personal details and contact information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Full Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={user.email || ""}
+                        disabled
+                        className="bg-muted"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Email cannot be changed
+                      </p>
+                    </div>
+                  </div>
 
-          {isDirty && (
-            <p className="text-sm text-amber-600 dark:text-amber-400 mt-4 text-center">
-              You have unsaved changes
-            </p>
-          )}
-        </form>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="role">Role</Label>
+                      <Input
+                        id="role"
+                        value={user.role}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="plan">Subscription Plan</Label>
+                      <Input
+                        id="plan"
+                        value={user.plan}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Address Information</CardTitle>
+                  <CardDescription>
+                    Search and select your address using the autocomplete below
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AddressAutocomplete
+                    label="Search Address"
+                    value={{
+                      addressLine1: formData.addressLine1,
+                      addressLine2: formData.addressLine2,
+                      city: formData.city,
+                      state: formData.state,
+                      country: formData.country,
+                      countryCode: formData.countryCode,
+                      postalCode: formData.postalCode,
+                      latitude: formData.latitude ?? undefined,
+                      longitude: formData.longitude ?? undefined,
+                    }}
+                    onChange={handleAddressChange}
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Start typing to search for your address. The selected
+                    address will be saved automatically.
+                  </p>
+
+                  {formData.addressLine1 && (
+                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                      <p className="text-sm font-medium mb-2">
+                        Current Address:
+                      </p>
+                      <p className="text-sm">{formData.addressLine1}</p>
+                      {formData.addressLine2 && (
+                        <p className="text-sm">{formData.addressLine2}</p>
+                      )}
+                      <p className="text-sm">
+                        {formData.city}, {formData.state} {formData.postalCode}
+                      </p>
+                      <p className="text-sm">{formData.country}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="flex gap-3">
+                <Button
+                  type="submit"
+                  disabled={!isDirty || saving}
+                  className="flex-1"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setFormData(originalData)}
+                  disabled={!isDirty || saving}
+                >
+                  Reset
+                </Button>
+              </div>
+
+              {isDirty && (
+                <p className="text-sm text-amber-600 dark:text-amber-400 mt-4 text-center">
+                  You have unsaved changes
+                </p>
+              )}
+            </form>
+          </TabsContent>
+
+          <TabsContent value="security">
+            {/* Email verification banner and MFA settings */}
+            <div className="mb-4">
+              <EmailVerificationBanner
+                userEmail={user.email || ""}
+                emailVerified={!!user.emailVerified}
+              />
+            </div>
+
+            <MfaSettings
+              initialMfaEnabled={!!user.mfaEnabled}
+              initialMfaSetupAt={
+                user.mfaSetupAt ? new Date(user.mfaSetupAt) : null
+              }
+              onMfaStatusChange={(enabled, setupAt) => {
+                setUser((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        mfaEnabled: enabled,
+                        mfaSetupAt: setupAt ? setupAt.toISOString() : null,
+                      }
+                    : null
+                );
+              }}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

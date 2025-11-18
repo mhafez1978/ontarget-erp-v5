@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 
 export interface CreateAuditLogParams {
   action: string;
-  userId: string;
+  userId?: string | null;
   companyId?: string | null;
   entityType?: string | null;
   entityId?: string | null;
@@ -74,6 +74,11 @@ export const AUDIT_ACTIONS = {
   COMPANY_MEMBER_REMOVED: "COMPANY_MEMBER_REMOVED",
   COMPANY_MEMBER_ROLE_CHANGED: "COMPANY_MEMBER_ROLE_CHANGED",
 
+  // Staff actions
+  STAFF_MEMBER_ADDED: "STAFF_MEMBER_ADDED",
+  STAFF_MEMBER_UPDATED: "STAFF_MEMBER_UPDATED",
+  STAFF_MEMBER_DELETED: "STAFF_MEMBER_DELETED",
+
   // Subscriber actions
   SUBSCRIBER_CUSTOMER_CREATED: "SUBSCRIBER_CUSTOMER_CREATED",
 
@@ -126,6 +131,7 @@ export const ENTITY_TYPES = {
   USER: "User",
   COMPANY: "Company",
   COMPANY_MEMBER: "CompanyMember",
+  STAFF_MEMBER: "StaffMember",
   PRODUCT: "Product",
   SERVICE: "Service",
   ORDER: "Order",

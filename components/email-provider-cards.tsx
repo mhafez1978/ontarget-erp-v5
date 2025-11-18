@@ -14,7 +14,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { BorderBeam } from "@/components/ui/border-beam";
-import { AlertCircle, CheckCircle2, Loader2, Crown } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Crown,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -34,6 +41,8 @@ interface ProviderConfig {
   description: string;
   icon: string;
   type:
+    | "NODEMAILER"
+    | "SMTP"
     | "GOOGLE_OAUTH"
     | "OFFICE365"
     | "SENDGRID"
@@ -41,22 +50,42 @@ interface ProviderConfig {
     | "AWS_SES"
     | "RESEND";
   color: string;
+  isDefault?: boolean;
+  isGmail?: boolean; // Flag to indicate Gmail SMTP preset
 }
 
 const PROVIDERS: ProviderConfig[] = [
   {
+    id: "nodemailer",
+    name: "Nodemailer (SMTP)",
+    description: "Default ERP email service via SMTP",
+    icon: "https://www.vectorlogo.zone/logos/nodejs/nodejs-icon.svg",
+    type: "NODEMAILER",
+    color: "from-[#68A063] to-[#43853D]",
+    isDefault: true,
+  },
+  {
+    id: "gmail",
+    name: "Gmail SMTP",
+    description: "Gmail SMTP with App Password (Recommended)",
+    icon: "https://www.vectorlogo.zone/logos/google/google-icon.svg",
+    type: "SMTP",
+    color: "from-[#4285F4] to-[#34A853]",
+    isGmail: true,
+  },
+  {
     id: "google",
     name: "Google OAuth",
-    description: "Gmail API with OAuth 2.0",
+    description: "Gmail API with OAuth 2.0 (Advanced)",
     icon: "https://www.vectorlogo.zone/logos/google/google-icon.svg",
     type: "GOOGLE_OAUTH",
-    color: "from-[#4285F4] to-[#34A853]",
+    color: "from-[#34A853] to-[#FBBC05]",
   },
   {
     id: "office365",
     name: "Office 365",
     description: "Microsoft Graph API with OAuth 2.0",
-    icon: "https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_logo_%282019%E2%80%93present%29.svg",
+    icon: "https://cdn.simpleicons.org/microsoftoffice/D83B01",
     type: "OFFICE365",
     color: "from-[#D83B01] to-[#EA4300]",
   },
@@ -88,7 +117,7 @@ const PROVIDERS: ProviderConfig[] = [
     id: "resend",
     name: "Resend",
     description: "Modern email API for developers",
-    icon: "https://react.email/static/icons/resend-icon.svg",
+    icon: "https://cdn.simpleicons.org/resend/000000",
     type: "RESEND",
     color: "from-[#000000] to-[#1a1a1a]",
   },
@@ -101,6 +130,9 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
     useState<ProviderConfig | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [activeProvider, setActiveProvider] = useState<string | null>(null);
+  const [globalActiveProvider, setGlobalActiveProvider] = useState<
+    string | null
+  >(null);
   const [isTesting, setIsTesting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [testSuccess, setTestSuccess] = useState(false);
@@ -136,14 +168,28 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
   // Resend fields
   const [resendApiKey, setResendApiKey] = useState("");
 
+  // Nodemailer (SMTP) fields
+  const [nodemailerHost, setNodemailerHost] = useState("");
+  const [nodemailerPort, setNodemailerPort] = useState("587");
+  const [nodemailerUsername, setNodemailerUsername] = useState("");
+  const [nodemailerPassword, setNodemailerPassword] = useState("");
+  const [nodemailerSecure, setNodemailerSecure] = useState(false);
+
   // Common fields
   const [fromEmail, setFromEmail] = useState("");
   const [fromName, setFromName] = useState("");
   const [replyToEmail, setReplyToEmail] = useState("");
 
-  // Fetch companies for ADMIN users
+  // Password visibility toggles
+  const [showNodemailerPassword, setShowNodemailerPassword] = useState(false);
+  const [showSendgridKey, setShowSendgridKey] = useState(false);
+  const [showMailgunKey, setShowMailgunKey] = useState(false);
+  const [showAwsKeys, setShowAwsKeys] = useState(false);
+  const [showOffice365Secret, setShowOffice365Secret] = useState(false);
+
+  // Fetch companies for ADMIN and SUPER_ADMIN users
   useEffect(() => {
-    if (userRole === "ADMIN") {
+    if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
       const fetchCompanies = async () => {
         try {
           const response = await fetch("/api/companies/my-owned");
@@ -176,6 +222,22 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
         } else {
           setActiveProvider(null);
         }
+
+        // If viewing a company (not GLOBAL), also fetch the global provider
+        if (selectedCompanyId !== "GLOBAL") {
+          const globalResponse = await fetch(
+            "/api/settings/email-provider?scope=GLOBAL"
+          );
+          const globalData = await globalResponse.json();
+
+          if (globalResponse.ok && globalData.provider?.isActive) {
+            setGlobalActiveProvider(globalData.provider.provider);
+          } else {
+            setGlobalActiveProvider(null);
+          }
+        } else {
+          setGlobalActiveProvider(null);
+        }
       } catch (err) {
         console.error("Error fetching active provider:", err);
       }
@@ -188,6 +250,13 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
     setSelectedProvider(provider);
     setTestSuccess(false);
     setTestResult(null);
+
+    // If Gmail SMTP preset, auto-fill Gmail settings
+    if (provider.isGmail) {
+      setNodemailerHost("smtp.gmail.com");
+      setNodemailerPort("587");
+      setNodemailerSecure(true);
+    }
 
     // Fetch existing config
     try {
@@ -217,9 +286,14 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
         setMailgunApiKey(p.mailgunApiKey || "");
         setMailgunDomain(p.mailgunDomain || "");
         setAwsRegion(p.awsRegion || "us-east-1");
-        setAwsAccessKey(p.awsAccessKey || "");
-        setAwsSecretKey(p.awsSecretKey || "");
-        setResendApiKey(p.resendApiKey || "");
+        setAwsAccessKey("");
+        setAwsSecretKey("");
+        setResendApiKey("");
+        setNodemailerHost(p.smtpHost || "");
+        setNodemailerPort(p.smtpPort?.toString() || "587");
+        setNodemailerUsername(p.smtpUsername || "");
+        setNodemailerPassword(""); // Don't populate with encrypted value
+        setNodemailerSecure(p.smtpSecure || false);
         setFromEmail(p.fromEmail || "");
         setFromName(p.fromName || "");
         setReplyToEmail(p.replyToEmail || "");
@@ -256,6 +330,11 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
     setAwsAccessKey("");
     setAwsSecretKey("");
     setResendApiKey("");
+    setNodemailerHost("");
+    setNodemailerPort("587");
+    setNodemailerUsername("");
+    setNodemailerPassword("");
+    setNodemailerSecure(false);
     setFromEmail("");
     setFromName("");
     setReplyToEmail("");
@@ -360,19 +439,32 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
     } else if (selectedProvider.type === "OFFICE365") {
       config.office365TenantId = office365TenantId;
       config.office365ClientId = office365ClientId;
-      config.office365ClientSecret = office365ClientSecret;
+      if (office365ClientSecret)
+        config.office365ClientSecret = office365ClientSecret;
       config.office365FromEmail = office365FromEmail;
     } else if (selectedProvider.type === "SENDGRID") {
-      config.sendgridApiKey = sendgridApiKey;
+      if (sendgridApiKey) config.sendgridApiKey = sendgridApiKey;
     } else if (selectedProvider.type === "MAILGUN") {
-      config.mailgunApiKey = mailgunApiKey;
+      if (mailgunApiKey) config.mailgunApiKey = mailgunApiKey;
       config.mailgunDomain = mailgunDomain;
     } else if (selectedProvider.type === "AWS_SES") {
       config.awsRegion = awsRegion;
-      config.awsAccessKey = awsAccessKey;
-      config.awsSecretKey = awsSecretKey;
+      if (awsAccessKey) config.awsAccessKey = awsAccessKey;
+      if (awsSecretKey) config.awsSecretKey = awsSecretKey;
     } else if (selectedProvider.type === "RESEND") {
-      config.resendApiKey = resendApiKey;
+      if (resendApiKey) config.resendApiKey = resendApiKey;
+    } else if (
+      selectedProvider.type === "NODEMAILER" ||
+      selectedProvider.type === "SMTP"
+    ) {
+      config.smtpHost = nodemailerHost;
+      config.smtpPort = parseInt(nodemailerPort) || 587;
+      config.smtpUsername = nodemailerUsername;
+      // Only include password if it's been changed
+      if (nodemailerPassword) {
+        config.smtpPassword = nodemailerPassword;
+      }
+      config.smtpSecure = nodemailerSecure;
     }
 
     return config;
@@ -385,29 +477,191 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
       case "GOOGLE_OAUTH":
         return (
           <>
-            <Alert className="mb-4 flex flex-row gap-3 bg-emerald-100">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <Alert className="mb-4 bg-amber-50 border-amber-200">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
               <div className="flex-1 text-sm">
-                <strong>Setup Required:</strong> Create a project in{" "}
-                <a
-                  href="https://console.cloud.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline hover:text-primary/80"
-                >
-                  Google Cloud Console
-                </a>
-                , enable Gmail API, create OAuth 2.0 credentials, and generate a
-                refresh token using{" "}
-                <a
-                  href="https://developers.google.com/oauthplayground"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline hover:text-primary/80"
-                >
-                  OAuth Playground
-                </a>
-                .
+                <strong className="text-amber-900">
+                  ⚠️ Advanced Setup - Not Recommended
+                </strong>
+                <p className="mt-2 text-amber-800">
+                  Consider using <strong>Gmail SMTP</strong> instead - it&apos;s
+                  much simpler and more reliable. Google OAuth requires complex
+                  setup and token management.
+                </p>
+              </div>
+            </Alert>
+
+            <Alert className="mb-4 flex flex-col gap-2 bg-blue-50 border-blue-200">
+              <div className="flex gap-3">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-blue-600" />
+                <div className="flex-1 text-sm">
+                  <strong className="text-blue-900">
+                    Google OAuth Setup Instructions
+                  </strong>
+                </div>
+              </div>
+              <div className="ml-7 text-sm space-y-3 text-blue-900">
+                <div>
+                  <strong>Step 1: Create Google Cloud Project</strong>
+                  <ol className="mt-1 space-y-1 list-decimal list-inside text-xs">
+                    <li>
+                      Go to{" "}
+                      <a
+                        href="https://console.cloud.google.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline"
+                      >
+                        Google Cloud Console
+                      </a>
+                    </li>
+                    <li>Create a new project or select existing one</li>
+                    <li>Note your Project ID</li>
+                  </ol>
+                </div>
+
+                <div>
+                  <strong>Step 2: Enable Gmail API</strong>
+                  <ol className="mt-1 space-y-1 list-decimal list-inside text-xs">
+                    <li>
+                      In your project, go to <strong>APIs & Services</strong> →{" "}
+                      <strong>Library</strong>
+                    </li>
+                    <li>Search for &ldquo;Gmail API&rdquo;</li>
+                    <li>
+                      Click on it and click <strong>Enable</strong>
+                    </li>
+                  </ol>
+                </div>
+
+                <div>
+                  <strong>Step 3: Create OAuth 2.0 Credentials</strong>
+                  <ol className="mt-1 space-y-1 list-decimal list-inside text-xs">
+                    <li>
+                      Go to <strong>APIs & Services</strong> →{" "}
+                      <strong>Credentials</strong>
+                    </li>
+                    <li>
+                      Click <strong>Create Credentials</strong> →{" "}
+                      <strong>OAuth client ID</strong>
+                    </li>
+                    <li>
+                      Configure consent screen if prompted (External, add test
+                      users)
+                    </li>
+                    <li>
+                      Application type: <strong>Web application</strong>
+                    </li>
+                    <li>Name: &ldquo;OnTarget ERP Email&rdquo;</li>
+                    <li>
+                      Authorized redirect URIs:{" "}
+                      <code className="bg-blue-100 px-1 rounded">
+                        https://developers.google.com/oauthplayground
+                      </code>
+                    </li>
+                    <li>
+                      Click <strong>Create</strong> and copy your{" "}
+                      <strong>Client ID</strong> and{" "}
+                      <strong>Client Secret</strong>
+                    </li>
+                  </ol>
+                </div>
+
+                <div>
+                  <strong>
+                    Step 4: Generate Refresh Token (OAuth Playground)
+                  </strong>
+                  <ol className="mt-1 space-y-1 list-decimal list-inside text-xs">
+                    <li>
+                      Go to{" "}
+                      <a
+                        href="https://developers.google.com/oauthplayground"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline"
+                      >
+                        OAuth 2.0 Playground
+                      </a>
+                    </li>
+                    <li>Click the ⚙️ gear icon (Settings) in top right</li>
+                    <li>
+                      Check{" "}
+                      <strong>
+                        &ldquo;Use your own OAuth credentials&rdquo;
+                      </strong>
+                    </li>
+                    <li>
+                      Enter your <strong>Client ID</strong> and{" "}
+                      <strong>Client Secret</strong>
+                    </li>
+                    <li>Close settings</li>
+                    <li>
+                      In <strong>Step 1</strong>, scroll down and select:{" "}
+                      <code className="bg-blue-100 px-1 rounded">
+                        https://mail.google.com/
+                      </code>{" "}
+                      (full Gmail access)
+                    </li>
+                    <li>
+                      Click <strong>Authorize APIs</strong>
+                    </li>
+                    <li>
+                      Sign in with the Gmail account you want to send from
+                    </li>
+                    <li>
+                      Click <strong>Allow</strong> to grant permissions
+                    </li>
+                    <li>
+                      In <strong>Step 2</strong>, click{" "}
+                      <strong>Exchange authorization code for tokens</strong>
+                    </li>
+                    <li>
+                      Copy the <strong>Refresh token</strong> (starts with
+                      &ldquo;1//&rdquo;)
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="pt-2 border-t border-blue-200">
+                  <strong>Step 5: Configure Below</strong>
+                  <p className="text-xs mt-1">
+                    Enter your Client ID, Client Secret, Gmail address, and the
+                    Refresh Token you just generated.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-blue-200">
+                  <strong className="text-xs">
+                    Common Issues & Solutions:
+                  </strong>
+                  <ul className="mt-1 space-y-0.5 text-[10px] leading-tight text-blue-800">
+                    <li>
+                      <strong>Error 400: redirect_uri_mismatch</strong> - Make
+                      sure you added{" "}
+                      <code className="bg-blue-100 px-0.5 rounded text-[9px]">
+                        https://developers.google.com/oauthplayground
+                      </code>{" "}
+                      (no trailing slash) to Authorized redirect URIs
+                    </li>
+                    <li>
+                      <strong>Error 403: access_denied</strong> - Add your Gmail
+                      address to <strong>Test users</strong> in OAuth consent
+                      screen
+                    </li>
+                    <li>
+                      <strong>OAuth Playground Settings</strong> - Use: OAuth
+                      flow = Server-side, Access type = <strong>Offline</strong>{" "}
+                      (critical!), Force prompt = Consent screen
+                    </li>
+                    <li>
+                      <strong>Scope Required</strong> - Select{" "}
+                      <code className="bg-blue-100 px-0.5 rounded text-[9px]">
+                        https://mail.google.com/
+                      </code>{" "}
+                      under Gmail API v1 in Step 1
+                    </li>
+                  </ul>
+                </div>
               </div>
             </Alert>
             <div className="space-y-4">
@@ -514,12 +768,28 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
               </div>
               <div className="space-y-2">
                 <Label>Client Secret</Label>
-                <Input
-                  type="password"
-                  value={office365ClientSecret}
-                  onChange={(e) => setOffice365ClientSecret(e.target.value)}
-                  placeholder="••••••••••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showOffice365Secret ? "text" : "password"}
+                    value={office365ClientSecret}
+                    onChange={(e) => setOffice365ClientSecret(e.target.value)}
+                    placeholder="Leave empty to keep existing"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowOffice365Secret(!showOffice365Secret)}
+                  >
+                    {showOffice365Secret ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Client secret value from Azure app registration
                 </p>
@@ -561,12 +831,28 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>SendGrid API Key</Label>
-                <Input
-                  type="password"
-                  value={sendgridApiKey}
-                  onChange={(e) => setSendgridApiKey(e.target.value)}
-                  placeholder="SG.••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showSendgridKey ? "text" : "password"}
+                    value={sendgridApiKey}
+                    onChange={(e) => setSendgridApiKey(e.target.value)}
+                    placeholder="Leave empty to keep existing"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowSendgridKey(!showSendgridKey)}
+                  >
+                    {showSendgridKey ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   API key from SendGrid dashboard (starts with SG.)
                 </p>
@@ -630,12 +916,28 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Mailgun API Key</Label>
-                <Input
-                  type="password"
-                  value={mailgunApiKey}
-                  onChange={(e) => setMailgunApiKey(e.target.value)}
-                  placeholder="key-••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showMailgunKey ? "text" : "password"}
+                    value={mailgunApiKey}
+                    onChange={(e) => setMailgunApiKey(e.target.value)}
+                    placeholder="Leave empty to keep existing"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowMailgunKey(!showMailgunKey)}
+                  >
+                    {showMailgunKey ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Private API key from Mailgun dashboard
                 </p>
@@ -723,23 +1025,56 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
               </div>
               <div className="space-y-2">
                 <Label>AWS Access Key ID</Label>
-                <Input
-                  value={awsAccessKey}
-                  onChange={(e) => setAwsAccessKey(e.target.value)}
-                  placeholder="AKIA••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showAwsKeys ? "text" : "password"}
+                    value={awsAccessKey}
+                    onChange={(e) => setAwsAccessKey(e.target.value)}
+                    placeholder="Leave empty to keep existing"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowAwsKeys(!showAwsKeys)}
+                  >
+                    {showAwsKeys ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   IAM user access key ID from AWS credentials
                 </p>
               </div>
               <div className="space-y-2">
                 <Label>AWS Secret Access Key</Label>
-                <Input
-                  type="password"
-                  value={awsSecretKey}
-                  onChange={(e) => setAwsSecretKey(e.target.value)}
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showAwsKeys ? "text" : "password"}
+                    value={awsSecretKey}
+                    onChange={(e) => setAwsSecretKey(e.target.value)}
+                    placeholder="Leave empty to keep existing"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowAwsKeys(!showAwsKeys)}
+                  >
+                    {showAwsKeys ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   IAM user secret access key from AWS credentials
                 </p>
@@ -826,6 +1161,194 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
           </>
         );
 
+      case "NODEMAILER":
+      case "SMTP":
+        return (
+          <>
+            {selectedProvider.isGmail ? (
+              <Alert className="mb-4 flex flex-row gap-3 bg-blue-50 border-blue-200">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-blue-600" />
+                <div className="flex-1 text-sm">
+                  <strong>Gmail SMTP Setup:</strong>
+                  <ol className="mt-2 space-y-1 list-decimal list-inside">
+                    <li>
+                      Go to your{" "}
+                      <a
+                        href="https://myaccount.google.com/security"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline hover:text-primary/80"
+                      >
+                        Google Account Security
+                      </a>
+                    </li>
+                    <li>Enable 2-Step Verification (if not enabled)</li>
+                    <li>
+                      Go to{" "}
+                      <a
+                        href="https://myaccount.google.com/apppasswords"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline hover:text-primary/80"
+                      >
+                        App Passwords
+                      </a>
+                    </li>
+                    <li>Generate a new app password for &ldquo;Mail&rdquo;</li>
+                    <li>
+                      Use that 16-character password below (not your regular
+                      Gmail password)
+                    </li>
+                  </ol>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    <strong>Note:</strong> Gmail SMTP is pre-configured for you.
+                    Just enter your Gmail address and App Password.
+                  </p>
+                </div>
+              </Alert>
+            ) : (
+              <Alert className="mb-4 flex flex-row gap-3 bg-emerald-100">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <div className="flex-1 text-sm">
+                  <strong>Default ERP Email Service:</strong> Configure your
+                  SMTP server settings to send emails. This is the recommended
+                  default provider for the OnTarget ERP system.
+                </div>
+              </Alert>
+            )}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>SMTP Host</Label>
+                <Input
+                  value={nodemailerHost}
+                  onChange={(e) => setNodemailerHost(e.target.value)}
+                  placeholder="smtp.example.com"
+                  disabled={selectedProvider.isGmail}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {selectedProvider.isGmail
+                    ? "Pre-configured for Gmail (smtp.gmail.com)"
+                    : "SMTP server hostname (e.g., smtp.gmail.com, smtp.office365.com)"}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>SMTP Port</Label>
+                  <Input
+                    type="number"
+                    value={nodemailerPort}
+                    onChange={(e) => setNodemailerPort(e.target.value)}
+                    placeholder="587"
+                    disabled={selectedProvider.isGmail}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {selectedProvider.isGmail
+                      ? "Pre-configured (587 with TLS)"
+                      : "Usually 587 (TLS) or 465 (SSL)"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Secure Connection (TLS)</Label>
+                  <div className="flex items-center space-x-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="nodemailer-secure"
+                      checked={nodemailerSecure}
+                      onChange={(e) => setNodemailerSecure(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300"
+                      disabled={selectedProvider.isGmail}
+                    />
+                    <label
+                      htmlFor="nodemailer-secure"
+                      className="text-sm text-muted-foreground"
+                    >
+                      {selectedProvider.isGmail
+                        ? "Enabled (Required)"
+                        : "Use SSL/TLS (port 465)"}
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>SMTP Username</Label>
+                <Input
+                  value={nodemailerUsername}
+                  onChange={(e) => setNodemailerUsername(e.target.value)}
+                  placeholder={
+                    selectedProvider.isGmail
+                      ? "your-email@gmail.com"
+                      : "your-email@example.com"
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  {selectedProvider.isGmail
+                    ? "Your Gmail address"
+                    : "Usually your email address"}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>SMTP Password</Label>
+                <div className="relative">
+                  <Input
+                    type={showNodemailerPassword ? "text" : "password"}
+                    value={nodemailerPassword}
+                    onChange={(e) => setNodemailerPassword(e.target.value)}
+                    placeholder={
+                      selectedProvider.isGmail
+                        ? "16-character App Password"
+                        : "Leave empty to keep existing"
+                    }
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() =>
+                      setShowNodemailerPassword(!showNodemailerPassword)
+                    }
+                  >
+                    {showNodemailerPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedProvider.isGmail
+                    ? "Use the 16-character App Password from Google (NOT your regular Gmail password)"
+                    : "Your email password or app-specific password"}
+                </p>
+              </div>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Common SMTP Providers:</strong>
+                  <ul className="mt-2 space-y-1 text-xs">
+                    <li>
+                      <strong>Gmail:</strong> smtp.gmail.com:587 (Enable 2FA and
+                      use App Password)
+                    </li>
+                    <li>
+                      <strong>Outlook/Office 365:</strong>{" "}
+                      smtp.office365.com:587
+                    </li>
+                    <li>
+                      <strong>Yahoo:</strong> smtp.mail.yahoo.com:587
+                    </li>
+                    <li>
+                      <strong>Custom Domain:</strong> Contact your hosting
+                      provider for SMTP details
+                    </li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            </div>
+          </>
+        );
+
       default:
         return null;
     }
@@ -833,35 +1356,38 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Company Selector for ADMIN */}
-      {userRole === "ADMIN" && companies.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-2">
-              <Label>Configuration Level</Label>
-              <select
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-              >
-                <option value="GLOBAL">🌐 Global Default (System-wide)</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    🏢 {company.name} (Company Override)
+      {/* Company Selector for ADMIN and SUPER_ADMIN */}
+      {(userRole === "ADMIN" || userRole === "SUPER_ADMIN") &&
+        companies.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-2">
+                <Label>Configuration Level</Label>
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                >
+                  <option value="GLOBAL">
+                    🌐 Global Default (System-wide)
                   </option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground">
-                Select &quot;Global Default&quot; to use the system-wide email
-                configuration, or choose a company to override with custom
-                settings.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  {companies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      🏢 {company.name} (Company Override)
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  {userRole === "SUPER_ADMIN"
+                    ? "Configure global default settings or override for specific companies you own."
+                    : 'Select "Global Default" to use the system-wide email configuration, or choose a company to override with custom settings.'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {userRole === "SUPER_ADMIN" && (
+      {userRole === "SUPER_ADMIN" && selectedCompanyId === "GLOBAL" && (
         <Alert>
           <Crown className="h-4 w-4" />
           <AlertDescription>
@@ -873,16 +1399,20 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
       )}
 
       {/* Provider Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="ml-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {PROVIDERS.map((provider) => {
           const isActive = activeProvider === provider.type;
+          const isGlobalActive =
+            !isActive && globalActiveProvider === provider.type;
+          const showBorderBeam = isActive || isGlobalActive;
 
           return (
             <Card
               key={provider.id}
               className={cn(
                 "relative cursor-pointer transition-all hover:shadow-lg group overflow-hidden",
-                isActive && "ring-2 ring-primary"
+                isActive && "ring-2 ring-primary",
+                isGlobalActive && "ring-2 ring-blue-500"
               )}
               onClick={() => handleCardClick(provider)}
             >
@@ -911,6 +1441,12 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                           Active
                         </span>
                       )}
+                      {isGlobalActive && (
+                        <span className="inline-flex items-center rounded-full bg-blue-500 px-2 py-0.5 text-xs font-medium text-white gap-1">
+                          <Crown className="h-3 w-3" />
+                          Global
+                        </span>
+                      )}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       {provider.description}
@@ -923,15 +1459,21 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     Currently sending emails
                   </div>
                 )}
+                {isGlobalActive && (
+                  <div className="mt-4 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                    <Crown className="h-4 w-4" />
+                    Using global configuration
+                  </div>
+                )}
               </CardContent>
 
-              {isActive && (
+              {showBorderBeam && (
                 <BorderBeam
                   size={100}
                   duration={8}
                   borderWidth={4}
-                  colorFrom="#10b981"
-                  colorTo="#a855f7"
+                  colorFrom={isActive ? "#10b981" : "#3b82f6"}
+                  colorTo={isActive ? "#a855f7" : "#8b5cf6"}
                 />
               )}
             </Card>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { OnboardingCheck } from "@/components/onboarding-check";
 
 export default function DashboardLayout({
   children,
@@ -43,5 +44,10 @@ export default function DashboardLayout({
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <OnboardingCheck />
+      {children}
+    </>
+  );
 }

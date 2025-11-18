@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConditionalNavbar } from "@/components/conditional-navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { SWRProvider } from "@/lib/swr-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,9 +38,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ConditionalNavbar />
-          {children}
-          <Toaster />
+          <SWRProvider>
+            <ConditionalNavbar />
+            {children}
+            <Toaster />
+          </SWRProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import crypto from "crypto";
 import { z } from "zod";
+import { sendEmail, getPasswordResetEmailHtml } from "@/lib/email-service";
 
 // Zod schema for forgot password validation
 const forgotPasswordSchema = z.object({
@@ -82,16 +83,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: In production, send email with reset link
-    // For now, we'll just return the token (development only)
-    // const resetUrl = `${request.nextUrl.origin}/reset-password?token=${resetToken}`;
-    // await sendPasswordResetEmail(user.email, resetUrl);
+    // Send password reset email
+    const resetUrl = `${request.nextUrl.origin}/reset-password?token=${resetToken}`;
+    const html = getPasswordResetEmailHtml(resetUrl, user.name || user.email!);
+
+    try {
+      await sendEmail({
+        to: user.email!,
+        subject: "Password Reset Request - OnTarget ERP",
+        html,
+      });
+    } catch (emailError) {
+      console.error("Failed to send password reset email:", emailError);
+      // Still return success to prevent email enumeration
+      // But log the error for admin investigation
+    }
 
     console.log("Password reset token for", email, ":", resetToken);
-    console.log(
-      "Reset URL:",
-      `${request.nextUrl.origin}/reset-password?token=${resetToken}`
-    );
+    console.log("Reset URL:", resetUrl);
 
     return NextResponse.json({
       success: true,

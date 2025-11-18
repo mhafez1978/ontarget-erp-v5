@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Sheet,
   SheetContent,
@@ -565,12 +566,13 @@ export function EditProductSheet({
                     {images.map((image, index) => (
                       <TableRow key={image.id || index}>
                         <TableCell>
-                          <div className="w-14 h-14 rounded overflow-hidden bg-muted">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                          <div className="relative w-14 h-14 rounded overflow-hidden bg-muted">
+                            <Image
                               src={image.url}
                               alt={`Product ${index + 1}`}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              sizes="56px"
                             />
                           </div>
                         </TableCell>

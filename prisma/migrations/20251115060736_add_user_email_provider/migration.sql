@@ -1,0 +1,45 @@
+-- CreateTable
+CREATE TABLE `UserEmailProvider` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `provider` ENUM('NODEMAILER', 'SMTP', 'GMAIL', 'GOOGLE_OAUTH', 'OFFICE365', 'SENDGRID', 'MAILGUN', 'AWS_SES', 'RESEND') NOT NULL DEFAULT 'SMTP',
+    `isActive` BOOLEAN NOT NULL DEFAULT true,
+    `canSendAdHoc` BOOLEAN NOT NULL DEFAULT true,
+    `canSendMarketing` BOOLEAN NOT NULL DEFAULT false,
+    `smtpHost` VARCHAR(191) NULL,
+    `smtpPort` INTEGER NULL DEFAULT 587,
+    `smtpUsername` VARCHAR(191) NULL,
+    `smtpPassword` TEXT NULL,
+    `smtpSecure` BOOLEAN NOT NULL DEFAULT true,
+    `office365TenantId` VARCHAR(191) NULL,
+    `office365ClientId` VARCHAR(191) NULL,
+    `office365ClientSecret` TEXT NULL,
+    `office365AccessToken` TEXT NULL,
+    `office365RefreshToken` TEXT NULL,
+    `office365TokenExpiry` DATETIME(3) NULL,
+    `office365FromEmail` VARCHAR(191) NULL,
+    `googleClientId` VARCHAR(191) NULL,
+    `googleClientSecret` TEXT NULL,
+    `googleAccessToken` TEXT NULL,
+    `googleRefreshToken` TEXT NULL,
+    `googleTokenExpiry` DATETIME(3) NULL,
+    `googleFromEmail` VARCHAR(191) NULL,
+    `fromEmail` VARCHAR(191) NULL,
+    `fromName` VARCHAR(191) NULL,
+    `replyToEmail` VARCHAR(191) NULL,
+    `lastTestedAt` DATETIME(3) NULL,
+    `isConnected` BOOLEAN NOT NULL DEFAULT false,
+    `lastError` TEXT NULL,
+    `lastUsedAt` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    INDEX `UserEmailProvider_userId_idx`(`userId`),
+    INDEX `UserEmailProvider_isActive_idx`(`isActive`),
+    INDEX `UserEmailProvider_provider_idx`(`provider`),
+    UNIQUE INDEX `UserEmailProvider_userId_provider_key`(`userId`, `provider`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `UserEmailProvider` ADD CONSTRAINT `UserEmailProvider_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

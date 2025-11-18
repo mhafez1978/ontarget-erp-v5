@@ -11,7 +11,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, AlertTriangle, Ban, Loader2, Clock } from "lucide-react";
+import {
+  Shield,
+  AlertTriangle,
+  Ban,
+  Loader2,
+  Clock,
+  Monitor,
+} from "lucide-react";
+import { SessionManager } from "@/components/session-manager";
+import { Button } from "@/components/ui/button";
 
 // Simple time ago formatter
 function timeAgo(date: string): string {
@@ -78,6 +87,9 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
   const [failedAttempts, setFailedAttempts] = useState<FailedAttempt[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [isLoadingAttempts, setIsLoadingAttempts] = useState(true);
+  const [activeTab, setActiveTab] = useState<"attempts" | "sessions">(
+    "attempts"
+  );
 
   // Fetch statistics
   useEffect(() => {
@@ -311,6 +323,33 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Tabs for Failed Attempts and Sessions */}
+      <div className="flex gap-2 border-b mt-6">
+        <Button
+          variant={activeTab === "attempts" ? "default" : "ghost"}
+          onClick={() => setActiveTab("attempts")}
+          className="rounded-b-none"
+        >
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          Failed Attempts
+        </Button>
+        <Button
+          variant={activeTab === "sessions" ? "default" : "ghost"}
+          onClick={() => setActiveTab("sessions")}
+          className="rounded-b-none"
+        >
+          <Monitor className="h-4 w-4 mr-2" />
+          Active Sessions
+        </Button>
+      </div>
+
+      {/* Active Sessions */}
+      {activeTab === "sessions" && (
+        <div className="space-y-6">
+          <SessionManager userRole="ADMIN" currentUserId={userName || ""} />
+        </div>
+      )}
     </div>
   );
 }

@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
 
         // Log audit event
         await createAuditLog({
-          userId: user?.id || "system",
+          userId: user?.id || null,
           action: "IP_AUTO_BLOCKED",
           description: `IP ${ipAddress} automatically blocked after ${recentAttempts} failed login attempts`,
           ipAddress,
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
 
     // Log the failed attempt to audit
     await createAuditLog({
-      userId: user?.id || "system",
+      userId: user?.id || null,
       action: "FAILED_LOGIN_ATTEMPT",
       description: `Failed login attempt for ${email} from ${ipAddress}`,
       ipAddress,

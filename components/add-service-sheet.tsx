@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Sheet,
   SheetContent,
@@ -339,12 +340,13 @@ export function AddServiceSheet({
                       key={index}
                       className="relative group border rounded-lg overflow-hidden"
                     >
-                      <div className="aspect-video bg-muted relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                      <div className="relative aspect-video bg-muted">
+                        <Image
                           src={image.url}
                           alt={`Service ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 300px"
                         />
                       </div>
                       <div className="absolute top-2 right-2 flex gap-1">

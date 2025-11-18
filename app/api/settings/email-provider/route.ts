@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { encrypt } from "@/lib/crypto";
 
 const emailProviderSchema = z.object({
   provider: z.enum([
     "SMTP",
     "GMAIL",
     "GOOGLE_OAUTH",
+    "NODEMAILER",
     "OFFICE365",
     "SENDGRID",
     "MAILGUN",
@@ -42,6 +44,9 @@ const emailProviderSchema = z.object({
   awsRegion: z.string().optional(),
   awsAccessKey: z.string().optional(),
   awsSecretKey: z.string().optional(),
+
+  // Resend fields
+  resendApiKey: z.string().optional(),
 
   // Office 365 OAuth fields
   office365TenantId: z.string().optional(),
@@ -163,21 +168,40 @@ export async function POST(req: NextRequest) {
             smtpHost: data.smtpHost,
             smtpPort: data.smtpPort,
             smtpUsername: data.smtpUsername,
-            smtpPassword: data.smtpPassword, // TODO: Encrypt
+            smtpPassword: data.smtpPassword
+              ? encrypt(data.smtpPassword)
+              : undefined,
             smtpSecure: data.smtpSecure,
             googleClientId: data.googleClientId,
-            googleClientSecret: data.googleClientSecret, // TODO: Encrypt
+            googleClientSecret: data.googleClientSecret
+              ? encrypt(data.googleClientSecret)
+              : undefined,
             googleFromEmail: data.googleFromEmail,
-            googleRefreshToken: data.googleRefreshToken, // TODO: Encrypt
-            sendgridApiKey: data.sendgridApiKey, // TODO: Encrypt
-            mailgunApiKey: data.mailgunApiKey, // TODO: Encrypt
+            googleRefreshToken: data.googleRefreshToken
+              ? encrypt(data.googleRefreshToken)
+              : undefined,
+            sendgridApiKey: data.sendgridApiKey
+              ? encrypt(data.sendgridApiKey)
+              : undefined,
+            mailgunApiKey: data.mailgunApiKey
+              ? encrypt(data.mailgunApiKey)
+              : undefined,
             mailgunDomain: data.mailgunDomain,
             awsRegion: data.awsRegion,
-            awsAccessKey: data.awsAccessKey, // TODO: Encrypt
-            awsSecretKey: data.awsSecretKey, // TODO: Encrypt
+            awsAccessKey: data.awsAccessKey
+              ? encrypt(data.awsAccessKey)
+              : undefined,
+            awsSecretKey: data.awsSecretKey
+              ? encrypt(data.awsSecretKey)
+              : undefined,
+            resendApiKey: data.resendApiKey
+              ? encrypt(data.resendApiKey)
+              : undefined,
             office365TenantId: data.office365TenantId,
             office365ClientId: data.office365ClientId,
-            office365ClientSecret: data.office365ClientSecret, // TODO: Encrypt
+            office365ClientSecret: data.office365ClientSecret
+              ? encrypt(data.office365ClientSecret)
+              : undefined,
             office365FromEmail: data.office365FromEmail,
             fromEmail: data.fromEmail,
             fromName: data.fromName,
@@ -195,21 +219,40 @@ export async function POST(req: NextRequest) {
             smtpHost: data.smtpHost,
             smtpPort: data.smtpPort,
             smtpUsername: data.smtpUsername,
-            smtpPassword: data.smtpPassword, // TODO: Encrypt
+            smtpPassword: data.smtpPassword
+              ? encrypt(data.smtpPassword)
+              : undefined,
             smtpSecure: data.smtpSecure,
             googleClientId: data.googleClientId,
-            googleClientSecret: data.googleClientSecret, // TODO: Encrypt
+            googleClientSecret: data.googleClientSecret
+              ? encrypt(data.googleClientSecret)
+              : undefined,
             googleFromEmail: data.googleFromEmail,
-            googleRefreshToken: data.googleRefreshToken, // TODO: Encrypt
-            sendgridApiKey: data.sendgridApiKey, // TODO: Encrypt
-            mailgunApiKey: data.mailgunApiKey, // TODO: Encrypt
+            googleRefreshToken: data.googleRefreshToken
+              ? encrypt(data.googleRefreshToken)
+              : undefined,
+            sendgridApiKey: data.sendgridApiKey
+              ? encrypt(data.sendgridApiKey)
+              : undefined,
+            mailgunApiKey: data.mailgunApiKey
+              ? encrypt(data.mailgunApiKey)
+              : undefined,
             mailgunDomain: data.mailgunDomain,
             awsRegion: data.awsRegion,
-            awsAccessKey: data.awsAccessKey, // TODO: Encrypt
-            awsSecretKey: data.awsSecretKey, // TODO: Encrypt
+            awsAccessKey: data.awsAccessKey
+              ? encrypt(data.awsAccessKey)
+              : undefined,
+            awsSecretKey: data.awsSecretKey
+              ? encrypt(data.awsSecretKey)
+              : undefined,
+            resendApiKey: data.resendApiKey
+              ? encrypt(data.resendApiKey)
+              : undefined,
             office365TenantId: data.office365TenantId,
             office365ClientId: data.office365ClientId,
-            office365ClientSecret: data.office365ClientSecret, // TODO: Encrypt
+            office365ClientSecret: data.office365ClientSecret
+              ? encrypt(data.office365ClientSecret)
+              : undefined,
             office365FromEmail: data.office365FromEmail,
             fromEmail: data.fromEmail,
             fromName: data.fromName,
@@ -259,21 +302,40 @@ export async function POST(req: NextRequest) {
             smtpHost: data.smtpHost,
             smtpPort: data.smtpPort,
             smtpUsername: data.smtpUsername,
-            smtpPassword: data.smtpPassword, // TODO: Encrypt
+            smtpPassword: data.smtpPassword
+              ? encrypt(data.smtpPassword)
+              : undefined,
             smtpSecure: data.smtpSecure,
             googleClientId: data.googleClientId,
-            googleClientSecret: data.googleClientSecret, // TODO: Encrypt
+            googleClientSecret: data.googleClientSecret
+              ? encrypt(data.googleClientSecret)
+              : undefined,
             googleFromEmail: data.googleFromEmail,
-            googleRefreshToken: data.googleRefreshToken, // TODO: Encrypt
-            sendgridApiKey: data.sendgridApiKey, // TODO: Encrypt
-            mailgunApiKey: data.mailgunApiKey, // TODO: Encrypt
+            googleRefreshToken: data.googleRefreshToken
+              ? encrypt(data.googleRefreshToken)
+              : undefined,
+            sendgridApiKey: data.sendgridApiKey
+              ? encrypt(data.sendgridApiKey)
+              : undefined,
+            mailgunApiKey: data.mailgunApiKey
+              ? encrypt(data.mailgunApiKey)
+              : undefined,
             mailgunDomain: data.mailgunDomain,
             awsRegion: data.awsRegion,
-            awsAccessKey: data.awsAccessKey, // TODO: Encrypt
-            awsSecretKey: data.awsSecretKey, // TODO: Encrypt
+            awsAccessKey: data.awsAccessKey
+              ? encrypt(data.awsAccessKey)
+              : undefined,
+            awsSecretKey: data.awsSecretKey
+              ? encrypt(data.awsSecretKey)
+              : undefined,
+            resendApiKey: data.resendApiKey
+              ? encrypt(data.resendApiKey)
+              : undefined,
             office365TenantId: data.office365TenantId,
             office365ClientId: data.office365ClientId,
-            office365ClientSecret: data.office365ClientSecret, // TODO: Encrypt
+            office365ClientSecret: data.office365ClientSecret
+              ? encrypt(data.office365ClientSecret)
+              : undefined,
             office365FromEmail: data.office365FromEmail,
             fromEmail: data.fromEmail,
             fromName: data.fromName,
@@ -292,21 +354,40 @@ export async function POST(req: NextRequest) {
             smtpHost: data.smtpHost,
             smtpPort: data.smtpPort,
             smtpUsername: data.smtpUsername,
-            smtpPassword: data.smtpPassword, // TODO: Encrypt
+            smtpPassword: data.smtpPassword
+              ? encrypt(data.smtpPassword)
+              : undefined,
             smtpSecure: data.smtpSecure,
             googleClientId: data.googleClientId,
-            googleClientSecret: data.googleClientSecret, // TODO: Encrypt
+            googleClientSecret: data.googleClientSecret
+              ? encrypt(data.googleClientSecret)
+              : undefined,
             googleFromEmail: data.googleFromEmail,
-            googleRefreshToken: data.googleRefreshToken, // TODO: Encrypt
-            sendgridApiKey: data.sendgridApiKey, // TODO: Encrypt
-            mailgunApiKey: data.mailgunApiKey, // TODO: Encrypt
+            googleRefreshToken: data.googleRefreshToken
+              ? encrypt(data.googleRefreshToken)
+              : undefined,
+            sendgridApiKey: data.sendgridApiKey
+              ? encrypt(data.sendgridApiKey)
+              : undefined,
+            mailgunApiKey: data.mailgunApiKey
+              ? encrypt(data.mailgunApiKey)
+              : undefined,
             mailgunDomain: data.mailgunDomain,
             awsRegion: data.awsRegion,
-            awsAccessKey: data.awsAccessKey, // TODO: Encrypt
-            awsSecretKey: data.awsSecretKey, // TODO: Encrypt
+            awsAccessKey: data.awsAccessKey
+              ? encrypt(data.awsAccessKey)
+              : undefined,
+            awsSecretKey: data.awsSecretKey
+              ? encrypt(data.awsSecretKey)
+              : undefined,
+            resendApiKey: data.resendApiKey
+              ? encrypt(data.resendApiKey)
+              : undefined,
             office365TenantId: data.office365TenantId,
             office365ClientId: data.office365ClientId,
-            office365ClientSecret: data.office365ClientSecret, // TODO: Encrypt
+            office365ClientSecret: data.office365ClientSecret
+              ? encrypt(data.office365ClientSecret)
+              : undefined,
             office365FromEmail: data.office365FromEmail,
             fromEmail: data.fromEmail,
             fromName: data.fromName,

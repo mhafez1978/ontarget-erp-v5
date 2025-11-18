@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { GeoTrackingDisplay } from "@/components/geo-tracking-display";
 import { AuditLog } from "@/components/audit-log";
+import { EmailSettingsWarningBanner } from "@/components/email-settings-warning-banner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Users, Globe, LogsIcon } from "lucide-react";
@@ -58,6 +59,9 @@ export function SuperAdminView({ userName }: SuperAdminViewProps) {
       <p className="text-muted-foreground">
         You have full access to all system features and administrative controls.
       </p>
+
+      {/* Email Settings Warning Banner */}
+      <EmailSettingsWarningBanner />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2">

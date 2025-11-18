@@ -95,6 +95,11 @@ export async function POST(request: NextRequest) {
         email: true,
         password: true,
         role: true,
+        emailVerified: true,
+        mfaEnabled: true,
+        mfaSecret: true,
+        authMethod: true,
+        isActive: true,
       },
     });
 
@@ -113,6 +118,28 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    // STEP 3.5: Check if account is disabled
+    if (!user.isActive) {
+      return NextResponse.json(
+        {
+          error:
+            "Your account has been disabled. Please contact support for assistance.",
+        },
+        { status: 403 }
+      );
+    }
+
+    // STEP 3.6: Check if user is OAuth-only
+    if (user.authMethod === "oauth" && user.password) {
+      return NextResponse.json(
+        {
+          error:
+            "Please continue with Google or Microsoft login. This account was created using OAuth authentication.",
+        },
         { status: 401 }
       );
     }
@@ -136,6 +163,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
+      );
+    }
+
+    // STEP 4.5: Check if email is verified (skip for SUPER_ADMIN as safety net)
+    if (!user.emailVerified && user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        {
+          error:
+            "Please verify your email address before logging in. Check your inbox for the verification link.",
+          emailNotVerified: true,
+          email: user.email,
+        },
+        { status: 403 }
       );
     }
 
@@ -214,8 +254,8 @@ export async function POST(request: NextRequest) {
       user: userWithoutPassword,
     });
 
-    // Set cookie with user ID
-    response.cookies.set("userId", user.id, {
+    // Set secure session token cookie
+    response.cookies.set("sessionToken", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

@@ -815,7 +815,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
       </Alert>
 
       {/* Provider Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="ml-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {PROVIDERS.map((provider) => {
           const isActive = activeProvider === provider.type;
 

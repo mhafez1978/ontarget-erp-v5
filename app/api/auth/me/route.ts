@@ -1,42 +1,56 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { db } from "@/lib/db";
+import { validateSession } from "@/lib/session-manager";
 
 export async function GET() {
   try {
-    // Get user ID from cookie (temporary solution until NextAuth is set up)
+    // Get session token from cookie
     const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("sessionToken")?.value;
     const userId = cookieStore.get("userId")?.value;
 
-    if (!userId) {
+    console.log(
+      "[/api/auth/me] Checking auth - sessionToken:",
+      sessionToken ? "EXISTS" : "MISSING",
+      "userId:",
+      userId ? "EXISTS" : "MISSING"
+    );
+
+    if (!sessionToken) {
+      console.log("[/api/auth/me] No session token found");
       return NextResponse.json(
         { user: null, authenticated: false },
         { status: 200 }
       );
     }
 
-    // Get user from database
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        image: true,
-        plan: true,
-      },
-    });
+    // Validate session
+    const validation = await validateSession(sessionToken);
 
-    if (!user) {
+    console.log(
+      "[/api/auth/me] Session validation result:",
+      validation.valid ? "VALID" : "INVALID",
+      "reason:",
+      validation.reason || "N/A"
+    );
+
+    if (!validation.valid || !validation.user) {
+      console.log("[/api/auth/me] Session invalid or no user");
       return NextResponse.json(
         { user: null, authenticated: false },
         { status: 200 }
       );
     }
+
+    console.log(
+      "[/api/auth/me] User authenticated:",
+      validation.user.email,
+      "role:",
+      validation.user.role
+    );
 
     return NextResponse.json({
-      user,
+      user: validation.user,
       authenticated: true,
     });
   } catch (error) {

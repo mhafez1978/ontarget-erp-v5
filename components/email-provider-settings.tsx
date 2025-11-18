@@ -15,7 +15,15 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail, AlertCircle, CheckCircle2, Crown } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  AlertCircle,
+  CheckCircle2,
+  Crown,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface Company {
@@ -57,7 +65,7 @@ export function EmailProviderSettings({
   const [smtpPort, setSmtpPort] = useState("587");
   const [smtpUsername, setSmtpUsername] = useState("");
   const [smtpPassword, setSmtpPassword] = useState("");
-  const [smtpSecure, setSmtpSecure] = useState(true);
+  const [smtpSecure, setSmtpSecure] = useState(false); // Default to STARTTLS (port 587)
 
   // SendGrid fields
   const [sendgridApiKey, setSendgridApiKey] = useState("");
@@ -81,6 +89,78 @@ export function EmailProviderSettings({
   const [fromEmail, setFromEmail] = useState("");
   const [fromName, setFromName] = useState("");
   const [replyToEmail, setReplyToEmail] = useState("");
+
+  // Password visibility toggles
+  const [showSmtpPassword, setShowSmtpPassword] = useState(false);
+  const [showSendgridKey, setShowSendgridKey] = useState(false);
+  const [showMailgunKey, setShowMailgunKey] = useState(false);
+  const [showAwsKeys, setShowAwsKeys] = useState(false);
+  const [showOffice365Secret, setShowOffice365Secret] = useState(false);
+
+  // Track dirty state
+  const [isDirty, setIsDirty] = useState(false);
+  const [originalConfig, setOriginalConfig] = useState<Record<
+    string,
+    string | boolean
+  > | null>(null);
+
+  // Check if form is dirty whenever values change
+  useEffect(() => {
+    if (!originalConfig) {
+      setIsDirty(false);
+      return;
+    }
+
+    const currentConfig: Record<string, string | boolean> = {
+      provider,
+      isActive,
+      smtpHost,
+      smtpPort,
+      smtpUsername,
+      smtpPassword,
+      smtpSecure,
+      sendgridApiKey,
+      mailgunApiKey,
+      mailgunDomain,
+      awsRegion,
+      awsAccessKey,
+      awsSecretKey,
+      office365TenantId,
+      office365ClientId,
+      office365ClientSecret,
+      office365FromEmail,
+      fromEmail,
+      fromName,
+      replyToEmail,
+    };
+
+    const hasChanges = Object.keys(currentConfig).some(
+      (key) => currentConfig[key] !== originalConfig[key]
+    );
+    setIsDirty(hasChanges);
+  }, [
+    provider,
+    isActive,
+    smtpHost,
+    smtpPort,
+    smtpUsername,
+    smtpPassword,
+    smtpSecure,
+    sendgridApiKey,
+    mailgunApiKey,
+    mailgunDomain,
+    awsRegion,
+    awsAccessKey,
+    awsSecretKey,
+    office365TenantId,
+    office365ClientId,
+    office365ClientSecret,
+    office365FromEmail,
+    fromEmail,
+    fromName,
+    replyToEmail,
+    originalConfig,
+  ]);
 
   // Fetch companies for ADMIN users
   useEffect(() => {
@@ -115,26 +195,53 @@ export function EmailProviderSettings({
 
         if (response.ok && data.provider) {
           const p = data.provider;
-          setProvider(p.provider);
-          setIsActive(p.isActive);
-          setSmtpHost(p.smtpHost || "");
-          setSmtpPort(String(p.smtpPort || 587));
-          setSmtpUsername(p.smtpUsername || "");
-          setSmtpPassword(p.smtpPassword || "");
-          setSmtpSecure(p.smtpSecure);
-          setSendgridApiKey(p.sendgridApiKey || "");
-          setMailgunApiKey(p.mailgunApiKey || "");
-          setMailgunDomain(p.mailgunDomain || "");
-          setAwsRegion(p.awsRegion || "us-east-1");
-          setAwsAccessKey(p.awsAccessKey || "");
-          setAwsSecretKey(p.awsSecretKey || "");
-          setOffice365TenantId(p.office365TenantId || "");
-          setOffice365ClientId(p.office365ClientId || "");
-          setOffice365ClientSecret(p.office365ClientSecret || "");
-          setOffice365FromEmail(p.office365FromEmail || "");
-          setFromEmail(p.fromEmail || "");
-          setFromName(p.fromName || "");
-          setReplyToEmail(p.replyToEmail || "");
+          const configValues = {
+            provider: p.provider,
+            isActive: p.isActive,
+            smtpHost: p.smtpHost || "",
+            smtpPort: String(p.smtpPort || 587),
+            smtpUsername: p.smtpUsername || "",
+            smtpPassword: "",
+            smtpSecure: p.smtpSecure,
+            sendgridApiKey: "",
+            mailgunApiKey: "",
+            mailgunDomain: p.mailgunDomain || "",
+            awsRegion: p.awsRegion || "us-east-1",
+            awsAccessKey: "",
+            awsSecretKey: "",
+            office365TenantId: p.office365TenantId || "",
+            office365ClientId: p.office365ClientId || "",
+            office365ClientSecret: p.office365ClientSecret || "",
+            office365FromEmail: p.office365FromEmail || "",
+            fromEmail: p.fromEmail || "",
+            fromName: p.fromName || "",
+            replyToEmail: p.replyToEmail || "",
+          };
+
+          setProvider(configValues.provider);
+          setIsActive(configValues.isActive);
+          setSmtpHost(configValues.smtpHost);
+          setSmtpPort(configValues.smtpPort);
+          setSmtpUsername(configValues.smtpUsername);
+          setSmtpPassword(configValues.smtpPassword);
+          setSmtpSecure(configValues.smtpSecure);
+          setSendgridApiKey(configValues.sendgridApiKey);
+          setMailgunApiKey(configValues.mailgunApiKey);
+          setMailgunDomain(configValues.mailgunDomain);
+          setAwsRegion(configValues.awsRegion);
+          setAwsAccessKey(configValues.awsAccessKey);
+          setAwsSecretKey(configValues.awsSecretKey);
+          setOffice365TenantId(configValues.office365TenantId);
+          setOffice365ClientId(configValues.office365ClientId);
+          setOffice365ClientSecret(configValues.office365ClientSecret);
+          setOffice365FromEmail(configValues.office365FromEmail);
+          setFromEmail(configValues.fromEmail);
+          setFromName(configValues.fromName);
+          setReplyToEmail(configValues.replyToEmail);
+
+          // Save original config for dirty tracking
+          setOriginalConfig(configValues);
+
           setTestResult(
             p.isConnected
               ? { success: true, message: "Connected" }
@@ -232,6 +339,32 @@ export function EmailProviderSettings({
 
       if (response.ok) {
         toast.success("Email provider settings saved successfully!");
+
+        // Reset dirty state by updating original config
+        const updatedConfig: Record<string, string | boolean> = {
+          provider,
+          isActive,
+          smtpHost,
+          smtpPort,
+          smtpUsername,
+          smtpPassword,
+          smtpSecure,
+          sendgridApiKey,
+          mailgunApiKey,
+          mailgunDomain,
+          awsRegion,
+          awsAccessKey,
+          awsSecretKey,
+          office365TenantId,
+          office365ClientId,
+          office365ClientSecret,
+          office365FromEmail,
+          fromEmail,
+          fromName,
+          replyToEmail,
+        };
+        setOriginalConfig(updatedConfig);
+        setIsDirty(false);
       } else {
         toast.error(data.error || "Failed to save settings");
       }
@@ -257,30 +390,50 @@ export function EmailProviderSettings({
       config.smtpHost = smtpHost;
       config.smtpPort = parseInt(smtpPort);
       config.smtpUsername = smtpUsername;
-      config.smtpPassword = smtpPassword;
+      // Only include password if it's been changed (not empty)
+      if (smtpPassword) {
+        config.smtpPassword = smtpPassword;
+      }
       config.smtpSecure = smtpSecure;
     } else if (provider === "GMAIL") {
       // Gmail uses smtp.gmail.com with port 587 and TLS
       config.smtpHost = "smtp.gmail.com";
       config.smtpPort = 587;
       config.smtpUsername = smtpUsername;
-      config.smtpPassword = smtpPassword;
+      // Only include password if it's been changed (not empty)
+      if (smtpPassword) {
+        config.smtpPassword = smtpPassword;
+      }
       config.smtpSecure = true;
     } else if (provider === "OFFICE365") {
       // Office 365 uses OAuth with Microsoft Graph API
       config.office365TenantId = office365TenantId;
       config.office365ClientId = office365ClientId;
-      config.office365ClientSecret = office365ClientSecret;
+      // Only include secret if it's been changed
+      if (office365ClientSecret) {
+        config.office365ClientSecret = office365ClientSecret;
+      }
       config.office365FromEmail = office365FromEmail;
     } else if (provider === "SENDGRID") {
-      config.sendgridApiKey = sendgridApiKey;
+      // Only include API key if it's been changed
+      if (sendgridApiKey) {
+        config.sendgridApiKey = sendgridApiKey;
+      }
     } else if (provider === "MAILGUN") {
-      config.mailgunApiKey = mailgunApiKey;
+      // Only include API key if it's been changed
+      if (mailgunApiKey) {
+        config.mailgunApiKey = mailgunApiKey;
+      }
       config.mailgunDomain = mailgunDomain;
     } else if (provider === "AWS_SES") {
       config.awsRegion = awsRegion;
-      config.awsAccessKey = awsAccessKey;
-      config.awsSecretKey = awsSecretKey;
+      // Only include keys if they've been changed
+      if (awsAccessKey) {
+        config.awsAccessKey = awsAccessKey;
+      }
+      if (awsSecretKey) {
+        config.awsSecretKey = awsSecretKey;
+      }
     }
 
     return config;
@@ -406,16 +559,41 @@ export function EmailProviderSettings({
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
-                <Input
-                  type="password"
-                  value={smtpPassword}
-                  onChange={(e) => setSmtpPassword(e.target.value)}
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showSmtpPassword ? "text" : "password"}
+                    value={smtpPassword}
+                    onChange={(e) => setSmtpPassword(e.target.value)}
+                    placeholder="Leave empty to keep existing password"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowSmtpPassword(!showSmtpPassword)}
+                  >
+                    {showSmtpPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch checked={smtpSecure} onCheckedChange={setSmtpSecure} />
-                <Label>Use TLS/SSL</Label>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={smtpSecure}
+                    onCheckedChange={setSmtpSecure}
+                  />
+                  <Label>Use SSL (Port 465)</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Leave unchecked for STARTTLS (Port 587 - Recommended). Check
+                  for direct SSL/TLS (Port 465).
+                </p>
               </div>
             </TabsContent>
 
@@ -439,12 +617,28 @@ export function EmailProviderSettings({
               </div>
               <div className="space-y-2">
                 <Label>App Password</Label>
-                <Input
-                  type="password"
-                  value={smtpPassword}
-                  onChange={(e) => setSmtpPassword(e.target.value)}
-                  placeholder="••••••••••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showSmtpPassword ? "text" : "password"}
+                    value={smtpPassword}
+                    onChange={(e) => setSmtpPassword(e.target.value)}
+                    placeholder="Leave empty to keep existing password"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowSmtpPassword(!showSmtpPassword)}
+                  >
+                    {showSmtpPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   16-character app password from Google Account settings
                 </p>
@@ -484,12 +678,28 @@ export function EmailProviderSettings({
               </div>
               <div className="space-y-2">
                 <Label>Client Secret</Label>
-                <Input
-                  type="password"
-                  value={office365ClientSecret}
-                  onChange={(e) => setOffice365ClientSecret(e.target.value)}
-                  placeholder="••••••••••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showOffice365Secret ? "text" : "password"}
+                    value={office365ClientSecret}
+                    onChange={(e) => setOffice365ClientSecret(e.target.value)}
+                    placeholder="Leave empty to keep existing secret"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowOffice365Secret(!showOffice365Secret)}
+                  >
+                    {showOffice365Secret ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Client secret value from Azure app registration
                 </p>
@@ -511,12 +721,28 @@ export function EmailProviderSettings({
             <TabsContent value="SENDGRID" className="space-y-4">
               <div className="space-y-2">
                 <Label>SendGrid API Key</Label>
-                <Input
-                  type="password"
-                  value={sendgridApiKey}
-                  onChange={(e) => setSendgridApiKey(e.target.value)}
-                  placeholder="SG.••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showSendgridKey ? "text" : "password"}
+                    value={sendgridApiKey}
+                    onChange={(e) => setSendgridApiKey(e.target.value)}
+                    placeholder="Leave empty to keep existing key"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowSendgridKey(!showSendgridKey)}
+                  >
+                    {showSendgridKey ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </TabsContent>
 
@@ -524,12 +750,28 @@ export function EmailProviderSettings({
             <TabsContent value="MAILGUN" className="space-y-4">
               <div className="space-y-2">
                 <Label>Mailgun API Key</Label>
-                <Input
-                  type="password"
-                  value={mailgunApiKey}
-                  onChange={(e) => setMailgunApiKey(e.target.value)}
-                  placeholder="key-••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showMailgunKey ? "text" : "password"}
+                    value={mailgunApiKey}
+                    onChange={(e) => setMailgunApiKey(e.target.value)}
+                    placeholder="Leave empty to keep existing key"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowMailgunKey(!showMailgunKey)}
+                  >
+                    {showMailgunKey ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Mailgun Domain</Label>
@@ -553,20 +795,53 @@ export function EmailProviderSettings({
               </div>
               <div className="space-y-2">
                 <Label>AWS Access Key</Label>
-                <Input
-                  value={awsAccessKey}
-                  onChange={(e) => setAwsAccessKey(e.target.value)}
-                  placeholder="AKIA••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showAwsKeys ? "text" : "password"}
+                    value={awsAccessKey}
+                    onChange={(e) => setAwsAccessKey(e.target.value)}
+                    placeholder="Leave empty to keep existing key"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowAwsKeys(!showAwsKeys)}
+                  >
+                    {showAwsKeys ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>AWS Secret Key</Label>
-                <Input
-                  type="password"
-                  value={awsSecretKey}
-                  onChange={(e) => setAwsSecretKey(e.target.value)}
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    type={showAwsKeys ? "text" : "password"}
+                    value={awsSecretKey}
+                    onChange={(e) => setAwsSecretKey(e.target.value)}
+                    placeholder="Leave empty to keep existing key"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowAwsKeys(!showAwsKeys)}
+                  >
+                    {showAwsKeys ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </TabsContent>
 
@@ -627,7 +902,7 @@ export function EmailProviderSettings({
           )}
 
           {/* Actions */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
             <Button
               onClick={handleTest}
               disabled={isTesting || isSaving}
@@ -636,10 +911,25 @@ export function EmailProviderSettings({
               {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Test Connection
             </Button>
-            <Button onClick={handleSave} disabled={isTesting || isSaving}>
+            <Button
+              onClick={handleSave}
+              disabled={isTesting || isSaving}
+              className="relative"
+            >
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Configuration
+              {isDirty && (
+                <span
+                  className="ml-2 h-2 w-2 rounded-full bg-orange-500 animate-pulse"
+                  title="Unsaved changes"
+                />
+              )}
             </Button>
+            {isDirty && (
+              <span className="text-sm text-orange-600 font-medium">
+                ● Unsaved changes
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>
