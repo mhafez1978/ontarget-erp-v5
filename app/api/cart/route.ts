@@ -2,15 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { validateSession } from "@/lib/session-manager";
 
 // GET - Fetch user's cart
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
     const sessionId = cookieStore.get("cartSessionId")?.value;
 
     let cart;
+    let userId;
+
+    if (sessionToken) {
+      // Logged-in user
+      const validation = await validateSession(sessionToken);
+      if (validation.valid && validation.user) {
+        userId = validation.user.id;
+      }
+    }
 
     if (userId) {
       // Logged-in user
@@ -85,8 +95,16 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
     let sessionId = cookieStore.get("cartSessionId")?.value;
+
+    let userId;
+    if (sessionToken) {
+      const validation = await validateSession(sessionToken);
+      if (validation.valid && validation.user) {
+        userId = validation.user.id;
+      }
+    }
 
     const body = await request.json();
     const { companyId, productId, serviceId, quantity = 1 } = body;

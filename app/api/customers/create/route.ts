@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { validateSession } from "@/lib/session-manager";
 
 const customerCreateSchema = z.object({
   name: z
@@ -41,22 +42,22 @@ const customerCreateSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the user making the request
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        role: true,
-        email: true,
-        name: true,
-      },
-    });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
+    const user = validation.user;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

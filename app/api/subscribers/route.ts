@@ -1,31 +1,29 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 
 export async function GET() {
   try {
-    // Get user from cookie
+    // Get user from session
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user and verify SUPER_ADMIN role
-    const currentUser = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        role: true,
-        ownedCompanies: {
-          where: { isRoot: true },
-          select: { id: true },
-        },
-      },
-    });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
 
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    const currentUser = validation.user;
+
+    if (currentUser.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Forbidden - SUPER_ADMIN only" },
         { status: 403 }
@@ -33,7 +31,15 @@ export async function GET() {
     }
 
     // Get the root company
-    const rootCompany = currentUser.ownedCompanies[0];
+    const ownedCompanies = await db.company.findMany({
+      where: {
+        ownerId: currentUser.id,
+        isRoot: true,
+      },
+      select: { id: true },
+    });
+
+    const rootCompany = ownedCompanies[0];
     if (!rootCompany) {
       return NextResponse.json(
         { error: "Root company not found. Please complete setup first." },

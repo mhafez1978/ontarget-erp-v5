@@ -1,29 +1,31 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 
 export async function GET() {
   try {
     console.log("[API /customers/my-companies] Request received");
 
-    // Get user from cookie
+    // Get user from session
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
-      console.log("[API /customers/my-companies] No userId cookie");
+    if (!sessionToken) {
+      console.log("[API /customers/my-companies] No sessionToken");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user
-    const user = await db.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      console.log("[API /customers/my-companies] User not found");
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      console.log("[API /customers/my-companies] Invalid session");
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
     }
+
+    const user = validation.user;
     console.log(
       "[API /customers/my-companies] User:",
       user.email,
