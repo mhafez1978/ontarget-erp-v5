@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { createPaymentProvider } from "@/lib/payment-providers";
+import { validateSession } from "@/lib/session-manager";
 
 export async function POST(
   request: NextRequest,
@@ -9,13 +10,23 @@ export async function POST(
 ) {
   try {
     const { provider } = await params;
-    // Get user from cookie
+    // Get user from session
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
 
     const body = await request.json();
     const { companyId, publicKey, secretKey, webhookSecret, isTestMode } = body;

@@ -3,15 +3,26 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { writeFile } from "fs/promises";
 import { join } from "path";
+import { validateSession } from "@/lib/session-manager";
 
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const validation = await validateSession(sessionToken);
+    if (!validation.isValid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
 
     const user = await db.user.findUnique({
       where: { id: userId },
