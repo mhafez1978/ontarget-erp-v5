@@ -77,6 +77,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const userId = validation.user.id;
+
     const { templateTypes } = await request.json();
 
     if (!Array.isArray(templateTypes) || templateTypes.length === 0) {

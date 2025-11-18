@@ -82,6 +82,10 @@ export async function GET(req: NextRequest) {
     const userId = validation.user.id;
     const user = validation.user;
 
+    const { searchParams } = new URL(req.url);
+    const scope = searchParams.get("scope");
+    const companyId = searchParams.get("companyId");
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -150,6 +154,9 @@ export async function POST(req: NextRequest) {
 
     const userId = validation.user.id;
     const user = validation.user;
+
+    const body = await req.json();
+    const data = emailProviderSchema.parse(body);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

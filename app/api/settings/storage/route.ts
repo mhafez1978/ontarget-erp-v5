@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user = validation.user;
+    const userId = validation.user.id;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

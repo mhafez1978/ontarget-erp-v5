@@ -24,6 +24,7 @@ export async function GET(
     }
 
     const user = validation.user;
+    const userId = validation.user.id;
 
     const { id: companyId } = await params;
 

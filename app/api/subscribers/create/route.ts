@@ -95,19 +95,9 @@ export async function POST(request: NextRequest) {
         isRoot: true,
       },
       select: { id: true },
-        },
-      },
     });
 
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
-      return NextResponse.json(
-        { error: "Forbidden - SUPER_ADMIN only" },
-        { status: 403 }
-      );
-    }
-
-    // Get the root company
-    const rootCompany = currentUser.ownedCompanies[0];
+    const rootCompany = ownedCompanies[0];
     if (!rootCompany) {
       return NextResponse.json(
         { error: "Root company not found. Please complete setup first." },

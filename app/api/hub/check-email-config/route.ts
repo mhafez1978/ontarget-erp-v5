@@ -25,6 +25,7 @@ export async function GET() {
     }
 
     const user = validation.user;
+    const userId = validation.user.id;
 
     // Only ADMIN and SUPER_ADMIN can access hub
     if (!["SUPER_ADMIN", "ADMIN"].includes(user.role)) {

@@ -16,7 +16,7 @@ export async function POST(
     }
 
     const validation = await validateSession(sessionToken);
-    if (!validation.isValid || !validation.user) {
+    if (!validation.valid || !validation.user) {
       return NextResponse.json(
         { error: "Invalid or expired session" },
         { status: 401 }

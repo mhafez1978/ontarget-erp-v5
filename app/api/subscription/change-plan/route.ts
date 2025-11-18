@@ -30,7 +30,6 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
-    }
 
     const body = await request.json();
     const newPlan = body.plan || body.newPlan;
@@ -41,8 +40,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    // Get current company count
-    const companyCount = user.ownedCompanies.length;
+    // Get current company count - fetch owned companies
+    const ownedCompanies = await db.company.findMany({
+      where: { ownerId: userId },
+      select: { id: true },
+    });
+    const companyCount = ownedCompanies.length;
 
     // Check if downgrade violates limits
     const PLAN_LIMITS = {
@@ -70,11 +73,11 @@ export async function POST(request: Request) {
     });
 
     // Update all subscriptions for owned companies to match user plan
-    if (user.ownedCompanies.length > 0) {
+    if (ownedCompanies.length > 0) {
       await db.subscription.updateMany({
         where: {
           subscriberCompanyId: {
-            in: user.ownedCompanies.map((c) => c.id),
+            in: ownedCompanies.map((c) => c.id),
           },
         },
         data: {
@@ -84,7 +87,7 @@ export async function POST(request: Request) {
 
       // Create audit log
       await createAuditLog({
-        companyId: user.ownedCompanies[0].id,
+        companyId: ownedCompanies[0].id,
         userId: user.id,
         action: AUDIT_ACTIONS.SUBSCRIPTION_PLAN_CHANGED,
         description: `Plan changed from ${user.plan} to ${newPlan} for user and all owned companies`,

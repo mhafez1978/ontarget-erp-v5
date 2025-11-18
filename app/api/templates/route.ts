@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = validation.user;
+    const userId = validation.user.id;
 
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get("companyId");
@@ -257,6 +258,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user = validation.user;
+    const userId = validation.user.id;
 
     const role = user.role;
     const body = await request.json();

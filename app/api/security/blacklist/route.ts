@@ -112,9 +112,10 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = validation.user.id;
+    const user = validation.user;
 
     // Check if user is Super Admin
-    if (validation.user.role !== "SUPER_ADMIN") {
+    if (user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Forbidden - Super Admin only" },
         { status: 403 }

@@ -214,25 +214,19 @@ export default function ProfilePage() {
 
       console.log("✅ Image uploaded successfully:", data.imageUrl);
 
-      // Refetch user profile to get updated image
-      const userResponse = await fetch("/api/user/profile");
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        // Add cache-busting timestamp to force browser to reload image
-        const imageUrlWithCache = `${userData.image}?t=${Date.now()}`;
-        console.log("📤 Updating user with fresh image:", imageUrlWithCache);
+      // Use the imageUrl directly from upload response with cache busting
+      const imageUrlWithCache = `${data.imageUrl}?t=${Date.now()}`;
+      console.log("📤 Updating user with fresh image:", imageUrlWithCache);
 
-        setUser((prev) =>
-          prev ? { ...prev, image: imageUrlWithCache } : null
-        );
+      // Update local state immediately
+      setUser((prev) => (prev ? { ...prev, image: imageUrlWithCache } : null));
 
-        // Dispatch event to notify dashboard layout
-        window.dispatchEvent(
-          new CustomEvent("profile-updated", {
-            detail: { imageUrl: imageUrlWithCache },
-          })
-        );
-      }
+      // Dispatch event to notify dashboard layout
+      window.dispatchEvent(
+        new CustomEvent("profile-updated", {
+          detail: { imageUrl: imageUrlWithCache },
+        })
+      );
 
       toast.success("Profile image updated successfully!");
     } catch (error) {
