@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { writeFile, unlink, readdir, mkdir } from "fs/promises";
 import { join, extname } from "path";
 import { createAuditLog } from "@/lib/audit-log";
+import { validateSession } from "@/lib/session-manager";
 
 // POST - Upload multiple logos
 export async function POST(
@@ -13,11 +14,20 @@ export async function POST(
   try {
     const { id } = await params;
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = validation.user.id;
 
     // Get user role and check ownership
     const user = await db.user.findUnique({
@@ -137,11 +147,20 @@ export async function GET(
   try {
     const { id } = await params;
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = validation.user.id;
 
     // Get user role and check ownership
     const user = await db.user.findUnique({
@@ -212,11 +231,20 @@ export async function DELETE(
   try {
     const { id } = await params;
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = validation.user.id;
 
     // Get user role and check ownership
     const user = await db.user.findUnique({

@@ -1,15 +1,25 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { validateSession } from "@/lib/session-manager";
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ needsOnboarding: false });
     }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ needsOnboarding: false });
+    }
+
+    const userId = validation.user.id;
 
     // Get user with staff records
     const user = await db.user.findUnique({

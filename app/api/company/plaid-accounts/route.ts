@@ -1,17 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 
 // GET - Retrieve Plaid accounts for a company
 export async function GET(request: NextRequest) {
   try {
     // Get user from cookie
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = validation.user.id;
 
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get("companyId");

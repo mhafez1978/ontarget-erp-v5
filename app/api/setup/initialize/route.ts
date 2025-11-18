@@ -65,7 +65,8 @@ export async function POST(request: NextRequest) {
       const company = await tx.company.create({
         data: {
           name: companyName,
-          description: companySlogan || `Welcome to ${companyName}`,
+          slogan: companySlogan || "People Driven & AI Insight",
+          description: `Welcome to ${companyName}`,
           ownerId: user.id,
           isRoot: true, // Mark as root company
         },

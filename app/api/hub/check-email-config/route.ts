@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { validateSession } from "@/lib/session-manager";
 
 /**
  * Check if email service is configured
@@ -10,21 +11,20 @@ import { db } from "@/lib/db";
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch user with role
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
+    // Validate session
+    const validation = await validateSession(sessionToken);
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const user = validation.user;
 
     // Only ADMIN and SUPER_ADMIN can access hub
     if (!["SUPER_ADMIN", "ADMIN"].includes(user.role)) {

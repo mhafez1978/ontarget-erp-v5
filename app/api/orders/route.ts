@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 import type { StorefrontOrderStatus, PaymentStatus } from "@prisma/client";
 
 export type OrdersDb = {
@@ -107,9 +108,21 @@ export async function listOrdersForUser(
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
+
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { status, body } = await listOrdersForUser(
-      userId,
+      validation.user.id,
       request.nextUrl.searchParams
     );
     return NextResponse.json(body, { status });

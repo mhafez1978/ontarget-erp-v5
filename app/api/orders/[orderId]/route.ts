@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 import type { StorefrontOrderStatus, PaymentStatus } from "@prisma/client";
 
 export type OrdersDetailDb = {
@@ -170,8 +171,20 @@ export async function GET(
   try {
     const { orderId } = await params;
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-    const { status, body } = await getOrderForUser(userId, orderId);
+    const sessionToken = cookieStore.get("sessionToken")?.value;
+
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { status, body } = await getOrderForUser(validation.user.id, orderId);
     return NextResponse.json(body, { status });
   } catch (error) {
     console.error("Error fetching order:", error);
@@ -190,9 +203,21 @@ export async function PATCH(
   try {
     const { orderId } = await params;
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
+
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
-    const result = await updateOrderForUser(userId, orderId, body);
+    const result = await updateOrderForUser(validation.user.id, orderId, body);
     return NextResponse.json(result.body, { status: result.status });
   } catch (error) {
     console.error("Error updating order:", error);
