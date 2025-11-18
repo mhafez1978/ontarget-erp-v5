@@ -341,7 +341,13 @@ export function AuditLog({ maxHeight = 600, limit = 50 }: AuditLogProps) {
       const response = await fetch(`/api/audit-logs?limit=${limit}`);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch audit logs");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Audit logs API error:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+        throw new Error(errorData.error || "Failed to fetch audit logs");
       }
 
       const data = await response.json();

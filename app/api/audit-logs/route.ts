@@ -1,20 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user from cookie
+    // Get session token from cookie
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user with role and company info
-    const user = await db.user.findUnique({
-      where: { id: userId },
+    // Validate session
+    const validation = await validateSession(sessionToken);
+
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = validation.user;
+
+    // Get user's company memberships for access control
+    const userWithMemberships = await db.user.findUnique({
+      where: { id: user.id },
       select: {
         id: true,
         role: true,
@@ -27,7 +37,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!userWithMemberships) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -35,12 +45,14 @@ export async function GET(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let whereClause: any = {};
 
-    if (user.role === "SUPER_ADMIN") {
+    if (userWithMemberships.role === "SUPER_ADMIN") {
       // SUPER_ADMIN sees all audit logs
       whereClause = {};
-    } else if (user.role === "ADMIN") {
+    } else if (userWithMemberships.role === "ADMIN") {
       // ADMIN sees logs from their company only
-      const companyIds = user.companyMemberships.map((m) => m.companyId);
+      const companyIds = userWithMemberships.companyMemberships.map(
+        (m) => m.companyId
+      );
       if (companyIds.length > 0) {
         whereClause = {
           companyId: {
@@ -50,14 +62,18 @@ export async function GET(request: NextRequest) {
       } else {
         // Admin not in any company yet
         whereClause = {
-          userId: user.id, // Only see their own logs
+          userId: userWithMemberships.id, // Only see their own logs
         };
       }
     } else if (
-      ["MANAGER", "STAFF", "CONTRACTOR", "SUPPLIER"].includes(user.role)
+      ["MANAGER", "STAFF", "CONTRACTOR", "SUPPLIER"].includes(
+        userWithMemberships.role
+      )
     ) {
       // Other roles see logs from their company
-      const companyIds = user.companyMemberships.map((m) => m.companyId);
+      const companyIds = userWithMemberships.companyMemberships.map(
+        (m) => m.companyId
+      );
       if (companyIds.length > 0) {
         whereClause = {
           companyId: {
@@ -67,13 +83,13 @@ export async function GET(request: NextRequest) {
       } else {
         // Not in any company, only see own logs
         whereClause = {
-          userId: user.id,
+          userId: userWithMemberships.id,
         };
       }
     } else {
       // ERP_CUSTOMER, COMPANY_CUSTOMER, GUEST see only their own logs
       whereClause = {
-        userId: user.id,
+        userId: userWithMemberships.id,
       };
     }
 
