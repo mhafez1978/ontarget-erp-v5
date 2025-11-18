@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { validateSession } from "@/lib/session-manager";
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
     // If user is authenticated, check for company-specific white-label branding
-    if (userId) {
-      const user = await db.user.findUnique({
-        where: { id: userId },
+    if (sessionToken) {
+      const validation = await validateSession(sessionToken);
+      
+      if (validation.valid && validation.user) {
+        const userId = validation.user.id;
+        
+        const user = await db.user.findUnique({
+          where: { id: userId },
         select: {
           companyMemberships: {
             select: {
