@@ -75,6 +75,19 @@ type ProjectWithFullDetails = Prisma.ProjectGetPayload<{
         name: true;
       };
     };
+    subscriberCompany: {
+      select: {
+        id: true;
+        name: true;
+      };
+    };
+    customer: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+      };
+    };
   };
 }>;
 
@@ -184,6 +197,19 @@ export async function GET(
           select: {
             id: true,
             name: true,
+          },
+        },
+        subscriberCompany: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
       },
@@ -310,6 +336,14 @@ export async function PATCH(
 
     console.log("PATCH /api/projects/[projectId] - Body:", body);
     console.log("PATCH /api/projects/[projectId] - ProjectId:", projectId);
+    console.log(
+      "PATCH /api/projects/[projectId] - startDate from body:",
+      body.startDate
+    );
+    console.log(
+      "PATCH /api/projects/[projectId] - endDate from body:",
+      body.endDate
+    );
 
     const {
       name,
@@ -320,6 +354,12 @@ export async function PATCH(
       projectManagerId,
       teamLeadId,
     } = body;
+
+    console.log(
+      "PATCH /api/projects/[projectId] - startDate variable:",
+      startDate
+    );
+    console.log("PATCH /api/projects/[projectId] - endDate variable:", endDate);
 
     // Get user with role
     const user = await db.user.findUnique({
@@ -443,8 +483,12 @@ export async function PATCH(
         ...(name && { name }),
         ...(description !== undefined && { description }),
         ...(status && { status: status as ProjectStatus }),
-        ...(startDate && { startDate: new Date(startDate) }),
-        ...(endDate && { endDate: new Date(endDate) }),
+        ...(startDate !== undefined && {
+          startDate: startDate ? new Date(startDate) : null,
+        }),
+        ...(endDate !== undefined && {
+          endDate: endDate ? new Date(endDate) : null,
+        }),
         ...(projectManagerId !== undefined && { projectManagerId }),
         ...(teamLeadId !== undefined && { teamLeadId }),
       },

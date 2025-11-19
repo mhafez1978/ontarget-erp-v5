@@ -71,6 +71,35 @@ export function InlineEditSection({
 
   const IconComponent = icon;
 
+  // Format date for display
+  const formatDateForDisplay = (dateString: string | null) => {
+    if (!dateString) return null;
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Format date for input (YYYY-MM-DD)
+  const formatDateForInput = (dateString: string | null) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split("T")[0];
+    } catch {
+      return dateString;
+    }
+  };
+
+  const displayValue =
+    type === "date" && value ? formatDateForDisplay(value) : value;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -103,7 +132,9 @@ export function InlineEditSection({
           ) : (
             <Input
               type={type}
-              value={editValue}
+              value={
+                type === "date" ? formatDateForInput(editValue) : editValue
+              }
               onChange={(e) => setEditValue(e.target.value)}
               placeholder={placeholder}
             />
@@ -126,7 +157,7 @@ export function InlineEditSection({
         </div>
       ) : (
         <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-          {value || <span className="italic">{placeholder}</span>}
+          {displayValue || <span className="italic">{placeholder}</span>}
         </div>
       )}
     </div>

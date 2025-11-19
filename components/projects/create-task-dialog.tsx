@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,8 +30,9 @@ interface CreateTaskDialogProps {
     | "TODO"
     | "IN_PROGRESS"
     | "IN_REVIEW"
+    | "BLOCKED"
     | "COMPLETED"
-    | "BLOCKED";
+    | "CANCELLED";
   onTaskCreated?: () => void;
 }
 
@@ -41,6 +42,10 @@ interface StaffMember {
     name: string | null;
     email: string;
   };
+}
+
+interface TeamMember {
+  staff: StaffMember;
 }
 
 export function CreateTaskDialog({
@@ -57,7 +62,8 @@ export function CreateTaskDialog({
     "LOW" | "MEDIUM" | "HIGH" | "URGENT"
   >("MEDIUM");
   const [dueDate, setDueDate] = useState("");
-  const [assigneeId, setAssigneeId] = useState<string>("");
+  const [createdById, setCreatedById] = useState<string>("");
+  const [assignedToId, setAssignedToId] = useState<string>("");
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingStaff, setIsLoadingStaff] = useState(false);
@@ -66,37 +72,74 @@ export function CreateTaskDialog({
   const loadStaffMembers = async () => {
     setIsLoadingStaff(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}`);
-      if (!response.ok) throw new Error("Failed to load project");
+      // Get current user info
+      const userResponse = await fetch("/api/auth/me");
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        const currentUserId = userData.user?.id;
 
-      const project = await response.json();
+        const response = await fetch(`/api/projects/${projectId}`);
+        if (!response.ok) throw new Error("Failed to load project");
 
-      // Get all unique staff members from the project
-      const staffSet = new Set<string>();
-      const staff: StaffMember[] = [];
+        const data = await response.json();
+        const project = data.project || data; // Handle both {project: ...} and direct response
+        console.log("Full response data:", data);
+        console.log("Project data:", project);
+        console.log("Project manager:", project.projectManager);
+        console.log("Team lead:", project.teamLead);
+        console.log("Team members:", project.team?.members);
 
-      if (project.projectManager) {
-        staffSet.add(project.projectManager.id);
-        staff.push(project.projectManager);
-      }
+        // Get all unique staff members from the project
+        const staffSet = new Set<string>();
+        const staff: StaffMember[] = [];
 
-      if (project.teamLead) {
-        if (!staffSet.has(project.teamLead.id)) {
-          staffSet.add(project.teamLead.id);
-          staff.push(project.teamLead);
+        if (project.projectManager) {
+          console.log("Adding project manager:", project.projectManager);
+          staffSet.add(project.projectManager.id);
+          staff.push(project.projectManager);
+        } else {
+          console.log("No project manager found");
+        }
+
+        if (project.teamLead) {
+          if (!staffSet.has(project.teamLead.id)) {
+            console.log("Adding team lead:", project.teamLead);
+            staffSet.add(project.teamLead.id);
+            staff.push(project.teamLead);
+          }
+        } else {
+          console.log("No team lead found");
+        }
+
+        if (project.team?.members) {
+          console.log("Processing team members:", project.team.members.length);
+          project.team.members.forEach((member: TeamMember) => {
+            // Each member has a nested staff property with user data
+            console.log("Team member:", member);
+            if (member.staff && !staffSet.has(member.staff.id)) {
+              console.log("Adding team member staff:", member.staff);
+              staffSet.add(member.staff.id);
+              staff.push(member.staff);
+            }
+          });
+        } else {
+          console.log("No team members found");
+        }
+
+        console.log("Final staff array:", staff);
+        console.log("Staff count:", staff.length);
+        setStaffMembers(staff);
+
+        // Find current user's staff ID and set as default creator
+        const currentUserStaff = staff.find(
+          (s) =>
+            s.user &&
+            (s.user.email === userData.user?.email || s.id === currentUserId)
+        );
+        if (currentUserStaff) {
+          setCreatedById(currentUserStaff.id);
         }
       }
-
-      if (project.team?.members) {
-        project.team.members.forEach((member: StaffMember) => {
-          if (!staffSet.has(member.id)) {
-            staffSet.add(member.id);
-            staff.push(member);
-          }
-        });
-      }
-
-      setStaffMembers(staff);
     } catch (error) {
       console.error("Error loading staff:", error);
       toast.error("Failed to load team members");
@@ -106,17 +149,35 @@ export function CreateTaskDialog({
   };
 
   const handleOpenChange = (newOpen: boolean) => {
+    console.log("handleOpenChange called:", newOpen);
+    console.log("staffMembers.length:", staffMembers.length);
     if (newOpen && staffMembers.length === 0) {
+      console.log("Loading staff members...");
       loadStaffMembers();
     }
     onOpenChange(newOpen);
   };
+
+  // Load staff members when dialog opens
+  useEffect(() => {
+    console.log("useEffect triggered, open:", open);
+    if (open && staffMembers.length === 0) {
+      console.log("Loading staff members via useEffect...");
+      loadStaffMembers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
       toast.error("Task title is required");
+      return;
+    }
+
+    if (!createdById) {
+      toast.error("Task creator is required");
       return;
     }
 
@@ -132,7 +193,8 @@ export function CreateTaskDialog({
           status,
           priority,
           dueDate: dueDate || null,
-          assigneeId: assigneeId || null,
+          createdById,
+          assignedToId: assignedToId || null,
         }),
       });
 
@@ -149,7 +211,8 @@ export function CreateTaskDialog({
       setStatus("TODO");
       setPriority("MEDIUM");
       setDueDate("");
-      setAssigneeId("");
+      setCreatedById("");
+      setAssignedToId("");
 
       onOpenChange(false);
 
@@ -168,7 +231,7 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto px-6">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
           <DialogDescription>
@@ -201,7 +264,7 @@ export function CreateTaskDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-row justify-between">
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select
@@ -216,8 +279,9 @@ export function CreateTaskDialog({
                   <SelectItem value="TODO">To Do</SelectItem>
                   <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                   <SelectItem value="IN_REVIEW">In Review</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
                   <SelectItem value="BLOCKED">Blocked</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -242,37 +306,82 @@ export function CreateTaskDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input
+              id="dueDate"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="flex flex-row justify-between">
             <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                disabled={isLoading}
-              />
+              <Label htmlFor="assignee">Task Owner (Assignee)</Label>
+              {isLoadingStaff ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
+                </div>
+              ) : (
+                <Select
+                  value={createdById}
+                  onValueChange={setCreatedById}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="assignee">
+                    <SelectValue placeholder="Select task owner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {staffMembers.length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        No team members found
+                      </div>
+                    ) : (
+                      staffMembers.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.user.name || member.user.email}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="assignee">Assignee</Label>
-              <Select
-                value={assigneeId}
-                onValueChange={setAssigneeId}
-                disabled={isLoading || isLoadingStaff}
-              >
-                <SelectTrigger id="assignee">
-                  <SelectValue placeholder="Select assignee..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
-                  {staffMembers.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.user.name || member.user.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="assignedTo">Assigned To (Optional)</Label>
+              {isLoadingStaff ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
+                </div>
+              ) : (
+                <Select
+                  value={assignedToId}
+                  onValueChange={setAssignedToId}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="assignedTo">
+                    <SelectValue placeholder="Select team member (optional)..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {staffMembers.length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        No team members found
+                      </div>
+                    ) : (
+                      staffMembers.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.user.name || member.user.email}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
 

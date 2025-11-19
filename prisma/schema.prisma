@@ -140,6 +140,9 @@ model User {
   storefrontOrders StorefrontOrder[] @relation("StorefrontOrders")
   carts            Cart[]
 
+  // Project relations (as customer)
+  customerProjects Project[] @relation("ProjectCustomer") // Projects where this user is the customer
+
   // Payment system relations
   invoices Invoice[]
 
@@ -231,6 +234,7 @@ model Company {
   // Project Management relations
   teams    Team[]
   projects Project[]
+  customerProjects Project[] @relation("ProjectSubscriberCustomer") // Projects where this company is the customer
 
   // Financial relations
   ledger Ledger?
@@ -365,9 +369,10 @@ model CompanyStaff {
 
   // Project Management relations
   teamMemberships TeamMember[]
-  managedProjects Project[]    @relation("ProjectManager")
-  ledProjects     Project[]    @relation("TeamLead")
-  assignedTasks   Task[]
+  managedProjects Project[]     @relation("ProjectManager")
+  ledProjects     Project[]     @relation("TeamLead")
+  createdTasks    Task[]        @relation("TaskCreator")
+  assignedTasks   Task[]        @relation("TaskAssignee")
   projectNotes    ProjectNote[]
 
   // Financial relations
@@ -1446,6 +1451,15 @@ model Project {
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  // Customer relations (optional - for billable projects)
+  // For SUPER_ADMIN: subscriberCompanyId links to ERP customer company
+  subscriberCompanyId String?
+  subscriberCompany   Company? @relation("ProjectSubscriberCustomer", fields: [subscriberCompanyId], references: [id], onDelete: SetNull)
+  
+  // For ADMIN: customerId links to COMPANY_CUSTOMER user
+  customerId String?
+  customer   User?   @relation("ProjectCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+
   // Project Manager (must be from the same company)
   projectManagerId String?
   projectManager   CompanyStaff? @relation("ProjectManager", fields: [projectManagerId], references: [id], onDelete: SetNull)
@@ -1472,6 +1486,8 @@ model Project {
 
   @@index([teamId])
   @@index([companyId])
+  @@index([subscriberCompanyId])
+  @@index([customerId])
   @@index([projectManagerId])
   @@index([teamLeadId])
   @@index([status])
@@ -1487,9 +1503,13 @@ model Task {
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  // Assigned to (must be from the same company)
+  // Created by (task owner/assignee - person creating the task)
+  createdById String
+  createdBy   CompanyStaff @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  // Assigned to (person who will work on the task - optional)
   assignedToId String?
-  assignedTo   CompanyStaff? @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo   CompanyStaff? @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   // Status
   status   TaskStatus   @default(TODO)
@@ -1509,6 +1529,7 @@ model Task {
   updatedAt DateTime @updatedAt
 
   @@index([projectId])
+  @@index([createdById])
   @@index([assignedToId])
   @@index([status])
   @@index([priority])
@@ -1981,8 +2002,9 @@ enum TaskStatus {
   TODO
   IN_PROGRESS
   IN_REVIEW
-  COMPLETED
   BLOCKED
+  COMPLETED
+  CANCELLED
 }
 
 // Task Priority Enum

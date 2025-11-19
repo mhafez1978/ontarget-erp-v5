@@ -29,12 +29,23 @@ interface Project {
   teamId: string;
   managerId: string | null;
   leadId: string | null;
+  subscriberCompanyId: string | null;
+  customerId: string | null;
   createdAt: string;
   updatedAt: string;
   company: {
     id: string;
     name: string;
   };
+  subscriberCompany?: {
+    id: string;
+    name: string;
+  } | null;
+  customer?: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
   team: {
     id: string;
     name: string;
@@ -102,8 +113,14 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   const todoTasks = localProject.tasks.filter(
     (t) => t.status === "TODO"
   ).length;
+  const inReviewTasks = localProject.tasks.filter(
+    (t) => t.status === "IN_REVIEW"
+  ).length;
   const blockedTasks = localProject.tasks.filter(
     (t) => t.status === "BLOCKED"
+  ).length;
+  const cancelledTasks = localProject.tasks.filter(
+    (t) => t.status === "CANCELLED"
   ).length;
   const totalTasks = localProject._count.tasks;
   const progressPercentage =
@@ -111,12 +128,10 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
 
   // Calculate date info
   const today = new Date();
-  const startDate = localProject.targetStartDate
-    ? new Date(localProject.targetStartDate)
+  const startDate = localProject.startDate
+    ? new Date(localProject.startDate)
     : null;
-  const endDate = localProject.targetEndDate
-    ? new Date(localProject.targetEndDate)
-    : null;
+  const endDate = localProject.endDate ? new Date(localProject.endDate) : null;
   const daysRemaining = endDate
     ? Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
     : null;
@@ -144,12 +159,45 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             }}
           />
 
-          <div className="grid gap-4 md:grid-cols-2">
+          {/* Customer Section */}
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">
+              Customer
+            </h4>
+            {localProject.subscriberCompany ? (
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-sm">
+                  ERP Customer
+                </Badge>
+                <p className="text-sm font-medium">
+                  {localProject.subscriberCompany.name}
+                </p>
+              </div>
+            ) : localProject.customer ? (
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-sm">
+                  Company Customer
+                </Badge>
+                <p className="text-sm font-medium">
+                  {localProject.customer.name || localProject.customer.email}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                No customer assigned (internal project)
+              </p>
+            )}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 border-t pt-4">order-t pt-4">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-1">
                 Company
               </h4>
               <p className="text-sm font-medium">{localProject.company.name}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                ⚠️ Company cannot be changed after project creation
+              </p>
             </div>
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-1">
@@ -162,6 +210,9 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                   {localProject.team.members.length} members
                 </Badge>
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Team can be changed via project settings
+              </p>
             </div>
           </div>
         </CardContent>
@@ -187,10 +238,10 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-green-500" />
-                <span>Completed</span>
+                <div className="h-3 w-3 rounded-full bg-gray-500" />
+                <span>To Do</span>
               </div>
-              <span className="font-medium">{completedTasks}</span>
+              <span className="font-medium">{todoTasks}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
@@ -201,20 +252,32 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             </div>
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-gray-500" />
-                <span>To Do</span>
+                <div className="h-3 w-3 rounded-full bg-purple-500" />
+                <span>In Review</span>
               </div>
-              <span className="font-medium">{todoTasks}</span>
+              <span className="font-medium">{inReviewTasks}</span>
             </div>
-            {blockedTasks > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-red-500" />
-                  <span>Blocked</span>
-                </div>
-                <span className="font-medium">{blockedTasks}</span>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-red-500" />
+                <span>Blocked</span>
               </div>
-            )}
+              <span className="font-medium">{blockedTasks}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500" />
+                <span>Completed</span>
+              </div>
+              <span className="font-medium">{completedTasks}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-gray-400" />
+                <span>Cancelled</span>
+              </div>
+              <span className="font-medium">{cancelledTasks}</span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -231,26 +294,26 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           <div className="space-y-3">
             <InlineEditSection
               title="Start Date"
-              value={localProject.targetStartDate || ""}
-              fieldName="targetStartDate"
+              value={localProject.startDate || ""}
+              fieldName="startDate"
               projectId={localProject.id}
               type="date"
               icon={Calendar}
               placeholder="Set start date..."
               onSave={(newValue) => {
-                setLocalProject({ ...localProject, targetStartDate: newValue });
+                setLocalProject({ ...localProject, startDate: newValue });
               }}
             />
             <InlineEditSection
               title="Target End Date"
-              value={localProject.targetEndDate || ""}
-              fieldName="targetEndDate"
+              value={localProject.endDate || ""}
+              fieldName="endDate"
               projectId={localProject.id}
               type="date"
               icon={Calendar}
               placeholder="Set end date..."
               onSave={(newValue) => {
-                setLocalProject({ ...localProject, targetEndDate: newValue });
+                setLocalProject({ ...localProject, endDate: newValue });
               }}
             />
             {daysRemaining !== null && (

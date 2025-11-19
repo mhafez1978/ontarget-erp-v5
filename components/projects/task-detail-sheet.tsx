@@ -3,16 +3,15 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { TimeTracker } from "@/components/projects/time-tracker";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface Task {
   id: string;
@@ -34,9 +34,19 @@ interface Task {
   status: string;
   priority: string;
   dueDate: string | null;
-  assigneeId: string | null;
+  createdById: string;
+  assignedToId: string | null;
   timeEntry: number;
-  assignee?: {
+  createdBy: {
+    id: string;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+    };
+  };
+  assignedTo?: {
     id: string;
     user: {
       id: string;
@@ -76,7 +86,7 @@ interface TaskFormData {
   status: string;
   priority: string;
   dueDate: string;
-  assigneeId: string;
+  assignedToId: string;
 }
 
 const STATUS_OPTIONS = [
@@ -105,6 +115,7 @@ export function TaskDetailSheet({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [timeEntry, setTimeEntry] = useState(0);
+  const [description, setDescription] = useState("");
 
   const { register, handleSubmit, setValue, watch, reset } =
     useForm<TaskFormData>({
@@ -114,13 +125,13 @@ export function TaskDetailSheet({
         status: "TODO",
         priority: "MEDIUM",
         dueDate: "",
-        assigneeId: "",
+        assignedToId: "UNASSIGNED",
       },
     });
 
   const watchedStatus = watch("status");
   const watchedPriority = watch("priority");
-  const watchedAssigneeId = watch("assigneeId");
+  const watchedAssignedToId = watch("assignedToId");
 
   // Reset form when task changes
   useEffect(() => {
@@ -133,8 +144,9 @@ export function TaskDetailSheet({
         dueDate: task.dueDate
           ? new Date(task.dueDate).toISOString().split("T")[0]
           : "",
-        assigneeId: task.assigneeId || "",
+        assignedToId: task.assignedToId || "UNASSIGNED",
       });
+      setDescription(task.description || "");
       setTimeEntry(task.timeEntry || 0);
     }
   }, [task, reset]);
@@ -149,11 +161,12 @@ export function TaskDetailSheet({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: data.title,
-          description: data.description || null,
+          description: description || null,
           status: data.status,
           priority: data.priority,
           dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
-          assigneeId: data.assigneeId || null,
+          assignedToId:
+            data.assignedToId === "UNASSIGNED" ? null : data.assignedToId,
           timeEntry,
         }),
       });
@@ -214,21 +227,21 @@ export function TaskDetailSheet({
     );
   };
 
-  const selectedAssignee = teamMembers.find(
-    (member) => member.staff.id === watchedAssigneeId
+  const selectedAssignedTo = teamMembers.find(
+    (member) => member.staff.id === watchedAssignedToId
   );
 
   if (!task) return null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Task Details</SheetTitle>
-          <SheetDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Task Details</DialogTitle>
+          <DialogDescription>
             View and edit task information. Changes are saved immediately.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
           {/* Title */}
@@ -244,11 +257,10 @@ export function TaskDetailSheet({
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              {...register("description")}
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
               placeholder="Add a description..."
-              rows={5}
             />
           </div>
 
@@ -331,29 +343,55 @@ export function TaskDetailSheet({
             </div>
           </div>
 
-          {/* Assignee */}
+          <Separator />
+
+          {/* Task Owner (Read-only) */}
           <div className="space-y-2">
-            <Label htmlFor="assignee">Assignee</Label>
+            <Label>Created By</Label>
+            <div className="flex items-center gap-3 p-3 rounded-md bg-muted/50">
+              <Avatar className="h-8 w-8">
+                <AvatarImage
+                  src={task.createdBy.user.image || ""}
+                  alt={task.createdBy.user.name || "User"}
+                />
+                <AvatarFallback>
+                  {task.createdBy.user.name?.[0] || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">
+                  {task.createdBy.user.name || task.createdBy.user.email}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Created this task
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Assigned To */}
+          <div className="space-y-2">
+            <Label htmlFor="assignedTo">Assigned To</Label>
             <Select
-              value={watchedAssigneeId}
-              onValueChange={(value) => setValue("assigneeId", value)}
+              value={watchedAssignedToId}
+              onValueChange={(value) => setValue("assignedToId", value)}
             >
               <SelectTrigger>
                 <SelectValue>
-                  {selectedAssignee ? (
+                  {selectedAssignedTo ? (
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
                         <AvatarImage
-                          src={selectedAssignee.staff.user.image || ""}
-                          alt={selectedAssignee.staff.user.name || "User"}
+                          src={selectedAssignedTo.staff.user.image || ""}
+                          alt={selectedAssignedTo.staff.user.name || "User"}
                         />
                         <AvatarFallback>
-                          {selectedAssignee.staff.user.name?.[0] || "U"}
+                          {selectedAssignedTo.staff.user.name?.[0] || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <span>
-                        {selectedAssignee.staff.user.name ||
-                          selectedAssignee.staff.user.email}
+                        {selectedAssignedTo.staff.user.name ||
+                          selectedAssignedTo.staff.user.email}
                       </span>
                     </div>
                   ) : (
@@ -362,7 +400,7 @@ export function TaskDetailSheet({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
+                <SelectItem value="UNASSIGNED">
                   <span className="text-muted-foreground">Unassigned</span>
                 </SelectItem>
                 {teamMembers.map((member) => (
@@ -432,7 +470,7 @@ export function TaskDetailSheet({
             </div>
           </div>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

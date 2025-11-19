@@ -35,7 +35,10 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Disable the default link that comes with StarterKit
+        link: false,
+      }),
       Placeholder.configure({
         placeholder,
       }),

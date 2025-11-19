@@ -24,9 +24,16 @@ interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "COMPLETED" | "BLOCKED";
+  status:
+    | "TODO"
+    | "IN_PROGRESS"
+    | "IN_REVIEW"
+    | "BLOCKED"
+    | "COMPLETED"
+    | "CANCELLED";
   priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   dueDate: string | null;
+  order: number;
   assigneeId: string | null;
   projectId: string;
   timeEntry: number;
@@ -52,6 +59,7 @@ interface TasksBoardProps {
   onAssignTask?: (task: Task) => void;
   onChangePriority?: (task: Task) => void;
   onSetDueDate?: (task: Task) => void;
+  refreshTrigger?: number; // Add this to trigger refetch
 }
 
 const STATUS_CONFIG = {
@@ -71,15 +79,20 @@ const STATUS_CONFIG = {
       "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
     borderColor: "border-purple-200",
   },
+  BLOCKED: {
+    label: "Blocked",
+    color: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+    borderColor: "border-red-200",
+  },
   COMPLETED: {
     label: "Completed",
     color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
     borderColor: "border-green-200",
   },
-  BLOCKED: {
-    label: "Blocked",
-    color: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-    borderColor: "border-red-200",
+  CANCELLED: {
+    label: "Cancelled",
+    color: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+    borderColor: "border-gray-300",
   },
 } as const;
 
@@ -92,6 +105,7 @@ export function TasksBoard({
   onAssignTask,
   onChangePriority,
   onSetDueDate,
+  refreshTrigger,
 }: TasksBoardProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,10 +141,12 @@ export function TasksBoard({
     if (projectId) {
       fetchTasks();
     }
-  }, [projectId]);
+  }, [projectId, refreshTrigger]); // Added refreshTrigger to dependencies
 
   const getTasksByStatus = (status: Task["status"]) => {
-    return tasks.filter((task) => task.status === status);
+    return tasks
+      .filter((task) => task.status === status)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -147,37 +163,94 @@ export function TasksBoard({
     if (!over) return;
 
     const taskId = active.id as string;
-    const newStatus = over.id as Task["status"];
     const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
 
-    if (!task || task.status === newStatus) return;
+    // Check if dropping over a column or over another task
+    const overIsColumn = Object.keys(STATUS_CONFIG).includes(over.id as string);
 
-    // Optimistic update
-    const previousTasks = [...tasks];
-    setTasks(
-      tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
-    );
+    if (overIsColumn) {
+      // Dropping over a column - move to that column
+      const newStatus = over.id as Task["status"];
+      if (task.status === newStatus) return;
 
-    setIsUpdating(true);
-    try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+      // Optimistic update
+      const previousTasks = [...tasks];
+      setTasks(
+        tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      );
+
+      setIsUpdating(true);
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update task");
+        }
+
+        toast.success("Task moved successfully");
+      } catch (error) {
+        console.error("Error updating task:", error);
+        toast.error("Failed to move task");
+        // Rollback on error
+        setTasks(previousTasks);
+      } finally {
+        setIsUpdating(false);
+      }
+    } else {
+      // Dropping over another task - reorder within the same column
+      const overTask = tasks.find((t) => t.id === over.id);
+      if (!overTask || task.status !== overTask.status) return;
+
+      const statusTasks = getTasksByStatus(task.status);
+      const oldIndex = statusTasks.findIndex((t) => t.id === taskId);
+      const newIndex = statusTasks.findIndex((t) => t.id === over.id);
+
+      if (oldIndex === newIndex) return;
+
+      // Optimistic UI update
+      const previousTasks = [...tasks];
+      const reorderedTasks = [...statusTasks];
+      const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+      reorderedTasks.splice(newIndex, 0, movedTask);
+
+      // Update orders
+      const updatedStatusTasks = reorderedTasks.map((t, index) => ({
+        ...t,
+        order: index,
+      }));
+
+      const updatedTasks = tasks.map((t) => {
+        const updated = updatedStatusTasks.find((ut) => ut.id === t.id);
+        return updated || t;
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update task");
-      }
+      setTasks(updatedTasks);
 
-      toast.success("Task moved successfully");
-    } catch (error) {
-      console.error("Error updating task:", error);
-      toast.error("Failed to move task");
-      // Rollback on error
-      setTasks(previousTasks);
-    } finally {
-      setIsUpdating(false);
+      // Update order in database
+      setIsUpdating(true);
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: newIndex }),
+        });
+
+        if (!response.ok) throw new Error("Failed to update task order");
+
+        toast.success("Task reordered");
+      } catch (error) {
+        console.error("Error updating task order:", error);
+        toast.error("Failed to reorder task");
+        // Rollback on error
+        setTasks(previousTasks);
+      } finally {
+        setIsUpdating(false);
+      }
     }
   };
 
@@ -215,7 +288,7 @@ export function TasksBoard({
         </div>
 
         {/* Kanban Board */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {(
             Object.keys(STATUS_CONFIG) as Array<keyof typeof STATUS_CONFIG>
           ).map((status) => {
@@ -348,10 +421,19 @@ function DraggableTask({
   onChangePriority,
   onSetDueDate,
 }: DraggableTaskProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: task.id,
-    });
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: task.id,
+  });
+
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: task.id,
+  });
 
   const style = transform
     ? {
@@ -361,16 +443,22 @@ function DraggableTask({
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setDraggableRef(node);
+        setDroppableRef(node);
+      }}
       style={style}
       {...listeners}
       {...attributes}
-      className={isDragging ? "opacity-50" : ""}
+      className={`${isDragging ? "opacity-50" : ""} ${
+        isOver ? "ring-2 ring-primary rounded-lg" : ""
+      }`}
     >
       <div className="cursor-grab active:cursor-grabbing">
         <TaskCard
           task={task}
           onClick={onClick}
+          showStatus={true}
           onEdit={onEdit}
           onDelete={onDelete}
           onAssign={onAssign}

@@ -8,6 +8,18 @@ import { validateSession } from "@/lib/session-manager";
 // Type for task with includes
 type TaskWithIncludes = Prisma.TaskGetPayload<{
   include: {
+    createdBy: {
+      include: {
+        user: {
+          select: {
+            id: true;
+            name: true;
+            email: true;
+            image: true;
+          };
+        };
+      };
+    };
     assignedTo: {
       include: {
         user: {
@@ -137,6 +149,18 @@ export async function GET(
     const tasks = (await db.task.findMany({
       where: { projectId },
       include: {
+        createdBy: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+        },
         assignedTo: {
           include: {
             user: {
@@ -213,12 +237,20 @@ export async function POST(
       description,
       status = "TODO",
       priority = "MEDIUM",
+      createdById,
       assignedToId,
       dueDate,
     } = body;
 
     if (!title) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    }
+
+    if (!createdById) {
+      return NextResponse.json(
+        { error: "Task creator is required" },
+        { status: 400 }
+      );
     }
 
     // Get user with role
@@ -281,7 +313,18 @@ export async function POST(
       return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
     }
 
-    // Validate assigned staff if provided
+    // Validate task creator (required)
+    const creator = await db.companyStaff.findFirst({
+      where: { id: createdById, companyId: project.companyId },
+    });
+    if (!creator) {
+      return NextResponse.json(
+        { error: "Task creator not found in this company" },
+        { status: 400 }
+      );
+    }
+
+    // Validate assigned staff if provided (optional)
     if (assignedToId) {
       const staff = await db.companyStaff.findFirst({
         where: { id: assignedToId, companyId: project.companyId },
@@ -311,11 +354,24 @@ export async function POST(
         status: status as TaskStatus,
         priority: priority as TaskPriority,
         projectId,
+        createdById,
         assignedToId,
         dueDate: dueDate ? new Date(dueDate) : null,
         order,
       },
       include: {
+        createdBy: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+        },
         assignedTo: {
           include: {
             user: {

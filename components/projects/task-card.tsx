@@ -27,15 +27,31 @@ interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "COMPLETED" | "BLOCKED";
+  status:
+    | "TODO"
+    | "IN_PROGRESS"
+    | "IN_REVIEW"
+    | "BLOCKED"
+    | "COMPLETED"
+    | "CANCELLED";
   priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   dueDate: string | null;
-  assigneeId: string | null;
+  createdById: string;
+  assignedToId: string | null;
   projectId: string;
   timeEntry: number;
   createdAt: string;
   updatedAt: string;
-  assignee: {
+  createdBy: {
+    id: string;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+    };
+  };
+  assignedTo: {
     id: string;
     user: {
       id: string;
@@ -104,12 +120,33 @@ export function TaskCard({
         return "bg-blue-500/10 text-blue-700 border-blue-200";
       case "IN_REVIEW":
         return "bg-purple-500/10 text-purple-700 border-purple-200";
-      case "COMPLETED":
-        return "bg-green-500/10 text-green-700 border-green-200";
       case "BLOCKED":
         return "bg-red-500/10 text-red-700 border-red-200";
+      case "COMPLETED":
+        return "bg-green-500/10 text-green-700 border-green-200";
+      case "CANCELLED":
+        return "bg-gray-500/10 text-gray-500 border-gray-300";
       default:
         return "bg-gray-500/10 text-gray-700 border-gray-200";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "TODO":
+        return "To Do";
+      case "IN_PROGRESS":
+        return "In Progress";
+      case "IN_REVIEW":
+        return "In Review";
+      case "BLOCKED":
+        return "Blocked";
+      case "COMPLETED":
+        return "Completed";
+      case "CANCELLED":
+        return "Cancelled";
+      default:
+        return status;
     }
   };
 
@@ -125,7 +162,7 @@ export function TaskCard({
   return (
     <Card
       className={`group relative cursor-pointer hover:shadow-md transition-all ${
-        compact ? "p-2" : ""
+        compact ? "p-2" : "min-h-[180px]"
       }`}
       onClick={handleClick}
     >
@@ -218,22 +255,26 @@ export function TaskCard({
 
           {/* Description */}
           {!compact && task.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {task.description}
-            </p>
+            <div
+              className="text-xs text-muted-foreground line-clamp-3 prose prose-sm max-w-none overflow-hidden"
+              dangerouslySetInnerHTML={{ __html: task.description }}
+            />
           )}
         </div>
 
         {/* Footer */}
-        <div className="mt-3 flex items-center justify-between gap-2">
-          {/* Assignee */}
+        <div className="mt-3 space-y-2">
+          {/* Assigned To */}
           <div className="flex items-center gap-2">
-            {task.assignee ? (
-              <>
+            <span className="text-xs text-muted-foreground font-medium min-w-[70px]">
+              Assigned To:
+            </span>
+            {task.assignedTo ? (
+              <div className="flex items-center gap-2">
                 <Avatar className={compact ? "h-5 w-5" : "h-6 w-6"}>
                   <AvatarImage
-                    src={task.assignee.user.image || ""}
-                    alt={task.assignee.user.name || "Assignee"}
+                    src={task.assignedTo.user.image || ""}
+                    alt={task.assignedTo.user.name || "Assigned To"}
                   />
                   <AvatarFallback className="text-xs">
                     <User2 className={compact ? "h-3 w-3" : "h-4 w-4"} />
@@ -241,53 +282,55 @@ export function TaskCard({
                 </Avatar>
                 {!compact && (
                   <span className="text-xs text-muted-foreground">
-                    {task.assignee.user.name}
+                    {task.assignedTo.user.name || task.assignedTo.user.email}
                   </span>
                 )}
-              </>
-            ) : (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <User2 className="h-3 w-3" />
-                <span>Unassigned</span>
               </div>
+            ) : (
+              <span className="text-xs text-muted-foreground italic">
+                Unassigned
+              </span>
             )}
           </div>
 
-          {/* Time Tracking */}
-          {task.timeEntry > 0 && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>
-                {task.timeEntry < 60
-                  ? `${task.timeEntry}m`
-                  : `${Math.floor(task.timeEntry / 60)}h ${
-                      task.timeEntry % 60 > 0 ? `${task.timeEntry % 60}m` : ""
-                    }`}
-              </span>
-            </div>
-          )}
+          {/* Time and Due Date Row */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Time Tracking */}
+            {task.timeEntry > 0 && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>
+                  {task.timeEntry < 60
+                    ? `${task.timeEntry}m`
+                    : `${Math.floor(task.timeEntry / 60)}h ${
+                        task.timeEntry % 60 > 0 ? `${task.timeEntry % 60}m` : ""
+                      }`}
+                </span>
+              </div>
+            )}
 
-          {/* Due Date */}
-          {task.dueDate && (
-            <div
-              className={`flex items-center gap-1 text-xs ${
-                isOverdue
-                  ? "text-red-600 font-medium"
-                  : isDueSoon
-                  ? "text-orange-600 font-medium"
-                  : "text-muted-foreground"
-              }`}
-            >
-              {isOverdue && <AlertCircle className="h-3 w-3" />}
-              <Calendar className="h-3 w-3" />
-              <span>
-                {new Date(task.dueDate).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-          )}
+            {/* Due Date */}
+            {task.dueDate && (
+              <div
+                className={`flex items-center gap-1 text-xs ${
+                  isOverdue
+                    ? "text-red-600 font-medium"
+                    : isDueSoon
+                    ? "text-orange-600 font-medium"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {isOverdue && <AlertCircle className="h-3 w-3" />}
+                <Calendar className="h-3 w-3" />
+                <span>
+                  {new Date(task.dueDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Status Badge (optional) */}
@@ -297,7 +340,7 @@ export function TaskCard({
               variant="outline"
               className={`text-xs ${getStatusColor(task.status)}`}
             >
-              {task.status.replace(/_/g, " ")}
+              {getStatusLabel(task.status)}
             </Badge>
           </div>
         )}

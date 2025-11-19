@@ -35,8 +35,19 @@ interface Task {
   status: string;
   priority: string;
   dueDate: string | null;
-  assigneeId: string | null;
-  assignee?: {
+  createdById: string;
+  assignedToId: string | null;
+  timeEntry: number;
+  createdBy: {
+    id: string;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+    };
+  };
+  assignedTo?: {
     id: string;
     user: {
       id: string;
@@ -60,12 +71,23 @@ interface Project {
   teamId: string;
   managerId: string | null;
   leadId: string | null;
+  subscriberCompanyId: string | null;
+  customerId: string | null;
   createdAt: string;
   updatedAt: string;
   company: {
     id: string;
     name: string;
   };
+  subscriberCompany?: {
+    id: string;
+    name: string;
+  } | null;
+  customer?: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
   team: {
     id: string;
     name: string;
@@ -138,6 +160,7 @@ export default function ProjectDetailPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(0);
   const [createTaskStatus, setCreateTaskStatus] = useState<
     "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "COMPLETED" | "BLOCKED"
   >("TODO");
@@ -322,7 +345,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
@@ -443,6 +466,7 @@ export default function ProjectDetailPage() {
           <TabsContent value="tasks" className="space-y-4">
             <TasksBoard
               projectId={project.id}
+              refreshTrigger={taskRefreshTrigger}
               onTaskClick={(task) => {
                 setSelectedTask(task);
                 setIsTaskDetailOpen(true);
@@ -455,9 +479,38 @@ export default function ProjectDetailPage() {
                 setSelectedTask(task);
                 setIsTaskDetailOpen(true);
               }}
-              onDeleteTask={(task) => {
-                setSelectedTask(task);
-                setIsTaskDetailOpen(true);
+              onDeleteTask={async (task) => {
+                // Show confirmation with sonner
+                toast.warning(`Delete task "${task.title}"?`, {
+                  description: "This action cannot be undone.",
+                  action: {
+                    label: "Delete",
+                    onClick: async () => {
+                      try {
+                        const response = await fetch(
+                          `/api/projects/${projectId}/tasks/${task.id}`,
+                          {
+                            method: "DELETE",
+                          }
+                        );
+
+                        if (!response.ok) {
+                          throw new Error("Failed to delete task");
+                        }
+
+                        toast.success("Task deleted successfully");
+                        setTaskRefreshTrigger((prev) => prev + 1);
+                      } catch (error) {
+                        console.error("Error deleting task:", error);
+                        toast.error("Failed to delete task");
+                      }
+                    },
+                  },
+                  cancel: {
+                    label: "Cancel",
+                    onClick: () => {},
+                  },
+                });
               }}
               onAssignTask={(task) => {
                 setSelectedTask(task);
@@ -550,6 +603,8 @@ export default function ProjectDetailPage() {
               if (response.ok) {
                 const data = await response.json();
                 setProject(data.project);
+                // Trigger task board refresh
+                setTaskRefreshTrigger((prev) => prev + 1);
               }
             } catch (error) {
               console.error("Error refreshing project:", error);
