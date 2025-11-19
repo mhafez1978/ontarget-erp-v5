@@ -275,15 +275,18 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
       ) {
         const p = data.provider;
         setGoogleClientId(p.googleClientId || "");
-        setGoogleClientSecret(p.googleClientSecret || "");
+        // Don't load encrypted secrets - keep field empty so user knows to re-enter
+        setGoogleClientSecret("");
         setGoogleFromEmail(p.googleFromEmail || "");
-        setGoogleRefreshToken(p.googleRefreshToken || "");
+        // Don't load encrypted refresh token
+        setGoogleRefreshToken("");
         setOffice365TenantId(p.office365TenantId || "");
         setOffice365ClientId(p.office365ClientId || "");
-        setOffice365ClientSecret(p.office365ClientSecret || "");
+        // Don't load encrypted secrets - keep field empty
+        setOffice365ClientSecret("");
         setOffice365FromEmail(p.office365FromEmail || "");
-        setSendgridApiKey(p.sendgridApiKey || "");
-        setMailgunApiKey(p.mailgunApiKey || "");
+        setSendgridApiKey("");
+        setMailgunApiKey("");
         setMailgunDomain(p.mailgunDomain || "");
         setAwsRegion(p.awsRegion || "us-east-1");
         setAwsAccessKey("");
@@ -665,59 +668,201 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
               </div>
             </Alert>
             <div className="space-y-4">
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertDescription>
+                  <div className="text-sm text-blue-900">
+                    <strong>🎯 Quick Setup (One-Time)</strong>
+                    <ol className="mt-2 space-y-1 text-xs list-decimal list-inside">
+                      <li>
+                        Enter Client ID & Secret from Google Cloud Console below
+                      </li>
+                      <li>
+                        Click the green &quot;Authenticate with Google&quot;
+                        button
+                      </li>
+                      <li>Sign in and allow permissions</li>
+                      <li>Done! Emails work forever (no maintenance needed)</li>
+                    </ol>
+                  </div>
+                </AlertDescription>
+              </Alert>
+
               <div className="space-y-2">
-                <Label>Client ID</Label>
+                <Label className="flex items-center gap-2">
+                  Client ID
+                  <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   value={googleClientId}
                   onChange={(e) => setGoogleClientId(e.target.value)}
                   placeholder="xxxxxxxxx.apps.googleusercontent.com"
+                  required
                 />
                 <p className="text-xs text-muted-foreground">
-                  OAuth 2.0 Client ID from Google Cloud Console
+                  From{" "}
+                  <a
+                    href="https://console.cloud.google.com/apis/credentials"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    Google Cloud Console → Credentials
+                  </a>
                 </p>
               </div>
               <div className="space-y-2">
-                <Label>Client Secret</Label>
+                <Label className="flex items-center gap-2">
+                  Client Secret
+                  <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   type="password"
                   value={googleClientSecret}
                   onChange={(e) => setGoogleClientSecret(e.target.value)}
-                  placeholder="GOCSPX-••••••••••••••••"
+                  placeholder="GOCSPX-xxxxxxxxxxxxx"
+                  required
                 />
-                <p className="text-xs text-muted-foreground">
-                  OAuth 2.0 Client Secret from Google Cloud Console
+                <p className="text-xs text-red-600 font-medium">
+                  ⚠️ Required to authenticate - paste from Google Cloud Console
                 </p>
               </div>
               <div className="space-y-2">
-                <Label>From Email Address</Label>
+                <Label className="flex items-center gap-2">
+                  From Email Address
+                  <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   type="email"
                   value={googleFromEmail}
                   onChange={(e) => setGoogleFromEmail(e.target.value)}
-                  placeholder="noreply@yourdomain.com"
+                  placeholder="your-email@gmail.com"
+                  required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Gmail address that will send emails
+                  The Gmail address that will send emails
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label>Refresh Token</Label>
-                <Input
-                  type="password"
-                  value={googleRefreshToken}
-                  onChange={(e) => setGoogleRefreshToken(e.target.value)}
-                  placeholder="1//••••••••••••••••"
-                />
-                <p className="text-xs text-muted-foreground">
-                  OAuth 2.0 Refresh Token (generate using OAuth Playground)
-                </p>
-              </div>
+
+              <Alert className="bg-green-50 border-green-200">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="flex items-center justify-between">
+                  <div className="text-sm text-green-900">
+                    <strong>✨ Ready to Authenticate?</strong>
+                    <p className="mt-1 text-xs">
+                      Fill in the 3 required fields above, then click the button
+                      below. After one-time setup, the system automatically
+                      handles all token refreshing forever!
+                    </p>
+                  </div>
+                </AlertDescription>
+              </Alert>
+
+              <Button
+                type="button"
+                onClick={async () => {
+                  if (
+                    !googleClientId ||
+                    !googleClientSecret ||
+                    !googleFromEmail
+                  ) {
+                    toast.error(
+                      "Please fill in Client ID, Client Secret, and From Email first"
+                    );
+                    return;
+                  }
+
+                  try {
+                    const response = await fetch(
+                      "/api/email-provider/google-oauth/authorize",
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          clientId: googleClientId,
+                          clientSecret: googleClientSecret,
+                          fromEmail: googleFromEmail,
+                        }),
+                      }
+                    );
+
+                    const data = await response.json();
+
+                    if (response.ok && data.authUrl) {
+                      // Append state parameters to the auth URL
+                      const url = new URL(data.authUrl);
+                      url.searchParams.append(
+                        "state",
+                        JSON.stringify({
+                          clientId: googleClientId,
+                          clientSecret: googleClientSecret,
+                          fromEmail: googleFromEmail,
+                        })
+                      );
+
+                      // Open in new window
+                      const authWindow = window.open(
+                        url.toString(),
+                        "Google OAuth",
+                        "width=600,height=700,scrollbars=yes"
+                      );
+
+                      if (authWindow) {
+                        toast.success("Opening Google authentication...");
+
+                        // Poll for window close and check for success
+                        const pollTimer = setInterval(() => {
+                          if (authWindow.closed) {
+                            clearInterval(pollTimer);
+                            // Refresh the page or refetch provider data
+                            setTimeout(() => {
+                              window.location.reload();
+                            }, 500);
+                          }
+                        }, 500);
+                      } else {
+                        toast.error(
+                          "Popup blocked! Please allow popups and try again."
+                        );
+                      }
+                    } else {
+                      toast.error(data.error || "Failed to start OAuth flow");
+                    }
+                  } catch (error) {
+                    console.error("OAuth authorization error:", error);
+                    toast.error("Failed to start authentication");
+                  }
+                }}
+                variant="outline"
+                className="w-full border-green-500 text-green-700 hover:bg-green-50"
+              >
+                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
+                </svg>
+                🚀 Authenticate with Google (Production Flow)
+              </Button>
+
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Need help?</strong> Follow the setup guide in the
-                  README for step-by-step instructions on configuring Google
-                  OAuth.
+                  <strong>Alternative:</strong> If you prefer the manual OAuth
+                  Playground method, follow the detailed setup guide above and
+                  paste your refresh token in the field.
                 </AlertDescription>
               </Alert>
             </div>
@@ -1560,31 +1705,39 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
             )}
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4">
-              <Button
-                onClick={handleTest}
-                disabled={isTesting || isSaving}
-                variant="outline"
-                className="flex-1"
-              >
-                {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Test Connection
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={isTesting || isSaving || !testSuccess}
-                className="flex-1"
-              >
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save & Activate
-              </Button>
-            </div>
-
-            {!testSuccess && (
-              <p className="text-xs text-muted-foreground text-center">
-                Test connection successfully before saving
-              </p>
+            {selectedProvider && selectedProvider.type !== "GOOGLE_OAUTH" && (
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleTest}
+                  disabled={isTesting || isSaving}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  {isTesting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Test Connection
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={isTesting || isSaving || !testSuccess}
+                  className="flex-1"
+                >
+                  {isSaving && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Save & Activate
+                </Button>
+              </div>
             )}
+
+            {!testSuccess &&
+              selectedProvider &&
+              selectedProvider.type !== "GOOGLE_OAUTH" && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Test connection successfully before saving
+                </p>
+              )}
           </form>
         </SheetContent>
       </Sheet>

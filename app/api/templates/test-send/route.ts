@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
-import nodemailer from "nodemailer";
+import { validateSession } from "@/lib/session-manager";
+import { sendEmail } from "@/lib/email-service";
 
 const sampleData: Record<string, string> = {
   userName: "John Doe",
@@ -18,29 +19,21 @@ const sampleData: Record<string, string> = {
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("session");
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!sessionCookie?.value) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const sessionData = JSON.parse(
-      Buffer.from(sessionCookie.value, "base64").toString()
-    );
-    const userId = sessionData.userId;
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
     }
 
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { role: true, email: true },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    const user = validation.user;
 
     const body = await request.json();
     const { templateId, recipientEmail } = body;
@@ -67,35 +60,15 @@ export async function POST(request: NextRequest) {
     // Replace variables with sample data
     let subject = template.subject;
     let htmlBody = template.bodyHtml;
-    let textBody = template.bodyText || "";
 
     Object.entries(sampleData).forEach(([key, value]) => {
       const regex = new RegExp(`{{${key}}}`, "g");
       subject = subject.replace(regex, value);
       htmlBody = htmlBody.replace(regex, value);
-      textBody = textBody.replace(regex, value);
     });
 
-    // Create transporter
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER || "movewebdesign@gmail.com",
-        pass: process.env.EMAIL_PASSWORD || "rdketjlbkppvcgso",
-      },
-    });
-
-    // Send email
-    const info = await transporter.sendMail({
-      from: `"OnTarget ERP" <${
-        process.env.EMAIL_USER || "movewebdesign@gmail.com"
-      }>`,
-      to: recipientEmail,
-      subject: `[TEST] ${subject}`,
-      text: textBody || `This is a test email for template: ${template.name}`,
-      html: `
+    // Build test email HTML with warning banner
+    const testEmailHtml = `
         <div style="background-color: #f3f4f6; padding: 20px; font-family: Arial, sans-serif;">
           <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin-bottom: 20px;">
             <h3 style="margin: 0; color: #92400e; font-size: 14px;">
@@ -125,14 +98,30 @@ export async function POST(request: NextRequest) {
             </ul>
           </div>
         </div>
-      `,
+      `;
+
+    // Send email using configured email provider
+    const sent = await sendEmail({
+      to: recipientEmail,
+      subject: `[TEST] ${subject}`,
+      html: testEmailHtml,
     });
 
-    console.log("[Test Send] Email sent:", info.messageId);
+    if (!sent) {
+      return NextResponse.json(
+        {
+          error:
+            "Failed to send test email. Please check email provider configuration.",
+        },
+        { status: 500 }
+      );
+    }
+
+    console.log("[Test Send] Email sent successfully to:", recipientEmail);
 
     return NextResponse.json({
       success: true,
-      messageId: info.messageId,
+      message: "Test email sent successfully",
     });
   } catch (error) {
     console.error("[Test Send] Error:", error);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { validateSession } from "@/lib/session-manager";
 import { cookies } from "next/headers";
 
 interface RouteContext {
@@ -9,29 +10,21 @@ interface RouteContext {
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("session");
+    const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    if (!sessionCookie?.value) {
+    if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const sessionData = JSON.parse(
-      Buffer.from(sessionCookie.value, "base64").toString()
-    );
-    const userId = sessionData.userId;
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
     }
 
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { role: true, id: true },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    const user = validation.user;
 
     const { id } = await context.params;
     const body = await request.json();

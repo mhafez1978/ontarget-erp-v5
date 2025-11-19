@@ -43,6 +43,7 @@
     "cobe": "^0.6.5",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.24",
+    "googleapis": "^166.0.0",
     "lucide-react": "^0.553.0",
     "motion": "^12.23.24",
     "next": "16.0.1",

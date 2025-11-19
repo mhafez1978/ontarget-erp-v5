@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { createSession } from "@/lib/session-manager";
+import { sendEmail, getWelcomeCustomerEmailHtml } from "@/lib/email-service";
 
 // GET /api/auth/microsoft/callback
 // Handles OAuth callback from Microsoft
@@ -172,6 +173,19 @@ export async function GET(request: NextRequest) {
           plan: true,
         },
       });
+
+      // Send welcome email to new customer
+      try {
+        const html = getWelcomeCustomerEmailHtml(user.name || email, email);
+        await sendEmail({
+          to: email,
+          subject: "Welcome to OnTarget ERP - Let's Get Started!",
+          html,
+        });
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Don't fail OAuth if email fails
+      }
     }
 
     // Store or update OAuth account information

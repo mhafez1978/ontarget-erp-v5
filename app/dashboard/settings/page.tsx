@@ -577,6 +577,68 @@ export default function SettingsPage() {
 
                   {oauthProviders.google.enabled && (
                     <div className="space-y-4 pt-4 border-t">
+                      {/* Setup Instructions */}
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 space-y-3">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Setup Instructions
+                        </h4>
+                        <ol className="text-sm space-y-2 list-decimal list-inside">
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://console.cloud.google.com/apis/credentials"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                            >
+                              Google Cloud Console - Credentials
+                            </a>
+                          </li>
+                          <li>
+                            Create a new project or select an existing one
+                          </li>
+                          <li>
+                            Click &quot;Create Credentials&quot; → &quot;OAuth
+                            client ID&quot;
+                          </li>
+                          <li>
+                            Select &quot;Web application&quot; as the
+                            application type
+                          </li>
+                          <li>
+                            Add Authorized JavaScript origins:{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                            </code>
+                          </li>
+                          <li>
+                            Add Authorized redirect URI:{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                              /api/auth/callback/google
+                            </code>
+                          </li>
+                          <li>Click &quot;Create&quot;</li>
+                          <li>
+                            Copy the &quot;Client ID&quot; and &quot;Client
+                            Secret&quot; and paste them below
+                          </li>
+                        </ol>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="google-client-id">Client ID</Label>
                         <Input
@@ -695,6 +757,68 @@ export default function SettingsPage() {
 
                   {oauthProviders.microsoft.enabled && (
                     <div className="space-y-4 pt-4 border-t">
+                      {/* Setup Instructions */}
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 space-y-3">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Setup Instructions
+                        </h4>
+                        <ol className="text-sm space-y-2 list-decimal list-inside">
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                            >
+                              Azure Portal - App Registrations
+                            </a>
+                          </li>
+                          <li>Click &quot;New registration&quot;</li>
+                          <li>
+                            Enter a name (e.g., &quot;OnTarget ERP OAuth&quot;)
+                          </li>
+                          <li>
+                            Under &quot;Supported account types&quot;, select
+                            &quot;Accounts in any organizational directory and
+                            personal Microsoft accounts&quot;
+                          </li>
+                          <li>
+                            Add Redirect URI:{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                              /api/auth/microsoft/callback
+                            </code>
+                          </li>
+                          <li>Click &quot;Register&quot;</li>
+                          <li>
+                            Copy the &quot;Application (client) ID&quot; and
+                            paste it below
+                          </li>
+                          <li>
+                            Go to &quot;Certificates & secrets&quot; → &quot;New
+                            client secret&quot;
+                          </li>
+                          <li>
+                            Create a secret, copy the value immediately, and
+                            paste it below
+                          </li>
+                        </ol>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="microsoft-client-id">
                           Application (Client) ID

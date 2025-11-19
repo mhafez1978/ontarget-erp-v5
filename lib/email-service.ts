@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { decrypt } from "./crypto";
+import { decrypt } from "./encryption";
 import { db } from "./db";
 
 export interface EmailOptions {
@@ -27,6 +27,14 @@ interface EmailProvider {
   awsRegion?: string | null;
   awsAccessKey?: string | null;
   awsSecretKey?: string | null;
+  googleClientId?: string | null;
+  googleClientSecret?: string | null;
+  googleFromEmail?: string | null;
+  googleRefreshToken?: string | null;
+  office365TenantId?: string | null;
+  office365ClientId?: string | null;
+  office365ClientSecret?: string | null;
+  office365FromEmail?: string | null;
   scope?: string;
   isActive?: boolean;
 }
@@ -106,7 +114,92 @@ function createTransporter(provider: EmailProvider) {
     });
   }
 
+  // Gmail with App Password (SMTP)
+  if (provider.provider === "GMAIL" && provider.smtpUsername) {
+    console.log("[Email Service] Using Gmail SMTP configuration");
+
+    return nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // Use STARTTLS
+      auth: {
+        user: provider.smtpUsername,
+        pass: provider.smtpPassword ? decrypt(provider.smtpPassword) : "",
+      },
+      connectionTimeout: 15000,
+      socketTimeout: 15000,
+      logger: true,
+      debug: true,
+    });
+  }
+
+  // Google OAuth 2.0
+  if (provider.provider === "GOOGLE_OAUTH") {
+    console.log("[Email Service] Using Google OAuth 2.0 configuration");
+
+    if (
+      !provider.googleClientId ||
+      !provider.googleClientSecret ||
+      !provider.googleRefreshToken ||
+      !provider.googleFromEmail
+    ) {
+      throw new Error(
+        "Google OAuth requires clientId, clientSecret, refreshToken, and fromEmail"
+      );
+    }
+
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: provider.googleFromEmail,
+        clientId: provider.googleClientId,
+        clientSecret: decrypt(provider.googleClientSecret),
+        refreshToken: decrypt(provider.googleRefreshToken),
+      },
+      connectionTimeout: 15000,
+      socketTimeout: 15000,
+      logger: true,
+      debug: true,
+    });
+  }
+
+  // Office 365 OAuth 2.0
+  if (provider.provider === "OFFICE365") {
+    console.log("[Email Service] Using Office 365 OAuth 2.0 configuration");
+
+    if (
+      !provider.office365TenantId ||
+      !provider.office365ClientId ||
+      !provider.office365ClientSecret ||
+      !provider.office365FromEmail
+    ) {
+      throw new Error(
+        "Office 365 OAuth requires tenantId, clientId, clientSecret, and fromEmail"
+      );
+    }
+
+    return nodemailer.createTransport({
+      host: "smtp.office365.com",
+      port: 587,
+      secure: false, // Use STARTTLS
+      auth: {
+        type: "OAuth2",
+        user: provider.office365FromEmail,
+        clientId: provider.office365ClientId,
+        clientSecret: decrypt(provider.office365ClientSecret),
+        tenantId: provider.office365TenantId,
+      },
+      connectionTimeout: 15000,
+      socketTimeout: 15000,
+      logger: true,
+      debug: true,
+    });
+  }
+
   if (provider.provider === "SENDGRID" && provider.sendgridApiKey) {
+    console.log("[Email Service] Using SendGrid configuration");
+
     return nodemailer.createTransport({
       host: "smtp.sendgrid.net",
       port: 587,
@@ -114,10 +207,16 @@ function createTransporter(provider: EmailProvider) {
         user: "apikey",
         pass: decrypt(provider.sendgridApiKey),
       },
+      connectionTimeout: 15000,
+      socketTimeout: 15000,
+      logger: true,
+      debug: true,
     });
   }
 
   if (provider.provider === "MAILGUN" && provider.mailgunApiKey) {
+    console.log("[Email Service] Using Mailgun configuration");
+
     const domain = provider.mailgunDomain || "mg.example.com";
     return nodemailer.createTransport({
       host: "smtp.mailgun.org",
@@ -126,10 +225,16 @@ function createTransporter(provider: EmailProvider) {
         user: `postmaster@${domain}`,
         pass: decrypt(provider.mailgunApiKey),
       },
+      connectionTimeout: 15000,
+      socketTimeout: 15000,
+      logger: true,
+      debug: true,
     });
   }
 
   if (provider.provider === "RESEND" && provider.resendApiKey) {
+    console.log("[Email Service] Using Resend configuration");
+
     return nodemailer.createTransport({
       host: "smtp.resend.com",
       port: 465,
@@ -138,6 +243,36 @@ function createTransporter(provider: EmailProvider) {
         user: "resend",
         pass: decrypt(provider.resendApiKey),
       },
+      connectionTimeout: 15000,
+      socketTimeout: 15000,
+      logger: true,
+      debug: true,
+    });
+  }
+
+  if (provider.provider === "AWS_SES") {
+    console.log("[Email Service] Using AWS SES configuration");
+
+    if (
+      !provider.awsRegion ||
+      !provider.awsAccessKey ||
+      !provider.awsSecretKey
+    ) {
+      throw new Error("AWS SES requires region, accessKey, and secretKey");
+    }
+
+    return nodemailer.createTransport({
+      host: `email-smtp.${provider.awsRegion}.amazonaws.com`,
+      port: 587,
+      secure: false,
+      auth: {
+        user: decrypt(provider.awsAccessKey),
+        pass: decrypt(provider.awsSecretKey),
+      },
+      connectionTimeout: 15000,
+      socketTimeout: 15000,
+      logger: true,
+      debug: true,
     });
   }
 
