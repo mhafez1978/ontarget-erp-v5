@@ -136,28 +136,36 @@ export function ProjectNotes({
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    if (!confirm("Are you sure you want to delete this note?")) {
-      return;
-    }
+    toast.warning("Delete this note?", {
+      description: "This action cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const response = await fetch(
+              `/api/projects/${projectId}/notes/${noteId}`,
+              {
+                method: "DELETE",
+              }
+            );
 
-    try {
-      const response = await fetch(
-        `/api/projects/${projectId}/notes/${noteId}`,
-        {
-          method: "DELETE",
-        }
-      );
+            if (!response.ok) {
+              throw new Error("Failed to delete note");
+            }
 
-      if (!response.ok) {
-        throw new Error("Failed to delete note");
-      }
-
-      setNotes(notes.filter((n) => n.id !== noteId));
-      toast.success("Note deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete note");
-      console.error(error);
-    }
+            setNotes(notes.filter((n) => n.id !== noteId));
+            toast.success("Note deleted successfully");
+          } catch (error) {
+            toast.error("Failed to delete note");
+            console.error(error);
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
   };
 
   const startEditing = (note: ProjectNote) => {
