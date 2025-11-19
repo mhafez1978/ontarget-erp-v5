@@ -184,8 +184,6 @@ export function TasksBoard({
   const handleCreateTask = (status: Task["status"]) => {
     if (onCreateTask) {
       onCreateTask(status);
-    } else {
-      toast.info("Create task functionality will be implemented in Task 13.3");
     }
   };
 

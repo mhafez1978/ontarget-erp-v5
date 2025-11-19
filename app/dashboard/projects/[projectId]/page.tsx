@@ -24,6 +24,7 @@ import { ProjectTeamTab } from "@/components/projects/project-team-tab";
 import { ProjectActivityTab } from "@/components/projects/project-activity-tab";
 import { TasksBoard } from "@/components/projects/tasks-board";
 import { TaskDetailSheet } from "@/components/projects/task-detail-sheet";
+import { CreateTaskDialog } from "@/components/projects/create-task-dialog";
 import { ProjectNotes } from "@/components/projects/project-notes";
 import { StickyNote } from "lucide-react";
 
@@ -136,6 +137,10 @@ export default function ProjectDetailPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [createTaskStatus, setCreateTaskStatus] = useState<
+    "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "COMPLETED" | "BLOCKED"
+  >("TODO");
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [user, setUser] = useState<{
     name: string | null;
@@ -443,10 +448,8 @@ export default function ProjectDetailPage() {
                 setIsTaskDetailOpen(true);
               }}
               onCreateTask={(status) => {
-                // Will be implemented in Task 13.3
-                toast.info(
-                  `Create task with status ${status} will be implemented in Task 13.3`
-                );
+                setCreateTaskStatus(status as typeof createTaskStatus);
+                setIsCreateTaskOpen(true);
               }}
               onEditTask={(task) => {
                 setSelectedTask(task);
@@ -532,6 +535,26 @@ export default function ProjectDetailPage() {
             }
           }}
           teamMembers={project.team.members}
+        />
+
+        {/* Create Task Dialog */}
+        <CreateTaskDialog
+          open={isCreateTaskOpen}
+          onOpenChange={setIsCreateTaskOpen}
+          projectId={projectId}
+          initialStatus={createTaskStatus}
+          onTaskCreated={async () => {
+            // Refetch project data to update tasks
+            try {
+              const response = await fetch(`/api/projects/${projectId}`);
+              if (response.ok) {
+                const data = await response.json();
+                setProject(data.project);
+              }
+            } catch (error) {
+              console.error("Error refreshing project:", error);
+            }
+          }}
         />
       </div>
     </DashboardLayout>
