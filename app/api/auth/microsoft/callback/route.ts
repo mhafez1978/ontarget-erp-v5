@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { createSession } from "@/lib/session-manager";
-import { sendEmail, getWelcomeCustomerEmailHtml } from "@/lib/email-service";
+import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // GET /api/auth/microsoft/callback
 // Handles OAuth callback from Microsoft
@@ -176,14 +177,49 @@ export async function GET(request: NextRequest) {
 
       // Send welcome email to new customer
       try {
-        const html = getWelcomeCustomerEmailHtml(user.name || email, email);
+        const { subject, html } = await getWelcomeCustomerEmail(
+          user.name || email,
+          email
+        );
         await sendEmail({
           to: email,
-          subject: "Welcome to OnTarget ERP - Let's Get Started!",
+          subject,
           html,
+        });
+
+        // Log welcome email sent
+        await createAuditLog({
+          action: AUDIT_ACTIONS.WELCOME_EMAIL_SENT,
+          userId: user.id,
+          entityType: "User",
+          entityId: user.id,
+          description: `Welcome email sent to new ERP customer: ${email}`,
+          metadata: {
+            email,
+            userName: user.name,
+            provider: "microsoft",
+            subject,
+          },
         });
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
+
+        // Log email failure
+        await createAuditLog({
+          action: AUDIT_ACTIONS.EMAIL_FAILED,
+          userId: user.id,
+          entityType: "User",
+          entityId: user.id,
+          description: `Failed to send welcome email to: ${email}`,
+          metadata: {
+            email,
+            provider: "microsoft",
+            error:
+              emailError instanceof Error
+                ? emailError.message
+                : String(emailError),
+          },
+        }).catch(console.error);
         // Don't fail OAuth if email fails
       }
     }

@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
+import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // GET /api/auth/google/callback
 // Handles OAuth callback from Google
@@ -162,6 +164,69 @@ export async function GET(request: NextRequest) {
           plan: true,
         },
       });
+
+      // Send welcome email to new customer
+      try {
+        console.log(`[Google OAuth] Sending welcome email to: ${email}`);
+        const { subject, html } = await getWelcomeCustomerEmail(
+          user.name || email,
+          email
+        );
+        console.log(`[Google OAuth] Email subject: ${subject}`);
+        await sendEmail({
+          to: email,
+          subject,
+          html,
+        });
+        console.log(
+          `[Google OAuth] Welcome email sent successfully to: ${email}`
+        );
+
+        // Log welcome email sent
+        await createAuditLog({
+          action: AUDIT_ACTIONS.WELCOME_EMAIL_SENT,
+          userId: user.id,
+          entityType: "User",
+          entityId: user.id,
+          description: `Welcome email sent to new ERP customer: ${email}`,
+          metadata: {
+            email,
+            userName: user.name,
+            provider: "google",
+            subject,
+          },
+        });
+      } catch (emailError) {
+        console.error(
+          "[Google OAuth] Failed to send welcome email:",
+          emailError
+        );
+        console.error("[Google OAuth] Error details:", {
+          message:
+            emailError instanceof Error
+              ? emailError.message
+              : String(emailError),
+          stack: emailError instanceof Error ? emailError.stack : undefined,
+        });
+
+        // Log email failure
+        await createAuditLog({
+          action: AUDIT_ACTIONS.EMAIL_FAILED,
+          userId: user.id,
+          entityType: "User",
+          entityId: user.id,
+          description: `Failed to send welcome email to: ${email}`,
+          metadata: {
+            email,
+            provider: "google",
+            error:
+              emailError instanceof Error
+                ? emailError.message
+                : String(emailError),
+          },
+        }).catch(console.error);
+        // Don't fail OAuth if email fails
+      }
     }
 
     // Store or update OAuth account information

@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import { trackLoginMethod } from "@/lib/account-tracking";
+import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // GET /api/auth/google/callback
 // Handles OAuth callback from Google
@@ -137,15 +139,15 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      // User doesn't exist - create new ERP_CUSTOMER
-      // They will be redirected to plan selection before accessing dashboard
+      // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
+      // They will be redirected to plan selection
       user = await db.user.create({
         data: {
           email,
           name: name || email.split("@")[0],
           image: picture,
-          role: "ERP_CUSTOMER", // New signups are ERP customers
-          plan: "ESSENTIAL", // Start with ESSENTIAL plan (1 company, basic features)
+          role: "ERP_CUSTOMER",
+          plan: "GUEST", // Set to GUEST so they're forced to select a plan
           authMethod: "oauth",
           emailVerified: verified_email ? new Date() : null,
           isActive: true,
@@ -162,6 +164,69 @@ export async function GET(request: NextRequest) {
           plan: true,
         },
       });
+
+      // Send welcome email to new customer
+      try {
+        console.log(`[Google OAuth] Sending welcome email to: ${email}`);
+        const { subject, html } = await getWelcomeCustomerEmail(
+          user.name || email,
+          email
+        );
+        console.log(`[Google OAuth] Email subject: ${subject}`);
+        await sendEmail({
+          to: email,
+          subject,
+          html,
+        });
+        console.log(
+          `[Google OAuth] Welcome email sent successfully to: ${email}`
+        );
+
+        // Log welcome email sent
+        await createAuditLog({
+          action: AUDIT_ACTIONS.WELCOME_EMAIL_SENT,
+          userId: user.id,
+          entityType: "User",
+          entityId: user.id,
+          description: `Welcome email sent to new ERP customer: ${email}`,
+          metadata: {
+            email,
+            userName: user.name,
+            provider: "google",
+            subject,
+          },
+        });
+      } catch (emailError) {
+        console.error(
+          "[Google OAuth] Failed to send welcome email:",
+          emailError
+        );
+        console.error("[Google OAuth] Error details:", {
+          message:
+            emailError instanceof Error
+              ? emailError.message
+              : String(emailError),
+          stack: emailError instanceof Error ? emailError.stack : undefined,
+        });
+
+        // Log email failure
+        await createAuditLog({
+          action: AUDIT_ACTIONS.EMAIL_FAILED,
+          userId: user.id,
+          entityType: "User",
+          entityId: user.id,
+          description: `Failed to send welcome email to: ${email}`,
+          metadata: {
+            email,
+            provider: "google",
+            error:
+              emailError instanceof Error
+                ? emailError.message
+                : String(emailError),
+          },
+        }).catch(console.error);
+        // Don't fail OAuth if email fails
+      }
     }
 
     // Store or update OAuth account information
@@ -288,6 +353,20 @@ export async function GET(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 7, // 7 days
         path: "/",
       });
+    }
+
+    console.log(
+      "Google OAuth successful for user:",
+      user.email,
+      "Plan:",
+      user.plan
+    );
+
+    // Check if user needs to select a plan (new users with GUEST plan)
+    if (user.plan === "GUEST") {
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
+      );
     }
 
     // Redirect to dashboard

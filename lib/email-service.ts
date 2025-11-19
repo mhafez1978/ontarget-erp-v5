@@ -404,17 +404,106 @@ export function getPasswordResetEmailHtml(
   `;
 }
 
-export function getWelcomeCustomerEmailHtml(
+/**
+ * Get welcome email HTML from database template with variable replacement
+ */
+export async function getWelcomeCustomerEmail(
   userName: string,
   email: string
-): string {
+): Promise<{ subject: string; html: string }> {
+  try {
+    const template = await db.emailTemplate.findFirst({
+      where: { type: "WELCOME_CUSTOMER" },
+    });
+
+    if (!template) {
+      console.error(
+        "[Email Service] WELCOME_CUSTOMER template not found, using fallback"
+      );
+      const fallbackHtml = await getWelcomeCustomerEmailHtml(userName, email);
+      return {
+        subject: "Welcome! 🎉",
+        html: fallbackHtml,
+      };
+    }
+
+    // Replace variables
+    const variables: Record<string, string> = {
+      userName,
+      email,
+      companyName: "OnTarget ERP",
+      loginUrl: `${
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001"
+      }/login`,
+      currentYear: new Date().getFullYear().toString(),
+      companyLogo: "",
+      staffName: userName, // For backward compatibility if template uses staffName
+    };
+
+    let subject = template.subject;
+    let html = template.bodyHtml;
+
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`{{${key}}}`, "g");
+      subject = subject.replace(regex, value);
+      html = html.replace(regex, value);
+    });
+
+    return { subject, html };
+  } catch (error) {
+    console.error("[Email Service] Error loading template:", error);
+    const fallbackHtml = await getWelcomeCustomerEmailHtml(userName, email);
+    return {
+      subject: "Welcome! 🎉",
+      html: fallbackHtml,
+    };
+  }
+}
+
+/**
+ * DEPRECATED: Use getWelcomeCustomerEmail() instead
+ * Kept for backward compatibility and fallback
+ */
+export async function getWelcomeCustomerEmailHtml(
+  userName: string,
+  email: string
+): Promise<string> {
+  // Try to get root company data for fallback
+  let companyName = "OnTarget ERP";
+  let companyWebsite = process.env.NEXTAUTH_URL || "http://localhost:3001";
+
+  try {
+    const rootCompany = await db.company.findFirst({
+      where: { isRoot: true },
+      select: {
+        name: true,
+        website: true,
+      },
+    });
+
+    if (rootCompany) {
+      companyName = rootCompany.name;
+      if (rootCompany.website) {
+        companyWebsite = rootCompany.website;
+      }
+    }
+  } catch (error) {
+    console.error(
+      "[Email Service] Failed to fetch root company for fallback:",
+      error
+    );
+  }
+
+  const currentYear = new Date().getFullYear();
+  const loginUrl = `${companyWebsite}/login`;
+
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to OnTarget ERP</title>
+        <title>Welcome to ${companyName}</title>
       </head>
       <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
@@ -424,7 +513,7 @@ export function getWelcomeCustomerEmailHtml(
                 <!-- Header -->
                 <tr>
                   <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 32px;">Welcome to OnTarget ERP! 🎉</h1>
+                    <h1 style="color: #ffffff; margin: 0; font-size: 32px;">Welcome to ${companyName}! 🎉</h1>
                   </td>
                 </tr>
                 <!-- Body -->
@@ -432,7 +521,7 @@ export function getWelcomeCustomerEmailHtml(
                   <td style="padding: 40px 30px;">
                     <p style="font-size: 16px; color: #333333; margin: 0 0 20px;">Hello ${userName},</p>
                     <p style="font-size: 16px; color: #333333; line-height: 1.6; margin: 0 0 20px;">
-                      Thank you for registering with OnTarget ERP! Your account has been successfully created.
+                      Thank you for registering with ${companyName}! Your account has been successfully created.
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 6px; padding: 20px; margin: 20px 0;">
                       <tr>
@@ -443,14 +532,12 @@ export function getWelcomeCustomerEmailHtml(
                       </tr>
                     </table>
                     <p style="font-size: 16px; color: #333333; line-height: 1.6; margin: 20px 0;">
-                      You can now log in and start exploring all the features OnTarget ERP has to offer!
+                      You can now log in and start exploring all the features ${companyName} has to offer!
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                       <tr>
                         <td align="center">
-                          <a href="${
-                            process.env.NEXTAUTH_URL
-                          }/login" style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Go to Dashboard</a>
+                          <a href="${loginUrl}" style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Go to Dashboard</a>
                         </td>
                       </tr>
                     </table>
@@ -463,7 +550,7 @@ export function getWelcomeCustomerEmailHtml(
                 <tr>
                   <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-top: 1px solid #e9ecef;">
                     <p style="font-size: 12px; color: #999999; margin: 0;">
-                      © ${new Date().getFullYear()} OnTarget ERP. All rights reserved.
+                      © ${currentYear} ${companyName}. All rights reserved.
                     </p>
                   </td>
                 </tr>

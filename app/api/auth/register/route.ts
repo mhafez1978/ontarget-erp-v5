@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { z } from "zod";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
-import { sendEmail, getWelcomeCustomerEmailHtml } from "@/lib/email-service";
+import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
 
 // Zod schema for registration validation
 const registerSchema = z.object({
@@ -147,14 +147,49 @@ export async function POST(request: NextRequest) {
 
     // Send welcome email to new customer
     try {
-      const html = getWelcomeCustomerEmailHtml(user.name || email, email);
+      const { subject, html } = await getWelcomeCustomerEmail(
+        user.name || email,
+        email
+      );
       await sendEmail({
         to: email,
-        subject: "Welcome to OnTarget ERP - Let's Get Started!",
+        subject,
         html,
+      });
+
+      // Log welcome email sent
+      await createAuditLog({
+        action: AUDIT_ACTIONS.WELCOME_EMAIL_SENT,
+        userId: user.id,
+        entityType: "User",
+        entityId: user.id,
+        description: `Welcome email sent to new ERP customer: ${email}`,
+        metadata: {
+          email,
+          userName: user.name,
+          provider: "credentials",
+          subject,
+        },
       });
     } catch (emailError) {
       console.error("Failed to send welcome email:", emailError);
+
+      // Log email failure
+      await createAuditLog({
+        action: AUDIT_ACTIONS.EMAIL_FAILED,
+        userId: user.id,
+        entityType: "User",
+        entityId: user.id,
+        description: `Failed to send welcome email to: ${email}`,
+        metadata: {
+          email,
+          provider: "credentials",
+          error:
+            emailError instanceof Error
+              ? emailError.message
+              : String(emailError),
+        },
+      }).catch(console.error);
       // Don't fail registration if email fails
     }
 

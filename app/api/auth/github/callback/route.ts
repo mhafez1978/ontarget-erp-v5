@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { createSession } from "@/lib/session-manager";
-import { sendEmail, getWelcomeCustomerEmailHtml } from "@/lib/email-service";
+import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
 
 export async function GET(request: NextRequest) {
   try {
@@ -174,10 +174,13 @@ export async function GET(request: NextRequest) {
 
       // Send welcome email to new customer
       try {
-        const html = getWelcomeCustomerEmailHtml(user.name || email, email);
+        const { subject, html } = await getWelcomeCustomerEmail(
+          user.name || email,
+          email
+        );
         await sendEmail({
           to: email,
-          subject: "Welcome to OnTarget ERP - Let's Get Started!",
+          subject,
           html,
         });
       } catch (emailError) {

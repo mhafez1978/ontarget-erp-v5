@@ -24,6 +24,8 @@ import {
   Key,
   FileText,
   Users,
+  Mail,
+  MailX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -277,6 +279,23 @@ const actionMeta: Record<
     label: "File Deleted",
     color: "bg-red-100 text-red-700 border-red-200",
     icon: Trash2,
+  },
+
+  // Email actions
+  WELCOME_EMAIL_SENT: {
+    label: "Welcome Email Sent",
+    color: "bg-green-100 text-green-700 border-green-200",
+    icon: Mail,
+  },
+  EMAIL_SENT: {
+    label: "Email Sent",
+    color: "bg-blue-100 text-blue-700 border-blue-200",
+    icon: Mail,
+  },
+  EMAIL_FAILED: {
+    label: "Email Failed",
+    color: "bg-red-100 text-red-700 border-red-200",
+    icon: MailX,
   },
 
   // System actions
