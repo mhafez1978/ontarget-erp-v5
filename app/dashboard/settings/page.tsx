@@ -24,6 +24,8 @@ import {
   Database,
   Users,
   Mail,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { StorageProviderCards } from "@/components/storage-provider-cards";
 import { EmailProviderCards } from "@/components/email-provider-cards";
@@ -32,7 +34,15 @@ import { UserManagementTable } from "@/components/user-management-table";
 
 interface OAuthProvider {
   id: string;
-  provider: "google" | "microsoft";
+  provider:
+    | "google"
+    | "microsoft"
+    | "github"
+    | "linkedin"
+    | "yahoo"
+    | "line"
+    | "yandex"
+    | "wechat";
   enabled: boolean;
   clientId: string;
   clientSecret: string | null;
@@ -49,16 +59,61 @@ export default function SettingsPage() {
   const [oauthProviders, setOauthProviders] = useState<{
     google: { enabled: boolean; clientId: string; clientSecret: string };
     microsoft: { enabled: boolean; clientId: string; clientSecret: string };
+    github: { enabled: boolean; clientId: string; clientSecret: string };
+    linkedin: { enabled: boolean; clientId: string; clientSecret: string };
+    yahoo: { enabled: boolean; clientId: string; clientSecret: string };
+    line: { enabled: boolean; clientId: string; clientSecret: string };
+    yandex: { enabled: boolean; clientId: string; clientSecret: string };
+    wechat: { enabled: boolean; clientId: string; clientSecret: string };
   }>({
     google: { enabled: false, clientId: "", clientSecret: "" },
     microsoft: { enabled: false, clientId: "", clientSecret: "" },
+    github: { enabled: false, clientId: "", clientSecret: "" },
+    linkedin: { enabled: false, clientId: "", clientSecret: "" },
+    yahoo: { enabled: false, clientId: "", clientSecret: "" },
+    line: { enabled: false, clientId: "", clientSecret: "" },
+    yandex: { enabled: false, clientId: "", clientSecret: "" },
+    wechat: { enabled: false, clientId: "", clientSecret: "" },
   });
   const [oauthLoading, setOauthLoading] = useState<{
     google: boolean;
     microsoft: boolean;
+    github: boolean;
+    linkedin: boolean;
+    yahoo: boolean;
+    line: boolean;
+    yandex: boolean;
+    wechat: boolean;
   }>({
     google: false,
     microsoft: false,
+    github: false,
+    linkedin: false,
+    yahoo: false,
+    line: false,
+    yandex: false,
+    wechat: false,
+  });
+
+  // State to track password visibility for each provider
+  const [showSecrets, setShowSecrets] = useState<{
+    google: boolean;
+    microsoft: boolean;
+    github: boolean;
+    linkedin: boolean;
+    yahoo: boolean;
+    line: boolean;
+    yandex: boolean;
+    wechat: boolean;
+  }>({
+    google: false,
+    microsoft: false,
+    github: false,
+    linkedin: false,
+    yahoo: false,
+    line: false,
+    yandex: false,
+    wechat: false,
   });
 
   const [user, setUser] = useState({
@@ -121,17 +176,65 @@ export default function SettingsPage() {
           const microsoftProvider = providers.find(
             (p: OAuthProvider) => p.provider === "microsoft"
           );
+          const githubProvider = providers.find(
+            (p: OAuthProvider) => p.provider === "github"
+          );
+          const linkedinProvider = providers.find(
+            (p: OAuthProvider) => p.provider === "linkedin"
+          );
+          const yahooProvider = providers.find(
+            (p: OAuthProvider) => p.provider === "yahoo"
+          );
+          const lineProvider = providers.find(
+            (p: OAuthProvider) => p.provider === "line"
+          );
+          const yandexProvider = providers.find(
+            (p: OAuthProvider) => p.provider === "yandex"
+          );
+          const wechatProvider = providers.find(
+            (p: OAuthProvider) => p.provider === "wechat"
+          );
 
           setOauthProviders({
             google: {
               enabled: googleProvider?.enabled || false,
               clientId: googleProvider?.clientId || "",
-              clientSecret: "",
+              clientSecret: googleProvider?.clientSecret || "",
             },
             microsoft: {
               enabled: microsoftProvider?.enabled || false,
               clientId: microsoftProvider?.clientId || "",
-              clientSecret: "",
+              clientSecret: microsoftProvider?.clientSecret || "",
+            },
+            github: {
+              enabled: githubProvider?.enabled || false,
+              clientId: githubProvider?.clientId || "",
+              clientSecret: githubProvider?.clientSecret || "",
+            },
+            linkedin: {
+              enabled: linkedinProvider?.enabled || false,
+              clientId: linkedinProvider?.clientId || "",
+              clientSecret: linkedinProvider?.clientSecret || "",
+            },
+            yahoo: {
+              enabled: yahooProvider?.enabled || false,
+              clientId: yahooProvider?.clientId || "",
+              clientSecret: yahooProvider?.clientSecret || "",
+            },
+            line: {
+              enabled: lineProvider?.enabled || false,
+              clientId: lineProvider?.clientId || "",
+              clientSecret: lineProvider?.clientSecret || "",
+            },
+            yandex: {
+              enabled: yandexProvider?.enabled || false,
+              clientId: yandexProvider?.clientId || "",
+              clientSecret: yandexProvider?.clientSecret || "",
+            },
+            wechat: {
+              enabled: wechatProvider?.enabled || false,
+              clientId: wechatProvider?.clientId || "",
+              clientSecret: wechatProvider?.clientSecret || "",
             },
           });
         }
@@ -164,7 +267,15 @@ export default function SettingsPage() {
   };
 
   const handleOAuthToggle = async (
-    provider: "google" | "microsoft",
+    provider:
+      | "google"
+      | "microsoft"
+      | "github"
+      | "linkedin"
+      | "yahoo"
+      | "line"
+      | "yandex"
+      | "wechat",
     checked: boolean
   ) => {
     setOauthLoading({ ...oauthLoading, [provider]: true });
@@ -195,7 +306,17 @@ export default function SettingsPage() {
     }
   };
 
-  const handleOAuthUpdate = async (provider: "google" | "microsoft") => {
+  const handleOAuthUpdate = async (
+    provider:
+      | "google"
+      | "microsoft"
+      | "github"
+      | "linkedin"
+      | "yahoo"
+      | "line"
+      | "yandex"
+      | "wechat"
+  ) => {
     setOauthLoading({ ...oauthLoading, [provider]: true });
     try {
       const response = await fetch("/api/settings/oauth-providers", {
@@ -477,21 +598,44 @@ export default function SettingsPage() {
                         <Label htmlFor="google-client-secret">
                           Client Secret
                         </Label>
-                        <Input
-                          id="google-client-secret"
-                          type="password"
-                          placeholder="Enter Google OAuth Client Secret"
-                          value={oauthProviders.google.clientSecret}
-                          onChange={(e) =>
-                            setOauthProviders({
-                              ...oauthProviders,
-                              google: {
-                                ...oauthProviders.google,
-                                clientSecret: e.target.value,
-                              },
-                            })
-                          }
-                        />
+                        <div className="relative">
+                          <Input
+                            id="google-client-secret"
+                            type={showSecrets.google ? "text" : "password"}
+                            placeholder={
+                              oauthProviders.google.clientSecret
+                                ? "••••••••••••••••"
+                                : "Enter Google OAuth Client Secret"
+                            }
+                            value={oauthProviders.google.clientSecret}
+                            onChange={(e) =>
+                              setOauthProviders({
+                                ...oauthProviders,
+                                google: {
+                                  ...oauthProviders.google,
+                                  clientSecret: e.target.value,
+                                },
+                              })
+                            }
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowSecrets({
+                                ...showSecrets,
+                                google: !showSecrets.google,
+                              })
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showSecrets.google ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                       <Button
                         onClick={() => handleOAuthUpdate("google")}
@@ -574,21 +718,44 @@ export default function SettingsPage() {
                         <Label htmlFor="microsoft-client-secret">
                           Client Secret
                         </Label>
-                        <Input
-                          id="microsoft-client-secret"
-                          type="password"
-                          placeholder="Enter Microsoft Azure Client Secret"
-                          value={oauthProviders.microsoft.clientSecret}
-                          onChange={(e) =>
-                            setOauthProviders({
-                              ...oauthProviders,
-                              microsoft: {
-                                ...oauthProviders.microsoft,
-                                clientSecret: e.target.value,
-                              },
-                            })
-                          }
-                        />
+                        <div className="relative">
+                          <Input
+                            id="microsoft-client-secret"
+                            type={showSecrets.microsoft ? "text" : "password"}
+                            placeholder={
+                              oauthProviders.microsoft.clientSecret
+                                ? "••••••••••••••••"
+                                : "Enter Microsoft Azure Client Secret"
+                            }
+                            value={oauthProviders.microsoft.clientSecret}
+                            onChange={(e) =>
+                              setOauthProviders({
+                                ...oauthProviders,
+                                microsoft: {
+                                  ...oauthProviders.microsoft,
+                                  clientSecret: e.target.value,
+                                },
+                              })
+                            }
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowSecrets({
+                                ...showSecrets,
+                                microsoft: !showSecrets.microsoft,
+                              })
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showSecrets.microsoft ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                       <Button
                         onClick={() => handleOAuthUpdate("microsoft")}
@@ -596,6 +763,676 @@ export default function SettingsPage() {
                         size="sm"
                       >
                         Save Microsoft Credentials
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* GitHub OAuth */}
+                <div className="rounded-lg border p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-gray-900 dark:bg-white flex items-center justify-center shadow-sm">
+                        <svg
+                          className="h-6 w-6 text-white dark:text-gray-900"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">GitHub OAuth</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Allow users to sign in with GitHub
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {oauthProviders.github.enabled ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-gray-400" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {oauthProviders.github.enabled
+                            ? "Enabled"
+                            : "Disabled"}
+                        </span>
+                      </div>
+                      <Switch
+                        checked={oauthProviders.github.enabled}
+                        onCheckedChange={(checked) =>
+                          handleOAuthToggle("github", checked)
+                        }
+                        disabled={oauthLoading.github}
+                      />
+                    </div>
+                  </div>
+                  {oauthProviders.github.enabled && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="github-client-id">Client ID</Label>
+                        <Input
+                          id="github-client-id"
+                          placeholder="Enter GitHub OAuth Client ID"
+                          value={oauthProviders.github.clientId}
+                          onChange={(e) =>
+                            setOauthProviders({
+                              ...oauthProviders,
+                              github: {
+                                ...oauthProviders.github,
+                                clientId: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="github-client-secret">
+                          Client Secret
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="github-client-secret"
+                            type={showSecrets.github ? "text" : "password"}
+                            placeholder={
+                              oauthProviders.github.clientSecret
+                                ? "••••••••••••••••"
+                                : "Enter GitHub OAuth Client Secret"
+                            }
+                            value={oauthProviders.github.clientSecret}
+                            onChange={(e) =>
+                              setOauthProviders({
+                                ...oauthProviders,
+                                github: {
+                                  ...oauthProviders.github,
+                                  clientSecret: e.target.value,
+                                },
+                              })
+                            }
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowSecrets({
+                                ...showSecrets,
+                                github: !showSecrets.github,
+                              })
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showSecrets.github ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleOAuthUpdate("github")}
+                        disabled={oauthLoading.github}
+                        size="sm"
+                      >
+                        Save GitHub Credentials
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* LinkedIn OAuth */}
+                <div className="rounded-lg border p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#0077B5] flex items-center justify-center shadow-sm">
+                        <svg
+                          className="h-6 w-6 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">LinkedIn OAuth</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Allow users to sign in with LinkedIn
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {oauthProviders.linkedin.enabled ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-gray-400" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {oauthProviders.linkedin.enabled
+                            ? "Enabled"
+                            : "Disabled"}
+                        </span>
+                      </div>
+                      <Switch
+                        checked={oauthProviders.linkedin.enabled}
+                        onCheckedChange={(checked) =>
+                          handleOAuthToggle("linkedin", checked)
+                        }
+                        disabled={oauthLoading.linkedin}
+                      />
+                    </div>
+                  </div>
+                  {oauthProviders.linkedin.enabled && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="linkedin-client-id">Client ID</Label>
+                        <Input
+                          id="linkedin-client-id"
+                          placeholder="Enter LinkedIn OAuth Client ID"
+                          value={oauthProviders.linkedin.clientId}
+                          onChange={(e) =>
+                            setOauthProviders({
+                              ...oauthProviders,
+                              linkedin: {
+                                ...oauthProviders.linkedin,
+                                clientId: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="linkedin-client-secret">
+                          Client Secret
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="linkedin-client-secret"
+                            type={showSecrets.linkedin ? "text" : "password"}
+                            placeholder={
+                              oauthProviders.linkedin.clientSecret
+                                ? "••••••••••••••••"
+                                : "Enter LinkedIn OAuth Client Secret"
+                            }
+                            value={oauthProviders.linkedin.clientSecret}
+                            onChange={(e) =>
+                              setOauthProviders({
+                                ...oauthProviders,
+                                linkedin: {
+                                  ...oauthProviders.linkedin,
+                                  clientSecret: e.target.value,
+                                },
+                              })
+                            }
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowSecrets({
+                                ...showSecrets,
+                                linkedin: !showSecrets.linkedin,
+                              })
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showSecrets.linkedin ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleOAuthUpdate("linkedin")}
+                        disabled={oauthLoading.linkedin}
+                        size="sm"
+                      >
+                        Save LinkedIn Credentials
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Yahoo OAuth */}
+                <div className="rounded-lg border p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#6001D2] flex items-center justify-center shadow-sm">
+                        <span className="text-white font-bold text-xl">Y!</span>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Yahoo OAuth</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Allow users to sign in with Yahoo
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {oauthProviders.yahoo.enabled ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-gray-400" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {oauthProviders.yahoo.enabled
+                            ? "Enabled"
+                            : "Disabled"}
+                        </span>
+                      </div>
+                      <Switch
+                        checked={oauthProviders.yahoo.enabled}
+                        onCheckedChange={(checked) =>
+                          handleOAuthToggle("yahoo", checked)
+                        }
+                        disabled={oauthLoading.yahoo}
+                      />
+                    </div>
+                  </div>
+                  {oauthProviders.yahoo.enabled && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="yahoo-client-id">Client ID</Label>
+                        <Input
+                          id="yahoo-client-id"
+                          placeholder="Enter Yahoo OAuth Client ID"
+                          value={oauthProviders.yahoo.clientId}
+                          onChange={(e) =>
+                            setOauthProviders({
+                              ...oauthProviders,
+                              yahoo: {
+                                ...oauthProviders.yahoo,
+                                clientId: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="yahoo-client-secret">
+                          Client Secret
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="yahoo-client-secret"
+                            type={showSecrets.yahoo ? "text" : "password"}
+                            placeholder={
+                              oauthProviders.yahoo.clientSecret
+                                ? "••••••••••••••••"
+                                : "Enter Yahoo OAuth Client Secret"
+                            }
+                            value={oauthProviders.yahoo.clientSecret}
+                            onChange={(e) =>
+                              setOauthProviders({
+                                ...oauthProviders,
+                                yahoo: {
+                                  ...oauthProviders.yahoo,
+                                  clientSecret: e.target.value,
+                                },
+                              })
+                            }
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowSecrets({
+                                ...showSecrets,
+                                yahoo: !showSecrets.yahoo,
+                              })
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showSecrets.yahoo ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleOAuthUpdate("yahoo")}
+                        disabled={oauthLoading.yahoo}
+                        size="sm"
+                      >
+                        Save Yahoo Credentials
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* LINE OAuth */}
+                <div className="rounded-lg border p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#00B900] flex items-center justify-center shadow-sm">
+                        <span className="text-white font-bold text-xl">
+                          LINE
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">LINE OAuth</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Allow users to sign in with LINE
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {oauthProviders.line.enabled ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-gray-400" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {oauthProviders.line.enabled ? "Enabled" : "Disabled"}
+                        </span>
+                      </div>
+                      <Switch
+                        checked={oauthProviders.line.enabled}
+                        onCheckedChange={(checked) =>
+                          handleOAuthToggle("line", checked)
+                        }
+                        disabled={oauthLoading.line}
+                      />
+                    </div>
+                  </div>
+                  {oauthProviders.line.enabled && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="line-client-id">Channel ID</Label>
+                        <Input
+                          id="line-client-id"
+                          placeholder="Enter LINE Channel ID"
+                          value={oauthProviders.line.clientId}
+                          onChange={(e) =>
+                            setOauthProviders({
+                              ...oauthProviders,
+                              line: {
+                                ...oauthProviders.line,
+                                clientId: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="line-client-secret">
+                          Channel Secret
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="line-client-secret"
+                            type={showSecrets.line ? "text" : "password"}
+                            placeholder={
+                              oauthProviders.line.clientSecret
+                                ? "••••••••••••••••"
+                                : "Enter LINE Channel Secret"
+                            }
+                            value={oauthProviders.line.clientSecret}
+                            onChange={(e) =>
+                              setOauthProviders({
+                                ...oauthProviders,
+                                line: {
+                                  ...oauthProviders.line,
+                                  clientSecret: e.target.value,
+                                },
+                              })
+                            }
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowSecrets({
+                                ...showSecrets,
+                                line: !showSecrets.line,
+                              })
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showSecrets.line ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleOAuthUpdate("line")}
+                        disabled={oauthLoading.line}
+                        size="sm"
+                      >
+                        Save LINE Credentials
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Yandex OAuth */}
+                <div className="rounded-lg border p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#FF0000] flex items-center justify-center shadow-sm">
+                        <span className="text-white font-bold text-xl">Я</span>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Yandex OAuth</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Allow users to sign in with Yandex
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {oauthProviders.yandex.enabled ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-gray-400" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {oauthProviders.yandex.enabled
+                            ? "Enabled"
+                            : "Disabled"}
+                        </span>
+                      </div>
+                      <Switch
+                        checked={oauthProviders.yandex.enabled}
+                        onCheckedChange={(checked) =>
+                          handleOAuthToggle("yandex", checked)
+                        }
+                        disabled={oauthLoading.yandex}
+                      />
+                    </div>
+                  </div>
+                  {oauthProviders.yandex.enabled && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="yandex-client-id">Application ID</Label>
+                        <Input
+                          id="yandex-client-id"
+                          placeholder="Enter Yandex Application ID"
+                          value={oauthProviders.yandex.clientId}
+                          onChange={(e) =>
+                            setOauthProviders({
+                              ...oauthProviders,
+                              yandex: {
+                                ...oauthProviders.yandex,
+                                clientId: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="yandex-client-secret">
+                          Client Secret
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="yandex-client-secret"
+                            type={showSecrets.yandex ? "text" : "password"}
+                            placeholder={
+                              oauthProviders.yandex.clientSecret
+                                ? "••••••••••••••••"
+                                : "Enter Yandex Client Secret"
+                            }
+                            value={oauthProviders.yandex.clientSecret}
+                            onChange={(e) =>
+                              setOauthProviders({
+                                ...oauthProviders,
+                                yandex: {
+                                  ...oauthProviders.yandex,
+                                  clientSecret: e.target.value,
+                                },
+                              })
+                            }
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowSecrets({
+                                ...showSecrets,
+                                yandex: !showSecrets.yandex,
+                              })
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showSecrets.yandex ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleOAuthUpdate("yandex")}
+                        disabled={oauthLoading.yandex}
+                        size="sm"
+                      >
+                        Save Yandex Credentials
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* WeChat OAuth */}
+                <div className="rounded-lg border p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#07C160] flex items-center justify-center shadow-sm">
+                        <svg
+                          className="h-6 w-6 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088v-.034zm-3.01 2.402c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">WeChat OAuth</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Allow users to sign in with WeChat
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {oauthProviders.wechat.enabled ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-gray-400" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {oauthProviders.wechat.enabled
+                            ? "Enabled"
+                            : "Disabled"}
+                        </span>
+                      </div>
+                      <Switch
+                        checked={oauthProviders.wechat.enabled}
+                        onCheckedChange={(checked) =>
+                          handleOAuthToggle("wechat", checked)
+                        }
+                        disabled={oauthLoading.wechat}
+                      />
+                    </div>
+                  </div>
+                  {oauthProviders.wechat.enabled && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="wechat-client-id">App ID</Label>
+                        <Input
+                          id="wechat-client-id"
+                          placeholder="Enter WeChat App ID"
+                          value={oauthProviders.wechat.clientId}
+                          onChange={(e) =>
+                            setOauthProviders({
+                              ...oauthProviders,
+                              wechat: {
+                                ...oauthProviders.wechat,
+                                clientId: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="wechat-client-secret">App Secret</Label>
+                        <div className="relative">
+                          <Input
+                            id="wechat-client-secret"
+                            type={showSecrets.wechat ? "text" : "password"}
+                            placeholder={
+                              oauthProviders.wechat.clientSecret
+                                ? "••••••••••••••••"
+                                : "Enter WeChat App Secret"
+                            }
+                            value={oauthProviders.wechat.clientSecret}
+                            onChange={(e) =>
+                              setOauthProviders({
+                                ...oauthProviders,
+                                wechat: {
+                                  ...oauthProviders.wechat,
+                                  clientSecret: e.target.value,
+                                },
+                              })
+                            }
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowSecrets({
+                                ...showSecrets,
+                                wechat: !showSecrets.wechat,
+                              })
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {showSecrets.wechat ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleOAuthUpdate("wechat")}
+                        disabled={oauthLoading.wechat}
+                        size="sm"
+                      >
+                        Save WeChat Credentials
                       </Button>
                     </div>
                   )}

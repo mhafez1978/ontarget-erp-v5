@@ -9,6 +9,7 @@ export async function GET() {
         provider: true,
         enabled: true,
         clientId: true,
+        clientSecret: true,
         createdAt: true,
         updatedAt: true,
       },

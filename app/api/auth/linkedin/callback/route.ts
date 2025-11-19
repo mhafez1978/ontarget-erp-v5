@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { createSession } from "@/lib/session-manager";
 
 export async function GET(request: NextRequest) {
   try {
@@ -152,17 +153,17 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Create session
+    // Create session using session manager
     const cookieStore = await cookies();
-    if (user) {
-      cookieStore.set("userId", user.id, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: "/",
-      });
-    }
+    const session = await createSession({ userId: user.id });
+
+    cookieStore.set("sessionToken", session.sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
 
     // Check if user needs to select a plan (new users with GUEST plan)
     if (user.plan === "GUEST") {
