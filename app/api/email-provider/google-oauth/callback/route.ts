@@ -159,6 +159,12 @@ export async function GET(request: NextRequest) {
         },
       });
     } else {
+      // Get root company for createdById
+      const rootCompany = await db.company.findFirst({
+        where: { isRoot: true },
+        select: { id: true },
+      });
+
       // Create new provider
       await db.emailProvider.create({
         data: {
@@ -172,6 +178,7 @@ export async function GET(request: NextRequest) {
           isConnected: true,
           fromName: "OnTarget Brands Inc",
           fromEmail: fromEmail,
+          createdById: rootCompany?.id || "system",
         },
       });
     }
