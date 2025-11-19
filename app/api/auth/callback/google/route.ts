@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
-import crypto from "crypto";
 import { trackLoginMethod } from "@/lib/account-tracking";
+import { createSession } from "@/lib/session-manager";
 
 // GET /api/auth/google/callback
 // Handles OAuth callback from Google
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      // User doesn't exist - create new ERP_CUSTOMER
+      // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
       // They will be redirected to plan selection before accessing dashboard
       user = await db.user.create({
         data: {
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
           name: name || email.split("@")[0],
           image: picture,
           role: "ERP_CUSTOMER", // New signups are ERP customers
-          plan: "ESSENTIAL", // Start with ESSENTIAL plan (1 company, basic features)
+          plan: "GUEST", // Set to GUEST so they're forced to select a plan
           authMethod: "oauth",
           emailVerified: verified_email ? new Date() : null,
           isActive: true,
@@ -219,83 +219,31 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get user's geolocation
-    let geoData = null;
-    try {
-      const geoResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/get-location`,
-        {
-          headers: {
-            "x-forwarded-for": request.headers.get("x-forwarded-for") || "",
-            "x-real-ip": request.headers.get("x-real-ip") || "",
-          },
-        }
-      );
-      if (geoResponse.ok) {
-        geoData = await geoResponse.json();
-      }
-    } catch (error) {
-      console.error("Error fetching geolocation:", error);
-    }
-
-    // Create a session record with geo-tracking
-    const sessionToken = crypto.randomUUID();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
-
-    await db.session.create({
-      data: {
-        sessionToken,
-        userId: user.id,
-        expires: expiresAt,
-        sessionIpAddress: geoData?.ip || null,
-        sessionIpv4: geoData?.ipv4 || null,
-        sessionIpv6: geoData?.ipv6 || null,
-        sessionCity: geoData?.city || null,
-        sessionState: geoData?.region || null,
-        sessionCountry: geoData?.country_name || null,
-        sessionCountryFlag: geoData?.flag || null,
-      },
-    });
-
-    // Update user's last login info
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        lastLoginAt: new Date(),
-        lastLoginIpAddress: geoData?.ip || null,
-        lastLoginCity: geoData?.city || null,
-        lastLoginState: geoData?.region || null,
-        lastLoginCountry: geoData?.country || null,
-        lastLoginCountryFlag: geoData?.flag || null,
-      },
-    });
-
-    // Create session cookie
+    // Create session using session manager
     const cookieStore = await cookies();
-    console.log("Setting cookies for user:", user.id);
-    if (user) {
-      cookieStore.set("userId", user.id, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: "/",
-      });
-      cookieStore.set("sessionToken", sessionToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: "/",
-      });
-      console.log("Cookies set successfully. SessionToken:", sessionToken);
-    }
+    const session = await createSession({ userId: user.id });
+    
+    cookieStore.set("sessionToken", session.sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
 
     console.log(
-      "Google OAuth successful - redirecting to dashboard for user:",
-      user.email
+      "Google OAuth successful for user:",
+      user.email,
+      "Plan:",
+      user.plan
     );
+
+    // Check if user needs to select a plan (new users with GUEST plan)
+    if (user.plan === "GUEST") {
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
+      );
+    }
 
     // Redirect to dashboard
     return NextResponse.redirect(
