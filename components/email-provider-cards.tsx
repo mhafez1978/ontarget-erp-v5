@@ -196,6 +196,10 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
           const data = await response.json();
           if (response.ok) {
             setCompanies(data.companies || []);
+            // For ADMIN users, default to first company instead of GLOBAL
+            if (userRole === "ADMIN" && data.companies?.length > 0) {
+              setSelectedCompanyId(data.companies[0].id);
+            }
           }
         } catch (err) {
           console.error("Error fetching companies:", err);
@@ -460,14 +464,26 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
       selectedProvider.type === "NODEMAILER" ||
       selectedProvider.type === "SMTP"
     ) {
-      config.smtpHost = nodemailerHost;
-      config.smtpPort = parseInt(nodemailerPort) || 587;
-      config.smtpUsername = nodemailerUsername;
-      // Only include password if it's been changed
-      if (nodemailerPassword) {
-        config.smtpPassword = nodemailerPassword;
+      // Gmail SMTP preset configuration
+      if (selectedProvider.isGmail) {
+        config.smtpHost = "smtp.gmail.com";
+        config.smtpPort = 587;
+        config.smtpUsername = nodemailerUsername;
+        if (nodemailerPassword) {
+          // Remove spaces from app password
+          config.smtpPassword = nodemailerPassword.replace(/\s/g, "");
+        }
+        config.smtpSecure = false; // Use STARTTLS on port 587
+      } else {
+        // Custom SMTP configuration
+        config.smtpHost = nodemailerHost;
+        config.smtpPort = parseInt(nodemailerPort) || 587;
+        config.smtpUsername = nodemailerUsername;
+        if (nodemailerPassword) {
+          config.smtpPassword = nodemailerPassword;
+        }
+        config.smtpSecure = nodemailerSecure;
       }
-      config.smtpSecure = nodemailerSecure;
     }
 
     return config;
@@ -1368,7 +1384,6 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   value={nodemailerHost}
                   onChange={(e) => setNodemailerHost(e.target.value)}
                   placeholder="smtp.example.com"
-                  disabled={selectedProvider.isGmail}
                 />
                 <p className="text-xs text-muted-foreground">
                   {selectedProvider.isGmail
@@ -1384,7 +1399,6 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     value={nodemailerPort}
                     onChange={(e) => setNodemailerPort(e.target.value)}
                     placeholder="587"
-                    disabled={selectedProvider.isGmail}
                   />
                   <p className="text-xs text-muted-foreground">
                     {selectedProvider.isGmail
@@ -1401,7 +1415,6 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                       checked={nodemailerSecure}
                       onChange={(e) => setNodemailerSecure(e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300"
-                      disabled={selectedProvider.isGmail}
                     />
                     <label
                       htmlFor="nodemailer-secure"
@@ -1513,9 +1526,11 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   value={selectedCompanyId}
                   onChange={(e) => setSelectedCompanyId(e.target.value)}
                 >
-                  <option value="GLOBAL">
-                    🌐 Global Default (System-wide)
-                  </option>
+                  {userRole === "SUPER_ADMIN" && (
+                    <option value="GLOBAL">
+                      🌐 Global Default (System-wide)
+                    </option>
+                  )}
                   {companies.map((company) => (
                     <option key={company.id} value={company.id}>
                       🏢 {company.name} (Company Override)
@@ -1525,7 +1540,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                 <p className="text-xs text-muted-foreground">
                   {userRole === "SUPER_ADMIN"
                     ? "Configure global default settings or override for specific companies you own."
-                    : 'Select "Global Default" to use the system-wide email configuration, or choose a company to override with custom settings.'}
+                    : "Choose a company to override the global email settings with custom configuration."}
                 </p>
               </div>
             </CardContent>

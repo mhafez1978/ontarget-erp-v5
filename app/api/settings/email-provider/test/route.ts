@@ -75,13 +75,22 @@ export async function POST(req: NextRequest) {
               { status: 400 }
             );
           }
+
+          // Check if this is Gmail SMTP (by host)
+          const isGmailSMTP = (data.smtpHost as string).includes(
+            "smtp.gmail.com"
+          );
+
           transporter = nodemailer.createTransport({
             host: data.smtpHost,
             port: data.smtpPort,
             secure: data.smtpSecure || false,
             auth: {
               user: data.smtpUsername,
-              pass: data.smtpPassword || "",
+              // Remove spaces from Gmail app passwords
+              pass: isGmailSMTP
+                ? (data.smtpPassword || "").replace(/\s/g, "")
+                : data.smtpPassword || "",
             },
             connectionTimeout: 10000,
             socketTimeout: 10000,
@@ -101,7 +110,7 @@ export async function POST(req: NextRequest) {
             secure: false,
             auth: {
               user: data.smtpUsername,
-              pass: data.smtpPassword,
+              pass: data.smtpPassword.replace(/\s/g, ""), // Remove spaces from app password
             },
             connectionTimeout: 10000,
             socketTimeout: 10000,

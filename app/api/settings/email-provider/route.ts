@@ -156,6 +156,12 @@ export async function POST(req: NextRequest) {
     const user = validation.user;
 
     const body = await req.json();
+    console.log("[Email Provider POST] Received body:", {
+      provider: body.provider,
+      scope: body.scope,
+      companyId: body.companyId,
+      userRole: user.role,
+    });
     const data = emailProviderSchema.parse(body);
 
     if (!user) {

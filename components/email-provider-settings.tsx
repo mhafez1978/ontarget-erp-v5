@@ -396,15 +396,15 @@ export function EmailProviderSettings({
       }
       config.smtpSecure = smtpSecure;
     } else if (provider === "GMAIL") {
-      // Gmail uses smtp.gmail.com with port 587 and TLS
+      // Gmail uses smtp.gmail.com with port 587 and STARTTLS
       config.smtpHost = "smtp.gmail.com";
       config.smtpPort = 587;
       config.smtpUsername = smtpUsername;
       // Only include password if it's been changed (not empty)
       if (smtpPassword) {
-        config.smtpPassword = smtpPassword;
+        config.smtpPassword = smtpPassword.replace(/\s/g, ""); // Remove any spaces from app password
       }
-      config.smtpSecure = true;
+      config.smtpSecure = false; // Use STARTTLS on port 587, not SSL
     } else if (provider === "OFFICE365") {
       // Office 365 uses OAuth with Microsoft Graph API
       config.office365TenantId = office365TenantId;
