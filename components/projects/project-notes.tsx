@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TimeTracker } from "@/components/projects/time-tracker";
 import { toast } from "sonner";
@@ -211,12 +211,10 @@ export function ProjectNotes({
         {/* Add New Note Form */}
         {isAdding && (
           <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
-            <Textarea
+            <RichTextEditor
+              content={newNoteContent}
+              onChange={setNewNoteContent}
               placeholder="Write your note..."
-              value={newNoteContent}
-              onChange={(e) => setNewNoteContent(e.target.value)}
-              className="min-h-[100px]"
-              disabled={isSaving}
             />
             <div className="flex items-center justify-between">
               <TimeTracker
@@ -262,11 +260,10 @@ export function ProjectNotes({
                 {editingId === note.id ? (
                   // Edit Mode
                   <>
-                    <Textarea
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      className="min-h-[100px]"
-                      disabled={isSaving}
+                    <RichTextEditor
+                      content={editContent}
+                      onChange={setEditContent}
+                      placeholder="Edit your note..."
                     />
                     <div className="flex items-center justify-between">
                       <TimeTracker
@@ -331,9 +328,10 @@ export function ProjectNotes({
                               </span>
                             )}
                           </div>
-                          <p className="text-sm whitespace-pre-wrap">
-                            {note.content}
-                          </p>
+                          <div
+                            className="prose prose-sm max-w-none text-sm"
+                            dangerouslySetInnerHTML={{ __html: note.content }}
+                          />
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
