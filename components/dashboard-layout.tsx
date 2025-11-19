@@ -22,9 +22,14 @@ interface DashboardLayoutProps {
     image?: string | null;
     role?: string;
   };
+  containerClassName?: string;
 }
 
-export function DashboardLayout({ children, user }: DashboardLayoutProps) {
+export function DashboardLayout({
+  children,
+  user,
+  containerClassName,
+}: DashboardLayoutProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [companyCount, setCompanyCount] = React.useState(0);
   const [userImage, setUserImage] = React.useState(user?.image);
@@ -375,7 +380,9 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto p-6">{children}</div>
+        <div className={cn("container mx-auto p-6", containerClassName)}>
+          {children}
+        </div>
       </main>
     </div>
   );

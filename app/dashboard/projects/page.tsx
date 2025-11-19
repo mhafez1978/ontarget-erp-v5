@@ -115,7 +115,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <DashboardLayout user={user}>
+    <DashboardLayout user={user} containerClassName="max-w-none px-3 py-4">
       {getRoleProjectsView(user.role)}
     </DashboardLayout>
   );

@@ -216,7 +216,7 @@ function DroppableColumn({ status, config, projects }: DroppableColumnProps) {
       }`}
     >
       {/* Column Header */}
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 px-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium text-emerald-900">
             {config.label}
@@ -231,7 +231,7 @@ function DroppableColumn({ status, config, projects }: DroppableColumnProps) {
       </CardHeader>
 
       {/* Projects Content - inside the column */}
-      <CardContent className="flex-1 pt-0 space-y-3">
+      <CardContent className="flex-1 pt-0 px-3 space-y-3">
         {projects.length === 0 ? (
           <div className="flex items-center justify-center h-32 border-2 border-dashed border-emerald-400 rounded-lg bg-emerald-50/50">
             <p className="text-sm text-emerald-700">
