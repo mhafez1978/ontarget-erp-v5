@@ -24,7 +24,7 @@ export async function PATCH(
     }
 
     const userId = validation.user.id;
-    const { projectId, noteId } = params;
+    const { projectId, noteId } = await params;
     const body = await request.json();
     const { content, timeEntry } = body;
 
@@ -175,7 +175,7 @@ export async function DELETE(
     }
 
     const userId = validation.user.id;
-    const { projectId, noteId } = params;
+    const { projectId, noteId } = await params;
 
     // Verify note exists and belongs to the project
     const note = await db.projectNote.findUnique({

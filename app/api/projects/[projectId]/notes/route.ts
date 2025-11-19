@@ -102,7 +102,7 @@ export async function POST(
     }
 
     const userId = validation.user.id;
-    const { projectId } = params;
+    const { projectId } = await params;
     const body = await request.json();
     const { content, timeEntry = 0 } = body;
 
