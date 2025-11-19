@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
     // Create session token
     const cookieStore = await cookies();
     const session = await createSession({ userId: user.id });
-    
+
     cookieStore.set("sessionToken", session.sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

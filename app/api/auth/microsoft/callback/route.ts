@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
-import crypto from "crypto";
+import { createSession } from "@/lib/session-manager";
 
 // GET /api/auth/microsoft/callback
 // Handles OAuth callback from Microsoft
@@ -147,14 +147,15 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      // User doesn't exist - create new ERP_CUSTOMER with ESSENTIAL plan
+      // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
+      // They will be redirected to plan selection
       user = await db.user.create({
         data: {
           email,
           name: displayName || email.split("@")[0],
           image: null, // Microsoft doesn't provide photo in basic profile
           role: "ERP_CUSTOMER",
-          plan: "ESSENTIAL", // Start with ESSENTIAL plan (1 company, basic features)
+          plan: "GUEST", // Set to GUEST so they're forced to select a plan
           authMethod: "oauth",
           emailVerified: new Date(), // Microsoft emails are verified
           isActive: true,
@@ -209,76 +210,24 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get user's geolocation
-    let geoData = null;
-    try {
-      const geoResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/get-location`,
-        {
-          headers: {
-            "x-forwarded-for": request.headers.get("x-forwarded-for") || "",
-            "x-real-ip": request.headers.get("x-real-ip") || "",
-          },
-        }
-      );
-      if (geoResponse.ok) {
-        geoData = await geoResponse.json();
-      }
-    } catch (error) {
-      console.error("Error fetching geolocation:", error);
-    }
-
-    // Create a session record with geo-tracking
-    const sessionToken = crypto.randomUUID();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
-
-    await db.session.create({
-      data: {
-        sessionToken,
-        userId: user.id,
-        expires: expiresAt,
-        sessionIpAddress: geoData?.ip || null,
-        sessionIpv4: geoData?.ipv4 || null,
-        sessionIpv6: geoData?.ipv6 || null,
-        sessionCity: geoData?.city || null,
-        sessionState: geoData?.region || null,
-        sessionCountry: geoData?.country_name || null,
-        sessionCountryFlag: geoData?.flag || null,
-      },
-    });
-
-    // Update user's last login info
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        lastLoginAt: new Date(),
-        lastLoginIpAddress: geoData?.ip || null,
-        lastLoginCity: geoData?.city || null,
-        lastLoginState: geoData?.region || null,
-        lastLoginCountry: geoData?.country || null,
-        lastLoginCountryFlag: geoData?.flag || null,
-      },
-    });
-
-    // Create session cookies
+    // Create session using session manager
     const cookieStore = await cookies();
-    if (user) {
-      cookieStore.set("userId", user.id, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: "/",
-      });
-      cookieStore.set("sessionToken", sessionToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: "/",
-      });
-    }
+    const session = await createSession({ userId: user.id });
+
+    cookieStore.set("sessionToken", session.sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
+
+    console.log(
+      "Microsoft OAuth successful for user:",
+      user.email,
+      "Plan:",
+      user.plan
+    );
 
     // Check if user needs to select a plan (new users with GUEST plan)
     if (user.plan === "GUEST") {
