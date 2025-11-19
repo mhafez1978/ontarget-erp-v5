@@ -24,7 +24,7 @@ export async function GET(
     }
 
     const userId = validation.user.id;
-    const { projectId } = params;
+    const { projectId } = await params;
 
     // Verify user has access to this project
     const project = await db.project.findUnique({
