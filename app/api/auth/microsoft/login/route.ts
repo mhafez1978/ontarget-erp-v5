@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 // GET /api/auth/microsoft/login
 // Initiates Microsoft OAuth flow
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Get plan from query parameter (if coming from register page)
+    const { searchParams } = new URL(request.url);
+    const plan = searchParams.get("plan");
+
     // Get Microsoft OAuth settings from database
     const oauthSettings = await db.oAuthProviderSetting.findUnique({
       where: { provider: "microsoft" },
@@ -37,6 +41,11 @@ export async function GET() {
     authUrl.searchParams.set("scope", scope);
     authUrl.searchParams.set("response_mode", "query");
     authUrl.searchParams.set("prompt", "select_account");
+
+    // Pass plan through state parameter if provided
+    if (plan && ["ESSENTIAL", "GROWTH", "ENTERPRISE"].includes(plan)) {
+      authUrl.searchParams.set("state", JSON.stringify({ plan }));
+    }
 
     // Redirect user to Microsoft OAuth consent screen
     return NextResponse.redirect(authUrl.toString());

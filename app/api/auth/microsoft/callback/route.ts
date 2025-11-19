@@ -13,6 +13,18 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get("code");
     const error = searchParams.get("error");
     const errorDescription = searchParams.get("error_description");
+    const stateParam = searchParams.get("state");
+
+    // Extract plan from state if provided
+    let selectedPlan: string | null = null;
+    if (stateParam) {
+      try {
+        const state = JSON.parse(stateParam);
+        selectedPlan = state.plan;
+      } catch {
+        console.log("[Microsoft OAuth] Could not parse state parameter");
+      }
+    }
 
     if (error) {
       console.error("Microsoft OAuth error:", error, errorDescription);
@@ -149,15 +161,21 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
-      // They will be redirected to plan selection
+      // User doesn't exist - create new ERP_CUSTOMER
+      // Use plan from register page if provided, otherwise GUEST for plan selection
+      const userPlan =
+        selectedPlan &&
+        ["ESSENTIAL", "GROWTH", "ENTERPRISE"].includes(selectedPlan)
+          ? (selectedPlan as "ESSENTIAL" | "GROWTH" | "ENTERPRISE")
+          : "GUEST";
+
       user = await db.user.create({
         data: {
           email,
           name: displayName || email.split("@")[0],
           image: null, // Microsoft doesn't provide photo in basic profile
           role: "ERP_CUSTOMER",
-          plan: "GUEST", // Set to GUEST so they're forced to select a plan
+          plan: userPlan, // Use selected plan from register page or GUEST
           authMethod: "oauth",
           emailVerified: new Date(), // Microsoft emails are verified
           isActive: true,

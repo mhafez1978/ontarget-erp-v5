@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 // GET /api/auth/google/login
 // Initiates Google OAuth flow
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Get plan from query parameter (if coming from register page)
+    const { searchParams } = new URL(request.url);
+    const plan = searchParams.get("plan");
+
     // Get Google OAuth settings from database
     const oauthSettings = await db.oAuthProviderSetting.findUnique({
       where: { provider: "google" },
@@ -36,6 +40,11 @@ export async function GET() {
     authUrl.searchParams.set("access_type", "offline");
     // Only prompt for consent on first login, not every time
     authUrl.searchParams.set("prompt", "select_account");
+
+    // Pass plan through state parameter if provided
+    if (plan && ["ESSENTIAL", "GROWTH", "ENTERPRISE"].includes(plan)) {
+      authUrl.searchParams.set("state", JSON.stringify({ plan }));
+    }
 
     // Redirect user to Google OAuth consent screen
     return NextResponse.redirect(authUrl.toString());

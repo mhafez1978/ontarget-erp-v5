@@ -13,6 +13,18 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get("code");
     const error = searchParams.get("error");
+    const stateParam = searchParams.get("state");
+
+    // Extract plan from state if provided
+    let selectedPlan: string | null = null;
+    if (stateParam) {
+      try {
+        const state = JSON.parse(stateParam);
+        selectedPlan = state.plan;
+      } catch {
+        console.log("[Google OAuth] Could not parse state parameter");
+      }
+    }
 
     if (error) {
       return NextResponse.redirect(
@@ -139,15 +151,21 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
-      // They will be redirected to plan selection before accessing dashboard
+      // User doesn't exist - create new ERP_CUSTOMER
+      // Use plan from register page if provided, otherwise GUEST for plan selection
+      const userPlan =
+        selectedPlan &&
+        ["ESSENTIAL", "GROWTH", "ENTERPRISE"].includes(selectedPlan)
+          ? (selectedPlan as "ESSENTIAL" | "GROWTH" | "ENTERPRISE")
+          : "GUEST";
+
       user = await db.user.create({
         data: {
           email,
           name: name || email.split("@")[0],
           image: picture,
           role: "ERP_CUSTOMER", // New signups are ERP customers
-          plan: "GUEST", // Set to GUEST so they're forced to select a plan
+          plan: userPlan, // Use selected plan from register page or GUEST
           authMethod: "oauth",
           emailVerified: verified_email ? new Date() : null,
           isActive: true,
