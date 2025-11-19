@@ -426,6 +426,7 @@ export async function PATCH(
         "PLANNING",
         "IN_PROGRESS",
         "ON_HOLD",
+        "BLOCKED",
         "COMPLETED",
         "CANCELLED",
       ].includes(status)

@@ -230,7 +230,18 @@ export function SuperAdminProjectsView() {
     projectId: string,
     newStatus: Project["status"]
   ) => {
+    // Store previous state for rollback
+    const previousProjects = projects;
+
     try {
+      // Update local state immediately (optimistic update)
+      setProjects((prevProjects) =>
+        prevProjects.map((project) =>
+          project.id === projectId ? { ...project, status: newStatus } : project
+        )
+      );
+
+      // Then make the API call
       const response = await fetch(`/api/projects/${projectId}`, {
         method: "PATCH",
         headers: {
@@ -242,19 +253,15 @@ export function SuperAdminProjectsView() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Failed to update project status:", errorData);
+        // Rollback on error
+        setProjects(previousProjects);
         throw new Error(errorData.error || "Failed to update project status");
       }
 
       await response.json(); // Consume the response
-
-      // Update local state optimistically
-      setProjects((prevProjects) =>
-        prevProjects.map((project) =>
-          project.id === projectId ? { ...project, status: newStatus } : project
-        )
-      );
     } catch (error) {
       console.error("Error updating project status:", error);
+      // Rollback already happened in the if block above
       throw error; // Re-throw to let BoardView handle the error
     }
   };
