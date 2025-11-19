@@ -368,6 +368,7 @@ model CompanyStaff {
   managedProjects Project[]    @relation("ProjectManager")
   ledProjects     Project[]    @relation("TeamLead")
   assignedTasks   Task[]
+  projectNotes    ProjectNote[]
 
   // Financial relations
   payrollEntries PayrollEntry[]
@@ -1463,6 +1464,9 @@ model Project {
   // Tasks
   tasks Task[]
 
+  // Notes
+  notes ProjectNote[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1495,6 +1499,9 @@ model Task {
   dueDate     DateTime?
   completedAt DateTime?
 
+  // Time tracking (in minutes)
+  timeEntry Int @default(0)
+
   // Order for display
   order Int @default(0)
 
@@ -1506,6 +1513,30 @@ model Task {
   @@index([status])
   @@index([priority])
   @@index([order])
+}
+
+// Project Note Model - Projects have many notes with time tracking
+model ProjectNote {
+  id      String  @id @default(cuid())
+  content String  @db.Text
+
+  // Project relation
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Author (must be from the same company)
+  authorId String
+  author   CompanyStaff @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Time tracking (in minutes)
+  timeEntry Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([authorId])
+  @@index([createdAt])
 }
 
 // ===================================

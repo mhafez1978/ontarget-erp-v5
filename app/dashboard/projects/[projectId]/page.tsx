@@ -16,6 +16,7 @@ import {
   Users,
   CheckCircle2,
   Activity,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectOverviewTab } from "@/components/projects/project-overview-tab";
@@ -23,6 +24,8 @@ import { ProjectTeamTab } from "@/components/projects/project-team-tab";
 import { ProjectActivityTab } from "@/components/projects/project-activity-tab";
 import { TasksBoard } from "@/components/projects/tasks-board";
 import { TaskDetailSheet } from "@/components/projects/task-detail-sheet";
+import { ProjectNotes } from "@/components/projects/project-notes";
+import { StickyNote } from "lucide-react";
 
 interface Task {
   id: string;
@@ -106,6 +109,7 @@ interface Project {
     priority: string;
     dueDate: string | null;
     assigneeId: string | null;
+    timeEntry: number;
     assignee?: {
       id: string;
       user: {
@@ -127,10 +131,12 @@ export default function ProjectDetailPage() {
   const projectId = params.projectId as string;
 
   const [project, setProject] = useState<Project | null>(null);
+  const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [user, setUser] = useState<{
     name: string | null;
     email: string | null;
@@ -169,14 +175,24 @@ export default function ProjectDetailPage() {
   }, [fetchUser]);
 
   useEffect(() => {
-    async function fetchProject() {
+    async function fetchProjectData() {
       try {
-        const response = await fetch(`/api/projects/${projectId}`);
-        if (!response.ok) {
+        const [projectResponse, notesResponse] = await Promise.all([
+          fetch(`/api/projects/${projectId}`),
+          fetch(`/api/projects/${projectId}/notes`),
+        ]);
+
+        if (!projectResponse.ok) {
           throw new Error("Failed to fetch project");
         }
-        const data = await response.json();
-        setProject(data.project);
+
+        const projectData = await projectResponse.json();
+        setProject(projectData.project);
+
+        if (notesResponse.ok) {
+          const notesData = await notesResponse.json();
+          setNotes(notesData);
+        }
       } catch (error) {
         console.error("Error fetching project:", error);
         toast.error("Failed to load project");
@@ -186,13 +202,12 @@ export default function ProjectDetailPage() {
     }
 
     if (projectId) {
-      fetchProject();
+      fetchProjectData();
     }
   }, [projectId]);
 
   const handleEdit = () => {
-    // Will be implemented in Task 17.2
-    toast.info("Edit dialog not yet implemented");
+    setShowEditDialog(true);
   };
 
   const handleDelete = async () => {
@@ -215,6 +230,24 @@ export default function ProjectDetailPage() {
       default:
         return "bg-gray-500/10 text-gray-700 border-gray-200";
     }
+  };
+
+  // Calculate total time from tasks and notes
+  const totalTaskTime =
+    project?.tasks.reduce((sum, task) => sum + (task.timeEntry || 0), 0) || 0;
+  const totalNoteTime = notes.reduce(
+    (sum, note) => sum + (note.timeEntry || 0),
+    0
+  );
+  const totalTimeMinutes = totalTaskTime + totalNoteTime;
+
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
   if (loading) {
@@ -309,6 +342,24 @@ export default function ProjectDetailPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Time Tracked
+              </CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {totalTimeMinutes > 0 ? formatTime(totalTimeMinutes) : "0m"}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {totalTaskTime > 0 && `${formatTime(totalTaskTime)} tasks`}
+                {totalTaskTime > 0 && totalNoteTime > 0 && " • "}
+                {totalNoteTime > 0 && `${formatTime(totalNoteTime)} notes`}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Start Date</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -365,6 +416,13 @@ export default function ProjectDetailPage() {
               Team
               <Badge variant="secondary" className="ml-2">
                 {project.team.members.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="notes">
+              <StickyNote className="mr-2 h-4 w-4" />
+              Notes
+              <Badge variant="secondary" className="ml-2">
+                {notes.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="activity">
@@ -428,6 +486,13 @@ export default function ProjectDetailPage() {
             />
           </TabsContent>
 
+          <TabsContent value="notes" className="space-y-4">
+            <ProjectNotes
+              projectId={project.id}
+              notes={notes}
+              currentUserId={user.email || ""}
+            />
+          </TabsContent>
           <TabsContent value="activity" className="space-y-4">
             <ProjectActivityTab
               projectId={project.id}

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { createAuditLog } from "@/lib/audit-log";
+import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { Prisma, ProjectStatus } from "@prisma/client";
 import { validateSession } from "@/lib/session-manager";
+import { canEditProject, canViewProject } from "@/lib/project-permissions";
 
 // Type for project with full includes
 type ProjectWithFullDetails = Prisma.ProjectGetPayload<{
@@ -192,65 +193,35 @@ export async function GET(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Check access based on role - SUPER_ADMIN has full access
-    if (user.role !== "SUPER_ADMIN") {
-      const company = await db.company.findFirst({
-        where: {
-          id: project.companyId,
-          OR: [
-            { ownerId: userId },
-            { members: { some: { userId } } },
-            { staff: { some: { userId } } },
-          ],
+    // Check view permissions using the permission system
+    const permissionCheck = await canViewProject({
+      userId,
+      projectId,
+      userRole: user.role,
+    });
+
+    if (!permissionCheck.canEdit) {
+      // Log unauthorized view attempt
+      await createAuditLog({
+        userId,
+        companyId: project.companyId,
+        action: AUDIT_ACTIONS.PROJECT_VIEWED,
+        entityType: ENTITY_TYPES.PROJECT,
+        entityId: projectId,
+        description: `Unauthorized attempt to view project: ${project.name}`,
+        metadata: {
+          reason: permissionCheck.reason,
+          projectName: project.name,
         },
       });
 
-      if (!company) {
-        return NextResponse.json(
-          { error: "You don't have access to this project" },
-          { status: 403 }
-        );
-      }
-
-      // Additional check for MANAGER/STAFF/CONTRACTOR: Must be team member
-      if (
-        user.role === "MANAGER" ||
-        user.role === "STAFF" ||
-        user.role === "CONTRACTOR"
-      ) {
-        const staffRecord = await db.companyStaff.findFirst({
-          where: { userId, companyId: project.companyId },
-          select: { id: true },
-        });
-
-        if (staffRecord) {
-          // If project has no team, deny access to non-admin roles
-          if (!project.team) {
-            return NextResponse.json(
-              { error: "This project is not assigned to a team" },
-              { status: 403 }
-            );
-          }
-
-          // Check if user is a member of the project's team
-          const isTeamMember = project.team.members.some(
-            (member) => member.staffId === staffRecord.id
-          );
-
-          if (!isTeamMember) {
-            return NextResponse.json(
-              { error: "You don't have access to this project" },
-              { status: 403 }
-            );
-          }
-        } else {
-          return NextResponse.json(
-            { error: "You don't have access to this project" },
-            { status: 403 }
-          );
-        }
-      }
-      // SUPER_ADMIN, ADMIN: Full access if they have company access
+      return NextResponse.json(
+        {
+          error:
+            permissionCheck.reason || "You don't have access to this project",
+        },
+        { status: 403 }
+      );
     }
 
     // Calculate progress
@@ -360,66 +331,69 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get project to check company
-    const project = await db.project.findUnique({
+    // Get existing project data before updates for audit logging
+    const existingProject = await db.project.findUnique({
       where: { id: projectId },
-      select: { companyId: true, teamId: true },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        companyId: true,
+        teamId: true,
+        projectManagerId: true,
+        teamLeadId: true,
+        projectManager: {
+          select: {
+            id: true,
+            user: { select: { name: true, email: true } },
+          },
+        },
+        teamLead: {
+          select: {
+            id: true,
+            user: { select: { name: true, email: true } },
+          },
+        },
+        team: {
+          select: { id: true, name: true },
+        },
+      },
     });
 
-    if (!project) {
+    if (!existingProject) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Check permissions (company owner/member, team admin/manager, or SUPER_ADMIN)
-    // SUPER_ADMIN can update any project
-    // ADMIN can update projects in companies they own or are members of
-    if (user.role === "SUPER_ADMIN") {
-      // SUPER_ADMIN has full access, skip other checks
-    } else if (user.role === "ADMIN") {
-      // ADMIN: Check if they own or are a member of the company
-      const company = await db.company.findFirst({
-        where: {
-          id: project.companyId,
-          OR: [
-            { ownerId: userId },
-            { members: { some: { userId } } },
-            { staff: { some: { userId } } },
-          ],
+    // Check edit permissions using the new permission system
+    const permissionCheck = await canEditProject({
+      userId,
+      projectId,
+      userRole: user.role,
+    });
+
+    if (!permissionCheck.canEdit) {
+      // Log unauthorized attempt
+      await createAuditLog({
+        userId,
+        companyId: existingProject.companyId,
+        action: AUDIT_ACTIONS.PROJECT_UPDATED,
+        entityType: ENTITY_TYPES.PROJECT,
+        entityId: projectId,
+        description: `Unauthorized attempt to update project: ${existingProject.name}`,
+        metadata: {
+          reason: permissionCheck.reason,
+          attemptedUpdates: body,
         },
       });
 
-      if (!company) {
-        return NextResponse.json(
-          { error: "Insufficient permissions to update this project" },
-          { status: 403 }
-        );
-      }
-    } else {
-      // MANAGER/STAFF/CONTRACTOR: Must be company owner or team admin/manager
-      const company = await db.company.findFirst({
-        where: {
-          id: project.companyId,
-          OR: [{ ownerId: userId }],
+      return NextResponse.json(
+        {
+          error:
+            permissionCheck.reason ||
+            "Insufficient permissions to update this project",
         },
-      });
-
-      // If project has no team, only company owner can update
-      const teamMembership = project.teamId
-        ? await db.teamMember.findFirst({
-            where: {
-              teamId: project.teamId,
-              staff: { userId },
-              role: { in: ["ADMIN", "MANAGER"] },
-            },
-          })
-        : null;
-
-      if (!company && !teamMembership) {
-        return NextResponse.json(
-          { error: "Insufficient permissions to update this project" },
-          { status: 403 }
-        );
-      }
+        { status: 403 }
+      );
     }
 
     // Validate status if provided
@@ -440,7 +414,7 @@ export async function PATCH(
     // Validate manager and lead are in the same company if provided
     if (projectManagerId) {
       const manager = await db.companyStaff.findFirst({
-        where: { id: projectManagerId, companyId: project.companyId },
+        where: { id: projectManagerId, companyId: existingProject.companyId },
       });
       if (!manager) {
         return NextResponse.json(
@@ -452,7 +426,7 @@ export async function PATCH(
 
     if (teamLeadId) {
       const lead = await db.companyStaff.findFirst({
-        where: { id: teamLeadId, companyId: project.companyId },
+        where: { id: teamLeadId, companyId: existingProject.companyId },
       });
       if (!lead) {
         return NextResponse.json(
@@ -503,16 +477,136 @@ export async function PATCH(
       },
     });
 
-    // Create audit log
-    await createAuditLog({
-      userId,
-      companyId: project.companyId,
-      action: "PROJECT_UPDATED",
-      entityType: "project",
-      entityId: projectId,
-      description: `Updated project: ${updatedProject.name}`,
-      metadata: { updates: body },
-    });
+    // Create detailed audit logs for specific changes
+    const auditLogs: Array<{
+      action: string;
+      description: string;
+      metadata: any;
+    }> = [];
+
+    // Track status changes with specific actions
+    if (status && status !== existingProject.status) {
+      let statusAction = AUDIT_ACTIONS.PROJECT_UPDATED;
+      let statusDescription = `Project status changed from ${existingProject.status} to ${status}`;
+
+      if (status === "COMPLETED") {
+        statusAction = AUDIT_ACTIONS.PROJECT_CLOSED;
+        statusDescription = `Project completed: ${updatedProject.name}`;
+      } else if (status === "CANCELLED") {
+        statusAction = AUDIT_ACTIONS.PROJECT_CANCELLED;
+        statusDescription = `Project cancelled: ${updatedProject.name}`;
+      } else if (
+        (existingProject.status === "COMPLETED" ||
+          existingProject.status === "CANCELLED") &&
+        ["PLANNING", "IN_PROGRESS", "ON_HOLD", "BLOCKED"].includes(status)
+      ) {
+        statusAction = AUDIT_ACTIONS.PROJECT_REOPENED;
+        statusDescription = `Project reopened: ${updatedProject.name}`;
+      }
+
+      auditLogs.push({
+        action: statusAction,
+        description: statusDescription,
+        metadata: {
+          oldStatus: existingProject.status,
+          newStatus: status,
+          projectName: updatedProject.name,
+        },
+      });
+    }
+
+    // Track team assignment changes
+    if (body.teamId !== undefined && body.teamId !== existingProject.teamId) {
+      auditLogs.push({
+        action: AUDIT_ACTIONS.PROJECT_TEAM_CHANGED,
+        description: `Project team assignment changed: ${updatedProject.name}`,
+        metadata: {
+          oldTeamId: existingProject.teamId,
+          oldTeamName: existingProject.team?.name,
+          newTeamId: body.teamId,
+          newTeamName: updatedProject.team?.name,
+          projectName: updatedProject.name,
+        },
+      });
+    }
+
+    // Track project manager changes
+    if (
+      projectManagerId !== undefined &&
+      projectManagerId !== existingProject.projectManagerId
+    ) {
+      auditLogs.push({
+        action: AUDIT_ACTIONS.PROJECT_MANAGER_CHANGED,
+        description: `Project manager changed: ${updatedProject.name}`,
+        metadata: {
+          oldManagerId: existingProject.projectManagerId,
+          oldManagerName: existingProject.projectManager?.user?.name,
+          oldManagerEmail: existingProject.projectManager?.user?.email,
+          newManagerId: projectManagerId,
+          newManagerName: updatedProject.projectManager?.user?.name,
+          newManagerEmail: updatedProject.projectManager?.user?.email,
+          projectName: updatedProject.name,
+        },
+      });
+    }
+
+    // Track team lead changes
+    if (teamLeadId !== undefined && teamLeadId !== existingProject.teamLeadId) {
+      auditLogs.push({
+        action: AUDIT_ACTIONS.PROJECT_LEAD_CHANGED,
+        description: `Project lead changed: ${updatedProject.name}`,
+        metadata: {
+          oldLeadId: existingProject.teamLeadId,
+          oldLeadName: existingProject.teamLead?.user?.name,
+          oldLeadEmail: existingProject.teamLead?.user?.email,
+          newLeadId: teamLeadId,
+          newLeadName: updatedProject.teamLead?.user?.name,
+          newLeadEmail: updatedProject.teamLead?.user?.email,
+          projectName: updatedProject.name,
+        },
+      });
+    }
+
+    // Create a general update log if there are other changes
+    const otherChanges: Record<string, any> = {};
+    if (name && name !== existingProject.name) {
+      otherChanges.name = { old: existingProject.name, new: name };
+    }
+    if (description !== undefined) {
+      otherChanges.description = { changed: true };
+    }
+    if (startDate) {
+      otherChanges.startDate = { new: startDate };
+    }
+    if (endDate) {
+      otherChanges.endDate = { new: endDate };
+    }
+
+    if (Object.keys(otherChanges).length > 0 || auditLogs.length === 0) {
+      auditLogs.push({
+        action: AUDIT_ACTIONS.PROJECT_UPDATED,
+        description: `Updated project: ${updatedProject.name}`,
+        metadata: {
+          updates: otherChanges,
+          projectName: updatedProject.name,
+        },
+      });
+    }
+
+    // Write all audit logs
+    await Promise.all(
+      auditLogs.map((log) =>
+        createAuditLog({
+          userId,
+          companyId: existingProject.companyId,
+          action: log.action,
+          entityType: ENTITY_TYPES.PROJECT,
+          entityId: projectId,
+          description: log.description,
+          metadata: log.metadata,
+        })
+      )
+    );
 
     return NextResponse.json({
       success: true,

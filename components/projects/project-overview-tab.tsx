@@ -13,6 +13,8 @@ import {
   AlertCircle,
   Mail,
 } from "lucide-react";
+import { InlineEditSection } from "@/components/projects/inline-edit-section";
+import { useState } from "react";
 
 interface Project {
   id: string;
@@ -88,28 +90,32 @@ interface ProjectOverviewTabProps {
 }
 
 export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
+  const [localProject, setLocalProject] = useState(project);
+
   // Calculate progress metrics
-  const completedTasks = project.tasks.filter(
+  const completedTasks = localProject.tasks.filter(
     (t) => t.status === "COMPLETED"
   ).length;
-  const inProgressTasks = project.tasks.filter(
+  const inProgressTasks = localProject.tasks.filter(
     (t) => t.status === "IN_PROGRESS"
   ).length;
-  const todoTasks = project.tasks.filter((t) => t.status === "TODO").length;
-  const blockedTasks = project.tasks.filter(
+  const todoTasks = localProject.tasks.filter(
+    (t) => t.status === "TODO"
+  ).length;
+  const blockedTasks = localProject.tasks.filter(
     (t) => t.status === "BLOCKED"
   ).length;
-  const totalTasks = project._count.tasks;
+  const totalTasks = localProject._count.tasks;
   const progressPercentage =
     totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   // Calculate date info
   const today = new Date();
-  const startDate = project.targetStartDate
-    ? new Date(project.targetStartDate)
+  const startDate = localProject.targetStartDate
+    ? new Date(localProject.targetStartDate)
     : null;
-  const endDate = project.targetEndDate
-    ? new Date(project.targetEndDate)
+  const endDate = localProject.targetEndDate
+    ? new Date(localProject.targetEndDate)
     : null;
   const daysRemaining = endDate
     ? Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
@@ -126,21 +132,24 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           <CardTitle>Project Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-1">
-              Description
-            </h4>
-            <p className="text-sm">
-              {project.description || "No description provided"}
-            </p>
-          </div>
+          <InlineEditSection
+            title="Description"
+            value={localProject.description}
+            fieldName="description"
+            projectId={localProject.id}
+            type="textarea"
+            placeholder="Add a project description..."
+            onSave={(newValue) => {
+              setLocalProject({ ...localProject, description: newValue });
+            }}
+          />
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-1">
                 Company
               </h4>
-              <p className="text-sm font-medium">{project.company.name}</p>
+              <p className="text-sm font-medium">{localProject.company.name}</p>
             </div>
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-1">
@@ -148,9 +157,9 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               </h4>
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">{project.team.name}</p>
+                <p className="text-sm font-medium">{localProject.team.name}</p>
                 <Badge variant="secondary" className="text-xs">
-                  {project.team.members.length} members
+                  {localProject.team.members.length} members
                 </Badge>
               </div>
             </div>
@@ -220,36 +229,30 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <Calendar className="h-4 w-4" />
-                <span>Start Date</span>
-              </div>
-              <p className="text-sm font-medium">
-                {startDate
-                  ? startDate.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
-                  : "Not set"}
-              </p>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <Calendar className="h-4 w-4" />
-                <span>Target End Date</span>
-              </div>
-              <p className="text-sm font-medium">
-                {endDate
-                  ? endDate.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
-                  : "Not set"}
-              </p>
-            </div>
+            <InlineEditSection
+              title="Start Date"
+              value={localProject.targetStartDate || ""}
+              fieldName="targetStartDate"
+              projectId={localProject.id}
+              type="date"
+              icon={Calendar}
+              placeholder="Set start date..."
+              onSave={(newValue) => {
+                setLocalProject({ ...localProject, targetStartDate: newValue });
+              }}
+            />
+            <InlineEditSection
+              title="Target End Date"
+              value={localProject.targetEndDate || ""}
+              fieldName="targetEndDate"
+              projectId={localProject.id}
+              type="date"
+              icon={Calendar}
+              placeholder="Set end date..."
+              onSave={(newValue) => {
+                setLocalProject({ ...localProject, targetEndDate: newValue });
+              }}
+            />
             {daysRemaining !== null && (
               <div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
@@ -284,7 +287,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       </Card>
 
       {/* Project Manager Card */}
-      {project.projectManager && (
+      {localProject.projectManager && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -296,8 +299,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
                 <AvatarImage
-                  src={project.projectManager.user.image || ""}
-                  alt={project.projectManager.user.name || "Manager"}
+                  src={localProject.projectManager.user.image || ""}
+                  alt={localProject.projectManager.user.name || "Manager"}
                 />
                 <AvatarFallback>
                   <User2 className="h-6 w-6" />
@@ -305,11 +308,11 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               </Avatar>
               <div className="space-y-1">
                 <p className="text-sm font-medium">
-                  {project.projectManager.user.name || "Unnamed User"}
+                  {localProject.projectManager.user.name || "Unnamed User"}
                 </p>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Mail className="h-3 w-3" />
-                  <span>{project.projectManager.user.email}</span>
+                  <span>{localProject.projectManager.user.email}</span>
                 </div>
               </div>
             </div>
@@ -318,7 +321,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       )}
 
       {/* Team Lead Card */}
-      {project.teamLead && (
+      {localProject.teamLead && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -330,8 +333,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
                 <AvatarImage
-                  src={project.teamLead.user.image || ""}
-                  alt={project.teamLead.user.name || "Lead"}
+                  src={localProject.teamLead.user.image || ""}
+                  alt={localProject.teamLead.user.name || "Lead"}
                 />
                 <AvatarFallback>
                   <User2 className="h-6 w-6" />
@@ -339,11 +342,11 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               </Avatar>
               <div className="space-y-1">
                 <p className="text-sm font-medium">
-                  {project.teamLead.user.name || "Unnamed User"}
+                  {localProject.teamLead.user.name || "Unnamed User"}
                 </p>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Mail className="h-3 w-3" />
-                  <span>{project.teamLead.user.email}</span>
+                  <span>{localProject.teamLead.user.email}</span>
                 </div>
               </div>
             </div>
@@ -363,7 +366,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                 Created
               </h4>
               <p className="text-sm">
-                {new Date(project.createdAt).toLocaleDateString("en-US", {
+                {new Date(localProject.createdAt).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -377,7 +380,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                 Last Updated
               </h4>
               <p className="text-sm">
-                {new Date(project.updatedAt).toLocaleDateString("en-US", {
+                {new Date(localProject.updatedAt).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",

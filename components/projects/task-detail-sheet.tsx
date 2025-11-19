@@ -23,8 +23,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Calendar } from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { TimeTracker } from "@/components/projects/time-tracker";
 
 interface Task {
   id: string;
@@ -34,6 +35,7 @@ interface Task {
   priority: string;
   dueDate: string | null;
   assigneeId: string | null;
+  timeEntry: number;
   assignee?: {
     id: string;
     user: {
@@ -102,6 +104,7 @@ export function TaskDetailSheet({
 }: TaskDetailSheetProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [timeEntry, setTimeEntry] = useState(0);
 
   const { register, handleSubmit, setValue, watch, reset } =
     useForm<TaskFormData>({
@@ -132,6 +135,7 @@ export function TaskDetailSheet({
           : "",
         assigneeId: task.assigneeId || "",
       });
+      setTimeEntry(task.timeEntry || 0);
     }
   }, [task, reset]);
 
@@ -150,6 +154,7 @@ export function TaskDetailSheet({
           priority: data.priority,
           dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
           assigneeId: data.assigneeId || null,
+          timeEntry,
         }),
       });
 
@@ -380,6 +385,24 @@ export function TaskDetailSheet({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <Separator />
+
+          {/* Time Tracking */}
+          <div className="space-y-2">
+            <Label htmlFor="timeTracking" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Time Tracking
+            </Label>
+            <TimeTracker
+              onTimeChange={setTimeEntry}
+              initialMinutes={timeEntry}
+            />
+            <p className="text-xs text-muted-foreground">
+              Track time spent on this task. Time is saved automatically when
+              you save the task.
+            </p>
           </div>
 
           <Separator />

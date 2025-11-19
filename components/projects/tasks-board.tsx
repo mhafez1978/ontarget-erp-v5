@@ -29,6 +29,7 @@ interface Task {
   dueDate: string | null;
   assigneeId: string | null;
   projectId: string;
+  timeEntry: number;
   createdAt: string;
   updatedAt: string;
   assignee: {

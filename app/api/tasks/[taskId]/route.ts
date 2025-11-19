@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { createAuditLog } from "@/lib/audit-log";
+import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { Prisma, TaskStatus, TaskPriority } from "@prisma/client";
 import { validateSession } from "@/lib/session-manager";
 
@@ -223,6 +223,7 @@ export async function PATCH(
       assignedToId,
       dueDate,
       order,
+      timeEntry,
     } = body;
 
     // Get user with role
@@ -235,15 +236,27 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get task with project details
+    // Get task with project details and existing data
     const task = await db.task.findUnique({
       where: { id: taskId },
       select: {
+        id: true,
+        title: true,
+        status: true,
+        assignedToId: true,
+        timeEntry: true,
         project: {
           select: {
+            id: true,
             companyId: true,
             teamId: true,
             name: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            id: true,
+            user: { select: { name: true, email: true } },
           },
         },
       },
@@ -320,6 +333,9 @@ export async function PATCH(
           dueDate: dueDate ? new Date(dueDate) : null,
         }),
         ...(order !== undefined && { order }),
+        ...(timeEntry !== undefined && {
+          timeEntry: Math.max(0, Math.floor(timeEntry)),
+        }),
       },
       include: {
         assignedTo: {
@@ -345,16 +361,116 @@ export async function PATCH(
       },
     })) as TaskWithIncludes;
 
-    // Create audit log
-    await createAuditLog({
-      userId,
-      companyId: task.project.companyId,
-      action: "TASK_UPDATED",
-      entityType: "task",
-      entityId: taskId,
-      description: `Updated task "${updatedTask.title}" in project ${task.project.name}`,
-      metadata: { updates: body },
-    });
+    // Create detailed audit logs
+    const auditLogs: Array<{
+      action: string;
+      description: string;
+      metadata: any;
+    }> = [];
+
+    // Track status changes
+    if (status && status !== task.status) {
+      auditLogs.push({
+        action: AUDIT_ACTIONS.TASK_STATUS_CHANGED,
+        description: `Task status changed from ${task.status} to ${status}: "${updatedTask.title}"`,
+        metadata: {
+          oldStatus: task.status,
+          newStatus: status,
+          taskTitle: updatedTask.title,
+          projectName: task.project.name,
+          projectId: task.project.id,
+        },
+      });
+    }
+
+    // Track assignment changes
+    if (assignedToId !== undefined && assignedToId !== task.assignedToId) {
+      auditLogs.push({
+        action: AUDIT_ACTIONS.TASK_ASSIGNED,
+        description: assignedToId
+          ? `Task "${updatedTask.title}" assigned to ${updatedTask.assignedTo?.user.name}`
+          : `Task "${updatedTask.title}" unassigned`,
+        metadata: {
+          oldAssignedToId: task.assignedToId,
+          oldAssignedToName: task.assignedTo?.user?.name,
+          newAssignedToId: assignedToId,
+          newAssignedToName: updatedTask.assignedTo?.user?.name,
+          newAssignedToEmail: updatedTask.assignedTo?.user?.email,
+          taskTitle: updatedTask.title,
+          projectName: task.project.name,
+          projectId: task.project.id,
+        },
+      });
+    }
+
+    // Track time entry changes (company admin only)
+    if (timeEntry !== undefined && timeEntry !== task.timeEntry) {
+      const oldMinutes = task.timeEntry || 0;
+      const newMinutes = Math.max(0, Math.floor(timeEntry));
+      const minutesChanged = newMinutes - oldMinutes;
+
+      auditLogs.push({
+        action: AUDIT_ACTIONS.TIME_ENTRY_UPDATED,
+        description: `Time entry updated for task "${updatedTask.title}": ${
+          minutesChanged > 0 ? "+" : ""
+        }${minutesChanged} minutes`,
+        metadata: {
+          oldTimeEntry: oldMinutes,
+          newTimeEntry: newMinutes,
+          minutesChanged,
+          taskTitle: updatedTask.title,
+          taskId: taskId,
+          projectName: task.project.name,
+          projectId: task.project.id,
+        },
+      });
+    }
+
+    // Create a general update log for other changes
+    const otherChanges: Record<string, any> = {};
+    if (title && title !== task.title) {
+      otherChanges.title = { old: task.title, new: title };
+    }
+    if (description !== undefined) {
+      otherChanges.description = { changed: true };
+    }
+    if (priority !== undefined) {
+      otherChanges.priority = { new: priority };
+    }
+    if (dueDate !== undefined) {
+      otherChanges.dueDate = { new: dueDate };
+    }
+    if (order !== undefined) {
+      otherChanges.order = { new: order };
+    }
+
+    if (Object.keys(otherChanges).length > 0 || auditLogs.length === 0) {
+      auditLogs.push({
+        action: AUDIT_ACTIONS.TASK_UPDATED,
+        description: `Updated task "${updatedTask.title}" in project ${task.project.name}`,
+        metadata: {
+          updates: otherChanges,
+          taskTitle: updatedTask.title,
+          projectName: task.project.name,
+          projectId: task.project.id,
+        },
+      });
+    }
+
+    // Write all audit logs
+    await Promise.all(
+      auditLogs.map((log) =>
+        createAuditLog({
+          userId,
+          companyId: task.project.companyId,
+          action: log.action,
+          entityType: ENTITY_TYPES.TASK,
+          entityId: taskId,
+          description: log.description,
+          metadata: log.metadata,
+        })
+      )
+    );
 
     return NextResponse.json({
       success: true,

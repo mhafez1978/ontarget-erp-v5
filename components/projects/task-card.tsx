@@ -32,6 +32,7 @@ interface Task {
   dueDate: string | null;
   assigneeId: string | null;
   projectId: string;
+  timeEntry: number;
   createdAt: string;
   updatedAt: string;
   assignee: {
@@ -251,6 +252,20 @@ export function TaskCard({
               </div>
             )}
           </div>
+
+          {/* Time Tracking */}
+          {task.timeEntry > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>
+                {task.timeEntry < 60
+                  ? `${task.timeEntry}m`
+                  : `${Math.floor(task.timeEntry / 60)}h ${
+                      task.timeEntry % 60 > 0 ? `${task.timeEntry % 60}m` : ""
+                    }`}
+              </span>
+            </div>
+          )}
 
           {/* Due Date */}
           {task.dueDate && (
