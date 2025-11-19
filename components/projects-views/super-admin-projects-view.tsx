@@ -255,7 +255,9 @@ export function SuperAdminProjectsView() {
         try {
           errorData = await response.json();
         } catch (e) {
-          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+          errorData = {
+            error: `HTTP ${response.status}: ${response.statusText}`,
+          };
         }
         console.error("Failed to update project status:", errorData);
         console.error("Response status:", response.status);
