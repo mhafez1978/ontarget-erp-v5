@@ -251,8 +251,15 @@ export function SuperAdminProjectsView() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
         console.error("Failed to update project status:", errorData);
+        console.error("Response status:", response.status);
+        console.error("Project ID:", projectId, "New Status:", newStatus);
         // Rollback on error
         setProjects(previousProjects);
         throw new Error(errorData.error || "Failed to update project status");

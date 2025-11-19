@@ -337,6 +337,9 @@ export async function PATCH(
     const { projectId } = await params;
     const body = await req.json();
 
+    console.log("PATCH /api/projects/[projectId] - Body:", body);
+    console.log("PATCH /api/projects/[projectId] - ProjectId:", projectId);
+
     const {
       name,
       description,
@@ -517,8 +520,10 @@ export async function PATCH(
     });
   } catch (error) {
     console.error("Error updating project:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to update project";
     return NextResponse.json(
-      { error: "Failed to update project" },
+      { error: errorMessage, details: error },
       { status: 500 }
     );
   }
