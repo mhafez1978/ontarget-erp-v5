@@ -326,9 +326,14 @@ export function ProjectCard({
                     <User2 className="h-3 w-3" />
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs text-muted-foreground truncate">
-                  {project.projectManager.user?.name || "Manager"}
-                </span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Manager
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {project.projectManager.user?.name || "Manager"}
+                  </span>
+                </div>
               </div>
             )}
             {project.teamLead && (
@@ -342,9 +347,14 @@ export function ProjectCard({
                     <User2 className="h-3 w-3" />
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs text-muted-foreground truncate">
-                  {project.teamLead.user?.name || "Lead"}
-                </span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Team Lead
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {project.teamLead.user?.name || "Lead"}
+                  </span>
+                </div>
               </div>
             )}
           </div>

@@ -276,7 +276,7 @@ function DraggableProjectCard({ project }: DraggableProjectCardProps) {
       <ProjectCard
         project={project}
         isDragging={isDragging}
-        disableNavigation={true}
+        disableNavigation={false}
         showQuickActions={false}
       />
     </div>
