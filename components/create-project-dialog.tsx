@@ -29,6 +29,18 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 interface Team {
   id: string;
   name: string;
+  members?: Array<{
+    id: string;
+    role: string;
+    staff: {
+      id: string;
+      user: {
+        id: string;
+        name: string | null;
+        email: string;
+      };
+    };
+  }>;
 }
 
 interface StaffMember {
@@ -65,6 +77,11 @@ const PROJECT_STATUSES = [
     value: "ON_HOLD",
     label: "On Hold",
     color: "bg-yellow-500/10 text-yellow-700",
+  },
+  {
+    value: "BLOCKED",
+    label: "Blocked",
+    color: "bg-orange-500/10 text-orange-700",
   },
   {
     value: "COMPLETED",
@@ -153,6 +170,33 @@ export function CreateProjectDialog({
 
     fetchStaff();
   }, [open, companyId]);
+
+  // Auto-populate Project Manager and Team Lead when team is selected
+  useEffect(() => {
+    if (!teamId || teams.length === 0) return;
+
+    const selectedTeam = teams.find((t) => t.id === teamId);
+    if (!selectedTeam?.members || selectedTeam.members.length === 0) return;
+
+    // Find MANAGER role for Team Lead (primary choice)
+    const manager = selectedTeam.members.find((m) => m.role === "MANAGER");
+    // Find ADMIN role as fallback or for Project Manager
+    const admin = selectedTeam.members.find((m) => m.role === "ADMIN");
+
+    // Auto-populate Team Lead (prefer MANAGER, fallback to ADMIN)
+    if (manager) {
+      setTeamLeadId(manager.staff.id);
+    } else if (admin) {
+      setTeamLeadId(admin.staff.id);
+    }
+
+    // Auto-populate Project Manager (prefer ADMIN, fallback to MANAGER)
+    if (admin) {
+      setProjectManagerId(admin.staff.id);
+    } else if (manager) {
+      setProjectManagerId(manager.staff.id);
+    }
+  }, [teamId, teams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -360,7 +404,12 @@ export function CreateProjectDialog({
 
           {/* Project Manager */}
           <div className="space-y-2">
-            <Label htmlFor="projectManager">Project Manager (Optional)</Label>
+            <Label htmlFor="projectManager">
+              Project Manager{" "}
+              <span className="text-muted-foreground text-xs font-normal">
+                (auto-filled from team, can override)
+              </span>
+            </Label>
             {staffLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -411,7 +460,12 @@ export function CreateProjectDialog({
 
           {/* Team Lead */}
           <div className="space-y-2">
-            <Label htmlFor="teamLead">Team Lead (Optional)</Label>
+            <Label htmlFor="teamLead">
+              Team Lead{" "}
+              <span className="text-muted-foreground text-xs font-normal">
+                (auto-filled from team, can override)
+              </span>
+            </Label>
             {staffLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

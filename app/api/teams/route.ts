@@ -112,7 +112,11 @@ export async function GET(req: NextRequest) {
         members: team.members.map((m) => ({
           id: m.id,
           role: m.role,
-          user: m.staff.user,
+          staffId: m.staffId,
+          staff: {
+            id: m.staff.id,
+            user: m.staff.user,
+          },
         })),
         createdAt: team.createdAt,
         updatedAt: team.updatedAt,

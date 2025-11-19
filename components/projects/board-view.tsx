@@ -19,7 +19,13 @@ interface Project {
   id: string;
   name: string;
   description: string | null;
-  status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+  status:
+    | "PLANNING"
+    | "IN_PROGRESS"
+    | "ON_HOLD"
+    | "BLOCKED"
+    | "COMPLETED"
+    | "CANCELLED";
   startDate: string | null;
   endDate: string | null;
   targetEndDate: string | null;
@@ -63,24 +69,27 @@ interface BoardViewProps {
 const STATUS_CONFIG = {
   PLANNING: {
     label: "Planning",
-    color: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    color: "bg-emerald-200 text-emerald-900",
   },
   IN_PROGRESS: {
     label: "In Progress",
-    color: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+    color: "bg-emerald-200 text-emerald-900",
   },
   ON_HOLD: {
     label: "On Hold",
-    color:
-      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+    color: "bg-emerald-200 text-emerald-900",
+  },
+  BLOCKED: {
+    label: "Blocked",
+    color: "bg-emerald-200 text-emerald-900",
   },
   COMPLETED: {
     label: "Completed",
-    color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+    color: "bg-emerald-200 text-emerald-900",
   },
   CANCELLED: {
     label: "Cancelled",
-    color: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+    color: "bg-emerald-200 text-emerald-900",
   },
 } as const;
 
@@ -155,7 +164,7 @@ export function BoardView({ projects, onProjectMove }: BoardViewProps) {
       onDragEnd={handleDragEnd}
     >
       <div
-        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 ${
+        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 ${
           isUpdating ? "opacity-50 pointer-events-none" : ""
         }`}
       >
@@ -200,42 +209,42 @@ function DroppableColumn({ status, config, projects }: DroppableColumnProps) {
   });
 
   return (
-    <div ref={setNodeRef} className="flex flex-col">
+    <Card
+      ref={setNodeRef}
+      className={`border-2 border-emerald-600 bg-emerald-200 flex flex-col min-h-[500px] transition-colors ${
+        isOver ? "ring-2 ring-primary ring-offset-2" : ""
+      }`}
+    >
       {/* Column Header */}
-      <Card className="mb-3">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">
-              {config.label}
-            </CardTitle>
-            <Badge variant="secondary" className="text-xs">
-              {projects.length}
-            </Badge>
-          </div>
-        </CardHeader>
-      </Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium text-emerald-900">
+            {config.label}
+          </CardTitle>
+          <Badge
+            variant="secondary"
+            className="text-xs bg-emerald-100 text-emerald-900"
+          >
+            {projects.length}
+          </Badge>
+        </div>
+      </CardHeader>
 
-      {/* Projects Column */}
-      <div
-        className={`space-y-3 flex-1 min-h-[200px] rounded-lg transition-colors ${
-          isOver ? "bg-muted/50 ring-2 ring-primary" : ""
-        }`}
-      >
+      {/* Projects Content - inside the column */}
+      <CardContent className="flex-1 pt-0 space-y-3">
         {projects.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-8">
-              <p className="text-sm text-muted-foreground text-center">
-                {isOver ? "Drop here" : "No projects"}
-              </p>
-            </CardContent>
-          </Card>
+          <div className="flex items-center justify-center h-32 border-2 border-dashed border-emerald-400 rounded-lg bg-emerald-50/50">
+            <p className="text-sm text-emerald-700">
+              {isOver ? "Drop here" : "No projects"}
+            </p>
+          </div>
         ) : (
           projects.map((project) => (
             <DraggableProjectCard key={project.id} project={project} />
           ))
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

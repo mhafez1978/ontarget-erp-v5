@@ -26,11 +26,17 @@ import {
   Mail,
   Eye,
   EyeOff,
+  UsersRound,
 } from "lucide-react";
 import { StorageProviderCards } from "@/components/storage-provider-cards";
 import { EmailProviderCards } from "@/components/email-provider-cards";
 import { SubscriptionPlanCards } from "@/components/subscription-plan-cards";
 import { UserManagementTable } from "@/components/user-management-table";
+import { TeamsManagement } from "@/components/teams-management";
+import { CreateTeamDialog } from "@/components/create-team-dialog";
+import { EditTeamDialog } from "@/components/edit-team-dialog";
+import { DeleteTeamDialog } from "@/components/delete-team-dialog";
+import { AddTeamMemberDialog } from "@/components/add-team-member-dialog";
 
 interface OAuthProvider {
   id: string;
@@ -125,6 +131,31 @@ export default function SettingsPage() {
     companyId: null as string | null,
   });
 
+  // Teams Management state
+  const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);
+  const [showEditTeamDialog, setShowEditTeamDialog] = useState(false);
+  const [showDeleteTeamDialog, setShowDeleteTeamDialog] = useState(false);
+  const [showManageMembersDialog, setShowManageMembersDialog] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<{
+    id: string;
+    name: string;
+    description: string | null;
+    companyId: string;
+    memberCount?: number;
+    projectCount?: number;
+    members?: Array<{ id: string; user: { id: string } }>;
+  } | null>(null);
+  const [teamsRefreshKey, setTeamsRefreshKey] = useState(0);
+  const [activeUserManagementTab, setActiveUserManagementTab] = useState<
+    "users" | "teams"
+  >("users");
+  const [selectedCompanyForTeams, setSelectedCompanyForTeams] = useState<
+    string | null
+  >(null);
+  const [availableCompanies, setAvailableCompanies] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+
   // Check user authentication and role
   useEffect(() => {
     const checkUser = async () => {
@@ -145,6 +176,23 @@ export default function SettingsPage() {
           plan: data.user.plan || "ESSENTIAL",
           companyId: data.user.companyId || null,
         });
+
+        // Fetch companies for SUPER_ADMIN to manage teams
+        if (data.user.role === "SUPER_ADMIN") {
+          try {
+            const companiesResponse = await fetch("/api/companies/my-owned");
+            const companiesData = await companiesResponse.json();
+            if (companiesResponse.ok && companiesData.companies) {
+              setAvailableCompanies(companiesData.companies);
+              // Auto-select first company if available
+              if (companiesData.companies.length > 0) {
+                setSelectedCompanyForTeams(companiesData.companies[0].id);
+              }
+            }
+          } catch (err) {
+            console.error("Failed to fetch companies:", err);
+          }
+        }
       } catch (error) {
         console.error("Failed to check user:", error);
         router.push("/");
@@ -1658,12 +1706,124 @@ export default function SettingsPage() {
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  User Directory
+                  User Directory & Teams
                 </div>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="pt-4">
-                  <UserManagementTable />
+                  {/* Tabs for User Directory and Teams Management */}
+                  <div className="border-b border-border mb-4">
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setActiveUserManagementTab("users")}
+                        className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+                          activeUserManagementTab === "users"
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Users className="h-4 w-4 inline mr-2" />
+                        User Directory
+                      </button>
+                      <button
+                        onClick={() => setActiveUserManagementTab("teams")}
+                        className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+                          activeUserManagementTab === "teams"
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <UsersRound className="h-4 w-4 inline mr-2" />
+                        Teams Management
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tab Content */}
+                  {activeUserManagementTab === "users" ? (
+                    <UserManagementTable />
+                  ) : (
+                    <>
+                      {/* Company Selector for SUPER_ADMIN */}
+                      {availableCompanies.length > 0 && (
+                        <div className="mb-6 p-4 border rounded-lg bg-muted/30">
+                          <Label className="text-sm font-medium mb-2 block">
+                            Select Company to Manage Teams
+                          </Label>
+                          <select
+                            className="w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={selectedCompanyForTeams || ""}
+                            onChange={(e) =>
+                              setSelectedCompanyForTeams(e.target.value)
+                            }
+                          >
+                            <option value="" disabled>
+                              Select a company...
+                            </option>
+                            {availableCompanies.map((company) => (
+                              <option key={company.id} value={company.id}>
+                                {company.name}
+                              </option>
+                            ))}
+                          </select>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Manage teams for the selected company
+                          </p>
+                        </div>
+                      )}
+
+                      <TeamsManagement
+                        key={teamsRefreshKey}
+                        companyId={selectedCompanyForTeams}
+                        onCreateTeam={() => setShowCreateTeamDialog(true)}
+                        onEditTeam={(team) => {
+                          setSelectedTeam(team);
+                          setShowEditTeamDialog(true);
+                        }}
+                        onDeleteTeam={(team) => {
+                          setSelectedTeam(team);
+                          setShowDeleteTeamDialog(true);
+                        }}
+                        onManageMembers={(team) => {
+                          setSelectedTeam(team);
+                          setShowManageMembersDialog(true);
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Teams Management - For ADMIN */}
+          {user.role === "ADMIN" && (
+            <AccordionItem value="teams-management">
+              <AccordionTrigger className="text-xl font-semibold">
+                <div className="flex items-center gap-2">
+                  <UsersRound className="h-5 w-5" />
+                  Company Teams Management
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-4">
+                  <TeamsManagement
+                    key={teamsRefreshKey}
+                    companyId={user.companyId}
+                    onCreateTeam={() => setShowCreateTeamDialog(true)}
+                    onEditTeam={(team) => {
+                      setSelectedTeam(team);
+                      setShowEditTeamDialog(true);
+                    }}
+                    onDeleteTeam={(team) => {
+                      setSelectedTeam(team);
+                      setShowDeleteTeamDialog(true);
+                    }}
+                    onManageMembers={(team) => {
+                      setSelectedTeam(team);
+                      setShowManageMembersDialog(true);
+                    }}
+                  />
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -1687,6 +1847,68 @@ export default function SettingsPage() {
           )}
         </Accordion>
       </div>
+
+      {/* Team Management Dialogs */}
+      {(user.role === "SUPER_ADMIN"
+        ? selectedCompanyForTeams
+        : user.companyId) && (
+        <CreateTeamDialog
+          open={showCreateTeamDialog}
+          onOpenChange={setShowCreateTeamDialog}
+          companyId={
+            (user.role === "SUPER_ADMIN"
+              ? selectedCompanyForTeams
+              : user.companyId)!
+          }
+          onSuccess={() => {
+            setTeamsRefreshKey((prev) => prev + 1);
+            toast.success("Team created successfully");
+          }}
+        />
+      )}
+
+      {selectedTeam && (
+        <>
+          <EditTeamDialog
+            open={showEditTeamDialog}
+            onOpenChange={setShowEditTeamDialog}
+            // @ts-expect-error - Team type mismatch handled by component
+            team={selectedTeam}
+            onSuccess={() => {
+              setTeamsRefreshKey((prev) => prev + 1);
+              toast.success("Team updated successfully");
+            }}
+          />
+
+          <DeleteTeamDialog
+            open={showDeleteTeamDialog}
+            onOpenChange={setShowDeleteTeamDialog}
+            // @ts-expect-error - Team type mismatch handled by component
+            team={selectedTeam}
+            onSuccess={() => {
+              setTeamsRefreshKey((prev) => prev + 1);
+              toast.success("Team deleted successfully");
+            }}
+          />
+
+          <AddTeamMemberDialog
+            open={showManageMembersDialog}
+            onOpenChange={setShowManageMembersDialog}
+            teamId={selectedTeam.id}
+            companyId={selectedTeam.companyId}
+            existingMembers={
+              selectedTeam.members?.map((m) => ({
+                id: m.id,
+                staffId: m.user.id,
+              })) || []
+            }
+            onSuccess={() => {
+              setTeamsRefreshKey((prev) => prev + 1);
+              toast.success("Team members updated successfully");
+            }}
+          />
+        </>
+      )}
     </DashboardLayout>
   );
 }

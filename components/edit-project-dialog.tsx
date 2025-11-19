@@ -79,6 +79,11 @@ const PROJECT_STATUSES = [
     color: "bg-yellow-500/10 text-yellow-700",
   },
   {
+    value: "BLOCKED",
+    label: "Blocked",
+    color: "bg-orange-500/10 text-orange-700",
+  },
+  {
     value: "COMPLETED",
     label: "Completed",
     color: "bg-gray-500/10 text-gray-700",
