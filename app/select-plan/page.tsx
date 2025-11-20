@@ -12,18 +12,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  PLAN_PRICING,
+  PLAN_LIMITS,
+  getTotalUserLimit,
+} from "@/lib/plan-limits";
 
 const plans = [
   {
     id: "ESSENTIAL",
     name: "Essential",
     description: "Perfect for small businesses getting started",
-    price: "$29/month",
+    price: `$${PLAN_PRICING.ESSENTIAL.monthlyPrice}/month`,
     features: [
-      "Create 1 company",
-      "Unlimited products & services",
-      "Customer management",
-      "Order tracking",
+      `Create ${PLAN_LIMITS.ESSENTIAL.companies} company`,
+      `${getTotalUserLimit("ESSENTIAL")} total users`,
+      `${PLAN_LIMITS.ESSENTIAL.customers} customers`,
+      `${PLAN_LIMITS.ESSENTIAL.storageGB} GB storage`,
+      "Customer & order management",
       "Email support",
     ],
   },
@@ -31,10 +37,12 @@ const plans = [
     id: "GROWTH",
     name: "Growth",
     description: "For growing businesses with multiple locations",
-    price: "$79/month",
+    price: `$${PLAN_PRICING.GROWTH.monthlyPrice}/month`,
     features: [
-      "Create up to 3 companies",
-      "All Essential features",
+      `Create up to ${PLAN_LIMITS.GROWTH.companies} companies`,
+      `${getTotalUserLimit("GROWTH")} total users`,
+      `${PLAN_LIMITS.GROWTH.customers} customers`,
+      `${PLAN_LIMITS.GROWTH.storageGB} GB storage`,
       "Advanced analytics",
       "Priority support",
       "Custom branding",
@@ -44,10 +52,12 @@ const plans = [
     id: "ENTERPRISE",
     name: "Enterprise",
     description: "For large organizations with complex needs",
-    price: "$199/month",
+    price: `$${PLAN_PRICING.ENTERPRISE.monthlyPrice}/month`,
     features: [
       "Unlimited companies",
-      "All Growth features",
+      "Unlimited users",
+      "Unlimited customers",
+      `${PLAN_LIMITS.ENTERPRISE.storageGB} GB storage`,
       "Dedicated account manager",
       "Custom integrations",
       "24/7 phone support",

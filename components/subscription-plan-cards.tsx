@@ -19,6 +19,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  PLAN_PRICING,
+  PLAN_LIMITS,
+  getTotalUserLimit,
+} from "@/lib/plan-limits";
 
 interface PlanConfig {
   id: string;
@@ -41,11 +46,12 @@ const PLANS: PlanConfig[] = [
     type: "ESSENTIAL",
     color: "from-[#10B981] to-[#059669]",
     features: [
-      "1 Company",
-      "Basic features",
+      `${PLAN_LIMITS.ESSENTIAL.companies} Company`,
+      `${getTotalUserLimit("ESSENTIAL")} total users`,
+      `${PLAN_LIMITS.ESSENTIAL.customers} customers`,
+      `${PLAN_LIMITS.ESSENTIAL.storageGB} GB storage`,
       "Email support",
       "Standard security",
-      "Monthly updates",
     ],
     companyLimit: 1,
   },
@@ -57,11 +63,12 @@ const PLANS: PlanConfig[] = [
     type: "GROWTH",
     color: "from-[#3B82F6] to-[#2563EB]",
     features: [
-      "Up to 3 Companies",
-      "Advanced features",
+      `Up to ${PLAN_LIMITS.GROWTH.companies} Companies`,
+      `${getTotalUserLimit("GROWTH")} total users`,
+      `${PLAN_LIMITS.GROWTH.customers} customers`,
+      `${PLAN_LIMITS.GROWTH.storageGB} GB storage`,
       "Priority support",
       "Enhanced security",
-      "Weekly updates",
       "Custom branding",
     ],
     companyLimit: 3,
@@ -76,12 +83,12 @@ const PLANS: PlanConfig[] = [
     color: "from-[#8B5CF6] to-[#7C3AED]",
     features: [
       "Unlimited Companies",
-      "All features included",
+      "Unlimited users",
+      "Unlimited customers",
+      `${PLAN_LIMITS.ENTERPRISE.storageGB} GB storage`,
       "24/7 dedicated support",
       "Advanced security & compliance",
-      "Daily updates",
       "White-label options",
-      "API access",
       "Custom integrations",
     ],
     companyLimit: "Unlimited",
@@ -262,6 +269,21 @@ export function SubscriptionPlanCards() {
                     <p className="text-sm text-muted-foreground mt-1">
                       {plan.description}
                     </p>
+                  </div>
+                </div>
+
+                {/* Pricing */}
+                <div className="mb-4">
+                  <div className="text-3xl font-bold">
+                    ${PLAN_PRICING[plan.type].monthlyPrice}
+                    <span className="text-lg font-normal text-muted-foreground">
+                      /mo
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Extra storage: $
+                    {PLAN_PRICING[plan.type].extraStoragePricePerGB}/GB per
+                    month
                   </div>
                 </div>
 

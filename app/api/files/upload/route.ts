@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { uploadDocument } from "@/lib/storage-service";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { PLAN_LIMITS, calculateExtraStorageCost } from "@/lib/plan-limits";
 
 export const runtime = "nodejs";
 
@@ -72,7 +73,16 @@ export async function POST(request: NextRequest) {
     const folder = await db.fileFolder.findUnique({
       where: { id: folderId },
       include: {
-        company: true,
+        company: {
+          include: {
+            owner: true,
+            subscriberSubscriptions: {
+              where: { status: { in: ["TRIAL", "ACTIVE"] } },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
+          },
+        },
       },
     });
 
@@ -85,6 +95,45 @@ export async function POST(request: NextRequest) {
         { error: "Folder does not belong to specified company" },
         { status: 400 }
       );
+    }
+
+    // Check storage limit (skip for SUPER_USER)
+    if (folder.company.owner.plan !== "SUPER_USER") {
+      const plan =
+        folder.company.subscriberSubscriptions[0]?.plan || "ESSENTIAL";
+      const planLimits = PLAN_LIMITS[plan];
+      const fileSizeGB = file.size / (1024 * 1024 * 1024);
+      const currentStorageGB = folder.company.storageUsedGB || 0;
+      const newTotalGB = currentStorageGB + fileSizeGB;
+
+      if (
+        planLimits.storageGB !== Infinity &&
+        newTotalGB > planLimits.storageGB
+      ) {
+        const { overageGB, monthlyCost } = calculateExtraStorageCost(
+          newTotalGB,
+          plan
+        );
+
+        return NextResponse.json(
+          {
+            error: `Storage limit exceeded. Your ${plan} plan includes ${
+              planLimits.storageGB
+            } GB. This upload would use ${newTotalGB.toFixed(
+              2
+            )} GB (${overageGB.toFixed(
+              2
+            )} GB over limit). Extra storage costs $${monthlyCost.toFixed(
+              2
+            )}/month. Please upgrade your plan or purchase additional storage.`,
+            limit: planLimits.storageGB,
+            current: currentStorageGB,
+            newTotal: newTotalGB,
+            overageCost: monthlyCost,
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Check user permissions
@@ -189,6 +238,17 @@ export async function POST(request: NextRequest) {
       data: {
         fileCount: {
           increment: 1,
+        },
+      },
+    });
+
+    // Update company storage usage
+    const fileSizeGB = file.size / (1024 * 1024 * 1024);
+    await db.company.update({
+      where: { id: companyId },
+      data: {
+        storageUsedGB: {
+          increment: fileSizeGB,
         },
       },
     });

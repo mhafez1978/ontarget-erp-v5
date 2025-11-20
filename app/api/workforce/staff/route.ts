@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { sendEmail } from "@/lib/email-service";
 import { validateSession } from "@/lib/session-manager";
+import { PLAN_LIMITS, getTotalUserLimit } from "@/lib/plan-limits";
 
 // GET /api/workforce/staff
 export async function GET(request: Request) {
@@ -174,9 +175,8 @@ export async function POST(request: Request) {
           ...(user.role === "SUPER_ADMIN" ? [{ id: companyId }] : []),
         ],
       },
-      select: {
-        id: true,
-        name: true,
+      include: {
+        owner: true,
       },
     });
 
@@ -185,6 +185,37 @@ export async function POST(request: Request) {
         { error: "Access denied to this company" },
         { status: 403 }
       );
+    }
+
+    // Check user limit (skip for SUPER_USER)
+    if (company.owner.plan !== "SUPER_USER") {
+      // Get company's subscription plan
+      const subscription = await db.subscription.findFirst({
+        where: {
+          subscriberCompanyId: companyId,
+          status: { in: ["TRIAL", "ACTIVE"] },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const plan = subscription?.plan || "ESSENTIAL";
+      const totalUserLimit = getTotalUserLimit(plan);
+
+      // Count all existing company members (across all roles)
+      const userCount = await db.companyMember.count({
+        where: { companyId },
+      });
+
+      if (totalUserLimit !== Infinity && userCount >= totalUserLimit) {
+        return NextResponse.json(
+          {
+            error: `User limit reached. Your ${plan} plan allows ${totalUserLimit} total users across all roles. Upgrade to add more.`,
+            limit: totalUserLimit,
+            current: userCount,
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Check if user with this email already exists

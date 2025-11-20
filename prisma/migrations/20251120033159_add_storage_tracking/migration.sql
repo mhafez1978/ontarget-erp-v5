@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Company` ADD COLUMN `storageUsedGB` DOUBLE NOT NULL DEFAULT 0;

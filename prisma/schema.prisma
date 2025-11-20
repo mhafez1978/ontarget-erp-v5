@@ -248,6 +248,7 @@ model Company {
   // Storage configuration - NEW SYSTEM: Uses StorageProvider table
   // Subscription-based backup: ESSENTIAL (uses global), PROFESSIONAL (optional backup), ENTERPRISE (no backup)
   storageBackupEnabled Boolean @default(true) // If true and has custom storage, also backup to global storage (charged feature)
+  storageUsedGB        Float   @default(0) // Track storage usage for plan limit enforcement
   
   // DEPRECATED: Legacy storage config - kept for backward compatibility, use StorageProvider table instead
   storageProvider     String?   @default("INHERIT") // DEPRECATED: Use StorageProvider table

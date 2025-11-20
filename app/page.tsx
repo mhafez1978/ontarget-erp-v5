@@ -153,17 +153,11 @@ export default function Home() {
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Essential</h3>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl text-yellow-300 line-through font-semibold">
-                    $39.99
-                  </span>
-                  <span className="text-4xl font-bold">$24.99</span>
+                  <span className="text-4xl font-bold">$49.99</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
-                <p className="text-sm text-primary font-medium mt-2">
-                  First year discount! Regular price $39.99/month
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  or $19.99/month billed annually
+                <p className="text-sm text-muted-foreground mt-2">
+                  Perfect for small businesses
                 </p>
               </div>
 
@@ -174,36 +168,25 @@ export default function Home() {
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 5 admin accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 5 manager accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 5 staff accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 5 contractor accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 5 supplier accounts</span>
+                  <span className="text-sm">10 total users (all roles)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <span className="text-sm">Up to 100 customers</span>
                 </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">50 GB storage</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">Email support</span>
+                </li>
               </ul>
 
               <div className="border-t pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  3.9% + $0.99 per CC transaction
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Plus any other Stripe fees
+                  Extra storage: $0.45/GB/month
                 </p>
               </div>
 
@@ -225,11 +208,11 @@ export default function Home() {
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Growth</h3>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold">$199.99</span>
+                  <span className="text-4xl font-bold">$299.99</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  or $190.99/month billed annually
+                  For growing businesses
                 </p>
               </div>
 
@@ -242,36 +225,29 @@ export default function Home() {
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 20 admin accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 20 manager accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 20 staff accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 20 contractor accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 20 supplier accounts</span>
+                  <span className="text-sm">50 total users (all roles)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <span className="text-sm">Up to 300 customers</span>
                 </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">250 GB storage</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">Priority support</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">Custom branding</span>
+                </li>
               </ul>
 
               <div className="border-t pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  3.2% + $0.49 per CC transaction
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Plus any other Stripe fees
+                  Extra storage: $0.32/GB/month
                 </p>
               </div>
 
@@ -285,11 +261,11 @@ export default function Home() {
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold">$499.99</span>
+                  <span className="text-4xl font-bold">$999.99</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  or $492.99/month billed annually
+                  For large organizations
                 </p>
               </div>
 
@@ -302,36 +278,33 @@ export default function Home() {
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Unlimited admin accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Unlimited manager accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Unlimited staff accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Unlimited contractor accounts</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-sm">Unlimited supplier accounts</span>
+                  <span className="text-sm">Unlimited users</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <span className="text-sm">Unlimited customers</span>
                 </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">1 TB storage</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">Dedicated account manager</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">24/7 phone support</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">SLA guarantee</span>
+                </li>
               </ul>
 
               <div className="border-t pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  2.9% + $0.20 per CC transaction
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Plus any other Stripe fees
+                  Extra storage: $0.10/GB/month
                 </p>
               </div>
 

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { validateSession } from "@/lib/session-manager";
+import { PLAN_LIMITS } from "@/lib/plan-limits";
 
 const customerCreateSchema = z.object({
   name: z
@@ -116,6 +117,43 @@ export async function POST(request: NextRequest) {
         { error: "You don't have access to this company" },
         { status: 403 }
       );
+    }
+
+    // Check customer limit (skip for SUPER_USER)
+    if (company.owner.plan !== "SUPER_USER") {
+      // Get company's subscription plan
+      const subscription = await db.subscription.findFirst({
+        where: {
+          subscriberCompanyId: companyId,
+          status: { in: ["TRIAL", "ACTIVE"] },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const plan = subscription?.plan || "ESSENTIAL";
+      const planLimits = PLAN_LIMITS[plan];
+
+      // Count existing customers (users with COMPANY_CUSTOMER role)
+      const customerCount = await db.companyMember.count({
+        where: {
+          companyId,
+          user: { role: "COMPANY_CUSTOMER" },
+        },
+      });
+
+      if (
+        planLimits.customers !== Infinity &&
+        customerCount >= planLimits.customers
+      ) {
+        return NextResponse.json(
+          {
+            error: `Customer limit reached. Your ${plan} plan allows ${planLimits.customers} customers. Upgrade to add more.`,
+            limit: planLimits.customers,
+            current: customerCount,
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Check if email already exists
