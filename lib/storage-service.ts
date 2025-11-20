@@ -2,11 +2,13 @@ import { db } from "@/lib/db";
 import { promises as fs } from "fs";
 import path from "path";
 
-// Company Storage Service
-// Handles hierarchical storage with fallback and backup:
-// 1. DEFAULT: Local storage
-// 2. LEVEL 1: Super Admin global storage (if configured)
-// 3. LEVEL 2: Company override storage (primary) + Super Admin backup
+// ============================================================================
+// HYBRID STORAGE SERVICE - Subscription-Based Architecture
+// ============================================================================
+// ESSENTIAL Plan: Uses global storage (Super Admin controls)
+// PROFESSIONAL Plan: Can use custom storage + optional backup (charged add-on)
+// ENTERPRISE Plan: Must use custom storage, no backup to global
+// ============================================================================
 
 export interface StorageConfig {
   provider: string;
@@ -51,96 +53,22 @@ export interface StorageDestination {
 }
 
 /**
- * Get storage configuration for a company
- * Returns primary storage and backup (if company has override)
+ * Get active global storage configuration from StorageProvider table
  */
-export async function getCompanyStorage(
-  companyId: string
-): Promise<StorageDestination> {
-  // Get company storage settings
-  const company = await db.company.findUnique({
-    where: { id: companyId },
-    select: {
-      name: true,
-      storageProvider: true,
-      storageConfig: true,
+async function getGlobalStorage(): Promise<{
+  provider: string;
+  config: Record<string, unknown>;
+} | null> {
+  const globalStorage = await db.storageProvider.findFirst({
+    where: {
+      scope: "GLOBAL",
+      isActive: true,
+      isConnected: true,
     },
   });
 
-  if (!company) {
-    throw new Error("Company not found");
-  }
-
-  // Get super admin (root company) global storage
-  const rootCompany = await db.company.findFirst({
-    where: { isRoot: true },
-    select: {
-      storageProvider: true,
-      storageConfig: true,
-    },
-  });
-
-  const superAdminStorage = rootCompany?.storageProvider
-    ? {
-        provider: rootCompany.storageProvider,
-        config: (rootCompany.storageConfig as Record<string, unknown>) || {},
-      }
-    : null;
-
-  // Determine primary and backup storage
-  if (company.storageProvider === "INHERIT" || !company.storageProvider) {
-    // Use super admin storage or default to LOCAL
-    const primaryProvider = superAdminStorage?.provider || "LOCAL";
-    const primaryConfig = superAdminStorage?.config || {
-      path: "/var/storage/cold",
-    };
-
-    return {
-      primary: {
-        provider: primaryProvider,
-        path: `${company.name}/HR-Docs`,
-        config: primaryConfig,
-      },
-    };
-  } else {
-    // Company has override - use it as primary, super admin as backup
-    const primaryProvider = company.storageProvider;
-    const primaryConfig =
-      (company.storageConfig as Record<string, unknown>) || {};
-
-    return {
-      primary: {
-        provider: primaryProvider,
-        path: `HR-Docs`,
-        config: primaryConfig,
-      },
-      backup: superAdminStorage
-        ? {
-            provider: superAdminStorage.provider,
-            path: `${company.name}/HR-Docs`,
-            config: superAdminStorage.config,
-          }
-        : undefined,
-    };
-  }
-}
-
-/**
- * Get super admin global storage configuration
- */
-export async function getSuperAdminStorage(): Promise<StorageConfig | null> {
-  const rootCompany = await db.company.findFirst({
-    where: { isRoot: true },
-    select: {
-      storageProvider: true,
-      storageConfig: true,
-    },
-  });
-
-  if (
-    !rootCompany?.storageProvider ||
-    rootCompany.storageProvider === "LOCAL"
-  ) {
+  if (!globalStorage) {
+    // Fallback to default LOCAL storage
     return {
       provider: "LOCAL",
       config: { path: "/var/storage/cold" },
@@ -148,28 +76,202 @@ export async function getSuperAdminStorage(): Promise<StorageConfig | null> {
   }
 
   return {
-    provider: rootCompany.storageProvider,
-    config: (rootCompany.storageConfig as Record<string, unknown>) || {},
+    provider: globalStorage.provider,
+    config: JSON.parse(globalStorage.config || "{}"),
   };
 }
 
 /**
- * Update company storage configuration
+ * Get company-specific storage configuration from StorageProvider table
  */
-export async function updateCompanyStorage(
+async function getCompanySpecificStorage(companyId: string): Promise<{
+  provider: string;
+  config: Record<string, unknown>;
+  enableGlobalBackup: boolean;
+} | null> {
+  const companyStorage = await db.storageProvider.findFirst({
+    where: {
+      companyId: companyId,
+      isActive: true,
+      isConnected: true,
+    },
+  });
+
+  if (!companyStorage) {
+    return null;
+  }
+
+  return {
+    provider: companyStorage.provider,
+    config: JSON.parse(companyStorage.config || "{}"),
+    enableGlobalBackup: companyStorage.enableGlobalBackup,
+  };
+}
+
+/**
+ * Get storage configuration for a company based on subscription plan
+ * ESSENTIAL: Uses global storage only
+ * PROFESSIONAL: Can override + optional backup to global (if storageBackupEnabled)
+ * ENTERPRISE: Must use custom storage, no backup
+ */
+export async function getCompanyStorage(
+  companyId: string
+): Promise<StorageDestination> {
+  // Get company with subscription info
+  const company = await db.company.findUnique({
+    where: { id: companyId },
+    select: {
+      name: true,
+      storageBackupEnabled: true,
+      subscriberSubscriptions: {
+        select: {
+          plan: true,
+          status: true,
+        },
+        where: {
+          status: { in: ["TRIAL", "ACTIVE"] },
+        },
+        take: 1,
+      },
+    },
+  });
+
+  if (!company) {
+    throw new Error("Company not found");
+  }
+
+  const subscription = company.subscriberSubscriptions[0];
+  const plan = subscription?.plan || "ESSENTIAL";
+
+  // Get global storage (Super Admin configured)
+  const globalStorage = await getGlobalStorage();
+
+  // Get company-specific storage if exists
+  const companyStorage = await getCompanySpecificStorage(companyId);
+
+  // ESSENTIAL PLAN: Must use global storage only
+  if (plan === "ESSENTIAL") {
+    if (!globalStorage) {
+      throw new Error(
+        "Global storage not configured. Contact system administrator."
+      );
+    }
+
+    return {
+      primary: {
+        provider: globalStorage.provider,
+        path: `${company.name}/HR-Docs`,
+        config: globalStorage.config,
+      },
+    };
+  }
+
+  // PROFESSIONAL PLAN: Can use custom storage + optional backup
+  if (plan === "GROWTH" || plan === "PROFESSIONAL") {
+    if (companyStorage) {
+      // Company has custom storage configured
+      const result: StorageDestination = {
+        primary: {
+          provider: companyStorage.provider,
+          path: `HR-Docs`,
+          config: companyStorage.config,
+        },
+      };
+
+      // Add backup if enabled (charged feature)
+      if (
+        company.storageBackupEnabled &&
+        companyStorage.enableGlobalBackup &&
+        globalStorage
+      ) {
+        result.backup = {
+          provider: globalStorage.provider,
+          path: `${company.name}/HR-Docs`,
+          config: globalStorage.config,
+        };
+      }
+
+      return result;
+    } else {
+      // No custom storage, use global
+      if (!globalStorage) {
+        throw new Error(
+          "Global storage not configured. Contact system administrator."
+        );
+      }
+
+      return {
+        primary: {
+          provider: globalStorage.provider,
+          path: `${company.name}/HR-Docs`,
+          config: globalStorage.config,
+        },
+      };
+    }
+  }
+
+  // ENTERPRISE PLAN: Must use custom storage, no backup
+  if (plan === "ENTERPRISE") {
+    if (!companyStorage) {
+      throw new Error(
+        "Enterprise plan requires custom storage configuration. Please configure storage in Settings."
+      );
+    }
+
+    return {
+      primary: {
+        provider: companyStorage.provider,
+        path: `HR-Docs`,
+        config: companyStorage.config,
+      },
+      // No backup for Enterprise - they manage their own redundancy
+    };
+  }
+
+  // Fallback to global storage
+  if (!globalStorage) {
+    throw new Error(
+      "Global storage not configured. Contact system administrator."
+    );
+  }
+
+  return {
+    primary: {
+      provider: globalStorage.provider,
+      path: `${company.name}/HR-Docs`,
+      config: globalStorage.config,
+    },
+  };
+}
+
+/**
+ * Get super admin global storage configuration (NEW SYSTEM)
+ * Reads from StorageProvider table with scope=GLOBAL
+ */
+export async function getSuperAdminStorage(): Promise<StorageConfig | null> {
+  const globalStorage = await getGlobalStorage();
+
+  if (!globalStorage) {
+    return null;
+  }
+
+  return {
+    provider: globalStorage.provider,
+    config: globalStorage.config as StorageConfig["config"],
+  };
+}
+
+/**
+ * Update company storage backup preference
+ * Controls whether Professional plan customers get backup to global storage
+ */
+export async function updateCompanyStorageBackup(
   companyId: string,
-  userId: string,
-  storageProvider: string,
-  storageConfig: Record<string, unknown>
+  enabled: boolean
 ): Promise<void> {
   await db.company.update({
     where: { id: companyId },
-    data: {
-      storageProvider,
-      storageConfig: storageConfig as never,
-      storageConfiguredAt: new Date(),
-      storageConfiguredBy: userId,
-    },
+    data: { storageBackupEnabled: enabled },
   });
 }
 
@@ -239,7 +341,11 @@ async function deleteFromLocal(filePath: string): Promise<void> {
 }
 
 /**
- * Upload file to storage (primary and backup if configured)
+ * Upload file to storage with subscription-based backup rules
+ *
+ * ESSENTIAL: Primary = Global storage (e.g., /var/storage/cold/CompanyName/...)
+ * PROFESSIONAL: Primary = Company storage, Backup = Global (if backup enabled)
+ * ENTERPRISE: Primary = Company storage only, no backup
  */
 export async function uploadDocument(
   companyId: string,
@@ -268,32 +374,46 @@ export async function uploadDocument(
 
   // Upload to primary storage
   if (storage.primary.provider === "LOCAL") {
-    const fullPath = `/var/storage/cold/${primaryPath}`;
+    const basePath =
+      (storage.primary.config.path as string) || "/var/storage/cold";
+    const fullPath = `${basePath}/${primaryPath}`;
     await uploadToLocal(fullPath, fileBuffer);
   }
   // TODO: Add S3, Google Drive, OneDrive, DigitalOcean implementations
 
-  // Upload to backup storage if configured
+  // Upload to backup storage if configured (Professional plan with backup enabled)
   if (storage.backup) {
     backupPath = buildStoragePath(company.name, category, fileName);
 
     if (storage.backup.provider === "LOCAL") {
-      const fullPath = `/var/storage/cold/${backupPath}`;
+      const backupBasePath =
+        (storage.backup.config.path as string) || "/var/storage/cold";
+      const fullPath = `${backupBasePath}/${backupPath}`;
       await uploadToLocal(fullPath, fileBuffer);
     }
     // TODO: Add other provider backups
   }
 
-  return {
-    primaryPath:
-      storage.primary.provider === "LOCAL"
-        ? `/var/storage/cold/${primaryPath}`
-        : primaryPath,
-    backupPath: backupPath
-      ? storage.backup?.provider === "LOCAL"
-        ? `/var/storage/cold/${backupPath}`
+  // Return full paths
+  const primaryFullPath =
+    storage.primary.provider === "LOCAL"
+      ? `${
+          (storage.primary.config.path as string) || "/var/storage/cold"
+        }/${primaryPath}`
+      : primaryPath;
+
+  const backupFullPath =
+    backupPath && storage.backup
+      ? storage.backup.provider === "LOCAL"
+        ? `${
+            (storage.backup.config.path as string) || "/var/storage/cold"
+          }/${backupPath}`
         : backupPath
-      : undefined,
+      : undefined;
+
+  return {
+    primaryPath: primaryFullPath,
+    backupPath: backupFullPath,
     storageProvider: storage.primary.provider,
   };
 }

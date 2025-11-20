@@ -61,11 +61,11 @@ export function EmailSettingsWarningBanner() {
           <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-              Email Provider Not Configured
+              Start setting up system global settings
             </h3>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-              Configure email settings to enable user verification emails,
-              password resets, and notifications.
+              Configure geo tracking, oauth provider integrations, global cold
+              storage settings, and email service provider configurations.
             </p>
             <div className="mt-3">
               <Link href="/dashboard/settings">
@@ -75,7 +75,7 @@ export function EmailSettingsWarningBanner() {
                   className="bg-white dark:bg-gray-800 text-amber-900 dark:text-amber-100 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30"
                 >
                   <Settings className="h-4 w-4 mr-2" />
-                  Configure Email Settings
+                  Configure Global System Settings
                 </Button>
               </Link>
             </div>

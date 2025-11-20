@@ -94,7 +94,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { provider, config, scope, companyId } = body;
+    const { provider, config, scope, companyId, isActive, enableGlobalBackup } =
+      body;
 
     // Validate permissions
     if (scope === "GLOBAL" && user.role !== "SUPER_ADMIN") {
@@ -118,6 +119,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // If activating, deactivate other providers in the same scope
+    if (isActive) {
+      const whereClause: { scope: string; companyId?: string | null } = {
+        scope: scope || "GLOBAL",
+      };
+
+      if (companyId) {
+        whereClause.companyId = companyId;
+      } else if (scope === "GLOBAL") {
+        whereClause.companyId = null;
+      }
+
+      await db.storageProvider.updateMany({
+        where: whereClause,
+        data: { isActive: false },
+      });
+    }
+
     // Create or update storage provider
     const storageProvider = await db.storageProvider.create({
       data: {
@@ -126,18 +145,30 @@ export async function POST(request: NextRequest) {
         scope: scope || "GLOBAL",
         companyId,
         createdById: userId,
-        isActive: false, // Require testing before activation
+        isActive: isActive || false,
+        isConnected: true, // User must test successfully before saving
+        lastTestedAt: new Date(),
+        enableGlobalBackup: enableGlobalBackup || false, // Professional plan backup feature
       },
     });
 
     // Log audit event
+    const scopeText =
+      scope === "GLOBAL" ? "globally" : `for company ${companyId}`;
+    const configPath =
+      config.path || config.bucket || config.space || "configured location";
+
     await db.auditLog.create({
       data: {
         userId: userId,
-        action: "CREATED",
+        action: isActive ? "ACTIVATED" : "CREATED",
         entityType: "StorageProvider",
         entityId: storageProvider.id,
-        description: `Created ${provider} storage provider`,
+        description: `${
+          isActive ? "Created and activated" : "Created"
+        } ${provider} storage provider ${scopeText}${
+          provider === "LOCAL" ? ` at ${configPath}` : ""
+        }`,
       },
     });
 
@@ -146,6 +177,116 @@ export async function POST(request: NextRequest) {
     console.error("Error creating storage provider:", error);
     return NextResponse.json(
       { error: "Failed to create storage provider" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Activate/deactivate storage provider
+export async function PATCH(request: NextRequest) {
+  try {
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("sessionToken")?.value;
+
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const user = validation.user;
+    const userId = validation.user.id;
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const { providerId, isActive } = body;
+
+    if (!providerId) {
+      return NextResponse.json(
+        { error: "Provider ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Get the provider to check permissions
+    const provider = await db.storageProvider.findUnique({
+      where: { id: providerId },
+    });
+
+    if (!provider) {
+      return NextResponse.json(
+        { error: "Storage provider not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check permissions
+    if (provider.scope === "GLOBAL" && user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Only super admins can modify global storage" },
+        { status: 403 }
+      );
+    }
+
+    if (provider.companyId && user.role !== "SUPER_ADMIN") {
+      // Verify admin owns this company
+      const company = await db.company.findFirst({
+        where: { id: provider.companyId, ownerId: userId },
+      });
+
+      if (!company) {
+        return NextResponse.json(
+          { error: "Forbidden - not your company" },
+          { status: 403 }
+        );
+      }
+    }
+
+    // If activating this provider, deactivate all others in the same scope
+    if (isActive) {
+      await db.storageProvider.updateMany({
+        where: {
+          scope: provider.scope,
+          companyId: provider.companyId,
+          id: { not: providerId },
+        },
+        data: { isActive: false },
+      });
+    }
+
+    // Update the provider
+    const updatedProvider = await db.storageProvider.update({
+      where: { id: providerId },
+      data: { isActive },
+    });
+
+    // Log audit event
+    await db.auditLog.create({
+      data: {
+        userId: userId,
+        action: isActive ? "ACTIVATED" : "DEACTIVATED",
+        entityType: "StorageProvider",
+        entityId: providerId,
+        description: `${isActive ? "Activated" : "Deactivated"} ${
+          provider.provider
+        } storage provider`,
+      },
+    });
+
+    return NextResponse.json({ provider: updatedProvider });
+  } catch (error) {
+    console.error("Error updating storage provider:", error);
+    return NextResponse.json(
+      { error: "Failed to update storage provider" },
       { status: 500 }
     );
   }

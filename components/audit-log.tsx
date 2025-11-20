@@ -476,8 +476,12 @@ export function AuditLog({ maxHeight = 600, limit = 50 }: AuditLogProps) {
                 </span>
                 <span>
                   <strong>User:</strong>{" "}
-                  {evt.user.name || evt.user.email || "Unknown user"}{" "}
-                  <span className="text-xs opacity-70">({evt.user.role})</span>
+                  {evt.user?.name || evt.user?.email || "Unknown user"}{" "}
+                  {evt.user?.role && (
+                    <span className="text-xs opacity-70">
+                      ({evt.user.role})
+                    </span>
+                  )}
                 </span>
                 <span>
                   <strong>IP:</strong>{" "}

@@ -245,9 +245,13 @@ model Company {
   invoices        Invoice[]
   payments        Payment[]
 
-  // Storage configuration (company can override global storage)
-  storageProvider     String?   @default("INHERIT") // INHERIT, LOCAL, AWS_S3, GOOGLE_DRIVE, ONEDRIVE, DIGITALOCEAN
-  storageConfig       Json? // Provider-specific configuration
+  // Storage configuration - NEW SYSTEM: Uses StorageProvider table
+  // Subscription-based backup: ESSENTIAL (uses global), PROFESSIONAL (optional backup), ENTERPRISE (no backup)
+  storageBackupEnabled Boolean @default(true) // If true and has custom storage, also backup to global storage (charged feature)
+  
+  // DEPRECATED: Legacy storage config - kept for backward compatibility, use StorageProvider table instead
+  storageProvider     String?   @default("INHERIT") // DEPRECATED: Use StorageProvider table
+  storageConfig       Json? // DEPRECATED: Use StorageProvider table
   storageConfiguredAt DateTime?
   storageConfiguredBy String? // User ID who configured it
 
@@ -1152,6 +1156,10 @@ model StorageProvider {
   // Scope - global (super admin) or company-specific
   scope     String  @default("GLOBAL") // "GLOBAL" or company ID
   companyId String? // If company-specific
+  
+  // Backup configuration (for PROFESSIONAL plan add-on)
+  // If company has custom storage and this is true, files also backup to global storage
+  enableGlobalBackup Boolean @default(false)
 
   // Metadata
   createdById String
