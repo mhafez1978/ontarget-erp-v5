@@ -46,6 +46,7 @@ interface UserProfile {
 
 interface FormData {
   name: string;
+  email: string;
   addressLine1: string;
   addressLine2: string;
   city: string;
@@ -66,6 +67,7 @@ export default function ProfilePage() {
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
+    email: "",
     addressLine1: "",
     addressLine2: "",
     city: "",
@@ -79,6 +81,7 @@ export default function ProfilePage() {
 
   const [originalData, setOriginalData] = useState<FormData>({
     name: "",
+    email: "",
     addressLine1: "",
     addressLine2: "",
     city: "",
@@ -132,6 +135,7 @@ export default function ProfilePage() {
 
         const profileData = {
           name: data.name || "",
+          email: data.email || "",
           addressLine1: data.addressLine1 || "",
           addressLine2: data.addressLine2 || "",
           city: data.city || "",
@@ -430,17 +434,45 @@ export default function ProfilePage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={user.email || ""}
-                        disabled
-                        className="bg-muted"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Email cannot be changed
-                      </p>
+                      <Label htmlFor="email">
+                        Email Address
+                        {user.email?.endsWith("@github.placeholder.local") &&
+                          " *"}
+                      </Label>
+                      {user.email?.endsWith("@github.placeholder.local") ? (
+                        <>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                email: e.target.value,
+                              })
+                            }
+                            placeholder="your.email@example.com"
+                            className="border-yellow-500"
+                          />
+                          <p className="text-xs text-yellow-600 mt-1">
+                            ⚠️ Please update your email address (GitHub didn't
+                            provide one)
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={user.email || ""}
+                            disabled
+                            className="bg-muted"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Email cannot be changed
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
 

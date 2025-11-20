@@ -131,6 +131,9 @@ export default function SettingsPage() {
     companyId: null as string | null,
   });
 
+  const [oauthScope, setOauthScope] = useState<"GLOBAL" | "COMPANY">("COMPANY");
+  const [canCustomizeOAuth, setCanCustomizeOAuth] = useState(false);
+
   // Teams Management state
   const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);
   const [showEditTeamDialog, setShowEditTeamDialog] = useState(false);
@@ -217,6 +220,10 @@ export default function SettingsPage() {
         if (oauthResponse.ok) {
           const oauthData = await oauthResponse.json();
           const providers: OAuthProvider[] = oauthData.providers || [];
+
+          // Set scope and customization permission
+          setOauthScope(oauthData.scope || "COMPANY");
+          setCanCustomizeOAuth(oauthData.canCustomize || false);
 
           const googleProvider = providers.find(
             (p: OAuthProvider) => p.provider === "google"
@@ -326,6 +333,19 @@ export default function SettingsPage() {
       | "wechat",
     checked: boolean
   ) => {
+    // Check if user can customize OAuth
+    if (!canCustomizeOAuth && user.role !== "SUPER_ADMIN") {
+      toast.error(
+        "Upgrade to GROWTH or ENTERPRISE plan to customize OAuth providers",
+        {
+          description:
+            "Your current plan doesn't allow OAuth provider customization. Upgrade your plan to unlock this feature.",
+          duration: 5000,
+        }
+      );
+      return;
+    }
+
     setOauthLoading({ ...oauthLoading, [provider]: true });
     try {
       const response = await fetch("/api/settings/oauth-providers", {
@@ -341,14 +361,34 @@ export default function SettingsPage() {
         }),
       });
 
-      if (response.ok) {
-        setOauthProviders({
-          ...oauthProviders,
-          [provider]: { ...oauthProviders[provider], enabled: checked },
-        });
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error === "PLAN_UPGRADE_REQUIRED") {
+          toast.error("Plan Upgrade Required", {
+            description:
+              data.message ||
+              "OAuth customization requires GROWTH or ENTERPRISE plan",
+            duration: 5000,
+          });
+        } else {
+          toast.error("Failed to update OAuth setting");
+        }
+        return;
       }
+
+      setOauthProviders({
+        ...oauthProviders,
+        [provider]: { ...oauthProviders[provider], enabled: checked },
+      });
+      toast.success(
+        `${provider.charAt(0).toUpperCase() + provider.slice(1)} OAuth ${
+          checked ? "enabled" : "disabled"
+        } successfully`
+      );
     } catch (error) {
       console.error(`Failed to update ${provider} OAuth setting:`, error);
+      toast.error("Failed to update OAuth setting");
     } finally {
       setOauthLoading({ ...oauthLoading, [provider]: false });
     }
@@ -365,6 +405,19 @@ export default function SettingsPage() {
       | "yandex"
       | "wechat"
   ) => {
+    // Check if user can customize OAuth
+    if (!canCustomizeOAuth && user.role !== "SUPER_ADMIN") {
+      toast.error(
+        "Upgrade to GROWTH or ENTERPRISE plan to customize OAuth providers",
+        {
+          description:
+            "Your current plan doesn't allow OAuth provider customization. Upgrade your plan to unlock this feature.",
+          duration: 5000,
+        }
+      );
+      return;
+    }
+
     setOauthLoading({ ...oauthLoading, [provider]: true });
     try {
       const response = await fetch("/api/settings/oauth-providers", {
@@ -380,13 +433,27 @@ export default function SettingsPage() {
         }),
       });
 
-      if (response.ok) {
-        toast.success(
-          `${
-            provider === "google" ? "Google" : "Microsoft"
-          } OAuth credentials saved successfully!`
-        );
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error === "PLAN_UPGRADE_REQUIRED") {
+          toast.error("Plan Upgrade Required", {
+            description:
+              data.message ||
+              "OAuth customization requires GROWTH or ENTERPRISE plan",
+            duration: 5000,
+          });
+        } else {
+          toast.error("Failed to save credentials");
+        }
+        return;
       }
+
+      toast.success(
+        `${
+          provider.charAt(0).toUpperCase() + provider.slice(1)
+        } OAuth credentials saved successfully!`
+      );
     } catch (error) {
       console.error(`Failed to save ${provider} OAuth credentials:`, error);
       toast.error("Failed to save credentials. Please try again.");
@@ -563,11 +630,40 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <p className="text-sm text-muted-foreground">
-                  Enable OAuth authentication providers for your ERP system.
-                  These settings are currently system-wide and apply to all
-                  users.
-                </p>
+                {user.role === "SUPER_ADMIN" ? (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Global Settings:</strong> These OAuth providers are
+                    configured globally and will be used by all companies unless
+                    they override them with their own settings
+                    (GROWTH/ENTERPRISE plans only).
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Company-Specific OAuth Settings:</strong>{" "}
+                      Configure your own OAuth providers to override the global
+                      defaults.
+                    </p>
+                    {!canCustomizeOAuth && (
+                      <div className="rounded-lg bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 p-4">
+                        <div className="flex items-start gap-3">
+                          <Info className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                              Upgrade Required for OAuth Customization
+                            </p>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                              Your current plan ({user.plan}) uses the global
+                              OAuth settings configured by the administrator.
+                              Upgrade to GROWTH or ENTERPRISE plan to configure
+                              your own OAuth providers.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Google OAuth */}
                 <div className="rounded-lg border p-6 space-y-4">

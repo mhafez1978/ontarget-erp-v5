@@ -86,6 +86,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const {
       name,
+      email: newEmail,
       addressLine1,
       addressLine2,
       city,
@@ -100,6 +101,8 @@ export async function PATCH(request: NextRequest) {
     // Build update data object
     const updateData: {
       name?: string;
+      email?: string;
+      emailVerified?: Date | null;
       addressLine1?: string;
       addressLine2?: string | null;
       city?: string;
@@ -111,6 +114,37 @@ export async function PATCH(request: NextRequest) {
       longitude?: number | null;
     } = {};
     if (name !== undefined) updateData.name = name;
+
+    // Allow email update only if current email is a placeholder (GitHub OAuth without email)
+    if (
+      newEmail !== undefined &&
+      user.email.endsWith("@github.placeholder.local")
+    ) {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newEmail)) {
+        return NextResponse.json(
+          { error: "Invalid email format" },
+          { status: 400 }
+        );
+      }
+
+      // Check if email already exists
+      const existingUser = await db.user.findUnique({
+        where: { email: newEmail },
+      });
+
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "Email already in use" },
+          { status: 400 }
+        );
+      }
+
+      updateData.email = newEmail;
+      updateData.emailVerified = null; // Reset verification when email changes
+    }
+
     if (addressLine1 !== undefined) updateData.addressLine1 = addressLine1;
     if (addressLine2 !== undefined)
       updateData.addressLine2 = addressLine2 || null;

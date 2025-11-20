@@ -6,7 +6,7 @@ import path from "path";
 // HYBRID STORAGE SERVICE - Subscription-Based Architecture
 // ============================================================================
 // ESSENTIAL Plan: Uses global storage (Super Admin controls)
-// PROFESSIONAL Plan: Can use custom storage + optional backup (charged add-on)
+// GROWTH Plan: Can use custom storage + optional backup (charged add-on)
 // ENTERPRISE Plan: Must use custom storage, no backup to global
 // ============================================================================
 
@@ -111,7 +111,7 @@ async function getCompanySpecificStorage(companyId: string): Promise<{
 /**
  * Get storage configuration for a company based on subscription plan
  * ESSENTIAL: Uses global storage only
- * PROFESSIONAL: Can override + optional backup to global (if storageBackupEnabled)
+ * GROWTH: Can override + optional backup to global (if storageBackupEnabled)
  * ENTERPRISE: Must use custom storage, no backup
  */
 export async function getCompanyStorage(
@@ -166,8 +166,8 @@ export async function getCompanyStorage(
     };
   }
 
-  // PROFESSIONAL PLAN: Can use custom storage + optional backup
-  if (plan === "GROWTH" || plan === "PROFESSIONAL") {
+  // GROWTH PLAN: Can use custom storage + optional backup
+  if (plan === "GROWTH") {
     if (companyStorage) {
       // Company has custom storage configured
       const result: StorageDestination = {
@@ -263,7 +263,7 @@ export async function getSuperAdminStorage(): Promise<StorageConfig | null> {
 
 /**
  * Update company storage backup preference
- * Controls whether Professional plan customers get backup to global storage
+ * Controls whether Growth plan customers get backup to global storage
  */
 export async function updateCompanyStorageBackup(
   companyId: string,
@@ -344,7 +344,7 @@ async function deleteFromLocal(filePath: string): Promise<void> {
  * Upload file to storage with subscription-based backup rules
  *
  * ESSENTIAL: Primary = Global storage (e.g., /var/storage/cold/CompanyName/...)
- * PROFESSIONAL: Primary = Company storage, Backup = Global (if backup enabled)
+ * GROWTH: Primary = Company storage, Backup = Global (if backup enabled)
  * ENTERPRISE: Primary = Company storage only, no backup
  */
 export async function uploadDocument(
@@ -381,7 +381,7 @@ export async function uploadDocument(
   }
   // TODO: Add S3, Google Drive, OneDrive, DigitalOcean implementations
 
-  // Upload to backup storage if configured (Professional plan with backup enabled)
+  // Upload to backup storage if configured (Growth plan with backup enabled)
   if (storage.backup) {
     backupPath = buildStoragePath(company.name, category, fileName);
 

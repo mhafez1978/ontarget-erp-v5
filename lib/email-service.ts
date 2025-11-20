@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import nodemailer, { type TransportOptions } from "nodemailer";
 import { decrypt } from "./encryption";
 import { db } from "./db";
 
@@ -8,6 +8,23 @@ export interface EmailOptions {
   html: string;
   text?: string;
   from?: string;
+}
+
+interface Office365TransportOptions {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth: {
+    type: string;
+    user: string;
+    clientId: string;
+    clientSecret: string;
+    tenantId: string;
+  };
+  connectionTimeout: number;
+  socketTimeout: number;
+  logger: boolean;
+  debug: boolean;
 }
 
 interface EmailProvider {
@@ -179,7 +196,7 @@ function createTransporter(provider: EmailProvider) {
       );
     }
 
-    return nodemailer.createTransport({
+    const transportOptions: Office365TransportOptions = {
       host: "smtp.office365.com",
       port: 587,
       secure: false, // Use STARTTLS
@@ -194,7 +211,9 @@ function createTransporter(provider: EmailProvider) {
       socketTimeout: 15000,
       logger: true,
       debug: true,
-    } as any);
+    };
+
+    return nodemailer.createTransport(transportOptions as TransportOptions);
   }
 
   if (provider.provider === "SENDGRID" && provider.sendgridApiKey) {

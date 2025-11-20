@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { updateCompanyStorage } from "@/lib/storage-service";
 import { validateSession } from "@/lib/session-manager";
 
 // GET - Fetch company storage configuration
@@ -176,12 +175,15 @@ export async function POST(request: Request) {
     }
 
     // Update storage configuration
-    await updateCompanyStorage(
-      companyId,
-      user.id,
-      storageProvider,
-      storageConfig
-    );
+    await db.company.update({
+      where: { id: companyId },
+      data: {
+        storageProvider,
+        storageConfig: storageConfig || null,
+        storageConfiguredAt: new Date(),
+        storageConfiguredBy: user.id,
+      },
+    });
 
     return NextResponse.json({
       success: true,

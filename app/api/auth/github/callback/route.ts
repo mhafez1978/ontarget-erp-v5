@@ -98,13 +98,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Generate placeholder email if GitHub doesn't provide one
     if (!email) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/login?error=no_email`
-      );
+      // Use GitHub username or ID to create a placeholder email
+      const githubUsername = profile.login || `github${profile.id}`;
+      email = `${githubUsername}@github.placeholder.local`;
+      console.log(`[GitHub OAuth] No email found, using placeholder: ${email}`);
     }
 
     const { name, avatar_url } = profile;
+    const isPlaceholderEmail = email.endsWith("@github.placeholder.local");
 
     // Check if user exists
     let user = await db.user.findUnique({
@@ -148,6 +151,7 @@ export async function GET(request: NextRequest) {
     } else {
       // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
       // They will need to select a plan before accessing the dashboard
+      // If using placeholder email, they'll also need to update their email
       user = await db.user.create({
         data: {
           email,

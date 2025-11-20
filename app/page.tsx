@@ -32,17 +32,16 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl mb-6">
-            Transform Your Business
+            Help Your Business
             <br />
             <span className="bg-linear-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-              With Smart ERP Solutions
+              Evolve With AI
             </span>
           </h1>
 
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-8 sm:text-xl">
-            Streamline operations, boost productivity, and drive growth with our
-            comprehensive enterprise resource planning platform designed for
-            modern businesses.
+            Streamline operations, boost business, and drive growth with our
+            comprehensive Ai driven enterprise resource planning platform
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
