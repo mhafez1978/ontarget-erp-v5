@@ -39,6 +39,7 @@ interface Task {
   createdById: string;
   assignedToId: string | null;
   projectId: string;
+  order: number;
   timeEntry: number;
   createdAt: string;
   updatedAt: string;

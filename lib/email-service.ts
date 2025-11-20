@@ -194,7 +194,7 @@ function createTransporter(provider: EmailProvider) {
       socketTimeout: 15000,
       logger: true,
       debug: true,
-    });
+    } as any);
   }
 
   if (provider.provider === "SENDGRID" && provider.sendgridApiKey) {

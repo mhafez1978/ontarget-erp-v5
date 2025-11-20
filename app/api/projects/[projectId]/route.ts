@@ -530,7 +530,7 @@ export async function PATCH(
 
     // Track status changes with specific actions
     if (status && status !== existingProject.status) {
-      let statusAction = AUDIT_ACTIONS.PROJECT_UPDATED;
+      let statusAction: string = AUDIT_ACTIONS.PROJECT_UPDATED;
       let statusDescription = `Project status changed from ${existingProject.status} to ${status}`;
 
       if (status === "COMPLETED") {

@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
             },
             connectionTimeout: 10000,
             socketTimeout: 10000,
-          });
+          } as any);
           break;
 
         case "SENDGRID":

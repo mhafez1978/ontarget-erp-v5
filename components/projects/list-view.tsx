@@ -41,7 +41,13 @@ interface Project {
   id: string;
   name: string;
   description: string | null;
-  status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+  status:
+    | "PLANNING"
+    | "IN_PROGRESS"
+    | "ON_HOLD"
+    | "BLOCKED"
+    | "COMPLETED"
+    | "CANCELLED";
   startDate: string | null;
   endDate: string | null;
   companyId: string;
@@ -90,6 +96,10 @@ const STATUS_CONFIG = {
   ON_HOLD: {
     label: "On Hold",
     variant: "outline" as const,
+  },
+  BLOCKED: {
+    label: "Blocked",
+    variant: "destructive" as const,
   },
   COMPLETED: {
     label: "Completed",

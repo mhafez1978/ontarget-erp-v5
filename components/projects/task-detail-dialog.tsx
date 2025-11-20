@@ -71,7 +71,7 @@ interface TeamMember {
   };
 }
 
-interface TaskDetailSheetProps {
+interface TaskDetailDialogProps {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -104,14 +104,14 @@ const PRIORITY_OPTIONS = [
   { value: "LOW", label: "Low", color: "bg-green-500" },
 ];
 
-export function TaskDetailSheet({
+export function TaskDetailDialog({
   task,
   open,
   onOpenChange,
   onSave,
   onDelete,
   teamMembers,
-}: TaskDetailSheetProps) {
+}: TaskDetailDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [timeEntry, setTimeEntry] = useState(0);

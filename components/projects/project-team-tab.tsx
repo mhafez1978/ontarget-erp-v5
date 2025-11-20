@@ -12,7 +12,13 @@ interface Project {
   id: string;
   name: string;
   description: string | null;
-  status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+  status:
+    | "PLANNING"
+    | "IN_PROGRESS"
+    | "ON_HOLD"
+    | "BLOCKED"
+    | "COMPLETED"
+    | "CANCELLED";
   startDate: string | null;
   endDate: string | null;
   targetStartDate: string | null;

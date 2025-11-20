@@ -11,7 +11,13 @@ interface Project {
   id: string;
   name: string;
   description: string | null;
-  status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+  status:
+    | "PLANNING"
+    | "IN_PROGRESS"
+    | "ON_HOLD"
+    | "BLOCKED"
+    | "COMPLETED"
+    | "CANCELLED";
   startDate: string | null;
   endDate: string | null;
   companyId: string;
@@ -62,13 +68,17 @@ const STATUS_CONFIG = {
     color:
       "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
   },
+  BLOCKED: {
+    label: "Blocked",
+    color: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+  },
   COMPLETED: {
     label: "Completed",
     color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
   },
   CANCELLED: {
     label: "Cancelled",
-    color: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+    color: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300",
   },
 };
 

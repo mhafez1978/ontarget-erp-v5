@@ -7,7 +7,7 @@ import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 // PATCH /api/projects/[projectId]/notes/[noteId] - Update a note
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { projectId: string; noteId: string } }
+  { params }: { params: Promise<{ projectId: string; noteId: string }> }
 ) {
   try {
     const cookieStore = await cookies();
@@ -158,7 +158,7 @@ export async function PATCH(
 // DELETE /api/projects/[projectId]/notes/[noteId] - Delete a note
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { projectId: string; noteId: string } }
+  { params }: { params: Promise<{ projectId: string; noteId: string }> }
 ) {
   try {
     const cookieStore = await cookies();

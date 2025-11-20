@@ -7,7 +7,7 @@ import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 // GET /api/projects/[projectId]/notes - Get all notes for a project
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const cookieStore = await cookies();
@@ -85,7 +85,7 @@ export async function GET(
 // POST /api/projects/[projectId]/notes - Create a new note
 export async function POST(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const cookieStore = await cookies();

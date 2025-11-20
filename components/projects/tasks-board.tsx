@@ -34,12 +34,22 @@ interface Task {
   priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   dueDate: string | null;
   order: number;
-  assigneeId: string | null;
+  createdById: string;
+  assignedToId: string | null;
   projectId: string;
   timeEntry: number;
   createdAt: string;
   updatedAt: string;
-  assignee: {
+  createdBy: {
+    id: string;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+    };
+  };
+  assignedTo: {
     id: string;
     user: {
       id: string;

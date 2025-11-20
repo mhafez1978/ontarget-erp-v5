@@ -20,7 +20,13 @@ interface Project {
   id: string;
   name: string;
   description: string | null;
-  status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+  status:
+    | "PLANNING"
+    | "IN_PROGRESS"
+    | "ON_HOLD"
+    | "BLOCKED"
+    | "COMPLETED"
+    | "CANCELLED";
   startDate: string | null;
   endDate: string | null;
   targetStartDate: string | null;
@@ -189,7 +195,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 border-t pt-4">order-t pt-4">
+          <div className="grid gap-4 md:grid-cols-2 border-t pt-4">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-1">
                 Company

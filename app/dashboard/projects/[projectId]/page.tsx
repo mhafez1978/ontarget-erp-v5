@@ -23,7 +23,7 @@ import { ProjectOverviewTab } from "@/components/projects/project-overview-tab";
 import { ProjectTeamTab } from "@/components/projects/project-team-tab";
 import { ProjectActivityTab } from "@/components/projects/project-activity-tab";
 import { TasksBoard } from "@/components/projects/tasks-board";
-import { TaskDetailSheet } from "@/components/projects/task-detail-sheet";
+import { TaskDetailDialog } from "@/components/projects/task-detail-dialog";
 import { CreateTaskDialog } from "@/components/projects/create-task-dialog";
 import { ProjectNotes } from "@/components/projects/project-notes";
 import { StickyNote } from "lucide-react";
@@ -35,9 +35,13 @@ interface Task {
   status: string;
   priority: string;
   dueDate: string | null;
+  order: number;
   createdById: string;
   assignedToId: string | null;
+  projectId: string;
   timeEntry: number;
+  createdAt: string;
+  updatedAt: string;
   createdBy: {
     id: string;
     user: {
@@ -47,7 +51,7 @@ interface Task {
       image: string | null;
     };
   };
-  assignedTo?: {
+  assignedTo: {
     id: string;
     user: {
       id: string;
@@ -62,7 +66,13 @@ interface Project {
   id: string;
   name: string;
   description: string | null;
-  status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+  status:
+    | "PLANNING"
+    | "IN_PROGRESS"
+    | "ON_HOLD"
+    | "BLOCKED"
+    | "COMPLETED"
+    | "CANCELLED";
   startDate: string | null;
   endDate: string | null;
   targetStartDate: string | null;
@@ -154,7 +164,24 @@ export default function ProjectDetailPage() {
   const projectId = params.projectId as string;
 
   const [project, setProject] = useState<Project | null>(null);
-  const [notes, setNotes] = useState<any[]>([]);
+  const [notes, setNotes] = useState<
+    Array<{
+      id: string;
+      content: string;
+      timeEntry: number;
+      createdAt: string;
+      updatedAt: string;
+      author: {
+        id: string;
+        user: {
+          id: string;
+          name: string | null;
+          email: string;
+          image: string | null;
+        };
+      };
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -164,7 +191,6 @@ export default function ProjectDetailPage() {
   const [createTaskStatus, setCreateTaskStatus] = useState<
     "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "COMPLETED" | "BLOCKED"
   >("TODO");
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [user, setUser] = useState<{
     name: string | null;
     email: string | null;
@@ -235,7 +261,7 @@ export default function ProjectDetailPage() {
   }, [projectId]);
 
   const handleEdit = () => {
-    setShowEditDialog(true);
+    toast.info("Edit project dialog not yet implemented");
   };
 
   const handleDelete = async () => {
@@ -558,7 +584,7 @@ export default function ProjectDetailPage() {
         </Tabs>
 
         {/* Task Detail Sheet */}
-        <TaskDetailSheet
+        <TaskDetailDialog
           task={selectedTask}
           open={isTaskDetailOpen}
           onOpenChange={setIsTaskDetailOpen}
