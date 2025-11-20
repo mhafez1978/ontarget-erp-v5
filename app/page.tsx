@@ -153,11 +153,17 @@ export default function Home() {
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Essential</h3>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold">$49.99</span>
+                  <span className="text-2xl text-orange-500 line-through font-semibold">
+                    $49.99
+                  </span>
+                  <span className="text-4xl font-bold">$45.99</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Perfect for small businesses
+                <p className="text-sm text-primary font-medium mt-2">
+                  Limited time offer!
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  or $42.49/month billed annually
                 </p>
               </div>
 
@@ -186,6 +192,12 @@ export default function Home() {
 
               <div className="border-t pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
+                  3.9% + $0.99 per CC transaction
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Plus any other Stripe fees
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
                   Extra storage: $0.45/GB/month
                 </p>
               </div>
@@ -212,7 +224,7 @@ export default function Home() {
                   <span className="text-muted-foreground">/month</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  For growing businesses
+                  or $289.99/month billed annually
                 </p>
               </div>
 
@@ -247,6 +259,12 @@ export default function Home() {
 
               <div className="border-t pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
+                  3.2% + $0.49 per CC transaction
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Plus any other Stripe fees
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
                   Extra storage: $0.32/GB/month
                 </p>
               </div>
@@ -265,7 +283,7 @@ export default function Home() {
                   <span className="text-muted-foreground">/month</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  For large organizations
+                  or $969.99/month billed annually
                 </p>
               </div>
 
@@ -304,6 +322,12 @@ export default function Home() {
 
               <div className="border-t pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
+                  2.9% + $0.20 per CC transaction
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Plus any other Stripe fees
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
                   Extra storage: $0.10/GB/month
                 </p>
               </div>

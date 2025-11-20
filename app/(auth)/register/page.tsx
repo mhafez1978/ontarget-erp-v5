@@ -25,6 +25,11 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
+import {
+  PLAN_PRICING,
+  PLAN_LIMITS,
+  getTotalUserLimit,
+} from "@/lib/plan-limits";
 
 type SubscriptionPlan = "ESSENTIAL" | "GROWTH" | "ENTERPRISE";
 
@@ -54,6 +59,9 @@ function RegisterForm() {
 
   const [formData, setFormData] = useState(initialFormData);
   const [error, setError] = useState("");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
+    "monthly"
+  );
 
   // Track if form is dirty
   const isFormDirty = useFormDirty(initialFormData, formData);
@@ -128,6 +136,7 @@ function RegisterForm() {
           email: formData.email,
           password: formData.password,
           plan: selectedPlan,
+          billingCycle: billingCycle.toUpperCase(), // "MONTHLY" or "ANNUAL"
         }),
       });
 
@@ -149,21 +158,48 @@ function RegisterForm() {
   const planDetails = {
     ESSENTIAL: {
       name: "Essential",
-      price: "$24.99-$39.99",
-      features: ["1 company", "5 accounts per type", "100 customers"],
+      monthlyPrice: PLAN_PRICING.ESSENTIAL.monthlyPromoPrice
+        ? `$${PLAN_PRICING.ESSENTIAL.monthlyPromoPrice}`
+        : `$${PLAN_PRICING.ESSENTIAL.monthlyPrice}`,
+      monthlyOriginalPrice: PLAN_PRICING.ESSENTIAL.monthlyPromoPrice
+        ? `$${PLAN_PRICING.ESSENTIAL.monthlyPrice}`
+        : null,
+      annualPrice: `$${PLAN_PRICING.ESSENTIAL.annualPriceMonthly}`,
+      annualTotal: `$${PLAN_PRICING.ESSENTIAL.annualPrice}`,
+      isPromo: !!PLAN_PRICING.ESSENTIAL.monthlyPromoPrice,
+      features: [
+        `${PLAN_LIMITS.ESSENTIAL.companies} company`,
+        `${getTotalUserLimit("ESSENTIAL")} users`,
+        `${PLAN_LIMITS.ESSENTIAL.customers} customers`,
+        `${PLAN_LIMITS.ESSENTIAL.storageGB} GB storage`,
+      ],
     },
     GROWTH: {
       name: "Growth",
-      price: "$199.99",
-      features: ["Up to 3 companies", "20 accounts per type", "300 customers"],
+      monthlyPrice: `$${PLAN_PRICING.GROWTH.monthlyPrice}`,
+      monthlyOriginalPrice: null,
+      annualPrice: `$${PLAN_PRICING.GROWTH.annualPriceMonthly}`,
+      annualTotal: `$${PLAN_PRICING.GROWTH.annualPrice}`,
+      isPromo: false,
+      features: [
+        `Up to ${PLAN_LIMITS.GROWTH.companies} companies`,
+        `${getTotalUserLimit("GROWTH")} users`,
+        `${PLAN_LIMITS.GROWTH.customers} customers`,
+        `${PLAN_LIMITS.GROWTH.storageGB} GB storage`,
+      ],
     },
     ENTERPRISE: {
       name: "Enterprise",
-      price: "$499.99",
+      monthlyPrice: `$${PLAN_PRICING.ENTERPRISE.monthlyPrice}`,
+      monthlyOriginalPrice: null,
+      annualPrice: `$${PLAN_PRICING.ENTERPRISE.annualPriceMonthly}`,
+      annualTotal: `$${PLAN_PRICING.ENTERPRISE.annualPrice}`,
+      isPromo: false,
       features: [
         "Unlimited companies",
-        "Unlimited accounts",
+        "Unlimited users",
         "Unlimited customers",
+        `${PLAN_LIMITS.ENTERPRISE.storageGB} GB storage`,
       ],
     },
   };
@@ -195,6 +231,38 @@ function RegisterForm() {
             {/* Plan Selection */}
             <div className="space-y-3">
               <Label>Select Your Plan</Label>
+
+              {/* Billing Cycle Toggle */}
+              <div className="flex justify-center mb-4">
+                <div className="inline-flex rounded-lg border border-border p-1 bg-muted/50">
+                  <button
+                    type="button"
+                    onClick={() => setBillingCycle("monthly")}
+                    className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                      billingCycle === "monthly"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBillingCycle("annual")}
+                    className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                      billingCycle === "annual"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Annual
+                    <span className="ml-1.5 text-xs bg-green-500 text-white px-1.5 py-0.5 rounded">
+                      Save
+                    </span>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {(["ESSENTIAL", "GROWTH", "ENTERPRISE"] as const).map(
                   (plan) => (
@@ -211,15 +279,56 @@ function RegisterForm() {
                       {selectedPlan === plan && (
                         <CheckCircle2 className="absolute top-2 right-2 h-5 w-5 text-primary" />
                       )}
+                      {/* {planDetails[plan].isPromo && (
+                        <div className="absolute top-8 left-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+                          PROMO
+                        </div>
+                      )} */}
                       <div className="font-semibold text-base mb-1">
                         {planDetails[plan].name}
                       </div>
-                      <div className="text-lg font-bold text-primary mb-2">
-                        {planDetails[plan].price}
-                        <span className="text-xs font-normal text-muted-foreground">
-                          /mo
-                        </span>
-                      </div>
+                      {billingCycle === "monthly" ? (
+                        // Monthly Pricing Display
+                        planDetails[plan].isPromo &&
+                        planDetails[plan].monthlyOriginalPrice ? (
+                          <div className="mb-2">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-sm text-orange-500 line-through font-semibold">
+                                {planDetails[plan].monthlyOriginalPrice}
+                              </span>
+                              <span className="text-lg font-bold text-primary">
+                                {planDetails[plan].monthlyPrice}
+                              </span>
+                              <span className="text-xs font-normal text-muted-foreground">
+                                /mo
+                              </span>
+                            </div>
+                            <p className="text-xs text-primary font-medium mt-0.5">
+                              Limited offer!
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="text-lg font-bold text-primary mb-2">
+                            {planDetails[plan].monthlyPrice}
+                            <span className="text-xs font-normal text-muted-foreground">
+                              /mo
+                            </span>
+                          </div>
+                        )
+                      ) : (
+                        // Annual Pricing Display
+                        <div className="mb-2">
+                          <div className="text-lg font-bold text-primary">
+                            {planDetails[plan].annualPrice}
+                            <span className="text-xs font-normal text-muted-foreground">
+                              /mo
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {planDetails[plan].annualTotal} billed annually
+                          </p>
+                        </div>
+                      )}
                       <ul className="space-y-1 text-xs text-muted-foreground">
                         {planDetails[plan].features.map((feature, idx) => (
                           <li key={idx}>• {feature}</li>

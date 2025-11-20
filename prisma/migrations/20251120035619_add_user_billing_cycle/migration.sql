@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `User` ADD COLUMN `billingCycle` ENUM('MONTHLY', 'ANNUAL') NOT NULL DEFAULT 'MONTHLY';

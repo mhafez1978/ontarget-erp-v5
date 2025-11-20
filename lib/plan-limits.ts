@@ -92,9 +92,13 @@ export interface PlanPricing {
   name: string;
   monthlyPrice: number;
   monthlyDiscountPrice?: number;
+  monthlyPromoPrice?: number; // Promotional price (shown with strikethrough on original)
   annualPrice: number;
+  annualPriceMonthly?: number; // Monthly equivalent when paid annually
   annualDiscountPrice?: number;
   transactionFee: string;
+  transactionFeePercent?: number;
+  transactionFeeFixed?: number;
   isPopular?: boolean;
   // Storage pricing
   baseStorageGB: number; // Base storage included
@@ -132,10 +136,13 @@ export const PLAN_PRICING: Record<PlanType, PlanPricing> = {
   },
   ESSENTIAL: {
     name: "Essential",
-    monthlyPrice: 49.99,
-    monthlyDiscountPrice: 46.99, // Annual billing discount
-    annualPrice: 563.88, // 46.99 * 12
+    monthlyPrice: 49.99, // Original price (shown with strikethrough)
+    monthlyPromoPrice: 45.99, // Promo price
+    annualPrice: 509.88, // 42.49 * 12
+    annualPriceMonthly: 42.49, // Monthly equivalent when paid annually
     transactionFee: "3.9% + $0.99",
+    transactionFeePercent: 3.9,
+    transactionFeeFixed: 0.99,
     baseStorageGB: 50,
     extraStoragePricePer100GB: 10, // $10 per 100GB
     extraStoragePricePerGB: 0.45, // $0.45 per GB
@@ -143,9 +150,11 @@ export const PLAN_PRICING: Record<PlanType, PlanPricing> = {
   GROWTH: {
     name: "Growth",
     monthlyPrice: 299.99,
-    monthlyDiscountPrice: 289.99, // Annual billing discount
     annualPrice: 3479.88, // 289.99 * 12
+    annualPriceMonthly: 289.99, // Monthly equivalent when paid annually
     transactionFee: "3.2% + $0.49",
+    transactionFeePercent: 3.2,
+    transactionFeeFixed: 0.49,
     isPopular: true,
     baseStorageGB: 250,
     extraStoragePricePer100GB: 35, // $35 per 500GB = $35 per 500GB
@@ -154,9 +163,11 @@ export const PLAN_PRICING: Record<PlanType, PlanPricing> = {
   ENTERPRISE: {
     name: "Enterprise",
     monthlyPrice: 999.99,
-    monthlyDiscountPrice: 969.99, // Annual billing discount
     annualPrice: 11639.88, // 969.99 * 12
+    annualPriceMonthly: 969.99, // Monthly equivalent when paid annually
     transactionFee: "2.9% + $0.20",
+    transactionFeePercent: 2.9,
+    transactionFeeFixed: 0.2,
     baseStorageGB: 1024, // 1 TB
     extraStoragePricePer100GB: 60, // $60 per 1TB = ~$0.06/GB but we charge per 100GB
     extraStoragePricePerGB: 0.1, // $0.10 per GB

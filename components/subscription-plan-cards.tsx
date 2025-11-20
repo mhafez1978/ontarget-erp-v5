@@ -274,11 +274,40 @@ export function SubscriptionPlanCards() {
 
                 {/* Pricing */}
                 <div className="mb-4">
-                  <div className="text-3xl font-bold">
-                    ${PLAN_PRICING[plan.type].monthlyPrice}
-                    <span className="text-lg font-normal text-muted-foreground">
-                      /mo
-                    </span>
+                  {plan.type === "ESSENTIAL" &&
+                  PLAN_PRICING.ESSENTIAL.monthlyPromoPrice ? (
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xl text-orange-500 line-through font-semibold">
+                          ${PLAN_PRICING[plan.type].monthlyPrice}
+                        </span>
+                        <span className="text-3xl font-bold">
+                          ${PLAN_PRICING.ESSENTIAL.monthlyPromoPrice}
+                        </span>
+                        <span className="text-lg font-normal text-muted-foreground">
+                          /mo
+                        </span>
+                      </div>
+                      <div className="text-xs text-primary font-medium mt-1">
+                        Limited time offer!
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-3xl font-bold">
+                      ${PLAN_PRICING[plan.type].monthlyPrice}
+                      <span className="text-lg font-normal text-muted-foreground">
+                        /mo
+                      </span>
+                    </div>
+                  )}
+                  <div className="text-xs text-muted-foreground mt-1">
+                    or ${PLAN_PRICING[plan.type].annualPriceMonthly}/month
+                    billed annually
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Transaction fee:{" "}
+                    {PLAN_PRICING[plan.type].transactionFeePercent}% + $
+                    {PLAN_PRICING[plan.type].transactionFeeFixed}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     Extra storage: $

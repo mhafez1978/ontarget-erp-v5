@@ -160,17 +160,19 @@ export function UserManagementTable() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 p-4 rounded-md mb-6">
+        <div className="bg-emerald-50 border border-blue-200 dark:border-emerald-200 p-4 rounded-md mb-6">
           <div className="flex items-start gap-3">
-            <ShieldAlert className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-            <div className="text-sm text-blue-900 dark:text-blue-100 space-y-1">
-              <p className="font-medium">Account Disable Feature</p>
-              <p>
+            <ShieldAlert className="h-5 w-5 text-emerald-700 dark:text-blue-400 mt-0.5 shrink-0" />
+            <div className="text-sm text-emerald-700 dark:text-blue-100 space-y-1">
+              <p className="font-medium dark:text-black">
+                Account Disable Feature
+              </p>
+              <p className="dark:text-purple-500">
                 Disabled accounts cannot log in or access any system features.
                 Use this to temporarily suspend user access without deleting
                 their data.
               </p>
-              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+              <p className="text-sm text-purple-700 dark:text-emerald-600 mt-2">
                 <strong>Note:</strong> You cannot disable your own account. Data
                 retention policies still apply to disabled accounts.
               </p>

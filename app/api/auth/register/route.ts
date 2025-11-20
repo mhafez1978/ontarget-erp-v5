@@ -32,6 +32,7 @@ const registerSchema = z.object({
     .enum(["ESSENTIAL", "GROWTH", "ENTERPRISE"])
     .optional()
     .default("ESSENTIAL"),
+  billingCycle: z.enum(["MONTHLY", "ANNUAL"]).optional().default("MONTHLY"),
 });
 
 export async function POST(request: NextRequest) {
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, password, plan } = validationResult.data;
+    const { name, email, password, plan, billingCycle } = validationResult.data;
 
     // Check if user already exists
     const existingUser = await db.user.findUnique({
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         role: "ERP_CUSTOMER", // Default role
         plan: plan,
+        billingCycle: billingCycle, // Store billing cycle preference
         trialEndsAt: trialEndsAt,
         verificationToken,
         verificationTokenExpires,
@@ -96,6 +98,7 @@ export async function POST(request: NextRequest) {
         email: true,
         role: true,
         plan: true,
+        billingCycle: true,
         createdAt: true,
       },
     });
@@ -131,6 +134,7 @@ export async function POST(request: NextRequest) {
           userName: name,
           userEmail: email,
           plan: plan,
+          billingCycle: billingCycle,
         },
         ipAddress: geoData?.ip || null,
         ipv4: geoData?.ipv4 || null,

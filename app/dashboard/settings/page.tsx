@@ -984,6 +984,71 @@ export default function SettingsPage() {
                   </div>
                   {oauthProviders.github.enabled && (
                     <div className="space-y-4 pt-4 border-t">
+                      {/* Setup Instructions */}
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 space-y-3">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Setup Instructions
+                        </h4>
+                        <ol className="text-sm space-y-2 list-decimal list-inside">
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://github.com/settings/developers"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                            >
+                              GitHub Developer Settings
+                            </a>
+                          </li>
+                          <li>
+                            Click &quot;OAuth Apps&quot; → &quot;New OAuth
+                            App&quot;
+                          </li>
+                          <li>
+                            Enter application name (e.g., &quot;OnTarget
+                            ERP&quot;)
+                          </li>
+                          <li>
+                            Set Homepage URL:{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                            </code>
+                          </li>
+                          <li>
+                            Set Authorization callback URL:{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                              /api/auth/github/callback
+                            </code>
+                          </li>
+                          <li>Click &quot;Register application&quot;</li>
+                          <li>
+                            Copy the &quot;Client ID&quot; and paste it below
+                          </li>
+                          <li>
+                            Click &quot;Generate a new client secret&quot;
+                          </li>
+                          <li>
+                            Copy the secret immediately and paste it below (you
+                            won&apos;t be able to see it again!)
+                          </li>
+                        </ol>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="github-client-id">Client ID</Label>
                         <Input
@@ -1099,6 +1164,73 @@ export default function SettingsPage() {
                   </div>
                   {oauthProviders.linkedin.enabled && (
                     <div className="space-y-4 pt-4 border-t">
+                      {/* Setup Instructions */}
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 space-y-3">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Setup Instructions
+                        </h4>
+                        <ol className="text-sm space-y-2 list-decimal list-inside">
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://www.linkedin.com/developers/apps"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                            >
+                              LinkedIn Developers - My Apps
+                            </a>
+                          </li>
+                          <li>Click &quot;Create app&quot; button</li>
+                          <li>
+                            Fill in required information:
+                            <ul className="ml-6 mt-1 space-y-1 list-disc">
+                              <li>App name (e.g., &quot;OnTarget ERP&quot;)</li>
+                              <li>LinkedIn Page (must have a company page)</li>
+                              <li>App logo (upload company logo)</li>
+                            </ul>
+                          </li>
+                          <li>
+                            Accept LinkedIn API Terms of Use and click
+                            &quot;Create app&quot;
+                          </li>
+                          <li>
+                            Go to the &quot;Auth&quot; tab in your app settings
+                          </li>
+                          <li>
+                            Under &quot;OAuth 2.0 settings&quot;, add Redirect
+                            URL:{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                              /api/auth/linkedin/callback
+                            </code>
+                          </li>
+                          <li>
+                            Copy the &quot;Client ID&quot; and &quot;Client
+                            Secret&quot; from the Auth tab
+                          </li>
+                          <li>
+                            Go to &quot;Products&quot; tab and request access to
+                            &quot;Sign In with LinkedIn using OpenID
+                            Connect&quot;
+                          </li>
+                          <li>Paste your Client ID and Client Secret below</li>
+                        </ol>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="linkedin-client-id">Client ID</Label>
                         <Input
@@ -1208,6 +1340,82 @@ export default function SettingsPage() {
                   </div>
                   {oauthProviders.yahoo.enabled && (
                     <div className="space-y-4 pt-4 border-t">
+                      {/* Setup Instructions */}
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 space-y-3">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Setup Instructions
+                        </h4>
+                        <ol className="text-sm space-y-2 list-decimal list-inside">
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://developer.yahoo.com/apps/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                            >
+                              Yahoo Developer Network - My Apps
+                            </a>
+                          </li>
+                          <li>Click &quot;Create an App&quot; button</li>
+                          <li>
+                            Fill in the application details:
+                            <ul className="ml-6 mt-1 space-y-1 list-disc">
+                              <li>
+                                Application Name (e.g., &quot;OnTarget
+                                ERP&quot;)
+                              </li>
+                              <li>Application Type: Web Application</li>
+                              <li>Description: Brief app description</li>
+                            </ul>
+                          </li>
+                          <li>
+                            Under &quot;API Permissions&quot;, select:
+                            <ul className="ml-6 mt-1 space-y-1 list-disc">
+                              <li>OpenID Connect Permissions</li>
+                              <li>Profile (Read/Write Public and Private)</li>
+                            </ul>
+                          </li>
+                          <li>
+                            Set Redirect URI (Callback Domain):{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                              /api/auth/yahoo/callback
+                            </code>
+                          </li>
+                          <li>Click &quot;Create App&quot;</li>
+                          <li>
+                            Copy the &quot;Client ID (Consumer Key)&quot; from
+                            the app dashboard
+                          </li>
+                          <li>
+                            Copy the &quot;Client Secret (Consumer Secret)&quot;
+                            (you may need to regenerate it)
+                          </li>
+                          <li>Paste both credentials below</li>
+                        </ol>
+                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-800">
+                          <p className="text-xs text-blue-900 dark:text-blue-100">
+                            <strong>Note:</strong> Yahoo OAuth may require app
+                            verification for production use. Test thoroughly in
+                            development first.
+                          </p>
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="yahoo-client-id">Client ID</Label>
                         <Input
@@ -1317,6 +1525,82 @@ export default function SettingsPage() {
                   </div>
                   {oauthProviders.line.enabled && (
                     <div className="space-y-4 pt-4 border-t">
+                      {/* Setup Instructions */}
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 space-y-3">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Setup Instructions
+                        </h4>
+                        <ol className="text-sm space-y-2 list-decimal list-inside">
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://developers.line.biz/console/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                            >
+                              LINE Developers Console
+                            </a>
+                          </li>
+                          <li>
+                            Click &quot;Create&quot; to create a new provider
+                          </li>
+                          <li>
+                            After creating provider, click &quot;Create a LINE
+                            Login channel&quot;
+                          </li>
+                          <li>
+                            Fill in channel information:
+                            <ul className="ml-6 mt-1 space-y-1 list-disc">
+                              <li>Channel type: LINE Login</li>
+                              <li>
+                                Channel name (e.g., &quot;OnTarget ERP&quot;)
+                              </li>
+                              <li>Channel description</li>
+                            </ul>
+                          </li>
+                          <li>
+                            In the &quot;LINE Login&quot; tab, set Callback URL:{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                              /api/auth/line/callback
+                            </code>
+                          </li>
+                          <li>Go to &quot;Basic settings&quot; tab</li>
+                          <li>
+                            Copy the &quot;Channel ID&quot; and paste it below
+                          </li>
+                          <li>
+                            Copy the &quot;Channel Secret&quot; and paste it
+                            below
+                          </li>
+                          <li>
+                            Enable &quot;Email address permission&quot; in
+                            &quot;LINE Login&quot; settings
+                          </li>
+                        </ol>
+                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-800">
+                          <p className="text-xs text-blue-900 dark:text-blue-100">
+                            <strong>Note:</strong> LINE Login requires app
+                            verification before production use. Popular in
+                            Japan, Taiwan, and Thailand.
+                          </p>
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="line-client-id">Channel ID</Label>
                         <Input
@@ -1426,6 +1710,84 @@ export default function SettingsPage() {
                   </div>
                   {oauthProviders.yandex.enabled && (
                     <div className="space-y-4 pt-4 border-t">
+                      {/* Setup Instructions */}
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 space-y-3">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Setup Instructions
+                        </h4>
+                        <ol className="text-sm space-y-2 list-decimal list-inside">
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://oauth.yandex.com/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                            >
+                              Yandex OAuth - My Applications
+                            </a>
+                          </li>
+                          <li>
+                            Click &quot;Register new client&quot; or &quot;New
+                            application&quot;
+                          </li>
+                          <li>
+                            Fill in application details:
+                            <ul className="ml-6 mt-1 space-y-1 list-disc">
+                              <li>
+                                Application name (e.g., &quot;OnTarget
+                                ERP&quot;)
+                              </li>
+                              <li>Platform: Web services</li>
+                            </ul>
+                          </li>
+                          <li>
+                            Under &quot;Callback URI&quot; (Redirect URI), add:{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                              /api/auth/yandex/callback
+                            </code>
+                          </li>
+                          <li>
+                            Under &quot;Data access&quot;, select:
+                            <ul className="ml-6 mt-1 space-y-1 list-disc">
+                              <li>Access to email address</li>
+                              <li>Access to user avatar</li>
+                              <li>Access to username, first and last name</li>
+                            </ul>
+                          </li>
+                          <li>Click &quot;Create application&quot;</li>
+                          <li>
+                            Copy the &quot;ID&quot; (Client ID) and paste it
+                            below
+                          </li>
+                          <li>
+                            Copy the &quot;Password&quot; (Client Secret) and
+                            paste it below
+                          </li>
+                        </ol>
+                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-800">
+                          <p className="text-xs text-blue-900 dark:text-blue-100">
+                            <strong>Note:</strong> Yandex is the most popular
+                            search engine in Russia. Ideal for Russian-speaking
+                            users.
+                          </p>
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="yandex-client-id">Application ID</Label>
                         <Input
@@ -1541,6 +1903,91 @@ export default function SettingsPage() {
                   </div>
                   {oauthProviders.wechat.enabled && (
                     <div className="space-y-4 pt-4 border-t">
+                      {/* Setup Instructions */}
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 space-y-3">
+                        <h4 className="font-semibold text-sm flex items-center gap-2">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Setup Instructions
+                        </h4>
+                        <ol className="text-sm space-y-2 list-decimal list-inside">
+                          <li>
+                            Go to{" "}
+                            <a
+                              href="https://open.weixin.qq.com/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                            >
+                              WeChat Open Platform
+                            </a>
+                          </li>
+                          <li>
+                            Register a developer account (requires Chinese phone
+                            number)
+                          </li>
+                          <li>
+                            Create a new &quot;Website Application&quot;
+                            (网站应用)
+                          </li>
+                          <li>
+                            Fill in application details:
+                            <ul className="ml-6 mt-1 space-y-1 list-disc">
+                              <li>
+                                Application name (e.g., &quot;OnTarget
+                                ERP&quot;)
+                              </li>
+                              <li>Application introduction/description</li>
+                              <li>
+                                Website URL: {process.env.NEXT_PUBLIC_APP_URL}
+                              </li>
+                            </ul>
+                          </li>
+                          <li>
+                            Set Authorization Callback Domain:{" "}
+                            <code className="bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded text-xs">
+                              {process.env.NEXT_PUBLIC_APP_URL?.replace(
+                                /^https?:\/\//,
+                                ""
+                              )}
+                            </code>
+                          </li>
+                          <li>
+                            Submit for verification (requires business license
+                            and may take several days)
+                          </li>
+                          <li>
+                            After approval, copy the &quot;AppID&quot; and paste
+                            it below
+                          </li>
+                          <li>
+                            Copy the &quot;AppSecret&quot; and paste it below
+                          </li>
+                        </ol>
+                        <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-950/30 rounded border border-orange-200 dark:border-orange-800">
+                          <p className="text-xs text-orange-900 dark:text-orange-100">
+                            <strong>Important:</strong> WeChat OAuth requires:
+                            <ul className="ml-4 mt-1 list-disc">
+                              <li>Chinese business registration</li>
+                              <li>Verification (3-7 business days)</li>
+                              <li>Annual fee (¥300 RMB)</li>
+                            </ul>
+                            Essential for Chinese market access.
+                          </p>
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="wechat-client-id">App ID</Label>
                         <Input
@@ -1608,59 +2055,6 @@ export default function SettingsPage() {
                       </Button>
                     </div>
                   )}
-                </div>
-
-                {/* Information */}
-                <div className="rounded-lg bg-muted p-6 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Info className="h-5 w-5 text-primary mt-0.5" />
-                    <div className="space-y-2 flex-1">
-                      <h3 className="font-semibold text-base">
-                        OAuth Provider Setup
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        To enable OAuth authentication, you need to configure
-                        your application in the respective provider&apos;s
-                        developer console.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <h4 className="font-medium mb-2">Google OAuth Setup:</h4>
-                      <ol className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
-                        <li>Go to Google Cloud Console</li>
-                        <li>Create a new project or select existing</li>
-                        <li>Enable Google+ API</li>
-                        <li>Create OAuth 2.0 credentials</li>
-                        <li>
-                          Add authorized redirect URI:{" "}
-                          <code className="text-xs bg-background px-1 py-0.5 rounded">
-                            http://localhost:3001/api/auth/callback/google
-                          </code>
-                        </li>
-                      </ol>
-                    </div>
-
-                    <div>
-                      <h4 className="font-medium mb-2">
-                        Microsoft OAuth Setup:
-                      </h4>
-                      <ol className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
-                        <li>Go to Azure Portal</li>
-                        <li>Register a new application</li>
-                        <li>Add platform: Web</li>
-                        <li>
-                          Add redirect URI:{" "}
-                          <code className="text-xs bg-background px-1 py-0.5 rounded">
-                            http://localhost:3001/api/auth/callback/microsoft
-                          </code>
-                        </li>
-                        <li>Create a new client secret</li>
-                      </ol>
-                    </div>
-                  </div>
                 </div>
               </div>
             </AccordionContent>

@@ -83,6 +83,7 @@ model User {
   authMethod            String           @default("credentials") // 'credentials', 'oauth', 'both' - tracks how user can authenticate
   role                  UserRole         @default(ERP_CUSTOMER) // Default to ERP_CUSTOMER for new signups
   plan                  SubscriptionPlan @default(GUEST) // GUEST until they select a plan (ERP_CUSTOMER) or assigned role-specific plan
+  billingCycle          BillingCycle     @default(MONTHLY) // Monthly or Annual billing preference
   trialEndsAt           DateTime? // 30-day trial period end date
   isActive              Boolean          @default(true) // Account status (can be disabled by super admin)
   canSetupPersonalEmail Boolean          @default(false) // Allow user to connect personal email provider (Office365, Gmail)
@@ -283,8 +284,9 @@ model Subscription {
   subscriberCompany   Company @relation("SubscriberCompany", fields: [subscriberCompanyId], references: [id], onDelete: Cascade)
 
   // Subscription details
-  plan   SubscriptionPlan   @default(ESSENTIAL)
-  status SubscriptionStatus @default(TRIAL)
+  plan          SubscriptionPlan   @default(ESSENTIAL)
+  status        SubscriptionStatus @default(TRIAL)
+  billingCycle  BillingCycle       @default(MONTHLY) // Monthly or Annual billing
 
   // Trial and billing dates
   trialEndsAt       DateTime? // 30 days from creation by default
@@ -312,6 +314,12 @@ enum SubscriptionStatus {
   PAST_DUE // Payment failed/overdue
   SUSPENDED // Suspended by admin or system
   CANCELLED // Cancelled subscription
+}
+
+// Billing Cycle Enum
+enum BillingCycle {
+  MONTHLY // Billed monthly
+  ANNUAL // Billed annually (discounted)
 }
 
 // Company Member (Junction table for User-Company relationship)
