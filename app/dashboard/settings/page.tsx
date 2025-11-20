@@ -631,19 +631,64 @@ export default function SettingsPage() {
                 </div>
 
                 {user.role === "SUPER_ADMIN" ? (
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Global Settings:</strong> These OAuth providers are
-                    configured globally and will be used by all companies unless
-                    they override them with their own settings
-                    (GROWTH/ENTERPRISE plans only).
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Global Settings (Root Platform):</strong> These
+                      OAuth providers are configured globally and will be used
+                      on the main platform login page (/login) for ERP
+                      subscribers. Companies can override these with their own
+                      settings for their storefronts (GROWTH/ENTERPRISE plans
+                      only).
+                    </p>
+                    <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 p-4">
+                      <div className="flex items-start gap-3">
+                        <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                            Two-Tier OAuth Architecture
+                          </p>
+                          <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
+                            <strong>Root Platform (/login):</strong> Uses these
+                            global settings for ERP_CUSTOMER signups.
+                          </p>
+                          <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
+                            <strong>
+                              Company Storefronts (/store/[slug]/login):
+                            </strong>{" "}
+                            Uses company-specific OAuth settings (if configured)
+                            for COMPANY_CUSTOMER signups.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">
-                      <strong>Company-Specific OAuth Settings:</strong>{" "}
-                      Configure your own OAuth providers to override the global
-                      defaults.
+                      <strong>Storefront OAuth Settings:</strong> Configure
+                      OAuth providers for your company&apos;s storefront
+                      customers. These settings will be used on your storefront
+                      login/register pages (/store/your-slug/login) and create
+                      COMPANY_CUSTOMER accounts, not ERP platform accounts.
                     </p>
+                    <div className="rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 p-4 mb-4">
+                      <div className="flex items-start gap-3">
+                        <Info className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                            What are storefront customers?
+                          </p>
+                          <p className="text-sm text-purple-800 dark:text-purple-200 mt-1">
+                            Storefront customers (COMPANY_CUSTOMER role) are
+                            your end customers who shop at your online store.
+                            They are different from ERP platform users who
+                            manage your business. Your storefront OAuth settings
+                            only affect storefront login pages, not the main ERP
+                            platform.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                     {!canCustomizeOAuth && (
                       <div className="rounded-lg bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 p-4">
                         <div className="flex items-start gap-3">
@@ -656,7 +701,7 @@ export default function SettingsPage() {
                               Your current plan ({user.plan}) uses the global
                               OAuth settings configured by the administrator.
                               Upgrade to GROWTH or ENTERPRISE plan to configure
-                              your own OAuth providers.
+                              your own OAuth providers for your storefront.
                             </p>
                           </div>
                         </div>

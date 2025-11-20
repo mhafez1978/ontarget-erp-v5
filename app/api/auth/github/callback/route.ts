@@ -9,6 +9,21 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get("code");
     const error = searchParams.get("error");
+    const stateParam = searchParams.get("state");
+
+    // Extract context and companyId from state parameter
+    let companyId: string | null = null;
+    let context: "root" | "storefront" = "root";
+
+    if (stateParam) {
+      try {
+        const state = JSON.parse(stateParam);
+        companyId = state.companyId;
+        context = state.context || "root";
+      } catch {
+        console.log("[GitHub OAuth] Could not parse state parameter");
+      }
+    }
 
     if (error) {
       return NextResponse.redirect(
@@ -22,10 +37,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch GitHub OAuth settings
-    const settings = await db.oAuthProviderSetting.findUnique({
-      where: { provider: "github" },
-    });
+    // Fetch GitHub OAuth settings based on context
+    let settings;
+
+    if (context === "storefront" && companyId) {
+      // Use company-specific OAuth settings
+      settings = await db.companyOAuthSetting.findFirst({
+        where: {
+          companyId: companyId,
+          provider: "github",
+          isEnabled: true,
+        },
+      });
+    } else {
+      // Use global OAuth settings
+      settings = await db.oAuthProviderSetting.findUnique({
+        where: { provider: "github" },
+      });
+    }
 
     if (!settings || !settings.clientId || !settings.clientSecret) {
       return NextResponse.redirect(
@@ -149,47 +178,76 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
-      // They will need to select a plan before accessing the dashboard
-      // If using placeholder email, they'll also need to update their email
-      user = await db.user.create({
-        data: {
-          email,
-          name: name || email.split("@")[0],
-          image: avatar_url,
-          role: "ERP_CUSTOMER",
-          plan: "GUEST", // Set to GUEST so they're forced to select a plan
-          authMethod: "oauth",
-          emailVerified: new Date(), // GitHub emails are verified
-          isActive: true,
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          authMethod: true,
-          password: true,
-          isActive: true,
-          image: true,
-          plan: true,
-        },
-      });
-
-      // Send welcome email to new customer
-      try {
-        const { subject, html } = await getWelcomeCustomerEmail(
-          user.name || email,
-          email
-        );
-        await sendEmail({
-          to: email,
-          subject,
-          html,
+      // User doesn't exist - create new user based on context
+      if (context === "storefront" && companyId) {
+        // STOREFRONT CONTEXT: Create COMPANY_CUSTOMER
+        user = await db.user.create({
+          data: {
+            email,
+            name: name || email.split("@")[0],
+            image: avatar_url,
+            role: "COMPANY_CUSTOMER",
+            plan: "COMPANY_CUSTOMER",
+            authMethod: "oauth",
+            emailVerified: new Date(),
+            isActive: true,
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            authMethod: true,
+            password: true,
+            isActive: true,
+            image: true,
+            plan: true,
+          },
         });
-      } catch (emailError) {
-        console.error("Failed to send welcome email:", emailError);
-        // Don't fail OAuth if email fails
+        // No welcome email for storefront customers
+      } else {
+        // ROOT PLATFORM CONTEXT: Create ERP_CUSTOMER with GUEST plan
+        // They will need to select a plan before accessing the dashboard
+        // If using placeholder email, they'll also need to update their email
+        user = await db.user.create({
+          data: {
+            email,
+            name: name || email.split("@")[0],
+            image: avatar_url,
+            role: "ERP_CUSTOMER",
+            plan: "GUEST", // Set to GUEST so they're forced to select a plan
+            authMethod: "oauth",
+            emailVerified: new Date(), // GitHub emails are verified
+            isActive: true,
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            authMethod: true,
+            password: true,
+            isActive: true,
+            image: true,
+            plan: true,
+          },
+        });
+
+        // Send welcome email to new ERP customer only
+        try {
+          const { subject, html } = await getWelcomeCustomerEmail(
+            user.name || email,
+            email
+          );
+          await sendEmail({
+            to: email,
+            subject,
+            html,
+          });
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+          // Don't fail OAuth if email fails
+        }
       }
     }
 
@@ -205,6 +263,25 @@ export async function GET(request: NextRequest) {
       path: "/",
     });
 
+    // Redirect based on context
+    if (context === "storefront" && companyId) {
+      // Get company slug for redirect
+      const company = await db.company.findUnique({
+        where: { id: companyId },
+        select: { slug: true },
+      });
+
+      if (company?.slug) {
+        return NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_APP_URL}/store/${company.slug}`
+        );
+      } else {
+        // Fallback if company not found
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/`);
+      }
+    }
+
+    // ROOT PLATFORM redirects
     // Check if user needs to select a plan (new users with GUEST plan)
     if (user.plan === "GUEST") {
       return NextResponse.redirect(

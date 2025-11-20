@@ -15,12 +15,17 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get("error");
     const stateParam = searchParams.get("state");
 
-    // Extract plan from state if provided
+    // Extract plan and context from state parameter
     let selectedPlan: string | null = null;
+    let companyId: string | null = null;
+    let context: "root" | "storefront" = "root";
+
     if (stateParam) {
       try {
         const state = JSON.parse(stateParam);
         selectedPlan = state.plan;
+        companyId = state.companyId;
+        context = state.context || "root";
       } catch {
         console.log("[Google OAuth] Could not parse state parameter");
       }
@@ -38,10 +43,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get Google OAuth settings
-    const oauthSettings = await db.oAuthProviderSetting.findUnique({
-      where: { provider: "google" },
-    });
+    // Get Google OAuth settings based on context
+    let oauthSettings;
+
+    if (context === "storefront" && companyId) {
+      // Use company-specific OAuth settings
+      oauthSettings = await db.companyOAuthSetting.findFirst({
+        where: {
+          companyId: companyId,
+          provider: "google",
+          isEnabled: true,
+        },
+      });
+    } else {
+      // Use global OAuth settings
+      oauthSettings = await db.oAuthProviderSetting.findUnique({
+        where: { provider: "google" },
+      });
+    }
 
     if (
       !oauthSettings ||
@@ -151,99 +170,130 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      // User doesn't exist - create new ERP_CUSTOMER
-      // Use plan from register page if provided, otherwise GUEST for plan selection
-      const userPlan =
-        selectedPlan &&
-        ["ESSENTIAL", "GROWTH", "ENTERPRISE"].includes(selectedPlan)
-          ? (selectedPlan as "ESSENTIAL" | "GROWTH" | "ENTERPRISE")
-          : "GUEST";
-
-      user = await db.user.create({
-        data: {
-          email,
-          name: name || email.split("@")[0],
-          image: picture,
-          role: "ERP_CUSTOMER", // New signups are ERP customers
-          plan: userPlan, // Use selected plan from register page or GUEST
-          authMethod: "oauth",
-          emailVerified: verified_email ? new Date() : null,
-          isActive: true,
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          authMethod: true,
-          password: true,
-          isActive: true,
-          image: true,
-          plan: true,
-        },
-      });
-
-      // Send welcome email to new customer
-      try {
-        console.log(`[Google OAuth] Sending welcome email to: ${email}`);
-        const { subject, html } = await getWelcomeCustomerEmail(
-          user.name || email,
-          email
-        );
-        console.log(`[Google OAuth] Email subject: ${subject}`);
-        await sendEmail({
-          to: email,
-          subject,
-          html,
-        });
-        console.log(
-          `[Google OAuth] Welcome email sent successfully to: ${email}`
-        );
-
-        // Log welcome email sent
-        await createAuditLog({
-          action: AUDIT_ACTIONS.WELCOME_EMAIL_SENT,
-          userId: user.id,
-          entityType: "User",
-          entityId: user.id,
-          description: `Welcome email sent to new ERP customer: ${email}`,
-          metadata: {
+      // User doesn't exist - create new user based on context
+      if (context === "storefront" && companyId) {
+        // STOREFRONT CONTEXT: Create COMPANY_CUSTOMER
+        user = await db.user.create({
+          data: {
             email,
-            userName: user.name,
-            provider: "google",
-            subject,
+            name: name || email.split("@")[0],
+            image: picture,
+            role: "COMPANY_CUSTOMER",
+            plan: "COMPANY_CUSTOMER",
+            authMethod: "oauth",
+            emailVerified: verified_email ? new Date() : null,
+            isActive: true,
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            authMethod: true,
+            password: true,
+            isActive: true,
+            image: true,
+            plan: true,
           },
         });
-      } catch (emailError) {
-        console.error(
-          "[Google OAuth] Failed to send welcome email:",
-          emailError
-        );
-        console.error("[Google OAuth] Error details:", {
-          message:
-            emailError instanceof Error
-              ? emailError.message
-              : String(emailError),
-          stack: emailError instanceof Error ? emailError.stack : undefined,
+
+        // Note: COMPANY_CUSTOMER users are linked to companies through their orders
+        // No welcome email for storefront customers (company can customize this later)
+      } else {
+        // ROOT PLATFORM CONTEXT: Create ERP_CUSTOMER
+        // Use plan from register page if provided, otherwise GUEST for plan selection
+        const userPlan =
+          selectedPlan &&
+          ["ESSENTIAL", "GROWTH", "ENTERPRISE"].includes(selectedPlan)
+            ? (selectedPlan as "ESSENTIAL" | "GROWTH" | "ENTERPRISE")
+            : "GUEST";
+
+        user = await db.user.create({
+          data: {
+            email,
+            name: name || email.split("@")[0],
+            image: picture,
+            role: "ERP_CUSTOMER", // New signups are ERP customers
+            plan: userPlan, // Use selected plan from register page or GUEST
+            authMethod: "oauth",
+            emailVerified: verified_email ? new Date() : null,
+            isActive: true,
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            authMethod: true,
+            password: true,
+            isActive: true,
+            image: true,
+            plan: true,
+          },
         });
 
-        // Log email failure
-        await createAuditLog({
-          action: AUDIT_ACTIONS.EMAIL_FAILED,
-          userId: user.id,
-          entityType: "User",
-          entityId: user.id,
-          description: `Failed to send welcome email to: ${email}`,
-          metadata: {
-            email,
-            provider: "google",
-            error:
+        // Send welcome email to new ERP customer only
+        try {
+          console.log(`[Google OAuth] Sending welcome email to: ${email}`);
+          const { subject, html } = await getWelcomeCustomerEmail(
+            user.name || email,
+            email
+          );
+          console.log(`[Google OAuth] Email subject: ${subject}`);
+          await sendEmail({
+            to: email,
+            subject,
+            html,
+          });
+          console.log(
+            `[Google OAuth] Welcome email sent successfully to: ${email}`
+          );
+
+          // Log welcome email sent
+          await createAuditLog({
+            action: AUDIT_ACTIONS.WELCOME_EMAIL_SENT,
+            userId: user.id,
+            entityType: "User",
+            entityId: user.id,
+            description: `Welcome email sent to new ERP customer: ${email}`,
+            metadata: {
+              email,
+              userName: user.name,
+              provider: "google",
+              subject,
+            },
+          });
+        } catch (emailError) {
+          console.error(
+            "[Google OAuth] Failed to send welcome email:",
+            emailError
+          );
+          console.error("[Google OAuth] Error details:", {
+            message:
               emailError instanceof Error
                 ? emailError.message
                 : String(emailError),
-          },
-        }).catch(console.error);
-        // Don't fail OAuth if email fails
+            stack: emailError instanceof Error ? emailError.stack : undefined,
+          });
+
+          // Log email failure
+          await createAuditLog({
+            action: AUDIT_ACTIONS.EMAIL_FAILED,
+            userId: user.id,
+            entityType: "User",
+            entityId: user.id,
+            description: `Failed to send welcome email to: ${email}`,
+            metadata: {
+              email,
+              provider: "google",
+              error:
+                emailError instanceof Error
+                  ? emailError.message
+                  : String(emailError),
+            },
+          }).catch(console.error);
+          // Don't fail OAuth if email fails
+        }
       }
     }
 
@@ -317,10 +367,33 @@ export async function GET(request: NextRequest) {
     console.log(
       "Google OAuth successful for user:",
       user.email,
+      "Role:",
+      user.role,
       "Plan:",
-      user.plan
+      user.plan,
+      "Context:",
+      context
     );
 
+    // Redirect based on context and user state
+    if (context === "storefront" && companyId) {
+      // Get company slug for redirect
+      const company = await db.company.findUnique({
+        where: { id: companyId },
+        select: { slug: true },
+      });
+
+      if (company?.slug) {
+        return NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_APP_URL}/store/${company.slug}`
+        );
+      } else {
+        // Fallback if company not found
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/`);
+      }
+    }
+
+    // ROOT PLATFORM redirects
     // Check if user needs to select a plan (new users with GUEST plan)
     if (user.plan === "GUEST") {
       return NextResponse.redirect(

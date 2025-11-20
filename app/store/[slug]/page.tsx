@@ -152,6 +152,15 @@ export default async function StorefrontPage({ params }: PageProps) {
               >
                 Services
               </Link>
+              <Link
+                href={`/store/${slug}/login`}
+                className="text-sm font-medium hover:underline"
+              >
+                Login
+              </Link>
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/store/${slug}/register`}>Register</Link>
+              </Button>
               <Button size="sm" asChild>
                 <Link href={`/store/${slug}/cart`}>
                   <ShoppingCart className="h-4 w-4 mr-2" />
