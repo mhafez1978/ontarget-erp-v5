@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
       await trackLoginMethod(user.id, "yandex", String(profile.id), {
         email: email,
         displayName: name,
-        avatarUrl: picture,
+        avatarUrl: picture || undefined,
         access_token: accessToken,
       });
     }

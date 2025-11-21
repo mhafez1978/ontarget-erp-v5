@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VisitorTracker } from "@/components/visitor-tracker";
+import { AboutSection } from "@/components/about-section";
+import { ContactSection } from "@/components/contact-section";
 
 export default function Home() {
   return (
@@ -371,6 +373,12 @@ export default function Home() {
         </div>
       </section>
 
+      {/* About Section */}
+      <AboutSection />
+
+      {/* Contact Section */}
+      <ContactSection />
+
       {/* Footer */}
       <footer className="border-t py-12 px-4 bg-muted/30">
         <div className="container mx-auto">
@@ -409,10 +417,18 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <Link
-                    href="/about"
+                    href="#about"
                     className="hover:text-primary transition-colors"
                   >
                     About
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="#contact"
+                    className="hover:text-primary transition-colors"
+                  >
+                    Contact
                   </Link>
                 </li>
                 <li>
