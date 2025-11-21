@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
         sessionState: geoData?.region || null,
         sessionCountry: geoData?.country_name || null,
         sessionCountryFlag: geoData?.flag || null,
+        sessionUserAgent: request.headers.get("user-agent") || null,
       },
     });
 

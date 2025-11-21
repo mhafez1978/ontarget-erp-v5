@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSession } from "@/lib/session-manager";
 
-// GET - List failed login attempts (Super Admin only)
+// GET - List failed login attempts (Admin and Super Admin)
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
@@ -23,12 +23,56 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if user is Super Admin
-    if (validation.user.role !== "SUPER_ADMIN") {
+    const user = validation.user;
+
+    // Check if user is Admin or Super Admin
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
       return NextResponse.json(
-        { error: "Forbidden - Super Admin only" },
+        { error: "Forbidden - Admin access required" },
         { status: 403 }
       );
+    }
+
+    // Get company user IDs if ADMIN (to scope security data)
+    let companyUserIds: string[] = [];
+    if (user.role === "ADMIN") {
+      const userWithCompany = await db.user.findUnique({
+        where: { id: user.id },
+        select: {
+          ownedCompanies: {
+            select: {
+              staff: {
+                select: { userId: true },
+              },
+            },
+          },
+          companyMemberships: {
+            select: {
+              company: {
+                select: {
+                  staff: {
+                    select: { userId: true },
+                  },
+                },
+              },
+            },
+            where: { role: "ADMIN" },
+          },
+        },
+      });
+
+      // Collect all user IDs from owned companies and managed companies
+      const ownedUserIds =
+        userWithCompany?.ownedCompanies.flatMap((c) =>
+          c.staff.map((s) => s.userId)
+        ) || [];
+      const managedUserIds =
+        userWithCompany?.companyMemberships.flatMap((m) =>
+          m.company.staff.map((s) => s.userId)
+        ) || [];
+      companyUserIds = [
+        ...new Set([...ownedUserIds, ...managedUserIds, user.id]),
+      ];
     }
 
     // Get query parameters
@@ -45,6 +89,12 @@ export async function GET(request: NextRequest) {
     // Build where clause
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
+
+    // Scope to company users if ADMIN
+    if (user.role === "ADMIN" && companyUserIds.length > 0) {
+      where.userId = { in: companyUserIds };
+    }
+
     if (email) {
       where.email = { contains: email };
     }

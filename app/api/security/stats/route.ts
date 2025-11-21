@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { validateSession } from "@/lib/session-manager";
 
-// GET - Security statistics (Super Admin only)
+// GET - Security statistics (Admin and Super Admin)
 export async function GET() {
   try {
     // Check authentication
@@ -22,18 +22,68 @@ export async function GET() {
       );
     }
 
-    // Check if user is Super Admin
-    if (validation.user.role !== "SUPER_ADMIN") {
+    const user = validation.user;
+
+    // Check if user is Admin or Super Admin
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
       return NextResponse.json(
-        { error: "Forbidden - Super Admin only" },
+        { error: "Forbidden - Admin access required" },
         { status: 403 }
       );
+    }
+
+    // Get company user IDs if ADMIN (to scope security data)
+    let companyUserIds: string[] = [];
+    if (user.role === "ADMIN") {
+      const userWithCompany = await db.user.findUnique({
+        where: { id: user.id },
+        select: {
+          ownedCompanies: {
+            select: {
+              staff: {
+                select: { userId: true },
+              },
+            },
+          },
+          companyMemberships: {
+            select: {
+              company: {
+                select: {
+                  staff: {
+                    select: { userId: true },
+                  },
+                },
+              },
+            },
+            where: { role: "ADMIN" },
+          },
+        },
+      });
+
+      // Collect all user IDs from owned companies and managed companies
+      const ownedUserIds =
+        userWithCompany?.ownedCompanies.flatMap((c) =>
+          c.staff.map((s) => s.userId)
+        ) || [];
+      const managedUserIds =
+        userWithCompany?.companyMemberships.flatMap((m) =>
+          m.company.staff.map((s) => s.userId)
+        ) || [];
+      companyUserIds = [
+        ...new Set([...ownedUserIds, ...managedUserIds, user.id]),
+      ];
     }
 
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Build where clause for company scoping
+    const baseWhere =
+      user.role === "ADMIN" && companyUserIds.length > 0
+        ? { userId: { in: companyUserIds } }
+        : {};
 
     // Get failed attempts counts
     const [
@@ -43,15 +93,15 @@ export async function GET() {
       totalAttempts,
     ] = await Promise.all([
       db.failedLoginAttempt.count({
-        where: { attemptedAt: { gte: oneHourAgo } },
+        where: { ...baseWhere, attemptedAt: { gte: oneHourAgo } },
       }),
       db.failedLoginAttempt.count({
-        where: { attemptedAt: { gte: oneDayAgo } },
+        where: { ...baseWhere, attemptedAt: { gte: oneDayAgo } },
       }),
       db.failedLoginAttempt.count({
-        where: { attemptedAt: { gte: sevenDaysAgo } },
+        where: { ...baseWhere, attemptedAt: { gte: sevenDaysAgo } },
       }),
-      db.failedLoginAttempt.count(),
+      db.failedLoginAttempt.count({ where: baseWhere }),
     ]);
 
     // Get currently blocked IPs count
@@ -71,6 +121,7 @@ export async function GET() {
     const topCountries = await db.failedLoginAttempt.groupBy({
       by: ["country", "countryFlag"],
       where: {
+        ...baseWhere,
         country: { not: null },
         attemptedAt: { gte: sevenDaysAgo },
       },
@@ -89,6 +140,7 @@ export async function GET() {
     const topTargetedEmails = await db.failedLoginAttempt.groupBy({
       by: ["email"],
       where: {
+        ...baseWhere,
         attemptedAt: { gte: sevenDaysAgo },
       },
       _count: {

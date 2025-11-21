@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         where: {
           companyId: companyId,
           provider: "google",
-          isEnabled: true,
+          enabled: true,
         },
       });
     } else {

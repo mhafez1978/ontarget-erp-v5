@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export async function GET(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
 
-    const company = await prisma.company.findUnique({
+    const company = await db.company.findUnique({
       where: {
         slug: slug,
         isStoreEnabled: true, // Only return companies with storefront enabled

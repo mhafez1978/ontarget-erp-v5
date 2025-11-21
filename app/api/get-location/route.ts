@@ -1,28 +1,48 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Fetch from ipapi.co - this will return the IP your connection is using
-    const response = await fetch("https://ipapi.co/json/", {
+    // Get client IP from headers (forwarded by proxy/load balancer)
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const realIp = request.headers.get("x-real-ip");
+
+    // x-forwarded-for can contain multiple IPs (client, proxy1, proxy2...)
+    // The first one is the real client IP
+    const clientIp = forwardedFor?.split(",")[0]?.trim() || realIp;
+
+    // Build the URL - if we have a client IP, query it specifically
+    // Otherwise, ipapi.co will detect the server's IP
+    const apiUrl = clientIp
+      ? `https://ipapi.co/${clientIp}/json/`
+      : "https://ipapi.co/json/";
+
+    // Fetch from ipapi.co - this will return location for the specified IP
+    const response = await fetch(apiUrl, {
       headers: {
         "User-Agent": "NextJS-App",
       },
     });
 
     if (!response.ok) {
-      // Rate limited or API error
+      // Rate limited or API error - try to at least return the client IP
+      const fallbackIp = clientIp || "127.0.0.1";
+      const isLocalhost =
+        fallbackIp === "127.0.0.1" ||
+        fallbackIp === "::1" ||
+        fallbackIp?.startsWith("192.168.") ||
+        fallbackIp?.startsWith("10.");
+
       return NextResponse.json(
         {
           error: "Rate limited or API unavailable",
-          // Return localhost fallback
-          ip: "127.0.0.1",
-          ipv4: null,
-          ipv6: null,
-          city: "Localhost",
+          ip: fallbackIp,
+          ipv4: fallbackIp && !fallbackIp.includes(":") ? fallbackIp : null,
+          ipv6: fallbackIp && fallbackIp.includes(":") ? fallbackIp : null,
+          city: isLocalhost ? "Localhost" : null,
           region: null,
-          country_name: "Local Development",
+          country_name: isLocalhost ? "Local Development" : null,
           country_code: null,
-          flag: "🏠",
+          flag: isLocalhost ? "🏠" : null,
         },
         { status: response.status }
       );
@@ -108,16 +128,28 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Geo-location API error:", error);
-    // Return localhost fallback on error
+
+    // Get client IP from headers for fallback
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const realIp = request.headers.get("x-real-ip");
+    const fallbackIp =
+      forwardedFor?.split(",")[0]?.trim() || realIp || "127.0.0.1";
+    const isLocalhost =
+      fallbackIp === "127.0.0.1" ||
+      fallbackIp === "::1" ||
+      fallbackIp?.startsWith("192.168.") ||
+      fallbackIp?.startsWith("10.");
+
+    // Return fallback with client IP
     return NextResponse.json({
-      ip: "127.0.0.1",
-      ipv4: "127.0.0.1",
-      ipv6: null,
-      city: "Localhost",
+      ip: fallbackIp,
+      ipv4: fallbackIp && !fallbackIp.includes(":") ? fallbackIp : null,
+      ipv6: fallbackIp && fallbackIp.includes(":") ? fallbackIp : null,
+      city: isLocalhost ? "Localhost" : null,
       region: null,
-      country_name: "Local Development",
+      country_name: isLocalhost ? "Local Development" : null,
       country_code: null,
-      flag: "🏠",
+      flag: isLocalhost ? "🏠" : null,
     });
   }
 }

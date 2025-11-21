@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { validateSession } from "@/lib/session-manager";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get("sessionToken")?.value;
@@ -22,15 +22,28 @@ export async function GET() {
 
     const userId = validation.user.id;
 
+    // Get companyId from query params
+    const { searchParams } = new URL(request.url);
+    const companyId = searchParams.get("companyId");
+
+    if (!companyId) {
+      return NextResponse.json(
+        { error: "Company ID is required" },
+        { status: 400 }
+      );
+    }
+
     const user = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         role: true,
         ownedCompanies: {
+          where: { id: companyId },
           select: { id: true },
         },
         companyMemberships: {
+          where: { companyId: companyId },
           select: { companyId: true },
         },
       },
@@ -40,14 +53,16 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get first owned company or first membership company
-    const companyId =
-      user.ownedCompanies[0]?.id || user.companyMemberships[0]?.companyId;
+    // Verify user has access to this company
+    const hasAccess =
+      user.role === "SUPER_ADMIN" ||
+      user.ownedCompanies.length > 0 ||
+      user.companyMemberships.length > 0;
 
-    if (!companyId) {
+    if (!hasAccess) {
       return NextResponse.json(
-        { error: "No company associated with user" },
-        { status: 404 }
+        { error: "Access denied to this company" },
+        { status: 403 }
       );
     }
 
@@ -98,15 +113,28 @@ export async function PUT(request: NextRequest) {
 
     const userId = validation.user.id;
 
+    // Get companyId from query params
+    const { searchParams } = new URL(request.url);
+    const companyId = searchParams.get("companyId");
+
+    if (!companyId) {
+      return NextResponse.json(
+        { error: "Company ID is required" },
+        { status: 400 }
+      );
+    }
+
     const user = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         role: true,
         ownedCompanies: {
+          where: { id: companyId },
           select: { id: true },
         },
         companyMemberships: {
+          where: { companyId: companyId },
           select: { companyId: true, role: true },
         },
       },
@@ -116,28 +144,18 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get first owned company or first admin/manager membership
-    const companyId =
-      user.ownedCompanies[0]?.id ||
-      user.companyMemberships.find(
-        (m) => m.role === "ADMIN" || m.role === "MANAGER"
-      )?.companyId;
+    // Verify user has access to modify this company
+    const isOwner = user.ownedCompanies.length > 0;
+    const isMember = user.companyMemberships.length > 0;
+    const isAdminOrManager = user.companyMemberships.some(
+      (m) => m.role === "ADMIN" || m.role === "MANAGER"
+    );
+    const hasAccess =
+      user.role === "SUPER_ADMIN" || isOwner || isAdminOrManager;
 
-    if (!companyId) {
+    if (!hasAccess) {
       return NextResponse.json(
-        { error: "No company associated with user" },
-        { status: 404 }
-      );
-    }
-
-    // Only ADMIN, MANAGER and SUPER_ADMIN can update storefront settings
-    if (
-      user.role !== "ADMIN" &&
-      user.role !== "SUPER_ADMIN" &&
-      user.role !== "MANAGER"
-    ) {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
+        { error: "Access denied to modify this company" },
         { status: 403 }
       );
     }

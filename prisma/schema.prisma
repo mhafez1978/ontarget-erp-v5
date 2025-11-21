@@ -67,6 +67,7 @@ model Session {
   sessionState       String?
   sessionCountry     String?
   sessionCountryFlag String?
+  sessionUserAgent   String? // Browser/OS info for device detection
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

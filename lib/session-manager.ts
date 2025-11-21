@@ -51,6 +51,7 @@ export interface SessionData {
 export interface CreateSessionOptions {
   userId: string;
   geoLocation?: GeoLocation;
+  userAgent?: string;
   expiresInDays?: number; // Default: 7 days
 }
 
@@ -74,7 +75,7 @@ export interface ValidateSessionResult {
 export async function createSession(
   options: CreateSessionOptions
 ): Promise<SessionData> {
-  const { userId, geoLocation, expiresInDays = 7 } = options;
+  const { userId, geoLocation, userAgent, expiresInDays = 7 } = options;
 
   // Generate random session token
   const sessionToken = crypto.randomUUID();
@@ -96,6 +97,7 @@ export async function createSession(
       sessionState: geoLocation?.region || null,
       sessionCountry: geoLocation?.country_name || geoLocation?.country || null,
       sessionCountryFlag: geoLocation?.flag || null,
+      sessionUserAgent: userAgent || null,
     },
   });
 

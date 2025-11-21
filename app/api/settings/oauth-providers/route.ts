@@ -46,7 +46,7 @@ export async function GET() {
           select: { id: true },
           take: 1,
         },
-        memberCompanies: {
+        companyMemberships: {
           select: { companyId: true },
           where: { role: "ADMIN" },
           take: 1,
@@ -56,7 +56,7 @@ export async function GET() {
 
     const companyId =
       userWithCompany?.ownedCompanies[0]?.id ||
-      userWithCompany?.memberCompanies[0]?.companyId;
+      userWithCompany?.companyMemberships[0]?.companyId;
 
     if (!companyId) {
       // No company, return empty array - DO NOT return global settings
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
           select: { id: true },
           take: 1,
         },
-        memberCompanies: {
+        companyMemberships: {
           select: { companyId: true },
           where: { role: "ADMIN" },
           take: 1,
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
 
     const companyId =
       userWithCompany?.ownedCompanies[0]?.id ||
-      userWithCompany?.memberCompanies[0]?.companyId;
+      userWithCompany?.companyMemberships[0]?.companyId;
 
     if (!companyId) {
       return NextResponse.json(

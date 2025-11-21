@@ -118,6 +118,7 @@ export async function PATCH(request: NextRequest) {
     // Allow email update only if current email is a placeholder (GitHub OAuth without email)
     if (
       newEmail !== undefined &&
+      user.email &&
       user.email.endsWith("@github.placeholder.local")
     ) {
       // Validate email format

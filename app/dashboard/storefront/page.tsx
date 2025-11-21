@@ -56,10 +56,18 @@ interface StorefrontSettings {
   } | null;
 }
 
+interface Company {
+  id: string;
+  name: string;
+  logo: string | null;
+}
+
 export default function StorefrontPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [settings, setSettings] = useState<StorefrontSettings>({
     slug: null,
     subdomain: null,
@@ -71,12 +79,47 @@ export default function StorefrontPage() {
   });
 
   useEffect(() => {
-    fetchSettings();
+    fetchCompanies();
   }, []);
 
-  const fetchSettings = async () => {
+  useEffect(() => {
+    if (selectedCompanyId) {
+      fetchSettings();
+    }
+  }, [selectedCompanyId]);
+
+  const fetchCompanies = async () => {
     try {
-      const response = await fetch("/api/company/storefront");
+      const response = await fetch("/api/companies/my-owned");
+      if (!response.ok) {
+        throw new Error("Failed to fetch companies");
+      }
+      const data = await response.json();
+      const ownedCompanies = data.companies || [];
+      setCompanies(ownedCompanies);
+
+      // Auto-select first company if available
+      if (ownedCompanies.length > 0) {
+        setSelectedCompanyId(ownedCompanies[0].id);
+      } else {
+        setLoading(false);
+        toast.error("No companies found. Please create a company first.");
+      }
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      toast.error("Failed to load companies");
+      setLoading(false);
+    }
+  };
+
+  const fetchSettings = async () => {
+    if (!selectedCompanyId) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/company/storefront?companyId=${selectedCompanyId}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch settings");
       }
@@ -91,13 +134,21 @@ export default function StorefrontPage() {
   };
 
   const handleSave = async () => {
+    if (!selectedCompanyId) {
+      toast.error("Please select a company first");
+      return;
+    }
+
     setSaving(true);
     try {
-      const response = await fetch("/api/company/storefront", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
-      });
+      const response = await fetch(
+        `/api/company/storefront?companyId=${selectedCompanyId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(settings),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -211,7 +262,7 @@ export default function StorefrontPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <Store className="h-8 w-8" />
               Storefront Settings
@@ -219,6 +270,33 @@ export default function StorefrontPage() {
             <p className="text-muted-foreground mt-1">
               Configure your public-facing online store
             </p>
+
+            {/* Company Selector */}
+            {companies.length > 0 && (
+              <div className="mt-4 max-w-xs">
+                <Label
+                  htmlFor="company-select"
+                  className="text-sm font-medium mb-2 block"
+                >
+                  Select Company
+                </Label>
+                <Select
+                  value={selectedCompanyId}
+                  onValueChange={setSelectedCompanyId}
+                >
+                  <SelectTrigger id="company-select">
+                    <SelectValue placeholder="Select a company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             {storeUrl && settings.isStoreEnabled && (

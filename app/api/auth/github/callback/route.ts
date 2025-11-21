@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         where: {
           companyId: companyId,
           provider: "github",
-          isEnabled: true,
+          enabled: true,
         },
       });
     } else {
@@ -253,7 +253,10 @@ export async function GET(request: NextRequest) {
 
     // Create session token
     const cookieStore = await cookies();
-    const session = await createSession({ userId: user.id });
+    const session = await createSession({
+      userId: user.id,
+      userAgent: request.headers.get("user-agent") || undefined,
+    });
 
     cookieStore.set("sessionToken", session.sessionToken, {
       httpOnly: true,

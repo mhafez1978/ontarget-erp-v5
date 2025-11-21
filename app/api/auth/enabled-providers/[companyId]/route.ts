@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export async function GET(
   request: Request,
-  { params }: { params: { companyId: string } }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
-    const { companyId } = params;
+    const { companyId } = await params;
 
     // Fetch company-specific OAuth settings
-    const providers = await prisma.companyOAuthSetting.findMany({
+    const providers = await db.companyOAuthSetting.findMany({
       where: {
         companyId: companyId,
-        isEnabled: true,
+        enabled: true,
       },
       select: {
         provider: true,

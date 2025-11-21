@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         where: {
           companyId: companyId,
           provider: "github",
-          isEnabled: true,
+          enabled: true,
         },
       });
 
@@ -44,6 +44,12 @@ export async function GET(request: NextRequest) {
       }
 
       oauthSettings = settings;
+    }
+
+    if (!oauthSettings.clientId) {
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/login?error=oauth_config_error`
+      );
     }
 
     // Build GitHub OAuth authorization URL

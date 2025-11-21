@@ -48,6 +48,7 @@ interface Session {
   ipAddress: string;
   country: string | null;
   countryFlag: string | null;
+  userAgent?: string | null;
   createdAt: string;
   expiresAt: string;
   userId?: string;
@@ -168,14 +169,61 @@ export function SessionManager({
     }
   };
 
-  const getDeviceIcon = (userAgent?: string) => {
-    // Simple device detection from user agent
-    // In production, you'd track this in the session data
+  const getDeviceIcon = (userAgent?: string | null) => {
     if (!userAgent) return <Monitor className="h-4 w-4" />;
-
-    if (userAgent.includes("Mobile")) return <Smartphone className="h-4 w-4" />;
-    if (userAgent.includes("Tablet")) return <Tablet className="h-4 w-4" />;
+    
+    const ua = userAgent.toLowerCase();
+    if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone")) {
+      return <Smartphone className="h-4 w-4" />;
+    }
+    if (ua.includes("tablet") || ua.includes("ipad")) {
+      return <Tablet className="h-4 w-4" />;
+    }
     return <Monitor className="h-4 w-4" />;
+  };
+
+  const getDeviceInfo = (userAgent?: string | null) => {
+    if (!userAgent) return "Unknown Device";
+    
+    const ua = userAgent;
+    let os = "Unknown OS";
+    let browser = "Unknown Browser";
+    
+    // Detect OS
+    if (ua.includes("Mac OS X")) {
+      os = "macOS";
+    } else if (ua.includes("Windows NT 10")) {
+      os = "Windows 10/11";
+    } else if (ua.includes("Windows NT 6.3")) {
+      os = "Windows 8.1";
+    } else if (ua.includes("Windows NT 6.2")) {
+      os = "Windows 8";
+    } else if (ua.includes("Windows NT 6.1")) {
+      os = "Windows 7";
+    } else if (ua.includes("Windows")) {
+      os = "Windows";
+    } else if (ua.includes("Linux")) {
+      os = "Linux";
+    } else if (ua.includes("iPhone")) {
+      os = "iOS";
+    } else if (ua.includes("Android")) {
+      os = "Android";
+    }
+    
+    // Detect Browser
+    if (ua.includes("Edg/")) {
+      browser = "Edge";
+    } else if (ua.includes("Chrome/") && !ua.includes("Edg")) {
+      browser = "Chrome";
+    } else if (ua.includes("Safari/") && !ua.includes("Chrome")) {
+      browser = "Safari";
+    } else if (ua.includes("Firefox/")) {
+      browser = "Firefox";
+    } else if (ua.includes("Opera/") || ua.includes("OPR/")) {
+      browser = "Opera";
+    }
+    
+    return `${os} • ${browser}`;
   };
 
   const getLocationDisplay = (session: Session) => {
@@ -270,12 +318,15 @@ export function SessionManager({
                     <CardContent className="pt-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
-                          <div className="mt-1">{getDeviceIcon()}</div>
+                          <div className="mt-1">{getDeviceIcon(currentSession.userAgent)}</div>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <Badge variant="default" className="text-xs">
                                 This Device
                               </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {getDeviceInfo(currentSession.userAgent)}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <MapPin className="h-3 w-3" />
@@ -339,8 +390,8 @@ export function SessionManager({
                             )}
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {getDeviceIcon()}
-                                <span className="text-sm">Browser</span>
+                                {getDeviceIcon(session.userAgent)}
+                                <span className="text-sm">{getDeviceInfo(session.userAgent)}</span>
                               </div>
                             </TableCell>
                             <TableCell>
