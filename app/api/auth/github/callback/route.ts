@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
 
@@ -249,6 +250,43 @@ export async function GET(request: NextRequest) {
           // Don't fail OAuth if email fails
         }
       }
+    }
+
+    // Store or update OAuth account information
+    if (user && profile.id) {
+      await db.account.upsert({
+        where: {
+          provider_providerAccountId: {
+            provider: "github",
+            providerAccountId: String(profile.id),
+          },
+        },
+        create: {
+          userId: user.id,
+          type: "oauth",
+          provider: "github",
+          providerAccountId: String(profile.id),
+          access_token: accessToken,
+          email: email,
+          displayName: profile.login || name,
+          avatarUrl: avatar_url,
+        },
+        update: {
+          access_token: accessToken,
+          email: email,
+          displayName: profile.login || name,
+          avatarUrl: avatar_url,
+        },
+      });
+
+      // Track login method for analytics
+      await trackLoginMethod(user.id, "github", String(profile.id), {
+        email: email,
+        displayName: profile.login || name,
+        profileUrl: profile.html_url,
+        avatarUrl: avatar_url,
+        access_token: accessToken,
+      });
     }
 
     // Create session token

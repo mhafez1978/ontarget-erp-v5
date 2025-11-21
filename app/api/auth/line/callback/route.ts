@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
 
@@ -178,6 +179,44 @@ export async function GET(request: NextRequest) {
         console.error("Failed to send welcome email:", emailError);
         // Don't fail OAuth if email fails
       }
+    }
+
+    // Store or update OAuth account information
+    if (user && userId) {
+      await db.account.upsert({
+        where: {
+          provider_providerAccountId: {
+            provider: "line",
+            providerAccountId: userId,
+          },
+        },
+        create: {
+          userId: user.id,
+          type: "oauth",
+          provider: "line",
+          providerAccountId: userId,
+          access_token: accessToken,
+          id_token: idToken,
+          email: email,
+          displayName: name,
+          avatarUrl: picture,
+        },
+        update: {
+          access_token: accessToken,
+          id_token: idToken,
+          email: email,
+          displayName: name,
+          avatarUrl: picture,
+        },
+      });
+
+      // Track login method for analytics
+      await trackLoginMethod(user.id, "line", userId, {
+        email: email,
+        displayName: name,
+        avatarUrl: picture,
+        access_token: accessToken,
+      });
     }
 
     // Create session using session manager

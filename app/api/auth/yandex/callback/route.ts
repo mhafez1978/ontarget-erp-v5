@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
 
@@ -166,6 +167,42 @@ export async function GET(request: NextRequest) {
         console.error("Failed to send welcome email:", emailError);
         // Don't fail OAuth if email fails
       }
+    }
+
+    // Store or update OAuth account information
+    if (user && profile.id) {
+      await db.account.upsert({
+        where: {
+          provider_providerAccountId: {
+            provider: "yandex",
+            providerAccountId: String(profile.id),
+          },
+        },
+        create: {
+          userId: user.id,
+          type: "oauth",
+          provider: "yandex",
+          providerAccountId: String(profile.id),
+          access_token: accessToken,
+          email: email,
+          displayName: name,
+          avatarUrl: picture,
+        },
+        update: {
+          access_token: accessToken,
+          email: email,
+          displayName: name,
+          avatarUrl: picture,
+        },
+      });
+
+      // Track login method for analytics
+      await trackLoginMethod(user.id, "yandex", String(profile.id), {
+        email: email,
+        displayName: name,
+        avatarUrl: picture,
+        access_token: accessToken,
+      });
     }
 
     // Create session using session manager

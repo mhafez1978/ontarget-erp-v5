@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
+import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
@@ -275,6 +276,17 @@ export async function GET(request: NextRequest) {
           scope: scope,
           id_token: idToken,
         },
+      });
+
+      // Track login method for analytics
+      await trackLoginMethod(user.id, "microsoft", microsoftUserId, {
+        email: email,
+        displayName: displayName,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_at: expiresIn
+          ? Math.floor(Date.now() / 1000) + expiresIn
+          : null,
       });
     }
 
