@@ -191,6 +191,9 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
                   Company
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium">
+                  Contact Info
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium">
                   Description
                 </th>
                 <th className="px-4 py-3 text-center text-sm font-medium">
@@ -207,7 +210,38 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
             <tbody>
               {companies.map((company) => (
                 <tr key={company.id} className="border-b last:border-0">
-                  <td className="px-4 py-4 font-medium">{company.name}</td>
+                  <td className="px-4 py-4">
+                    <div className="font-medium">{company.name}</div>
+                    {company.slogan && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {company.slogan}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 text-sm">
+                    <div className="space-y-1">
+                      {company.email && (
+                        <div className="text-muted-foreground">
+                          {company.email}
+                        </div>
+                      )}
+                      {company.phone && (
+                        <div className="text-muted-foreground">
+                          {company.phone}
+                        </div>
+                      )}
+                      {company.website && (
+                        <div className="text-muted-foreground truncate max-w-[200px]">
+                          {company.website}
+                        </div>
+                      )}
+                      {!company.email && !company.phone && !company.website && (
+                        <span className="text-muted-foreground italic">
+                          No contact info
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-4">
                     <span className="text-sm text-muted-foreground line-clamp-2">
                       {company.description || "No description"}

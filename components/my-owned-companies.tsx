@@ -202,6 +202,7 @@ export function MyOwnedCompanies() {
             <TableHeader>
               <TableRow>
                 <TableHead>Company Name</TableHead>
+                <TableHead>Contact Info</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="text-center">
                   <div className="flex items-center justify-center gap-1">
@@ -216,7 +217,38 @@ export function MyOwnedCompanies() {
             <TableBody>
               {companies.map((company) => (
                 <TableRow key={company.id}>
-                  <TableCell className="font-medium">{company.name}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{company.name}</div>
+                    {company.slogan && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {company.slogan}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    <div className="space-y-1">
+                      {company.email && (
+                        <div className="text-muted-foreground">
+                          {company.email}
+                        </div>
+                      )}
+                      {company.phone && (
+                        <div className="text-muted-foreground">
+                          {company.phone}
+                        </div>
+                      )}
+                      {company.website && (
+                        <div className="text-muted-foreground truncate max-w-[200px]">
+                          {company.website}
+                        </div>
+                      )}
+                      {!company.email && !company.phone && !company.website && (
+                        <span className="text-muted-foreground italic">
+                          No contact info
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="max-w-md">
                     <span className="text-sm text-muted-foreground line-clamp-2">
                       {company.description || "No description"}
