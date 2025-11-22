@@ -26,7 +26,6 @@ export const adminMenuItems = [
   { href: "/dashboard/storefront", label: "Storefront", icon: Store },
   { href: "/dashboard/workforce", label: "Workforce", icon: UsersRound },
   { href: "/dashboard/ledger", label: "Ledger", icon: BookOpen },
-  { href: "/dashboard/contractors", label: "Contractors", icon: Briefcase },
   { href: "/dashboard/suppliers", label: "Suppliers", icon: Building2 },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/security", label: "Security", icon: Shield },
