@@ -13,7 +13,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Loader2, Users, Briefcase, TrendingUp, ExternalLink } from "lucide-react";
+import {
+  Building2,
+  Loader2,
+  Users,
+  Briefcase,
+  TrendingUp,
+  ExternalLink,
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MyOwnedCompanies } from "@/components/my-owned-companies";
@@ -397,7 +404,9 @@ export function SuperAdminCompanyView({
                                   </Link>
                                 </Button>
                               ) : (
-                                <span className="text-xs text-muted-foreground">No store</span>
+                                <span className="text-xs text-muted-foreground">
+                                  No store
+                                </span>
                               )}
                             </div>
                           </TableCell>
