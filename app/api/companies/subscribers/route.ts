@@ -92,6 +92,7 @@ export async function GET() {
     const formattedCompanies = subscriberCompanies.map((company) => ({
       id: company.id,
       name: company.name,
+      slug: company.slug,
       slogan: company.slogan,
       description: company.description,
       logo: company.logo,

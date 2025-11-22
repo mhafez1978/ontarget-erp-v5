@@ -57,6 +57,7 @@ export async function GET() {
     const formattedCompanies = companies.map((company) => ({
       id: company.id,
       name: company.name,
+      slug: company.slug,
       description: company.description,
       logo: company.logo,
       memberCount: company._count.members,

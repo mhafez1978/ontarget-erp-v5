@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Building2, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Building2, Loader2, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { AddCompanySheet } from "@/components/add-company-sheet";
 import { EditCompanySheet } from "@/components/edit-company-sheet";
 import {
@@ -20,6 +21,7 @@ import { toast } from "sonner";
 interface Company {
   id: string;
   name: string;
+  slug: string | null;
   slogan: string | null;
   description: string | null;
   logo: string | null;
@@ -219,6 +221,22 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center justify-end gap-2">
+                      {company.slug && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          asChild
+                          title="View storefront"
+                        >
+                          <Link
+                            href={`/store/${company.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"

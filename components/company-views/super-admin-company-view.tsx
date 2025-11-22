@@ -13,7 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Loader2, Users, Briefcase, TrendingUp } from "lucide-react";
+import { Building2, Loader2, Users, Briefcase, TrendingUp, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MyOwnedCompanies } from "@/components/my-owned-companies";
 import { AddCompanySheet } from "@/components/add-company-sheet";
@@ -21,6 +22,7 @@ import { AddCompanySheet } from "@/components/add-company-sheet";
 interface SubscriberCompany {
   id: string;
   name: string;
+  slug: string | null;
   slogan: string | null;
   logo: string | null;
   owner: {
@@ -318,6 +320,7 @@ export function SuperAdminCompanyView({
                         <TableHead className="text-center">Members</TableHead>
                         <TableHead className="text-center">Staff</TableHead>
                         <TableHead>Created</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -375,6 +378,28 @@ export function SuperAdminCompanyView({
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {new Date(company.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-end gap-2">
+                              {company.slug ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  asChild
+                                  title="View storefront"
+                                >
+                                  <Link
+                                    href={`/store/${company.slug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <ExternalLink className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No store</span>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
