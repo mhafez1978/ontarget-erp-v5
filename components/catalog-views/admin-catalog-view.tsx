@@ -285,7 +285,12 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
   };
 
   const handleEditProduct = (product: Product) => {
-    setSelectedProduct(product);
+    // Ensure companyId is set from company.id if not present
+    const productWithCompanyId = {
+      ...product,
+      companyId: product.companyId || product.company?.id,
+    };
+    setSelectedProduct(productWithCompanyId);
     setIsEditingProduct(true);
   };
 
