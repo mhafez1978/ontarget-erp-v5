@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart } from "lucide-react";
 import { BorderBeam } from "@/components/ui/border-beam";
+import { useCart } from "@/contexts/cart-context";
 
 interface Product {
   id: string;
@@ -30,6 +33,20 @@ export function ThemeProductLayout({
   products,
   themeId,
 }: ThemeProductLayoutProps) {
+  const { addItem } = useCart();
+
+  const handleAddToCart = (product: Product) => {
+    addItem({
+      id: product.id,
+      type: "product",
+      name: product.name,
+      price: product.price,
+      image: product.images?.[0]?.url,
+      description: product.description,
+      companyId: "", // Will be set from context
+    });
+  };
+
   // Black Friday - Urgent/Flash Sale Grid with Animated Banners
   if (themeId === "black-friday-mega-sale") {
     return (
@@ -82,7 +99,11 @@ export function ThemeProductLayout({
                   <p className="text-3xl font-bold text-red-600">
                     ${Number(product.price).toFixed(2)}
                   </p>
-                  <Button size="lg" className="bg-red-600 hover:bg-red-700">
+                  <Button
+                    size="lg"
+                    className="bg-red-600 hover:bg-red-700"
+                    onClick={() => handleAddToCart(product)}
+                  >
                     <ShoppingCart className="h-5 w-5 mr-2" />
                     Buy Now!
                   </Button>
@@ -158,7 +179,10 @@ export function ThemeProductLayout({
               </p>
             </CardContent>
             <CardFooter className="justify-center">
-              <Button className="w-full rounded-full bg-green-700 hover:bg-green-800">
+              <Button
+                className="w-full rounded-full bg-green-700 hover:bg-green-800"
+                onClick={() => handleAddToCart(product)}
+              >
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 Add Gift to Cart
               </Button>
@@ -594,7 +618,7 @@ export function ThemeProductLayout({
             </p>
           </CardContent>
           <CardFooter>
-            <Button className="w-full">
+            <Button className="w-full" onClick={() => handleAddToCart(product)}>
               <ShoppingCart className="h-4 w-4 mr-2" />
               Add to Cart
             </Button>

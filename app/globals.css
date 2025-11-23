@@ -315,3 +315,48 @@ button[data-active="true"] {
 .stat-item {
   animation: count-up 0.6s ease-out;
 }
+/* Respect user's motion preferences - Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable specific animations */
+  .animate-spin,
+  .animate-bounce,
+  .animate-pulse,
+  .animate-ping,
+  .holiday-snowflake,
+  .black-friday-flash,
+  .black-friday-pulse,
+  .holiday-sparkle,
+  .animate-fade-in,
+  .animate-fade-in-delay-1,
+  .animate-fade-in-delay-2,
+  .animate-fade-in-delay-3,
+  .animate-scale-in,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-scroll-indicator,
+  .stat-item {
+    animation: none !important;
+  }
+
+  /* Disable transforms on hover */
+  .card-hover:hover,
+  .hover\:scale-105:hover,
+  .hover\:scale-110:hover,
+  .hover\:scale-\[1\.02\]:hover {
+    transform: none !important;
+  }
+
+  /* Keep blur effects but disable motion */
+  [class*="blur-"] {
+    animation: none !important;
+  }
+}

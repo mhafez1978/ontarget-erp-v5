@@ -1168,6 +1168,9 @@ export function AdminWorkforceView() {
                     role: "STAFF",
                     jobTitle: "SALES_REP",
                     employmentType: "FULL_TIME",
+                    isFeatured: false,
+                    bio: "",
+                    displayOrder: 0,
                   });
                   setAddressData({
                     addressLine1: "",
@@ -1264,6 +1267,9 @@ export function AdminWorkforceView() {
                         role: "STAFF",
                         jobTitle: "SALES_REP",
                         employmentType: "FULL_TIME",
+                        isFeatured: false,
+                        bio: "",
+                        displayOrder: 0,
                       });
                       setAddressData({
                         addressLine1: "",

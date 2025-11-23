@@ -381,11 +381,6 @@ export const defaultThemes: StorefrontTheme[] = [
           layout: "centered",
           showSnowfall: true,
           animationStyle: "gentle",
-          badges: [
-            { text: "FREE GIFT WRAP", color: "red" },
-            { text: "FREE SHIPPING $50+", color: "green" },
-            { text: "ARRIVES BY DEC 24", color: "gold" },
-          ],
         },
         styling: {
           backgroundColor: "#FFFFFF",
@@ -603,11 +598,6 @@ export const defaultThemes: StorefrontTheme[] = [
           secondaryCTA: "View Costumes",
           backgroundType: "dark-gradient",
           showFloatingElements: true,
-          badges: [
-            { text: "40% OFF", color: "orange" },
-            { text: "SPOOKY DEALS", color: "purple" },
-            { text: "LIMITED TIME", color: "dark" },
-          ],
         },
         styling: {
           backgroundColor: "#0F0515",
@@ -1011,11 +1001,6 @@ export const defaultThemes: StorefrontTheme[] = [
           primaryCTA: "Shop Summer Collection",
           secondaryCTA: "Beach Essentials",
           backgroundType: "gradient-overlay",
-          badges: [
-            { text: "50% OFF", color: "orange" },
-            { text: "FREE SHIPPING", color: "blue" },
-            { text: "NEW ARRIVALS", color: "yellow" },
-          ],
         },
         styling: {
           backgroundColor: "#F7F7F2",
@@ -1232,11 +1217,6 @@ export const defaultThemes: StorefrontTheme[] = [
           backgroundType: "minimal-clean",
           layout: "minimal",
           animationStyle: "smooth",
-          badges: [
-            { text: "NEW ARRIVALS", color: "green" },
-            { text: "40% OFF", color: "pink" },
-            { text: "FREE SHIPPING", color: "sage" },
-          ],
         },
         styling: {
           backgroundColor: "#F5FFF8",
@@ -1418,11 +1398,6 @@ export const defaultThemes: StorefrontTheme[] = [
           primaryCTA: "Start Free Trial",
           secondaryCTA: "Watch Demo",
           backgroundType: "tech-gradient",
-          badges: [
-            { text: "14-DAY FREE TRIAL", color: "blue" },
-            { text: "NO CREDIT CARD", color: "purple" },
-            { text: "24/7 SUPPORT", color: "cyan" },
-          ],
         },
         styling: {
           backgroundColor: "#0F172A",
@@ -1610,11 +1585,6 @@ export const defaultThemes: StorefrontTheme[] = [
           backgroundType: "image-focus",
           layout: "magazine",
           animationStyle: "elegant",
-          badges: [
-            { text: "MICHELIN RATED", color: "red" },
-            { text: "FARM TO TABLE", color: "brown" },
-            { text: "RESERVATIONS OPEN", color: "gold" },
-          ],
         },
         styling: {
           backgroundColor: "#FAF9F6",

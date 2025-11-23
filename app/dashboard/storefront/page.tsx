@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { ThemeGallery } from "@/components/storefront/theme-gallery";
 import { ContentWizard } from "@/components/storefront/content-wizard";
+import { StorefrontReadinessWidget } from "@/components/storefront/storefront-readiness-widget";
 import { ThemeSection } from "@/lib/storefront-themes";
 
 interface StorefrontSettings {
@@ -479,6 +480,14 @@ export default function StorefrontPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Storefront Readiness Check */}
+        {selectedCompanyId && (
+          <StorefrontReadinessWidget
+            companyId={selectedCompanyId}
+            slug={settings.slug}
+          />
+        )}
 
         {/* Settings Tabs */}
         <Tabs defaultValue="general" className="space-y-4">

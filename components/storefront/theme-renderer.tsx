@@ -185,7 +185,7 @@ export function ThemeRenderer({
         return (
           <section
             key={section.id}
-            className={`relative min-h-[600px] md:min-h-[700px] flex items-center justify-center overflow-hidden ${bgClass} ${textClass}`}
+            className={`relative min-h-[400px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px] flex items-center justify-center overflow-hidden ${bgClass} ${textClass}`}
             style={{
               background: storeBanner
                 ? "transparent"
@@ -205,8 +205,12 @@ export function ThemeRenderer({
               </div>
             )}
 
-            {/* Meteors for Veterans Day theme - show on top of banner */}
-            {isVeteransDay && <Meteors number={30} />}
+            {/* Meteors for Veterans Day theme - show on top of banner, hidden on mobile */}
+            {isVeteransDay && (
+              <div className="hidden md:block">
+                <Meteors number={30} />
+              </div>
+            )}
 
             {/* Pattern overlay based on theme */}
             {styling?.pattern && !storeBanner && (
@@ -219,9 +223,9 @@ export function ThemeRenderer({
                 )}
               </div>
             )}
-            {/* Animated background elements (only show if no banner) */}
+            {/* Animated background elements (only show if no banner, hidden on mobile) */}
             {!storeBanner && animationStyle !== "minimal" && (
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
                 <div
                   className={`absolute top-20 left-10 w-72 h-72 bg-white/5 rounded-full blur-3xl ${
                     animationStyle === "bouncy"
@@ -240,7 +244,7 @@ export function ThemeRenderer({
             )}
 
             <div
-              className={`container mx-auto px-4 py-20 relative z-10 ${
+              className={`container mx-auto px-4 py-12 sm:py-16 md:py-20 relative z-10 ${
                 heroLayout === "split"
                   ? "grid md:grid-cols-2 gap-12 items-center text-left"
                   : heroLayout === "offset"
