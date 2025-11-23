@@ -171,9 +171,13 @@ export function SessionManager({
 
   const getDeviceIcon = (userAgent?: string | null) => {
     if (!userAgent) return <Monitor className="h-4 w-4" />;
-    
+
     const ua = userAgent.toLowerCase();
-    if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone")) {
+    if (
+      ua.includes("mobile") ||
+      ua.includes("android") ||
+      ua.includes("iphone")
+    ) {
       return <Smartphone className="h-4 w-4" />;
     }
     if (ua.includes("tablet") || ua.includes("ipad")) {
@@ -184,11 +188,11 @@ export function SessionManager({
 
   const getDeviceInfo = (userAgent?: string | null) => {
     if (!userAgent) return "Unknown Device";
-    
+
     const ua = userAgent;
     let os = "Unknown OS";
     let browser = "Unknown Browser";
-    
+
     // Detect OS
     if (ua.includes("Mac OS X")) {
       os = "macOS";
@@ -209,7 +213,7 @@ export function SessionManager({
     } else if (ua.includes("Android")) {
       os = "Android";
     }
-    
+
     // Detect Browser
     if (ua.includes("Edg/")) {
       browser = "Edge";
@@ -222,7 +226,7 @@ export function SessionManager({
     } else if (ua.includes("Opera/") || ua.includes("OPR/")) {
       browser = "Opera";
     }
-    
+
     return `${os} • ${browser}`;
   };
 
@@ -318,7 +322,9 @@ export function SessionManager({
                     <CardContent className="pt-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
-                          <div className="mt-1">{getDeviceIcon(currentSession.userAgent)}</div>
+                          <div className="mt-1">
+                            {getDeviceIcon(currentSession.userAgent)}
+                          </div>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <Badge variant="default" className="text-xs">
@@ -391,7 +397,9 @@ export function SessionManager({
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {getDeviceIcon(session.userAgent)}
-                                <span className="text-sm">{getDeviceInfo(session.userAgent)}</span>
+                                <span className="text-sm">
+                                  {getDeviceInfo(session.userAgent)}
+                                </span>
                               </div>
                             </TableCell>
                             <TableCell>

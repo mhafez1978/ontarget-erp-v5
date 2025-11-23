@@ -62,6 +62,8 @@ export async function GET() {
       description: company.description,
       logo: company.logo,
       email: company.email,
+      salesEmail: company.salesEmail,
+      supportEmail: company.supportEmail,
       phone: company.phone,
       website: company.website,
       addressLine1: company.addressLine1,

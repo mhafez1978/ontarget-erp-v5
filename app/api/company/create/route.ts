@@ -55,7 +55,17 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { name, slogan, description, phone, email, website, address } = body;
+    const {
+      name,
+      slogan,
+      description,
+      phone,
+      email,
+      salesEmail,
+      supportEmail,
+      website,
+      address,
+    } = body;
 
     if (!name || name.trim().length === 0) {
       return NextResponse.json(
@@ -93,6 +103,8 @@ export async function POST(request: NextRequest) {
           description: description?.trim() || null,
           phone: phone?.trim() || null,
           email: email?.trim() || null,
+          salesEmail: salesEmail?.trim() || null,
+          supportEmail: supportEmail?.trim() || null,
           website: website?.trim() || null,
           ownerId: user.id,
           addressLine1: address?.addressLine1 || null,

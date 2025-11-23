@@ -21,12 +21,13 @@ export async function GET(
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
 
-    if (!company.isStoreEnabled) {
-      return NextResponse.json(
-        { error: "Store is not enabled" },
-        { status: 403 }
-      );
-    }
+    // Allow preview even when store is disabled
+    // if (!company.isStoreEnabled) {
+    //   return NextResponse.json(
+    //     { error: "Store is not enabled" },
+    //     { status: 403 }
+    //   );
+    // }
 
     // Build where clause
     const where = {

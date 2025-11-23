@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -33,7 +34,11 @@ import {
   ExternalLink,
   Eye,
   Upload,
+  Trash2,
 } from "lucide-react";
+import { ThemeGallery } from "@/components/storefront/theme-gallery";
+import { ContentWizard } from "@/components/storefront/content-wizard";
+import { ThemeSection } from "@/lib/storefront-themes";
 
 interface StorefrontSettings {
   slug: string | null;
@@ -50,6 +55,7 @@ interface StorefrontSettings {
       facebook?: string;
       twitter?: string;
       instagram?: string;
+      linkedin?: string;
     };
     contactEmail?: string;
     contactPhone?: string;
@@ -60,30 +66,90 @@ interface Company {
   id: string;
   name: string;
   logo: string | null;
+  slogan: string | null;
+  description: string | null;
+  email: string | null;
+  salesEmail: string | null;
+  supportEmail: string | null;
+  phone: string | null;
+  website: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  postalCode: string | null;
 }
 
 export default function StorefrontPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<{
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    role: string;
+  }>({
+    name: null,
+    email: null,
+    image: null,
+    role: "GUEST",
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [themeSections, setThemeSections] = useState<ThemeSection[]>([]);
   const [settings, setSettings] = useState<StorefrontSettings>({
     slug: null,
     subdomain: null,
     customDomain: null,
     isStoreEnabled: false,
-    storeTheme: "default",
+    storeTheme: "modern-tech",
     storeBanner: null,
     storeMetadata: null,
   });
 
+  const fetchUser = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/me");
+      const data = await response.json();
+
+      if (data.authenticated && data.user) {
+        setUser({
+          name: data.user.name,
+          email: data.user.email,
+          image: data.user.image,
+          role: data.user.role,
+        });
+        return true;
+      } else {
+        // Not authenticated - redirect to login
+        router.push("/login");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      router.push("/login");
+      return false;
+    }
+  }, [router]);
+
   useEffect(() => {
-    fetchCompanies();
-  }, []);
+    const init = async () => {
+      const authenticated = await fetchUser();
+      if (authenticated) {
+        await fetchCompanies();
+      }
+    };
+    init();
+  }, [fetchUser]);
 
   useEffect(() => {
     if (selectedCompanyId) {
+      const company = companies.find((c) => c.id === selectedCompanyId);
+      setSelectedCompany(company || null);
       fetchSettings();
     }
   }, [selectedCompanyId]);
@@ -124,6 +190,10 @@ export default function StorefrontPage() {
         throw new Error("Failed to fetch settings");
       }
       const data = await response.json();
+      // Set default theme if none exists
+      if (!data.storeTheme) {
+        data.storeTheme = "modern-tech";
+      }
       setSettings(data);
     } catch (error) {
       console.error("Error fetching storefront settings:", error);
@@ -213,6 +283,34 @@ export default function StorefrontPage() {
     }
   };
 
+  const handleBannerDelete = async () => {
+    if (!confirm("Are you sure you want to delete the banner?")) return;
+
+    setUploadingBanner(true);
+
+    try {
+      const response = await fetch("/api/company/storefront/banner", {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete banner");
+      }
+
+      setSettings((prev) => ({ ...prev, storeBanner: null }));
+      toast.success("Banner deleted successfully!");
+    } catch (error) {
+      console.error("Banner delete error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete banner"
+      );
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const updateMetadata = (
     key: string,
     value: string | boolean | null | string[]
@@ -241,7 +339,7 @@ export default function StorefrontPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout user={user}>
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -258,11 +356,11 @@ export default function StorefrontPage() {
     : null;
 
   return (
-    <DashboardLayout>
+    <DashboardLayout user={user}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex-1">
+          <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <Store className="h-8 w-8" />
               Storefront Settings
@@ -270,44 +368,8 @@ export default function StorefrontPage() {
             <p className="text-muted-foreground mt-1">
               Configure your public-facing online store
             </p>
-
-            {/* Company Selector */}
-            {companies.length > 0 && (
-              <div className="mt-4 max-w-xs">
-                <Label
-                  htmlFor="company-select"
-                  className="text-sm font-medium mb-2 block"
-                >
-                  Select Company
-                </Label>
-                <Select
-                  value={selectedCompanyId}
-                  onValueChange={setSelectedCompanyId}
-                >
-                  <SelectTrigger id="company-select">
-                    <SelectValue placeholder="Select a company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.map((company) => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
           <div className="flex gap-2">
-            {storeUrl && settings.isStoreEnabled && (
-              <Button variant="outline" asChild>
-                <a href={storeUrl} target="_blank" rel="noopener noreferrer">
-                  <Eye className="h-4 w-4 mr-2" />
-                  Preview Store
-                  <ExternalLink className="h-3 w-3 ml-1" />
-                </a>
-              </Button>
-            )}
             <Button onClick={handleSave} disabled={saving}>
               {saving ? (
                 <>
@@ -323,6 +385,78 @@ export default function StorefrontPage() {
             </Button>
           </div>
         </div>
+
+        {/* Company Selector Card - Prominent placement */}
+        {companies.length > 1 && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-lg">Select Company</CardTitle>
+              <CardDescription>
+                Choose which company's storefront you want to configure
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={selectedCompanyId}
+                onValueChange={setSelectedCompanyId}
+              >
+                <SelectTrigger className="max-w-md">
+                  <SelectValue placeholder="Select a company" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      <div className="flex items-center gap-2">
+                        {company.logo && (
+                          <Image
+                            src={company.logo}
+                            alt={company.name}
+                            width={20}
+                            height={20}
+                            className="rounded"
+                          />
+                        )}
+                        <span>{company.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedCompany && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Currently configuring: <strong>{selectedCompany.name}</strong>
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Single company indicator */}
+        {companies.length === 1 && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                {selectedCompany?.logo && (
+                  <Image
+                    src={selectedCompany.logo}
+                    alt={selectedCompany.name}
+                    width={40}
+                    height={40}
+                    className="rounded"
+                  />
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Configuring storefront for
+                  </p>
+                  <p className="font-semibold text-lg">
+                    {selectedCompany?.name}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Store Status Banner */}
         <Card>
@@ -357,6 +491,7 @@ export default function StorefrontPage() {
               <Palette className="h-4 w-4 mr-2" />
               Theme & Branding
             </TabsTrigger>
+            <TabsTrigger value="content">Content Wizard</TabsTrigger>
             <TabsTrigger value="seo">SEO & Metadata</TabsTrigger>
           </TabsList>
 
@@ -364,10 +499,40 @@ export default function StorefrontPage() {
           <TabsContent value="general" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Store URL Configuration</CardTitle>
-                <CardDescription>
-                  Choose how customers will access your store
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Store URL Configuration</CardTitle>
+                    <CardDescription>
+                      Choose how customers will access your store
+                    </CardDescription>
+                  </div>
+                  {storeUrl && (
+                    <Button variant="outline" asChild>
+                      <a
+                        href={storeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        {settings.isStoreEnabled
+                          ? "View Store"
+                          : "Preview Store"}
+                      </a>
+                    </Button>
+                  )}
+                  {!storeUrl && settings.slug && (
+                    <Button variant="outline" asChild>
+                      <a
+                        href={`/store/${settings.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View Store
+                      </a>
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -451,53 +616,42 @@ export default function StorefrontPage() {
 
           {/* Theme & Branding Tab */}
           <TabsContent value="theme" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Store Theme</CardTitle>
-                <CardDescription>
-                  Choose a theme for your storefront
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="theme">Theme</Label>
-                  <Select
-                    value={settings.storeTheme}
-                    onValueChange={(value) =>
-                      setSettings((prev) => ({ ...prev, storeTheme: value }))
-                    }
-                  >
-                    <SelectTrigger id="theme">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Default</SelectItem>
-                      <SelectItem value="minimal">Minimal</SelectItem>
-                      <SelectItem value="modern">Modern</SelectItem>
-                      <SelectItem value="classic">Classic</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
+            <ThemeGallery
+              selectedTheme={settings.storeTheme}
+              onThemeSelect={(themeId) =>
+                setSettings((prev) => ({ ...prev, storeTheme: themeId }))
+              }
+            />
 
             <Card>
               <CardHeader>
                 <CardTitle>Store Banner</CardTitle>
                 <CardDescription>
-                  Upload a banner image for your store homepage
+                  Upload a banner image for your store hero section. This will
+                  replace the animated background on your storefront homepage.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {settings.storeBanner && (
-                  <div className="relative aspect-3/1 w-full overflow-hidden rounded-lg border">
-                    <Image
-                      src={settings.storeBanner}
-                      alt="Store banner"
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-                    />
+                  <div className="space-y-2">
+                    <div className="relative aspect-3/1 w-full overflow-hidden rounded-lg border">
+                      <Image
+                        src={settings.storeBanner}
+                        alt="Store banner"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                      />
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBannerDelete}
+                      disabled={uploadingBanner}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Banner
+                    </Button>
                   </div>
                 )}
                 <div>
@@ -534,6 +688,35 @@ export default function StorefrontPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Content Wizard Tab */}
+          <TabsContent value="content" className="space-y-4">
+            <ContentWizard
+              themeId={settings.storeTheme}
+              companyData={
+                selectedCompany
+                  ? {
+                      name: selectedCompany.name,
+                      slogan: selectedCompany.slogan || undefined,
+                      description: selectedCompany.description || undefined,
+                      logo: selectedCompany.logo || undefined,
+                      email: selectedCompany.email || undefined,
+                      salesEmail: selectedCompany.salesEmail || undefined,
+                      supportEmail: selectedCompany.supportEmail || undefined,
+                      phone: selectedCompany.phone || undefined,
+                      website: selectedCompany.website || undefined,
+                      addressLine1: selectedCompany.addressLine1 || undefined,
+                      addressLine2: selectedCompany.addressLine2 || undefined,
+                      city: selectedCompany.city || undefined,
+                      state: selectedCompany.state || undefined,
+                      country: selectedCompany.country || undefined,
+                      postalCode: selectedCompany.postalCode || undefined,
+                    }
+                  : undefined
+              }
+              onContentChange={(sections) => setThemeSections(sections)}
+            />
           </TabsContent>
 
           {/* SEO & Metadata Tab */}
@@ -662,6 +845,18 @@ export default function StorefrontPage() {
                     value={settings.storeMetadata?.socialLinks?.instagram || ""}
                     onChange={(e) =>
                       updateSocialLink("instagram", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <Input
+                    id="linkedin"
+                    placeholder="https://linkedin.com/company/mystore"
+                    value={settings.storeMetadata?.socialLinks?.linkedin || ""}
+                    onChange={(e) =>
+                      updateSocialLink("linkedin", e.target.value)
                     }
                   />
                 </div>

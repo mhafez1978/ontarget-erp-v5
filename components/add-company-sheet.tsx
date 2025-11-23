@@ -37,6 +37,8 @@ export function AddCompanySheet({
     slogan: "",
     description: "",
     email: "",
+    salesEmail: "",
+    supportEmail: "",
     phone: "",
     website: "",
   };
@@ -72,6 +74,8 @@ export function AddCompanySheet({
           slogan: formData.slogan,
           description: formData.description,
           email: formData.email,
+          salesEmail: formData.salesEmail,
+          supportEmail: formData.supportEmail,
           phone: formData.phone,
           website: formData.website,
           address: addressData,
@@ -165,6 +169,32 @@ export function AddCompanySheet({
               value={formData.email}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="salesEmail">Sales Email</Label>
+            <Input
+              id="salesEmail"
+              type="email"
+              placeholder="sales@company.com"
+              value={formData.salesEmail}
+              onChange={(e) =>
+                setFormData({ ...formData, salesEmail: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="supportEmail">Support Email</Label>
+            <Input
+              id="supportEmail"
+              type="email"
+              placeholder="support@company.com"
+              value={formData.supportEmail}
+              onChange={(e) =>
+                setFormData({ ...formData, supportEmail: e.target.value })
               }
             />
           </div>

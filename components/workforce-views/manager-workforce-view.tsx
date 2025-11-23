@@ -63,6 +63,9 @@ interface StaffMember {
   employmentType: string;
   status: string;
   hireDate: string;
+  isFeatured?: boolean;
+  bio?: string | null;
+  displayOrder?: number;
   city: string | null;
   state: string | null;
   country: string | null;
@@ -138,6 +141,9 @@ export function ManagerWorkforceView() {
       | "STAFF",
     jobTitle: "SALES_REP" as string,
     employmentType: "FULL_TIME" as string,
+    isFeatured: false,
+    bio: "",
+    displayOrder: 0,
   };
 
   const initialAddressData: AddressData = {
@@ -168,6 +174,9 @@ export function ManagerWorkforceView() {
     jobTitle: "SALES_REP" as string,
     employmentType: "FULL_TIME" as string,
     status: "ACTIVE" as string,
+    isFeatured: false,
+    bio: "",
+    displayOrder: 0,
   };
 
   const initialEditAddressData: AddressData = {
@@ -228,6 +237,9 @@ export function ManagerWorkforceView() {
       jobTitle: member.jobTitle || "SALES_REP",
       employmentType: member.employmentType,
       status: member.status,
+      isFeatured: member.isFeatured || false,
+      bio: member.bio || "",
+      displayOrder: member.displayOrder || 0,
     });
     setEditAddressData({
       addressLine1: member.user.addressLine1 || "",
@@ -705,6 +717,9 @@ export function ManagerWorkforceView() {
                     role: formData.role,
                     jobTitle: formData.jobTitle,
                     employmentType: formData.employmentType,
+                    isFeatured: formData.isFeatured,
+                    bio: formData.bio,
+                    displayOrder: formData.displayOrder,
                     addressLine1: addressData.addressLine1,
                     addressLine2: addressData.addressLine2,
                     city: addressData.city,
@@ -916,6 +931,61 @@ export function ManagerWorkforceView() {
               </div>
             </div>
 
+            {/* Storefront Display */}
+            <div className="space-y-4 border-2 border-purple-300 p-4 rounded-lg bg-purple-50 dark:bg-purple-950/20">
+              <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-400">
+                🌟 Storefront Display (Meet the Team)
+              </h3>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isFeatured"
+                  checked={formData.isFeatured}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isFeatured: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="isFeatured" className="cursor-pointer">
+                  Feature on Storefront (Meet the Team)
+                </Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bio">Public Bio (Optional)</Label>
+                <textarea
+                  id="bio"
+                  value={formData.bio}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bio: e.target.value })
+                  }
+                  placeholder="Brief bio to display on storefront..."
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="displayOrder">Display Order</Label>
+                <Input
+                  id="displayOrder"
+                  type="number"
+                  value={formData.displayOrder}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      displayOrder: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="0"
+                  min="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Lower numbers appear first in the team section
+                </p>
+              </div>
+            </div>
+
             {/* Address */}
             <div className="space-y-4">
               <h3 className="font-semibold">Address</h3>
@@ -1009,6 +1079,9 @@ export function ManagerWorkforceView() {
                       jobTitle: editFormData.jobTitle,
                       employmentType: editFormData.employmentType,
                       status: editFormData.status,
+                      isFeatured: editFormData.isFeatured,
+                      bio: editFormData.bio,
+                      displayOrder: editFormData.displayOrder,
                       addressLine1: editAddressData.addressLine1,
                       addressLine2: editAddressData.addressLine2,
                       city: editAddressData.city,
@@ -1220,6 +1293,64 @@ export function ManagerWorkforceView() {
                     <SelectItem value="TERMINATED">Terminated</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* Storefront Display */}
+            <div className="space-y-4 border-2 border-purple-300 p-4 rounded-lg bg-purple-50 dark:bg-purple-950/20">
+              <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-400">
+                🌟 Storefront Display (Meet the Team)
+              </h3>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="editIsFeatured"
+                  checked={editFormData.isFeatured}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      isFeatured: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="editIsFeatured" className="cursor-pointer">
+                  Feature on Storefront (Meet the Team)
+                </Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editBio">Public Bio (Optional)</Label>
+                <textarea
+                  id="editBio"
+                  value={editFormData.bio}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, bio: e.target.value })
+                  }
+                  placeholder="Brief bio to display on storefront..."
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editDisplayOrder">Display Order</Label>
+                <Input
+                  id="editDisplayOrder"
+                  type="number"
+                  value={editFormData.displayOrder}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      displayOrder: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="0"
+                  min="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Lower numbers appear first in the team section
+                </p>
               </div>
             </div>
 

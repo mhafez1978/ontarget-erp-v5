@@ -3,13 +3,18 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { validateSession } from "@/lib/session-manager";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Check if this is for dashboard context (company-specific branding allowed)
+    const { searchParams } = new URL(request.url);
+    const context = searchParams.get("context");
+    const isDashboard = context === "dashboard";
+
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get("sessionToken")?.value;
 
-    // If user is authenticated, check for company-specific white-label branding
-    if (sessionToken) {
+    // Only apply company-specific white-label branding in dashboard context
+    if (isDashboard && sessionToken) {
       const validation = await validateSession(sessionToken);
 
       if (validation.valid && validation.user) {
@@ -56,7 +61,7 @@ export async function GET() {
             membership.company.logoDark ||
             membership.company.logo)
         ) {
-          // Return company-specific branding
+          // Return company-specific branding (only in dashboard context)
           return NextResponse.json({
             name: membership.company.name,
             slogan: membership.company.slogan || "People Driven & AI Insight",

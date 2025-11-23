@@ -16,6 +16,7 @@ import {
   BookOpen,
   Store,
   HelpCircle,
+  MessageSquare,
 } from "lucide-react";
 
 export const superAdminMenuItems = [
@@ -25,6 +26,11 @@ export const superAdminMenuItems = [
   { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/catalog", label: "Catalog", icon: Tags },
   { href: "/dashboard/storefront", label: "Storefront", icon: Store },
+  {
+    href: "/dashboard/testimonials",
+    label: "Testimonials",
+    icon: MessageSquare,
+  },
   { href: "/dashboard/workforce", label: "Workforce", icon: UsersRound },
   { href: "/dashboard/ledger", label: "Ledger", icon: BookOpen },
   { href: "/dashboard/suppliers", label: "Suppliers", icon: Building2 },

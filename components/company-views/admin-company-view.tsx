@@ -26,6 +26,8 @@ interface Company {
   description: string | null;
   logo: string | null;
   email: string | null;
+  salesEmail: string | null;
+  supportEmail: string | null;
   phone: string | null;
   website: string | null;
   addressLine1: string | null;

@@ -100,12 +100,22 @@ export async function PATCH(
       );
     }
 
+    // SECURITY: Only SUPER_ADMIN can update root company
+    if (company.isRoot && user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Only Super Admin can update system branding" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const {
       name,
       slogan,
       description,
       email,
+      salesEmail,
+      supportEmail,
       phone,
       website,
       address,
@@ -121,6 +131,8 @@ export async function PATCH(
         slogan,
         description,
         email,
+        salesEmail,
+        supportEmail,
         phone,
         website,
         ...(logo !== undefined && { logo }),

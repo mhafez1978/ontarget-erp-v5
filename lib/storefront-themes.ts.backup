@@ -1,0 +1,450 @@
+export interface ThemeSection {
+  id: string;
+  type:
+    | "hero"
+    | "social-proof"
+    | "featured-products"
+    | "featured-services"
+    | "about"
+    | "contact"
+    | "footer"
+    | "promo-banner"
+    | "video-section"
+    | "gallery";
+  enabled: boolean;
+  order: number;
+  content: {
+    [key: string]:
+      | string
+      | string[]
+      | boolean
+      | number
+      | Record<string, unknown>
+      | Array<Record<string, unknown>>
+      | undefined;
+  };
+  styling?: {
+    backgroundColor?: string;
+    textColor?: string;
+    gradient?: string;
+    backgroundImage?: string;
+    overlay?: string;
+    pattern?: string;
+  };
+}
+
+export interface StorefrontTheme {
+  id: string;
+  name: string;
+  description: string;
+  thumbnail: string;
+  previewImage?: string;
+  category:
+    | "seasonal"
+    | "industry"
+    | "event"
+    | "modern"
+    | "classic"
+    | "minimal"
+    | "bold"
+    | "creative";
+  season?: "spring" | "summer" | "fall" | "winter" | "holiday";
+  event?:
+    | "black-friday"
+    | "cyber-monday"
+    | "halloween"
+    | "christmas"
+    | "new-year"
+    | "valentines"
+    | "easter"
+    | "memorial-day"
+    | "independence-day"
+    | "labor-day"
+    | "veterans-day"
+    | "thanksgiving";
+  industry?:
+    | "tech"
+    | "retail"
+    | "food"
+    | "services"
+    | "healthcare"
+    | "real-estate"
+    | "education"
+    | "creative";
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background?: string;
+    text?: string;
+  };
+  sections: ThemeSection[];
+  features?: {
+    videoBackground?: boolean;
+    parallax?: boolean;
+    animations?: string[];
+    countdown?: boolean;
+    chatWidget?: boolean;
+  };
+}
+
+const createStandardSections = (
+  overrides?: Partial<ThemeSection>[]
+): ThemeSection[] => {
+  const standardSections: ThemeSection[] = [
+    {
+      id: "hero",
+      type: "hero",
+      enabled: true,
+      order: 1,
+      content: {
+        heading: "Welcome to [Your Company Name]",
+        subheading: "[Your company slogan or tagline]",
+        description:
+          "Discover our exceptional products and services designed to meet your needs",
+        primaryCTA: "Explore Products",
+        secondaryCTA: "View Services",
+        showScrollIndicator: true,
+      },
+    },
+    {
+      id: "social-proof",
+      type: "social-proof",
+      enabled: true,
+      order: 2,
+      content: {
+        heading: "Trusted by Industry Leaders",
+        description:
+          "Join thousands of satisfied customers who trust us with their business",
+        stats: [
+          { label: "Happy Customers", value: "10,000+", icon: "users" },
+          { label: "Projects Delivered", value: "5,000+", icon: "package" },
+          { label: "Years of Excellence", value: "15+", icon: "award" },
+          { label: "5-Star Reviews", value: "4.9/5", icon: "star" },
+        ],
+        testimonials: [
+          {
+            name: "Sarah Johnson",
+            role: "CEO, Tech Innovations Inc",
+            company: "Tech Innovations Inc",
+            comment:
+              "Working with this team has transformed our business. Their attention to detail and commitment to excellence is unmatched.",
+            rating: 5,
+            image: "",
+          },
+          {
+            name: "Michael Chen",
+            role: "Operations Director",
+            company: "Global Solutions Ltd",
+            comment:
+              "Exceptional service from start to finish. They delivered beyond our expectations and continue to provide outstanding support.",
+            rating: 5,
+            image: "",
+          },
+          {
+            name: "Emily Rodriguez",
+            role: "Business Owner",
+            company: "Creative Studios",
+            comment:
+              "Professional, reliable, and innovative. They've been instrumental in our growth and success.",
+            rating: 5,
+            image: "",
+          },
+        ],
+      },
+    },
+    {
+      id: "featured-products",
+      type: "featured-products",
+      enabled: true,
+      order: 3,
+      content: {
+        heading: "Featured Products",
+        description:
+          "Discover our hand-picked selection of premium products tailored to your needs",
+        viewAllText: "View All Products",
+        viewAllLink: "/products",
+      },
+    },
+    {
+      id: "featured-services",
+      type: "featured-services",
+      enabled: true,
+      order: 4,
+      content: {
+        heading: "Professional Services",
+        description:
+          "Expert services delivered with precision and care to help you succeed",
+        viewAllText: "Explore All Services",
+        viewAllLink: "/services",
+      },
+    },
+    {
+      id: "about",
+      type: "about",
+      enabled: true,
+      order: 5,
+      content: {
+        heading: "About [Company Name]",
+        description: "Who we are and what drives us",
+        content:
+          "We are a team of passionate professionals dedicated to delivering exceptional quality and service. With years of industry experience and a commitment to innovation, we help our clients achieve their goals and exceed their expectations. Our mission is to provide solutions that make a real difference.",
+        features: [
+          {
+            title: "Quality First",
+            description: "We never compromise on quality",
+            icon: "award",
+          },
+          {
+            title: "Customer Focused",
+            description: "Your success is our priority",
+            icon: "heart",
+          },
+          {
+            title: "Innovation Driven",
+            description: "Always pushing boundaries",
+            icon: "lightbulb",
+          },
+          {
+            title: "Reliable Support",
+            description: "We're here when you need us",
+            icon: "shield",
+          },
+        ],
+        showTeamButton: true,
+        teamButtonText: "Meet Our Team",
+      },
+    },
+    {
+      id: "contact",
+      type: "contact",
+      enabled: true,
+      order: 6,
+      content: {
+        heading: "Get In Touch",
+        description:
+          "We'd love to hear from you. Reach out to our team for any inquiries.",
+        email: "[Your general email]",
+        salesEmail: "[Your sales email]",
+        supportEmail: "[Your support email]",
+        phone: "[Your phone number]",
+        address: "[Your business address]",
+        showContactForm: true,
+        businessHours: "Monday - Friday: 9:00 AM - 6:00 PM",
+        responseTime: "We typically respond within 24 hours",
+      },
+    },
+    {
+      id: "footer",
+      type: "footer",
+      enabled: true,
+      order: 7,
+      content: {
+        description:
+          "Your trusted partner for exceptional products and services",
+        tagline: "Quality. Service. Excellence.",
+        companyInfo:
+          "We're committed to providing the best products and services to help you achieve your goals.",
+        quickLinks: [
+          { label: "Products", url: "/products" },
+          { label: "Services", url: "/services" },
+          { label: "About Us", url: "#about" },
+          { label: "Contact", url: "#contact" },
+        ],
+        legalLinks: [
+          { label: "Privacy Policy", url: "/privacy" },
+          { label: "Terms of Service", url: "/terms" },
+          { label: "Refund Policy", url: "/refund-policy" },
+        ],
+        socialLinks: {
+          facebook: "",
+          twitter: "",
+          instagram: "",
+          linkedin: "",
+        },
+        showNewsletter: true,
+        newsletterHeading: "Stay Updated",
+        newsletterDescription:
+          "Subscribe to our newsletter for the latest updates and offers",
+        copyrightText: "All rights reserved.",
+      },
+    },
+  ];
+
+  // Apply overrides if provided
+  if (overrides) {
+    overrides.forEach((override) => {
+      const sectionIndex = standardSections.findIndex(
+        (s) => s.id === override.id
+      );
+      if (sectionIndex !== -1) {
+        standardSections[sectionIndex] = {
+          ...standardSections[sectionIndex],
+          ...override,
+          content: {
+            ...standardSections[sectionIndex].content,
+            ...override.content,
+          },
+        };
+      }
+    });
+  }
+
+  return standardSections;
+};
+
+export const defaultThemes: StorefrontTheme[] = [
+  {
+    id: "modern-tech",
+    name: "Modern Tech",
+    description:
+      "Clean, contemporary design perfect for tech companies and startups. Features bold gradients and modern aesthetics.",
+    thumbnail: "🚀",
+    category: "modern",
+    colors: {
+      primary: "#3B82F6",
+      secondary: "#1E40AF",
+      accent: "#F59E0B",
+    },
+    sections: createStandardSections([
+      {
+        id: "hero",
+        content: {
+          heading: "Innovate. Transform. Succeed.",
+          subheading: "Next-Generation Solutions for Modern Businesses",
+          description:
+            "Harness the power of cutting-edge technology to drive your business forward. We deliver innovative solutions that scale with your ambitions.",
+          primaryCTA: "Explore Products",
+          secondaryCTA: "View Services",
+        },
+        styling: {
+          gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        },
+      },
+      {
+        id: "about",
+        content: {
+          heading: "Why Choose Our Platform",
+          description: "Built for the future, designed for today",
+          content:
+            "We combine cutting-edge technology with intuitive design to deliver solutions that don't just meet expectations—they exceed them. Our platform is built on a foundation of innovation, reliability, and a deep understanding of what modern businesses need to thrive in a digital-first world.",
+        },
+      },
+    ]),
+  },
+  {
+    id: "elegant-classic",
+    name: "Elegant Classic",
+    description:
+      "Timeless design with sophisticated aesthetics. Perfect for established brands that value tradition and excellence.",
+    thumbnail: "👔",
+    category: "classic",
+    colors: {
+      primary: "#1F2937",
+      secondary: "#374151",
+      accent: "#D97706",
+    },
+    sections: createStandardSections([
+      {
+        id: "hero",
+        content: {
+          heading: "Excellence Delivered Every Time",
+          subheading: "Where Tradition Meets Innovation",
+          description:
+            "Experience the perfect blend of time-honored quality and modern efficiency. We've been setting the standard for excellence since day one.",
+          primaryCTA: "Explore Products",
+          secondaryCTA: "View Services",
+        },
+        styling: {
+          gradient: "linear-gradient(135deg, #1F2937 0%, #374151 100%)",
+        },
+      },
+      {
+        id: "about",
+        content: {
+          heading: "Our Legacy of Excellence",
+          description: "Built on decades of expertise and trust",
+          content:
+            "With a heritage rooted in quality craftsmanship and attention to detail, we've earned our reputation as industry leaders. Every product and service we deliver reflects our unwavering commitment to excellence and our dedication to exceeding customer expectations.",
+        },
+      },
+    ]),
+  },
+  {
+    id: "minimal-zen",
+    name: "Minimal Zen",
+    description:
+      "Clean, minimalist design that eliminates distractions and lets your products take center stage.",
+    thumbnail: "🎨",
+    category: "minimal",
+    colors: {
+      primary: "#000000",
+      secondary: "#FFFFFF",
+      accent: "#EF4444",
+    },
+    sections: createStandardSections([
+      {
+        id: "hero",
+        content: {
+          heading: "Simplicity. Refined.",
+          subheading: "Where Less Truly Becomes More",
+          description:
+            "Experience the elegance of minimalist design. We strip away the unnecessary to reveal what truly matters.",
+          primaryCTA: "Explore Products",
+          secondaryCTA: "View Services",
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#000000",
+        },
+      },
+      {
+        id: "about",
+        content: {
+          heading: "Our Minimalist Philosophy",
+          description: "Focus on what matters most",
+          content:
+            "We believe in the power of simplicity. By eliminating clutter and focusing on essentials, we create experiences that are both beautiful and functional. Every element serves a purpose, every detail is intentional.",
+        },
+      },
+    ]),
+  },
+  {
+    id: "bold-creative",
+    name: "Bold & Creative",
+    description:
+      "Vibrant, eye-catching design for brands that dare to be different. Stand out from the crowd.",
+    thumbnail: "🎭",
+    category: "bold",
+    colors: {
+      primary: "#EC4899",
+      secondary: "#8B5CF6",
+      accent: "#F59E0B",
+    },
+    sections: createStandardSections([
+      {
+        id: "hero",
+        content: {
+          heading: "Make Your Mark",
+          subheading: "Where Bold Ideas Come to Life",
+          description:
+            "Don't just follow trends—set them. We help creative businesses stand out with solutions as unique as their vision.",
+          primaryCTA: "Explore Products",
+          secondaryCTA: "View Services",
+        },
+        styling: {
+          gradient: "linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)",
+        },
+      },
+      {
+        id: "about",
+        content: {
+          heading: "Creativity Unleashed",
+          description: "Where imagination meets execution",
+          content:
+            "We don't believe in playing it safe. Our approach combines bold creativity with strategic thinking to help brands make unforgettable impressions. Whether you're disrupting an industry or defining a new category, we're here to amplify your vision.",
+        },
+      },
+    ]),
+  },
+];

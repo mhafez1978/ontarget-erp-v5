@@ -32,12 +32,19 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+interface ProductImage {
+  id: string;
+  url: string;
+  isFeatured: boolean;
+  order: number;
+}
+
 interface Product {
   id: string;
   name: string;
   description: string | null;
   price: number;
-  images: string[] | null;
+  images: ProductImage[];
   category: string | null;
   inventory: number | null;
   isFeatured: boolean;
@@ -99,7 +106,9 @@ export default function ProductsPage() {
       const productsResponse = await fetch(`/api/store/${slug}/products`);
       if (!productsResponse.ok) throw new Error("Failed to fetch products");
       const productsData = await productsResponse.json();
-      setProducts(productsData);
+      setProducts(
+        Array.isArray(productsData) ? productsData : productsData.products || []
+      );
     } catch (error) {
       console.error("Error fetching store data:", error);
       toast.error("Failed to load products");
@@ -109,7 +118,7 @@ export default function ProductsPage() {
   };
 
   const filterAndSortProducts = () => {
-    let filtered = [...products];
+    let filtered = Array.isArray(products) ? [...products] : [];
 
     // Apply search filter
     if (searchQuery) {
@@ -170,7 +179,11 @@ export default function ProductsPage() {
 
   // Get unique categories
   const categories = Array.from(
-    new Set(products.map((p) => p.category).filter(Boolean))
+    new Set(
+      Array.isArray(products)
+        ? products.map((p) => p.category).filter(Boolean)
+        : []
+    )
   ) as string[];
 
   if (loading) {
@@ -334,27 +347,29 @@ export default function ProductsPage() {
                 key={product.id}
                 className={viewMode === "list" ? "flex" : ""}
               >
-                {product.images && product.images[0] && (
-                  <div
-                    className={
-                      viewMode === "list"
-                        ? "relative w-48 shrink-0 aspect-square"
-                        : "relative aspect-square overflow-hidden bg-muted"
-                    }
-                  >
-                    <Image
-                      src={product.images[0]}
-                      alt={product.name}
-                      fill
-                      className="object-cover hover:scale-105 transition-transform"
-                      sizes={
+                {product.images &&
+                  product.images.length > 0 &&
+                  product.images[0].url && (
+                    <div
+                      className={
                         viewMode === "list"
-                          ? "192px"
-                          : "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          ? "relative w-48 shrink-0 aspect-square"
+                          : "relative aspect-square overflow-hidden bg-muted"
                       }
-                    />
-                  </div>
-                )}
+                    >
+                      <Image
+                        src={product.images[0].url}
+                        alt={product.name}
+                        fill
+                        className="object-cover hover:scale-105 transition-transform"
+                        sizes={
+                          viewMode === "list"
+                            ? "192px"
+                            : "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        }
+                      />
+                    </div>
+                  )}
                 <div className="flex-1 flex flex-col">
                   <CardHeader>
                     <div className="flex items-start justify-between">

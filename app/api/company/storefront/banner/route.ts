@@ -142,3 +142,110 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("sessionToken")?.value;
+
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const validation = await validateSession(sessionToken);
+    if (!validation.valid || !validation.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 }
+      );
+    }
+
+    const userId = validation.user.id;
+
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+        ownedCompanies: {
+          select: { id: true, storeBanner: true },
+        },
+        companyMemberships: {
+          select: { companyId: true, role: true },
+        },
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Get first owned company or first admin/manager membership
+    const companyId =
+      user.ownedCompanies[0]?.id ||
+      user.companyMemberships.find(
+        (m) => m.role === "ADMIN" || m.role === "MANAGER"
+      )?.companyId;
+
+    if (!companyId) {
+      return NextResponse.json(
+        { error: "No company associated with user" },
+        { status: 404 }
+      );
+    }
+
+    // Only ADMIN, MANAGER and SUPER_ADMIN can delete banners
+    if (
+      user.role !== "ADMIN" &&
+      user.role !== "SUPER_ADMIN" &&
+      user.role !== "MANAGER"
+    ) {
+      return NextResponse.json(
+        { error: "Insufficient permissions" },
+        { status: 403 }
+      );
+    }
+
+    // Get current banner URL
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+      select: { storeBanner: true },
+    });
+
+    if (!company?.storeBanner) {
+      return NextResponse.json(
+        { error: "No banner to delete" },
+        { status: 404 }
+      );
+    }
+
+    // Delete the file from filesystem
+    try {
+      const fs = await import("fs");
+      const filePath = join(process.cwd(), "public", company.storeBanner);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (fsError) {
+      console.error("Error deleting banner file:", fsError);
+      // Continue even if file deletion fails
+    }
+
+    // Update company's banner URL to null in database
+    await db.company.update({
+      where: { id: companyId },
+      data: { storeBanner: null },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Banner deleted successfully",
+    });
+  } catch (error) {
+    console.error("Banner delete error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete banner" },
+      { status: 500 }
+    );
+  }
+}

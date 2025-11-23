@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { getRoleMenuItems } from "@/components/dashboard-menus/main-dashboard-menu";
+import { getProxiedImageUrl } from "@/lib/image-proxy";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -87,7 +88,7 @@ export function DashboardLayout({
 
   const fetchBranding = React.useCallback(async () => {
     try {
-      const response = await fetch("/api/branding");
+      const response = await fetch("/api/branding?context=dashboard");
       if (response.ok) {
         const data = await response.json();
         setBranding(data);
@@ -327,7 +328,10 @@ export function DashboardLayout({
           {!isCollapsed ? (
             <div className="flex items-center gap-3">
               <Avatar className="h-9 w-9" key={userImage || "no-image"}>
-                <AvatarImage src={userImage || undefined} alt={displayName} />
+                <AvatarImage
+                  src={getProxiedImageUrl(userImage)}
+                  alt={displayName}
+                />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {getInitials(user?.name)}
                 </AvatarFallback>
@@ -346,10 +350,13 @@ export function DashboardLayout({
           ) : (
             <div className="flex justify-center">
               <Avatar
-                className="h-9 w-9"
+                className="h-9 w-9 mx-auto"
                 key={userImage || "no-image-collapsed"}
               >
-                <AvatarImage src={userImage || undefined} alt={displayName} />
+                <AvatarImage
+                  src={getProxiedImageUrl(userImage)}
+                  alt={displayName}
+                />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {getInitials(user?.name)}
                 </AvatarFallback>

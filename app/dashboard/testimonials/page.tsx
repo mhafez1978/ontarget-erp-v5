@@ -1,0 +1,553 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { DashboardLayout } from "@/components/dashboard-layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  MessageSquare,
+  Check,
+  X,
+  Star,
+  Trash2,
+  Loader2,
+  Trophy,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface Testimonial {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerTitle: string | null;
+  rating: number;
+  testimonial: string;
+  status: string;
+  isFeatured: boolean;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+}
+
+export default function TestimonialsPage() {
+  const [user, setUser] = useState<{
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    role: string;
+  }>({
+    name: null,
+    email: null,
+    image: null,
+    role: "GUEST",
+  });
+  const [loading, setLoading] = useState(true);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [companies, setCompanies] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const fetchCompanies = useCallback(async () => {
+    try {
+      const response = await fetch("/api/company/my-companies");
+
+      if (!response.ok) {
+        console.error("Failed to fetch companies:", response.status);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Companies response:", data); // Debug log
+
+      if (data.companies && data.companies.length > 0) {
+        setCompanies(data.companies);
+        setSelectedCompanyId(data.companies[0].id);
+        console.log("Selected company:", data.companies[0]); // Debug log
+      } else {
+        console.log("No companies found for user");
+      }
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      toast.error("Failed to load companies");
+    }
+  }, []);
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/me");
+      const data = await response.json();
+
+      console.log("Auth response:", data); // Debug log
+
+      if (data.authenticated && data.user) {
+        const userData = {
+          name: data.user.name || null,
+          email: data.user.email || null,
+          image: data.user.image || null,
+          role: data.user.role || "GUEST",
+        };
+        console.log("Setting user:", userData); // Debug log
+        setUser(userData);
+        await fetchCompanies();
+      } else {
+        console.log("Not authenticated, redirecting..."); // Debug log
+        toast.error("Please log in to access this page");
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      toast.error("Failed to fetch user session");
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchCompanies]);
+
+  const fetchTestimonials = useCallback(async () => {
+    if (!selectedCompanyId) return;
+
+    try {
+      const response = await fetch(
+        `/api/admin/testimonials?companyId=${selectedCompanyId}&status=${statusFilter}`
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setTestimonials(data);
+      } else {
+        toast.error(data.error || "Failed to fetch testimonials");
+      }
+    } catch (error) {
+      console.error("Error fetching testimonials:", error);
+      toast.error("Failed to fetch testimonials");
+    }
+  }, [selectedCompanyId, statusFilter]);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  useEffect(() => {
+    if (selectedCompanyId) {
+      fetchTestimonials();
+    }
+  }, [selectedCompanyId, fetchTestimonials]);
+
+  const handleApprove = async (id: string) => {
+    setActionLoading(id);
+    try {
+      const response = await fetch(`/api/admin/testimonials/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "APPROVED" }),
+      });
+
+      if (response.ok) {
+        toast.success("Testimonial approved!");
+        fetchTestimonials();
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to approve testimonial");
+      }
+    } catch (error) {
+      console.error("Error approving testimonial:", error);
+      toast.error("Failed to approve testimonial");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    setActionLoading(id);
+    try {
+      const response = await fetch(`/api/admin/testimonials/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "REJECTED" }),
+      });
+
+      if (response.ok) {
+        toast.success("Testimonial rejected");
+        fetchTestimonials();
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to reject testimonial");
+      }
+    } catch (error) {
+      console.error("Error rejecting testimonial:", error);
+      toast.error("Failed to reject testimonial");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleFeature = async (id: string, isFeatured: boolean) => {
+    setActionLoading(id);
+    try {
+      const response = await fetch(`/api/admin/testimonials/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFeatured }),
+      });
+
+      if (response.ok) {
+        toast.success(
+          isFeatured ? "Testimonial featured!" : "Testimonial unfeatured"
+        );
+        fetchTestimonials();
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to update testimonial");
+      }
+    } catch (error) {
+      console.error("Error updating testimonial:", error);
+      toast.error("Failed to update testimonial");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      const response = await fetch(`/api/admin/testimonials/${deleteId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast.success("Testimonial deleted");
+        fetchTestimonials();
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to delete testimonial");
+      }
+    } catch (error) {
+      console.error("Error deleting testimonial:", error);
+      toast.error("Failed to delete testimonial");
+    } finally {
+      setDeleteId(null);
+    }
+  };
+
+  const pendingCount = testimonials.filter(
+    (t) => t.status === "PENDING"
+  ).length;
+  const approvedCount = testimonials.filter(
+    (t) => t.status === "APPROVED"
+  ).length;
+  const rejectedCount = testimonials.filter(
+    (t) => t.status === "REJECTED"
+  ).length;
+
+  // Show loading spinner while fetching user
+  if (loading) {
+    return (
+      <DashboardLayout user={user}>
+        <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show message if no companies found
+  if (companies.length === 0) {
+    return (
+      <DashboardLayout user={user}>
+        <div className="container mx-auto py-6 px-4">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg font-medium mb-2">No Companies Found</p>
+              <p className="text-sm text-muted-foreground">
+                You need to be an admin of a company to manage testimonials.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout user={user}>
+      <div className="container mx-auto py-6 px-4">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Store Testimonials</h1>
+            <p className="text-muted-foreground">
+              Manage customer testimonials for your storefront
+            </p>
+          </div>
+          <MessageSquare className="h-10 w-10 text-muted-foreground" />
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1 max-w-xs">
+            <Select
+              value={selectedCompanyId}
+              onValueChange={setSelectedCompanyId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select company" />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 max-w-xs">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All ({testimonials.length})</SelectItem>
+                <SelectItem value="PENDING">
+                  Pending ({pendingCount})
+                </SelectItem>
+                <SelectItem value="APPROVED">
+                  Approved ({approvedCount})
+                </SelectItem>
+                <SelectItem value="REJECTED">
+                  Rejected ({rejectedCount})
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card
+            className={
+              pendingCount > 0
+                ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20"
+                : ""
+            }
+          >
+            <CardHeader className="pb-3">
+              <CardDescription>Pending Review</CardDescription>
+              <CardTitle className="text-3xl text-yellow-600 dark:text-yellow-500">
+                {pendingCount}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Approved</CardDescription>
+              <CardTitle className="text-3xl text-green-600">
+                {approvedCount}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Rejected</CardDescription>
+              <CardTitle className="text-3xl text-red-600">
+                {rejectedCount}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+
+        {/* Testimonials List */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : testimonials.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg font-medium mb-2">No testimonials found</p>
+              <p className="text-sm text-muted-foreground">
+                {statusFilter === "PENDING"
+                  ? "No testimonials are awaiting review"
+                  : statusFilter === "APPROVED"
+                  ? "No approved testimonials yet"
+                  : statusFilter === "REJECTED"
+                  ? "No rejected testimonials"
+                  : "Customer testimonials will appear here once submitted"}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {testimonials.map((testimonial) => (
+              <Card
+                key={testimonial.id}
+                className={
+                  testimonial.status === "PENDING"
+                    ? "border-l-4 border-l-yellow-500"
+                    : ""
+                }
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <CardTitle className="text-xl">
+                          {testimonial.customerName}
+                        </CardTitle>
+                        <Badge
+                          variant={
+                            testimonial.status === "APPROVED"
+                              ? "default"
+                              : testimonial.status === "PENDING"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                        >
+                          {testimonial.status}
+                        </Badge>
+                        {testimonial.isFeatured && (
+                          <Badge variant="outline" className="gap-1">
+                            <Trophy className="h-3 w-3" />
+                            Featured
+                          </Badge>
+                        )}
+                      </div>
+                      {testimonial.customerTitle && (
+                        <CardDescription>
+                          {testimonial.customerTitle}
+                        </CardDescription>
+                      )}
+                      <CardDescription className="text-xs mt-1">
+                        {testimonial.customerEmail}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < testimonial.rating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm mb-4 leading-relaxed">
+                    &ldquo;{testimonial.testimonial}&rdquo;
+                  </p>
+                  <div className="text-xs text-muted-foreground mb-4">
+                    Submitted:{" "}
+                    {new Date(testimonial.createdAt).toLocaleDateString()}
+                  </div>
+
+                  <div className="flex gap-2">
+                    {testimonial.status === "PENDING" && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => handleApprove(testimonial.id)}
+                          disabled={actionLoading === testimonial.id}
+                        >
+                          {actionLoading === testimonial.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Check className="h-4 w-4 mr-1" />
+                              Approve
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleReject(testimonial.id)}
+                          disabled={actionLoading === testimonial.id}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                    {testimonial.status === "APPROVED" && (
+                      <Button
+                        size="sm"
+                        variant={
+                          testimonial.isFeatured ? "secondary" : "outline"
+                        }
+                        onClick={() =>
+                          handleFeature(testimonial.id, !testimonial.isFeatured)
+                        }
+                        disabled={actionLoading === testimonial.id}
+                      >
+                        <Trophy className="h-4 w-4 mr-1" />
+                        {testimonial.isFeatured ? "Unfeature" : "Feature"}
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeleteId(testimonial.id)}
+                      disabled={actionLoading === testimonial.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Testimonial?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This testimonial will be permanently
+              deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </DashboardLayout>
+  );
+}

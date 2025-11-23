@@ -25,6 +25,8 @@ interface Company {
   slogan: string | null;
   description: string | null;
   email: string | null;
+  salesEmail: string | null;
+  supportEmail: string | null;
   phone: string | null;
   website: string | null;
   addressLine1: string | null;
@@ -57,6 +59,8 @@ export function EditCompanySheet({
     slogan: "",
     description: "",
     email: "",
+    salesEmail: "",
+    supportEmail: "",
     phone: "",
     website: "",
   });
@@ -80,6 +84,8 @@ export function EditCompanySheet({
         slogan: company.slogan || "",
         description: company.description || "",
         email: company.email || "",
+        salesEmail: company.salesEmail || "",
+        supportEmail: company.supportEmail || "",
         phone: company.phone || "",
         website: company.website || "",
       });
@@ -100,6 +106,8 @@ export function EditCompanySheet({
         slogan: "",
         description: "",
         email: "",
+        salesEmail: "",
+        supportEmail: "",
         phone: "",
         website: "",
       });
@@ -123,6 +131,8 @@ export function EditCompanySheet({
       slogan: company?.slogan || "",
       description: company?.description || "",
       email: company?.email || "",
+      salesEmail: company?.salesEmail || "",
+      supportEmail: company?.supportEmail || "",
       phone: company?.phone || "",
       website: company?.website || "",
     },
@@ -145,6 +155,8 @@ export function EditCompanySheet({
           slogan: formData.slogan,
           description: formData.description,
           email: formData.email,
+          salesEmail: formData.salesEmail,
+          supportEmail: formData.supportEmail,
           phone: formData.phone,
           website: formData.website,
           address: addressData,
@@ -239,6 +251,32 @@ export function EditCompanySheet({
               value={formData.email}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="salesEmail">Sales Email</Label>
+            <Input
+              id="salesEmail"
+              type="email"
+              placeholder="sales@company.com"
+              value={formData.salesEmail}
+              onChange={(e) =>
+                setFormData({ ...formData, salesEmail: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="supportEmail">Support Email</Label>
+            <Input
+              id="supportEmail"
+              type="email"
+              placeholder="support@company.com"
+              value={formData.supportEmail}
+              onChange={(e) =>
+                setFormData({ ...formData, supportEmail: e.target.value })
               }
             />
           </div>

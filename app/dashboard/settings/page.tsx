@@ -180,8 +180,8 @@ export default function SettingsPage() {
           companyId: data.user.companyId || null,
         });
 
-        // Fetch companies for SUPER_ADMIN to manage teams
-        if (data.user.role === "SUPER_ADMIN") {
+        // Fetch companies for SUPER_ADMIN and ADMIN to manage teams
+        if (data.user.role === "SUPER_ADMIN" || data.user.role === "ADMIN") {
           try {
             const companiesResponse = await fetch("/api/companies/my-owned");
             const companiesData = await companiesResponse.json();
@@ -2235,8 +2235,8 @@ export default function SettingsPage() {
             </AccordionItem>
           )}
 
-          {/* User Management - Only for SUPER_ADMIN */}
-          {user.role === "SUPER_ADMIN" && (
+          {/* User Management - For SUPER_ADMIN and ADMIN */}
+          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
             <AccordionItem value="user-management">
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
@@ -2279,33 +2279,36 @@ export default function SettingsPage() {
                     <UserManagementTable />
                   ) : (
                     <>
-                      {/* Company Selector for SUPER_ADMIN */}
-                      {availableCompanies.length > 0 && (
-                        <div className="mb-6 p-4 border rounded-lg bg-muted/30">
-                          <Label className="text-sm font-medium mb-2 block">
-                            Select Company to Manage Teams
-                          </Label>
-                          <select
-                            className="w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={selectedCompanyForTeams || ""}
-                            onChange={(e) =>
-                              setSelectedCompanyForTeams(e.target.value)
-                            }
-                          >
-                            <option value="" disabled>
-                              Select a company...
-                            </option>
-                            {availableCompanies.map((company) => (
-                              <option key={company.id} value={company.id}>
-                                {company.name}
+                      {/* Company Selector for SUPER_ADMIN and ADMIN */}
+                      {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") &&
+                        availableCompanies.length > 0 && (
+                          <div className="mb-6 p-4 border rounded-lg bg-muted/30">
+                            <Label className="text-sm font-medium mb-2 block">
+                              Select Company to Manage Teams
+                            </Label>
+                            <select
+                              className="w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              value={selectedCompanyForTeams || ""}
+                              onChange={(e) =>
+                                setSelectedCompanyForTeams(e.target.value)
+                              }
+                            >
+                              <option value="" disabled>
+                                Select a company...
                               </option>
-                            ))}
-                          </select>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Manage teams for the selected company
-                          </p>
-                        </div>
-                      )}
+                              {availableCompanies.map((company) => (
+                                <option key={company.id} value={company.id}>
+                                  {company.name}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {user.role === "SUPER_ADMIN"
+                                ? "Manage teams for the selected company"
+                                : "Select one of your companies to manage teams"}
+                            </p>
+                          </div>
+                        )}
 
                       <TeamsManagement
                         key={teamsRefreshKey}
@@ -2326,39 +2329,6 @@ export default function SettingsPage() {
                       />
                     </>
                   )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-
-          {/* Teams Management - For ADMIN */}
-          {user.role === "ADMIN" && (
-            <AccordionItem value="teams-management">
-              <AccordionTrigger className="text-xl font-semibold">
-                <div className="flex items-center gap-2">
-                  <UsersRound className="h-5 w-5" />
-                  Company Teams Management
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="pt-4">
-                  <TeamsManagement
-                    key={teamsRefreshKey}
-                    companyId={user.companyId}
-                    onCreateTeam={() => setShowCreateTeamDialog(true)}
-                    onEditTeam={(team) => {
-                      setSelectedTeam(team);
-                      setShowEditTeamDialog(true);
-                    }}
-                    onDeleteTeam={(team) => {
-                      setSelectedTeam(team);
-                      setShowDeleteTeamDialog(true);
-                    }}
-                    onManageMembers={(team) => {
-                      setSelectedTeam(team);
-                      setShowManageMembersDialog(true);
-                    }}
-                  />
                 </div>
               </AccordionContent>
             </AccordionItem>

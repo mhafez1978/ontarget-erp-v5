@@ -14,18 +14,11 @@ export async function GET(
     // Find company by slug
     const company = await db.company.findUnique({
       where: { slug },
-      select: { id: true, isStoreEnabled: true },
+      select: { id: true },
     });
 
     if (!company) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
-    }
-
-    if (!company.isStoreEnabled) {
-      return NextResponse.json(
-        { error: "Store is not enabled" },
-        { status: 403 }
-      );
     }
 
     // Build where clause

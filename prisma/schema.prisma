@@ -191,6 +191,8 @@ model Company {
   website     String?
   phone       String?
   email       String?
+  salesEmail  String? // Sales inquiries email
+  supportEmail String? // Customer support email
   isRoot      Boolean @default(false) // True for OnTarget ERP (the SaaS provider)
 
   // Storefront fields
@@ -264,12 +266,48 @@ model Company {
   // File system relations
   folders FileFolder[] // Company folder structure
 
+  // Testimonial relations
+  testimonials Testimonial[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([ownerId])
   @@index([name])
   @@index([isRoot])
+}
+
+// Testimonial Model (customer reviews/testimonials for storefront)
+model Testimonial {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // Customer info
+  customerName  String
+  customerEmail String
+  customerTitle String?  // e.g., "CEO at TechCorp"
+  customerPhoto String?  // Optional photo URL
+  
+  // Testimonial content
+  rating      Int      @default(5) // 1-5 stars
+  testimonial String   @db.Text
+  
+  // Approval workflow
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  approvedBy  String?  // User ID who approved/rejected
+  approvedAt  DateTime?
+  
+  // Display settings
+  isFeatured  Boolean  @default(false) // Show on homepage
+  displayOrder Int     @default(0) // Order to display testimonials
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([companyId])
+  @@index([status])
+  @@index([isFeatured])
 }
 
 // Subscription Model (tracks root company ↔ subscriber company relationship)
@@ -380,6 +418,11 @@ model CompanyStaff {
 
   // Metadata
   notes String? @db.Text
+
+  // Storefront/Public Profile
+  isFeatured Boolean @default(false) // Show in "Meet the Team" section
+  bio        String? @db.Text // Public bio for storefront
+  displayOrder Int?  @default(0) // Order in team section
 
   // Project Management relations
   teamMemberships TeamMember[]

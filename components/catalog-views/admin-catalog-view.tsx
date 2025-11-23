@@ -35,6 +35,7 @@ import { ProductGridCard } from "@/components/catalog/product-grid-card";
 import { ProductTableRow } from "@/components/catalog/product-table-row";
 import { ServiceGridCard } from "@/components/catalog/service-grid-card";
 import { ServiceTableRow } from "@/components/catalog/service-table-row";
+import { toast } from "sonner";
 
 interface AdminCatalogViewProps {
   userName?: string | null;
@@ -419,10 +420,48 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
   };
 
   const handleDelete = async (id: string, type: "product" | "service") => {
-    if (!confirm(`Are you sure you want to delete this ${type}?`)) {
-      return;
-    }
+    toast(`Are you sure you want to delete this ${type}?`, {
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const endpoint =
+              type === "product"
+                ? `/api/catalog/products/${id}`
+                : `/api/catalog/services/${id}`;
 
+            const response = await fetch(endpoint, {
+              method: "DELETE",
+            });
+
+            if (response.ok) {
+              toast.success(
+                `${
+                  type.charAt(0).toUpperCase() + type.slice(1)
+                } deleted successfully`
+              );
+              if (type === "product") {
+                handleProductAdded();
+              } else {
+                handleServiceAdded();
+              }
+            } else {
+              toast.error(`Failed to delete ${type}`);
+            }
+          } catch (error) {
+            console.error(`Error deleting ${type}:`, error);
+            toast.error(`Error deleting ${type}`);
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
+  };
+
+  const handleDeleteOld = async (id: string, type: "product" | "service") => {
     try {
       const endpoint =
         type === "product"

@@ -24,6 +24,13 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+interface ServiceImage {
+  id: string;
+  url: string;
+  isFeatured: boolean;
+  order: number;
+}
+
 interface Service {
   id: string;
   name: string;
@@ -31,6 +38,7 @@ interface Service {
   price: number;
   category: string | null;
   duration: number | null;
+  images: ServiceImage[];
   isFeatured: boolean;
   isPublished: boolean;
 }
@@ -89,7 +97,11 @@ export default function ServicesPage() {
       const servicesResponse = await fetch(`/api/store/${slug}/services`);
       if (!servicesResponse.ok) throw new Error("Failed to fetch services");
       const servicesData = await servicesResponse.json();
-      setServices(servicesData);
+      // Handle both array and {success, services} response formats
+      const servicesArray = Array.isArray(servicesData)
+        ? servicesData
+        : servicesData.services || [];
+      setServices(servicesArray);
     } catch (error) {
       console.error("Error fetching store data:", error);
       toast.error("Failed to load services");
