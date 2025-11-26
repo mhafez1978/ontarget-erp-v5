@@ -39,29 +39,30 @@ const getTaxRateByLocation = ()=>{
 const TAX_RATE = 0.08; // 8% tax
 const STORAGE_KEY = "ontarget-cart";
 
-function getInitialCart(): CartItem[] {
-  if (typeof window === "undefined") return [];
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
+  // Hydrate cart from localStorage on client after mount
+  useEffect(() => {
     try {
-      return JSON.parse(stored);
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setItems(JSON.parse(stored));
+      }
     } catch (error) {
       console.error("Failed to load cart:", error);
-      return [];
+    } finally {
+      setIsHydrated(true);
     }
-  }
-  return [];
-}
+  }, []);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(getInitialCart);
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (after hydration)
   useEffect(() => {
+    if (!isHydrated) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+  }, [items, isHydrated]);
 
   const addItem = (item: Omit<CartItem, "quantity">, quantity: number = 1) => {
     setItems((prev) => {

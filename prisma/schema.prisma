@@ -145,6 +145,9 @@ model User {
   // Project relations (as customer)
   customerProjects Project[] @relation("ProjectCustomer") // Projects where this user is the customer
 
+  // Storefront blog posts authored by this user
+  storefrontPosts StorefrontPost[]
+
   // Payment system relations
   invoices Invoice[]
 
@@ -181,19 +184,19 @@ model PasswordReset {
 
 // Company Model
 model Company {
-  id          String  @id @default(cuid())
-  name        String
-  slogan      String?
-  description String? @db.Text
-  logo        String?
-  logoLight   String? // Logo for light theme
-  logoDark    String? // Logo for dark theme
-  website     String?
-  phone       String?
-  email       String?
-  salesEmail  String? // Sales inquiries email
+  id           String  @id @default(cuid())
+  name         String
+  slogan       String?
+  description  String? @db.Text
+  logo         String?
+  logoLight    String? // Logo for light theme
+  logoDark     String? // Logo for dark theme
+  website      String?
+  phone        String?
+  email        String?
+  salesEmail   String? // Sales inquiries email
   supportEmail String? // Customer support email
-  isRoot      Boolean @default(false) // True for OnTarget ERP (the SaaS provider)
+  isRoot       Boolean @default(false) // True for OnTarget ERP (the SaaS provider)
 
   // Storefront fields
   slug              String?   @unique // URL-friendly slug: "my-company-name" -> /store/my-company-name
@@ -203,8 +206,13 @@ model Company {
   storeTheme        String?   @default("default") // "default", "minimal", "modern", "classic"
   storeBanner       String? // Hero banner image for store homepage
   storeMetadata     Json? // SEO metadata, social links, store hours, etc.
+  storeBlogEnabled  Boolean   @default(false) // Enable/disable blog/posts section for storefront
   storeConfiguredAt DateTime?
   storeConfiguredBy String? // User ID who configured the store
+
+  // AI Storefront (Growth / Enterprise plans)
+  aiStorefrontEnabled Boolean @default(false) // If true, render storefront from AI spec
+  aiStorefrontSpec    Json? // Full AI storefront specification (AiFrontstoreSpec)
 
   // Address fields
   addressLine1 String?
@@ -234,10 +242,11 @@ model Company {
   // Storefront relations
   storefrontOrders StorefrontOrder[] @relation("StorefrontOrders")
   carts            Cart[]
+  storefrontPosts  StorefrontPost[]
 
   // Project Management relations
-  teams    Team[]
-  projects Project[]
+  teams            Team[]
+  projects         Project[]
   customerProjects Project[] @relation("ProjectSubscriberCustomer") // Projects where this company is the customer
 
   // Financial relations
@@ -253,7 +262,7 @@ model Company {
   // Subscription-based backup: ESSENTIAL (uses global), PROFESSIONAL (optional backup), ENTERPRISE (no backup)
   storageBackupEnabled Boolean @default(true) // If true and has custom storage, also backup to global storage (charged feature)
   storageUsedGB        Float   @default(0) // Track storage usage for plan limit enforcement
-  
+
   // DEPRECATED: Legacy storage config - kept for backward compatibility, use StorageProvider table instead
   storageProvider     String?   @default("INHERIT") // DEPRECATED: Use StorageProvider table
   storageConfig       Json? // DEPRECATED: Use StorageProvider table
@@ -277,34 +286,64 @@ model Company {
   @@index([isRoot])
 }
 
+// Storefront blog posts (optional blogroll for company storefronts)
+model StorefrontPost {
+  id        String  @id @default(cuid())
+  companyId String
+  authorId  String?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  author  User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  title     String
+  slug      String
+  excerpt   String? @db.Text
+  content   String  @db.Text
+  heroImage String?
+
+  status String  @default("DRAFT") // DRAFT, PUBLISHED
+  tags   String? @db.Text // Comma-separated tags for now
+
+  seoTitle       String?
+  seoDescription String? @db.Text
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId])
+  @@index([status])
+}
+
 // Testimonial Model (customer reviews/testimonials for storefront)
 model Testimonial {
-  id          String   @id @default(cuid())
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
   // Customer info
   customerName  String
   customerEmail String
-  customerTitle String?  // e.g., "CEO at TechCorp"
-  customerPhoto String?  // Optional photo URL
-  
+  customerTitle String? // e.g., "CEO at TechCorp"
+  customerPhoto String? // Optional photo URL
+
   // Testimonial content
-  rating      Int      @default(5) // 1-5 stars
-  testimonial String   @db.Text
-  
+  rating      Int    @default(5) // 1-5 stars
+  testimonial String @db.Text
+
   // Approval workflow
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  approvedBy  String?  // User ID who approved/rejected
-  approvedAt  DateTime?
-  
+  status     String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  approvedBy String? // User ID who approved/rejected
+  approvedAt DateTime?
+
   // Display settings
-  isFeatured  Boolean  @default(false) // Show on homepage
+  isFeatured   Boolean @default(false) // Show on homepage
   displayOrder Int     @default(0) // Order to display testimonials
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([companyId])
   @@index([status])
   @@index([isFeatured])
@@ -323,9 +362,9 @@ model Subscription {
   subscriberCompany   Company @relation("SubscriberCompany", fields: [subscriberCompanyId], references: [id], onDelete: Cascade)
 
   // Subscription details
-  plan          SubscriptionPlan   @default(ESSENTIAL)
-  status        SubscriptionStatus @default(TRIAL)
-  billingCycle  BillingCycle       @default(MONTHLY) // Monthly or Annual billing
+  plan         SubscriptionPlan   @default(ESSENTIAL)
+  status       SubscriptionStatus @default(TRIAL)
+  billingCycle BillingCycle       @default(MONTHLY) // Monthly or Annual billing
 
   // Trial and billing dates
   trialEndsAt       DateTime? // 30 days from creation by default
@@ -420,9 +459,9 @@ model CompanyStaff {
   notes String? @db.Text
 
   // Storefront/Public Profile
-  isFeatured Boolean @default(false) // Show in "Meet the Team" section
-  bio        String? @db.Text // Public bio for storefront
-  displayOrder Int?  @default(0) // Order in team section
+  isFeatured   Boolean @default(false) // Show in "Meet the Team" section
+  bio          String? @db.Text // Public bio for storefront
+  displayOrder Int?    @default(0) // Order in team section
 
   // Project Management relations
   teamMemberships TeamMember[]
@@ -877,35 +916,35 @@ model StorefrontOrderItem {
 
 // Payment Gateway Configuration (per company)
 model PaymentGateway {
-  id       String  @id @default(cuid())
+  id        String @id @default(cuid())
   companyId String
-  
+
   // Provider details
-  provider    String // "stripe", "paypal", "square", "authorize_net"
-  isEnabled   Boolean @default(false)
-  isTestMode  Boolean @default(true) // Test vs Production environment
-  
+  provider   String // "stripe", "paypal", "square", "authorize_net"
+  isEnabled  Boolean @default(false)
+  isTestMode Boolean @default(true) // Test vs Production environment
+
   // Encrypted credentials (use encryption library before storing)
   publicKey     String? @db.Text // Publishable/Public key (less sensitive)
   secretKey     String? @db.Text // Secret/Private key (ENCRYPTED)
   webhookSecret String? @db.Text // Webhook signing secret (ENCRYPTED)
   merchantId    String? // Additional provider-specific ID
-  
+
   // Configuration
   config Json? // Provider-specific settings: { currency: "USD", statementDescriptor: "MyStore" }
-  
+
   // Audit
-  configuredBy String? // User ID who configured
-  lastTestedAt DateTime?
+  configuredBy   String? // User ID who configured
+  lastTestedAt   DateTime?
   lastTestResult String? // "success", "failed"
-  
+
   // Relations
   company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   payments Payment[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([companyId])
   @@index([provider])
   @@index([isEnabled])
@@ -913,37 +952,37 @@ model PaymentGateway {
 
 // Plaid Bank Account (per company)
 model PlaidAccount {
-  id        String  @id @default(cuid())
+  id        String @id @default(cuid())
   companyId String
-  
+
   // Plaid tokens (ENCRYPTED before storing)
   accessToken String @db.Text // Plaid access token (ENCRYPTED)
   itemId      String // Plaid item ID
-  
+
   // Bank account details
   accountId      String
   accountName    String? // "Business Checking"
   accountMask    String? // Last 4 digits
   accountType    String? // "checking", "savings"
   accountSubtype String? // "business_checking"
-  
+
   // Institution info
   institutionId   String?
   institutionName String?
-  
+
   // Status
   isActive Boolean @default(true)
-  
+
   // Audit
   linkedBy   String? // User ID who linked
   lastSyncAt DateTime?
-  
+
   // Relations
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([companyId])
   @@index([accountId])
 }
@@ -954,50 +993,50 @@ model Invoice {
   invoiceNumber String  @unique // "INV-2024-001234"
   companyId     String // Company issuing the invoice
   userId        String? // User/customer receiving the invoice (NULL for external customers)
-  
+
   // Invoice type and status
   type   InvoiceType   @default(CUSTOM)
   status InvoiceStatus @default(DRAFT)
-  
+
   // Customer information (for external customers)
   customerEmail String?
   customerName  String?
   customerPhone String?
-  
+
   // Financial
   amount   Decimal @db.Decimal(10, 2) // Subtotal before tax
   tax      Decimal @default(0) @db.Decimal(10, 2)
   discount Decimal @default(0) @db.Decimal(10, 2)
   total    Decimal @db.Decimal(10, 2) // Final amount due
-  
+
   // Line items
   items Json // [{ description, quantity, unitPrice, amount }]
-  
+
   // Dates
   issueDate DateTime  @default(now())
   dueDate   DateTime
   paidAt    DateTime?
-  
+
   // Payment tracking
   paymentMethod String? // How was it paid
-  
+
   // Metadata
-  notes        String? @db.Text // Customer-visible notes
-  terms        String? @db.Text // Payment terms
+  notes         String? @db.Text // Customer-visible notes
+  terms         String? @db.Text // Payment terms
   internalNotes String? @db.Text // Staff notes (not visible to customer)
-  
+
   // Audit
   createdBy String? // User ID who created
   sentAt    DateTime?
-  
+
   // Relations
   company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   payments Payment[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([companyId])
   @@index([userId])
   @@index([invoiceNumber])
@@ -1008,52 +1047,52 @@ model Invoice {
 
 // Payment Transaction Model (universal payment records)
 model Payment {
-  id       String @id @default(cuid())
+  id        String @id @default(cuid())
   companyId String // Company receiving the payment
-  
+
   // Payment source
   gatewayId String? // Payment gateway used (NULL for cash/check/ACH)
   invoiceId String? // Invoice being paid (NULL for direct storefront orders)
   orderId   String? // Storefront order (NULL for invoice payments)
-  
+
   // Payment details
-  amount           Decimal @db.Decimal(10, 2)
-  currency         String  @default("USD")
-  status           PaymentTransactionStatus @default(PENDING)
-  paymentMethod    String? // "credit_card", "debit_card", "paypal", "ach", "cash", "check"
-  
+  amount        Decimal                  @db.Decimal(10, 2)
+  currency      String                   @default("USD")
+  status        PaymentTransactionStatus @default(PENDING)
+  paymentMethod String? // "credit_card", "debit_card", "paypal", "ach", "cash", "check"
+
   // External provider details
-  gatewayReference  String? // Provider's transaction ID (Stripe charge ID, PayPal transaction ID)
-  gatewayResponse   Json? // Full provider response
-  
+  gatewayReference String? // Provider's transaction ID (Stripe charge ID, PayPal transaction ID)
+  gatewayResponse  Json? // Full provider response
+
   // Customer info (snapshot)
   customerEmail String?
   customerName  String?
-  
+
   // Processing details
   processedAt DateTime?
   failedAt    DateTime?
   refundedAt  DateTime?
-  
+
   // Refund details
   refundAmount    Decimal? @db.Decimal(10, 2)
   refundReason    String?
   refundReference String? // Provider's refund ID
-  
+
   // Metadata
   description String? // Payment description
   metadata    Json? // Additional data
   notes       String? @db.Text
-  
+
   // Relations
-  company  Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  gateway  PaymentGateway? @relation(fields: [gatewayId], references: [id], onDelete: SetNull)
-  invoice  Invoice?        @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
-  order    StorefrontOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  
+  company Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  gateway PaymentGateway?  @relation(fields: [gatewayId], references: [id], onDelete: SetNull)
+  invoice Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  order   StorefrontOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([companyId])
   @@index([gatewayId])
   @@index([invoiceId])
@@ -1065,31 +1104,31 @@ model Payment {
 
 // Payment Webhook Model (audit trail for webhook events)
 model PaymentWebhook {
-  id       String @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Provider info
-  provider   String // "stripe", "paypal", "square"
-  eventType  String // "payment.succeeded", "payment.failed", etc.
-  eventId    String? @unique // Provider's event ID
-  
+  provider  String // "stripe", "paypal", "square"
+  eventType String // "payment.succeeded", "payment.failed", etc.
+  eventId   String? @unique // Provider's event ID
+
   // Webhook data
   payload   Json // Full webhook payload
   signature String? // Webhook signature for verification
-  
+
   // Processing status
-  processed     Boolean   @default(false)
-  processedAt   DateTime?
-  processingError String? @db.Text
-  
+  processed       Boolean   @default(false)
+  processedAt     DateTime?
+  processingError String?   @db.Text
+
   // Matched payment
   paymentId String? // Payment record created/updated from this webhook
-  
+
   // Request details
   ipAddress String?
   userAgent String?
-  
+
   createdAt DateTime @default(now())
-  
+
   @@index([provider])
   @@index([eventType])
   @@index([processed])
@@ -1209,7 +1248,7 @@ model StorageProvider {
   // Scope - global (super admin) or company-specific
   scope     String  @default("GLOBAL") // "GLOBAL" or company ID
   companyId String? // If company-specific
-  
+
   // Backup configuration (for PROFESSIONAL plan add-on)
   // If company has custom storage and this is true, files also backup to global storage
   enableGlobalBackup Boolean @default(false)
@@ -1356,6 +1395,21 @@ model UserEmailProvider {
   @@index([userId])
   @@index([isActive])
   @@index([provider])
+}
+
+// Global AI Provider Settings (for AI storefront and other AI services)
+model AiProviderSetting {
+  id        String   @id @default(cuid())
+  provider  String   @default("openai") // e.g., "openai", "anthropic", etc.
+  scope     String   @default("GLOBAL") // "GLOBAL" for platform-wide settings (future: per-company)
+  apiKey    String   @db.Text // Encrypted API key
+  model     String? // Model name, e.g., "gpt-4o-mini"
+  apiBase   String? // Optional custom API base URL
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([scope, provider])
 }
 
 model EmailTemplate {
@@ -1516,7 +1570,7 @@ model Project {
   // For SUPER_ADMIN: subscriberCompanyId links to ERP customer company
   subscriberCompanyId String?
   subscriberCompany   Company? @relation("ProjectSubscriberCustomer", fields: [subscriberCompanyId], references: [id], onDelete: SetNull)
-  
+
   // For ADMIN: customerId links to COMPANY_CUSTOMER user
   customerId String?
   customer   User?   @relation("ProjectCustomer", fields: [customerId], references: [id], onDelete: SetNull)
@@ -1599,8 +1653,8 @@ model Task {
 
 // Project Note Model - Projects have many notes with time tracking
 model ProjectNote {
-  id      String  @id @default(cuid())
-  content String  @db.Text
+  id      String @id @default(cuid())
+  content String @db.Text
 
   // Project relation
   projectId String

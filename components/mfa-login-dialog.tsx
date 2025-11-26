@@ -20,6 +20,7 @@ interface MfaLoginDialogProps {
   userId: string;
   onSuccess: () => void;
   onError: (message: string) => void;
+  validatePath?: string;
 }
 
 export function MfaLoginDialog({
@@ -28,6 +29,7 @@ export function MfaLoginDialog({
   userId,
   onSuccess,
   onError,
+  validatePath = "/api/auth/mfa/validate",
 }: MfaLoginDialogProps) {
   const [code, setCode] = useState("");
   const [backupCode, setBackupCode] = useState("");
@@ -51,7 +53,7 @@ export function MfaLoginDialog({
 
     setIsLoading(true);
     try {
-      const response = await fetch("/api/auth/mfa/validate", {
+      const response = await fetch(validatePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

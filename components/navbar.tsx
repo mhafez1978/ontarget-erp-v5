@@ -189,7 +189,7 @@ export function Navbar() {
             variant="ghost"
             size="sm"
             asChild
-            className="hidden sm:inline-flex"
+            className="hidden md:inline-flex"
           >
             <Link href="/login">Login</Link>
           </Button>

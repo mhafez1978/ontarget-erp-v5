@@ -4,6 +4,10 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { z } from "zod";
 import { createAuditLog } from "@/lib/audit-log";
+import {
+  createPendingMfaToken,
+  PENDING_COOKIE,
+} from "@/lib/mfa-pending";
 
 // Zod schema for login validation
 const loginSchema = z.object({
@@ -191,7 +195,31 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // STEP 6: Create session
+    // STEP 6: If MFA is enabled, issue pending token and require MFA before session
+    if (user.mfaEnabled && user.mfaSecret) {
+      const pendingToken = createPendingMfaToken(
+        user.id,
+        user.email,
+        "credentials"
+      );
+
+      const mfaResponse = NextResponse.json({
+        mfaRequired: true,
+        redirect: "/login/mfa",
+      });
+
+      mfaResponse.cookies.set(PENDING_COOKIE, pendingToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 5, // 5 minutes
+        path: "/",
+      });
+
+      return mfaResponse;
+    }
+
+    // STEP 7: Create session
     const sessionToken = crypto.randomUUID();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
@@ -211,7 +239,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // STEP 7: Update user's last login info
+    // STEP 8: Update user's last login info
     await db.user.update({
       where: { id: user.id },
       data: {
@@ -224,7 +252,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // STEP 8: Log successful login to audit
+    // STEP 9: Log successful login to audit
     await createAuditLog({
       userId: user.id,
       action: "USER_LOGIN_SUCCESS",
@@ -247,7 +275,7 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
 
-    // Create response with user data
+    // STEP 10: Create response with user data
     const response = NextResponse.json({
       success: true,
       message: "Login successful",

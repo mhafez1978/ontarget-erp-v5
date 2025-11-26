@@ -42,6 +42,14 @@ interface StaffMember {
   };
 }
 
+interface CompanyCustomer {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  companyId: string;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -53,6 +61,7 @@ interface Project {
   teamLeadId: string | null;
   startDate: string | null;
   endDate: string | null;
+  customerId: string | null;
 }
 
 interface EditProjectDialogProps {
@@ -104,18 +113,21 @@ export function EditProjectDialog({
   const [loading, setLoading] = useState(false);
   const [teamsLoading, setTeamsLoading] = useState(false);
   const [staffLoading, setStaffLoading] = useState(false);
+  const [customersLoading, setCustomersLoading] = useState(false);
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [customers, setCustomers] = useState<CompanyCustomer[]>([]);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [teamId, setTeamId] = useState("");
   const [status, setStatus] = useState("PLANNING");
-  const [projectManagerId, setProjectManagerId] = useState("");
-  const [teamLeadId, setTeamLeadId] = useState("");
+  const [projectManagerId, setProjectManagerId] = useState("none");
+  const [teamLeadId, setTeamLeadId] = useState("none");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [customerId, setCustomerId] = useState<string>("none");
 
   // Reset form when project changes
   useEffect(() => {
@@ -124,10 +136,11 @@ export function EditProjectDialog({
       setDescription(project.description || "");
       setTeamId(project.teamId);
       setStatus(project.status);
-      setProjectManagerId(project.projectManagerId || "");
-      setTeamLeadId(project.teamLeadId || "");
+      setProjectManagerId(project.projectManagerId || "none");
+      setTeamLeadId(project.teamLeadId || "none");
       setStartDate(project.startDate ? project.startDate.split("T")[0] : "");
       setEndDate(project.endDate ? project.endDate.split("T")[0] : "");
+      setCustomerId(project.customerId || "none");
     }
   }, [project]);
 
@@ -187,6 +200,35 @@ export function EditProjectDialog({
     fetchStaff();
   }, [open, project?.companyId]);
 
+  // Fetch company customers (COMPANY_CUSTOMER role) when dialog opens
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      if (!open || !project?.companyId) return;
+
+      setCustomersLoading(true);
+      try {
+        const response = await fetch("/api/customers/my-companies");
+        const data = await response.json();
+
+        if (response.ok && data.customers) {
+          const filtered = (data.customers as CompanyCustomer[]).filter(
+            (c) => c.companyId === project.companyId
+          );
+          setCustomers(filtered);
+        } else {
+          toast.error("Failed to load customers");
+        }
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+        toast.error("Failed to load customers");
+      } finally {
+        setCustomersLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, [open, project?.companyId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -212,10 +254,12 @@ export function EditProjectDialog({
           description: description.trim() || null,
           teamId,
           status,
-          projectManagerId: projectManagerId || null,
-          teamLeadId: teamLeadId || null,
+          projectManagerId:
+            projectManagerId === "none" ? null : projectManagerId,
+          teamLeadId: teamLeadId === "none" ? null : teamLeadId,
           startDate: startDate || null,
           endDate: endDate || null,
+          customerId: customerId === "none" ? null : customerId,
         }),
       });
 
@@ -247,6 +291,7 @@ export function EditProjectDialog({
   const selectedTeam = teams.find((t) => t.id === teamId);
   const selectedPM = staff.find((s) => s.id === projectManagerId);
   const selectedTL = staff.find((s) => s.id === teamLeadId);
+  const selectedCustomer = customers.find((c) => c.id === customerId);
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
@@ -381,7 +426,7 @@ export function EditProjectDialog({
                   <SelectValue placeholder="Select project manager" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {staff.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       <div className="flex items-center gap-2">
@@ -429,7 +474,7 @@ export function EditProjectDialog({
                   <SelectValue placeholder="Select team lead" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {staff.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       <div className="flex items-center gap-2">
@@ -459,6 +504,60 @@ export function EditProjectDialog({
                 </Avatar>
                 <span className="text-sm">
                   {selectedTL.user.name || selectedTL.user.email}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Customer (Company Customer) */}
+          <div className="space-y-2">
+            <Label htmlFor="customer">
+              Customer{" "}
+              <span className="text-muted-foreground text-xs font-normal">
+                (Company customer, optional)
+              </span>
+            </Label>
+            {customersLoading ? (
+              <div className="flex items-center justify-center py-4 border rounded-lg">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Select
+                value={customerId}
+                onValueChange={setCustomerId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      <div className="flex items-center gap-2">
+                        <span>
+                          {customer.name || customer.email || "Customer"}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {selectedCustomer && (
+              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage
+                    src={selectedCustomer.image || ""}
+                    alt={selectedCustomer.name || "Customer"}
+                  />
+                  <AvatarFallback>
+                    {selectedCustomer.name?.[0] ||
+                      selectedCustomer.email?.[0]?.toUpperCase() ||
+                      "C"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm">
+                  {selectedCustomer.name || selectedCustomer.email}
                 </span>
               </div>
             )}

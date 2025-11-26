@@ -19,12 +19,13 @@ import { toast } from "sonner";
 interface TeamMember {
   id: string;
   role: string;
+   staffId: string;
   user: {
     id: string;
     name: string | null;
     email: string;
     image: string | null;
-  };
+  } | null;
 }
 
 interface Team {
@@ -71,7 +72,59 @@ export function TeamsManagement({
         const data = await response.json();
 
         if (data.success && data.teams) {
-          setTeams(data.teams);
+          type ApiTeamMember = {
+            id: string;
+            role: string;
+            staffId: string;
+            user?: {
+              id: string;
+              name: string | null;
+              email: string;
+              image: string | null;
+            } | null;
+            staff?: {
+              user: {
+                id: string;
+                name: string | null;
+                email: string;
+                image: string | null;
+              } | null;
+            } | null;
+          };
+
+          type ApiTeam = {
+            id: string;
+            name: string;
+            description: string | null;
+            companyId: string;
+            memberCount: number;
+            projectCount: number;
+            members?: ApiTeamMember[];
+            createdAt: string;
+            updatedAt: string;
+          };
+
+          const normalizedTeams: Team[] = (data.teams as ApiTeam[]).map(
+            (team) => ({
+              id: team.id,
+              name: team.name,
+              description: team.description,
+              companyId: team.companyId,
+              memberCount: team.memberCount,
+              projectCount: team.projectCount,
+              createdAt: team.createdAt,
+              updatedAt: team.updatedAt,
+              members: (team.members ?? []).map((member) => ({
+                id: member.id,
+                role: member.role,
+                staffId: member.staffId,
+                // Normalize nested staff.user into a direct user property
+                user: member.user ?? member.staff?.user ?? null,
+              })),
+            })
+          );
+
+          setTeams(normalizedTeams);
         }
       } catch (error) {
         console.error("Error fetching teams:", error);
@@ -231,29 +284,40 @@ export function TeamsManagement({
                   <TableCell>
                     {leads.length > 0 ? (
                       <div className="flex items-center gap-2">
-                        {leads.slice(0, 2).map((member) => (
-                          <div
-                            key={member.id}
-                            className="flex items-center gap-1"
-                          >
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage
-                                src={member.user.image || ""}
-                                alt={member.user.name || "User"}
-                              />
-                              <AvatarFallback className="text-xs">
-                                {member.user.name?.[0] ||
-                                  member.user.email[0].toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${getRoleColor(member.role)}`}
+                        {leads.slice(0, 2).map((member) => {
+                          const user = member.user;
+                          const displayName =
+                            user?.name || user?.email || "User";
+                          const initial =
+                            user?.name?.[0] ||
+                            user?.email?.[0]?.toUpperCase() ||
+                            "?";
+
+                          return (
+                            <div
+                              key={member.id}
+                              className="flex items-center gap-1"
                             >
-                              {member.role}
-                            </Badge>
-                          </div>
-                        ))}
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage
+                                  src={user?.image || undefined}
+                                  alt={displayName}
+                                />
+                                <AvatarFallback className="text-xs">
+                                  {initial}
+                                </AvatarFallback>
+                              </Avatar>
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${getRoleColor(
+                                  member.role
+                                )}`}
+                              >
+                                {member.role}
+                              </Badge>
+                            </div>
+                          );
+                        })}
                         {leads.length > 2 && (
                           <span className="text-xs text-muted-foreground">
                             +{leads.length - 2}

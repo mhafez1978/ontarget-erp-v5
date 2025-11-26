@@ -123,6 +123,10 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (data.mfaRequired && data.redirect) {
+          router.push(data.redirect);
+          return;
+        }
         // Handle email not verified
         if (response.status === 403 && data.emailNotVerified) {
           setUnverifiedEmail(data.email || formData.email);
@@ -144,6 +148,12 @@ export default function LoginPage() {
         }
 
         throw new Error(data.error || "Login failed");
+      }
+
+      // MFA required (200 with mfaRequired)
+      if (data.mfaRequired && data.redirect) {
+        router.push(data.redirect);
+        return;
       }
 
       // Redirect to dashboard on success

@@ -60,6 +60,7 @@ interface Project {
   targetEndDate: string | null;
   companyId: string;
   teamId: string;
+   customerId: string | null;
   managerId: string | null;
   leadId: string | null;
   createdAt: string;

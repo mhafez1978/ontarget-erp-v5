@@ -32,6 +32,8 @@ export async function GET(
         state: true,
         country: true,
         postalCode: true,
+        aiStorefrontEnabled: true,
+        aiStorefrontSpec: true,
       },
     });
 
@@ -46,9 +48,23 @@ export async function GET(
       );
     }
 
+    // Extract a lightweight AI meta object (colors, layout) if AI storefront is enabled
+    let aiStorefrontMeta: Record<string, unknown> | null = null;
+    if (company.aiStorefrontEnabled && company.aiStorefrontSpec) {
+      const spec = company.aiStorefrontSpec as any;
+      if (spec && typeof spec === "object" && spec.meta) {
+        aiStorefrontMeta = spec.meta as Record<string, unknown>;
+      }
+    }
+
+    const { aiStorefrontSpec, ...rest } = company as any;
+
     return NextResponse.json({
       success: true,
-      store: company,
+      store: {
+        ...rest,
+        aiStorefrontMeta,
+      },
     });
   } catch (error) {
     console.error("Error fetching store:", error);

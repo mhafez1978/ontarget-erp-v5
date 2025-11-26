@@ -5,6 +5,10 @@ import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
+import {
+  buildMfaRedirectResponse,
+  createPendingMfaToken,
+} from "@/lib/mfa-pending";
 
 // GET /api/auth/microsoft/callback
 // Handles OAuth callback from Microsoft
@@ -135,6 +139,7 @@ export async function GET(request: NextRequest) {
         isActive: true,
         image: true,
         plan: true,
+        mfaEnabled: true,
       },
     });
 
@@ -191,6 +196,7 @@ export async function GET(request: NextRequest) {
           isActive: true,
           image: true,
           plan: true,
+          mfaEnabled: true,
         },
       });
 
@@ -288,6 +294,18 @@ export async function GET(request: NextRequest) {
           ? Math.floor(Date.now() / 1000) + expiresIn
           : null,
       });
+    }
+
+    // If MFA is enabled, redirect to MFA challenge without creating a session
+    if (user.mfaEnabled) {
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+      const pendingToken = createPendingMfaToken(
+        user.id,
+        user.email,
+        "microsoft"
+      );
+      return buildMfaRedirectResponse(appUrl, pendingToken, "microsoft");
     }
 
     // Create session using session manager

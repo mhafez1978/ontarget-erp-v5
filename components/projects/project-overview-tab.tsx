@@ -4,6 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Calendar,
   User2,
@@ -12,9 +20,10 @@ import {
   Target,
   AlertCircle,
   Mail,
+  Edit,
 } from "lucide-react";
 import { InlineEditSection } from "@/components/projects/inline-edit-section";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Project {
   id: string;
@@ -102,12 +111,26 @@ interface Project {
   };
 }
 
+interface CompanyCustomer {
+  id: string;
+  name: string | null;
+  email: string | null;
+}
+
 interface ProjectOverviewTabProps {
   project: Project;
 }
 
 export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
   const [localProject, setLocalProject] = useState(project);
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  const [customers, setCustomers] = useState<CompanyCustomer[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+
+  // Keep localProject in sync when the parent project prop changes
+  useEffect(() => {
+    setLocalProject(project);
+  }, [project]);
 
   // Calculate progress metrics
   const completedTasks = localProject.tasks.filter(
@@ -154,6 +177,18 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <InlineEditSection
+            title="Project Name"
+            value={localProject.name}
+            fieldName="name"
+            projectId={localProject.id}
+            type="text"
+            placeholder="Set project name..."
+            onSave={(newValue) => {
+              setLocalProject((prev) => ({ ...prev, name: newValue }));
+            }}
+          />
+
+          <InlineEditSection
             title="Description"
             value={localProject.description}
             fieldName="description"
@@ -161,16 +196,142 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             type="textarea"
             placeholder="Add a project description..."
             onSave={(newValue) => {
-              setLocalProject({ ...localProject, description: newValue });
+              setLocalProject((prev) => ({
+                ...prev,
+                description: newValue,
+              }));
             }}
           />
 
           {/* Customer Section */}
           <div className="border-t pt-4">
-            <h4 className="text-sm font-medium text-muted-foreground mb-2">
-              Customer
-            </h4>
-            {localProject.subscriberCompany ? (
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Customer
+              </h4>
+              {/* Allow editing only for company customer (not ERP subscriber company) */}
+              {!localProject.subscriberCompany && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="h-7 w-7"
+                  onClick={async () => {
+                    if (!isEditingCustomer && customers.length === 0) {
+                      try {
+                        setCustomersLoading(true);
+                        const response = await fetch(
+                          "/api/customers/my-companies"
+                        );
+                        const data = await response.json();
+                        if (response.ok && data.customers) {
+                          const filtered = (data.customers as any[]).filter(
+                            (c) => c.companyId === localProject.company.id
+                          );
+                          setCustomers(
+                            filtered.map((c) => ({
+                              id: c.id,
+                              name: c.name,
+                              email: c.email,
+                            }))
+                          );
+                        }
+                      } catch (error) {
+                        console.error("Failed to load customers:", error);
+                      } finally {
+                        setCustomersLoading(false);
+                      }
+                    }
+                    setIsEditingCustomer((prev) => !prev);
+                  }}
+                  aria-label="Edit customer"
+                >
+                  <Edit className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+
+            {isEditingCustomer && !localProject.subscriberCompany ? (
+              customersLoading ? (
+                <p className="text-sm text-muted-foreground">
+                  Loading customers...
+                </p>
+              ) : customers.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  No company customers available.
+                </p>
+              ) : (
+                <div className="max-w-xs">
+                  <Select
+                    value={localProject.customer?.id || "none"}
+                    onValueChange={async (value) => {
+                      const nextCustomerId =
+                        value === "none" ? null : value || null;
+                      try {
+                        const response = await fetch(
+                          `/api/projects/${localProject.id}`,
+                          {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              customerId: nextCustomerId,
+                            }),
+                          }
+                        );
+                        if (!response.ok) {
+                          const err = await response
+                            .json()
+                            .catch(() => ({}));
+                          throw new Error(
+                            err.error || "Failed to update customer"
+                          );
+                        }
+
+                        if (nextCustomerId) {
+                          const selected = customers.find(
+                            (c) => c.id === nextCustomerId
+                          );
+                          setLocalProject((prev) => ({
+                            ...prev,
+                            customer: selected
+                              ? {
+                                  id: selected.id,
+                                  name: selected.name,
+                                  email: selected.email || "",
+                                }
+                              : prev.customer ?? null,
+                          }));
+                        } else {
+                          setLocalProject((prev) => ({
+                            ...prev,
+                            customer: null,
+                          }));
+                        }
+                      } catch (error) {
+                        console.error("Error updating customer:", error);
+                      } finally {
+                        setIsEditingCustomer(false);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          <div className="flex items-center gap-2">
+                            <span>
+                              {customer.name || customer.email || "Customer"}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )
+            ) : localProject.subscriberCompany ? (
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-sm">
                   ERP Customer
@@ -307,7 +468,10 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               icon={Calendar}
               placeholder="Set start date..."
               onSave={(newValue) => {
-                setLocalProject({ ...localProject, startDate: newValue });
+                setLocalProject((prev) => ({
+                  ...prev,
+                  startDate: newValue,
+                }));
               }}
             />
             <InlineEditSection
@@ -319,7 +483,10 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               icon={Calendar}
               placeholder="Set end date..."
               onSave={(newValue) => {
-                setLocalProject({ ...localProject, endDate: newValue });
+                setLocalProject((prev) => ({
+                  ...prev,
+                  endDate: newValue,
+                }));
               }}
             />
             {daysRemaining !== null && (

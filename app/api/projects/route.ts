@@ -257,6 +257,7 @@ export async function GET(req: NextRequest) {
               user: project.teamLead.user,
             }
           : null,
+        customerId: project.customerId,
         _count: {
           tasks: project._count.tasks,
         },
@@ -347,6 +348,7 @@ export async function POST(req: NextRequest) {
       status = "PLANNING",
       startDate,
       endDate,
+      customerId,
     } = body;
 
     if (!name || !teamId || !companyId) {
@@ -449,6 +451,33 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Verify customer is a COMPANY_CUSTOMER of this company if provided
+    if (customerId) {
+      const customer = await db.companyMember.findFirst({
+        where: {
+          companyId,
+          user: {
+            id: customerId,
+            role: "COMPANY_CUSTOMER",
+          },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      });
+
+      if (!customer) {
+        return NextResponse.json(
+          { error: "Customer not found in this company" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create project
     const project = await db.project.create({
       data: {
@@ -458,6 +487,7 @@ export async function POST(req: NextRequest) {
         companyId,
         projectManagerId,
         teamLeadId,
+        customerId: customerId || null,
         status,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,

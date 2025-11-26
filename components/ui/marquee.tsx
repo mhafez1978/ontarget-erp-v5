@@ -59,12 +59,15 @@ export function Marquee({
         .map((_, i) => (
           <div
             key={i}
-            className={cn("flex shrink-0 justify-around [gap:var(--gap)]", {
-              "animate-marquee flex-row": !vertical,
-              "animate-marquee-vertical flex-col": vertical,
-              "group-hover:[animation-play-state:paused]": pauseOnHover,
-              "[animation-direction:reverse]": reverse,
-            })}
+            className={cn(
+              "flex shrink-0 items-center gap-4 [gap:var(--gap)] px-2",
+              vertical ? "flex-col animate-marquee-vertical" : "flex-row animate-marquee",
+              pauseOnHover && "group-hover:[animation-play-state:paused]",
+              reverse && "[animation-direction:reverse]"
+            )}
+            style={{
+              animationDuration: "var(--duration, 40s)",
+            }}
           >
             {children}
           </div>

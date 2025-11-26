@@ -55,6 +55,14 @@ interface StaffMember {
   };
 }
 
+interface CompanyCustomer {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  companyId: string;
+}
+
 interface CreateProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -104,9 +112,11 @@ export function CreateProjectDialog({
   const [loading, setLoading] = useState(false);
   const [teamsLoading, setTeamsLoading] = useState(false);
   const [staffLoading, setStaffLoading] = useState(false);
+  const [customersLoading, setCustomersLoading] = useState(false);
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [customers, setCustomers] = useState<CompanyCustomer[]>([]);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -116,6 +126,7 @@ export function CreateProjectDialog({
   const [teamLeadId, setTeamLeadId] = useState("none");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [customerId, setCustomerId] = useState("none");
 
   // Fetch teams when dialog opens
   useEffect(() => {
@@ -169,6 +180,35 @@ export function CreateProjectDialog({
     };
 
     fetchStaff();
+  }, [open, companyId]);
+
+  // Fetch company customers (COMPANY_CUSTOMER role) when dialog opens
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      if (!open || !companyId) return;
+
+      setCustomersLoading(true);
+      try {
+        const response = await fetch("/api/customers/my-companies");
+        const data = await response.json();
+
+        if (response.ok && data.customers) {
+          const filtered = (data.customers as CompanyCustomer[]).filter(
+            (c) => c.companyId === companyId
+          );
+          setCustomers(filtered);
+        } else {
+          toast.error("Failed to load customers");
+        }
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+        toast.error("Failed to load customers");
+      } finally {
+        setCustomersLoading(false);
+      }
+    };
+
+    fetchCustomers();
   }, [open, companyId]);
 
   // Auto-populate Project Manager and Team Lead when team is selected
@@ -227,6 +267,7 @@ export function CreateProjectDialog({
           teamLeadId: teamLeadId === "none" ? null : teamLeadId,
           startDate: startDate || null,
           endDate: endDate || null,
+          customerId: customerId === "none" ? null : customerId,
         }),
       });
 
@@ -259,6 +300,7 @@ export function CreateProjectDialog({
       setTeamLeadId("none");
       setStartDate("");
       setEndDate("");
+      setCustomerId("none");
       onOpenChange(false);
     }
   };
@@ -455,6 +497,37 @@ export function CreateProjectDialog({
                   {selectedPM.user.name || selectedPM.user.email}
                 </span>
               </div>
+            )}
+          </div>
+
+          {/* Customer (Company Customer) */}
+          <div className="space-y-2">
+            <Label htmlFor="customer">
+              Customer{" "}
+              <span className="text-muted-foreground text-xs font-normal">
+                (Company customer, optional)
+              </span>
+            </Label>
+            {customersLoading ? (
+              <div className="flex items-center justify-center py-4 border rounded-lg">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Select value={customerId} onValueChange={setCustomerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{customer.name || customer.email || "Customer"}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
 

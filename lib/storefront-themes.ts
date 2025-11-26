@@ -99,8 +99,8 @@ export const defaultThemes: StorefrontTheme[] = [
     name: "Black Friday Mega Sale",
     description:
       "High-converting Black Friday theme with urgency elements, countdown timers, and bold CTAs designed to maximize sales",
-    thumbnail: "/themes/black-friday.jpg",
-    previewImage: "/themes/previews/black-friday-full.jpg",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
     category: "seasonal",
     season: "fall",
     event: "black-friday",
@@ -321,6 +321,1100 @@ export const defaultThemes: StorefrontTheme[] = [
       },
     ],
   },
+  // ============================================================================
+  // INDUSTRY THEMES - HEALTHCARE CLINIC
+  // ============================================================================
+  {
+    id: "healthcare-precision-care",
+    name: "Precision Care Clinic",
+    description:
+      "Clean, calming layout for medical practices, clinics, and wellness groups focused on trust and outcomes.",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
+    category: "industry",
+    industry: "healthcare",
+    colors: {
+      primary: "#0E8AA8",
+      secondary: "#0FB5BA",
+      accent: "#E8F5F7",
+      background: "#F7FBFC",
+      text: "#0F3040",
+    },
+    sections: [
+      {
+        id: "hero",
+        type: "hero",
+        enabled: true,
+        order: 0,
+        content: {
+          title: "Evidence-Based Care for Every Patient",
+          subtitle: "Integrated health, diagnostics, and recovery",
+          description:
+            "Board-certified physicians, modern facilities, and compassionate teams delivering outcomes you can measure.",
+          primaryCTA: "Book Appointment",
+          secondaryCTA: "Meet Our Providers",
+          backgroundType: "soft-gradient",
+          layout: "left",
+        },
+        styling: {
+          gradient: "linear-gradient(135deg, #F7FBFC 0%, #E8F5F7 100%)",
+          textColor: "#0F3040",
+        },
+      },
+      {
+        id: "stats",
+        type: "stats",
+        enabled: true,
+        order: 1,
+        content: {
+          title: "Quality you can trust",
+          stats: [
+            { value: "15+", label: "Specialties", icon: "stethoscope" },
+            { value: "98%", label: "Patient Satisfaction", icon: "smile" },
+            { value: "24/7", label: "Urgent Care Access", icon: "clock" },
+            { value: "30K", label: "Patients Served", icon: "users" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#0F3040",
+        },
+      },
+      {
+        id: "featured-services",
+        type: "featured-services",
+        enabled: true,
+        order: 2,
+        content: {
+          heading: "Specialty Programs",
+          description:
+            "From preventive care to advanced diagnostics, pick the right path for your health.",
+          layout: "cards",
+          showBadges: true,
+          ctaText: "Schedule",
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#0F3040",
+        },
+      },
+      {
+        id: "social-proof",
+        type: "social-proof",
+        enabled: true,
+        order: 3,
+        content: {
+          heading: "Patients share their journey",
+          subheading: "Real stories of recovery and ongoing care",
+          layout: "carousel",
+        },
+        styling: {
+          backgroundColor: "#E8F5F7",
+          textColor: "#0F3040",
+        },
+      },
+      {
+        id: "team",
+        type: "team",
+        enabled: true,
+        order: 4,
+        content: {
+          heading: "Clinical leaders & care teams",
+          description:
+            "Multidisciplinary experts collaborating on every treatment plan.",
+          layout: "grid",
+          columns: 3,
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#0F3040",
+        },
+      },
+      {
+        id: "contact",
+        type: "contact",
+        enabled: true,
+        order: 5,
+        content: {
+          heading: "Visit or contact us",
+          subheading: "Same-day appointments available",
+          showMap: true,
+          showContactDetails: true,
+          showBusinessHours: true,
+          showSocialLinks: false,
+        },
+        styling: {
+          backgroundColor: "#0E8AA8",
+          textColor: "#FFFFFF",
+        },
+      },
+      {
+        id: "footer",
+        type: "footer",
+        enabled: true,
+        order: 6,
+        content: {
+          copyright: true,
+          showNewsletter: false,
+          showSocialMedia: true,
+          showTrustBadges: true,
+          trustBadges: [
+            { text: "HIPAA Compliant", icon: "shield" },
+            { text: "Board Certified", icon: "check" },
+            { text: "Emergency Ready", icon: "alert" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#0B6A82",
+          textColor: "#FFFFFF",
+        },
+      },
+    ],
+  },
+  // ============================================================================
+  // INDUSTRY THEMES - FINTECH / SAAS
+  // ============================================================================
+  {
+    id: "fintech-trust-lab",
+    name: "Trust Lab Fintech",
+    description:
+      "Crisp, conversion-focused layout for fintech, SaaS, or compliance-forward products.",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
+    category: "industry",
+    industry: "tech",
+    colors: {
+      primary: "#0F172A",
+      secondary: "#22D3EE",
+      accent: "#A855F7",
+      background: "#0B1220",
+      text: "#E2E8F0",
+    },
+    features: {
+      animations: ["fade-up", "slide-in"],
+      parallax: true,
+    },
+    sections: [
+      {
+        id: "hero",
+        type: "hero",
+        enabled: true,
+        order: 0,
+        content: {
+          title: "Build Trust. Ship Faster.",
+          subtitle: "Financial infrastructure without the drag",
+          description:
+            "KYC, payments, risk, and analytics in one modular platform—secure, compliant, and developer-friendly.",
+          primaryCTA: "Launch a Demo",
+          secondaryCTA: "View Security",
+          backgroundType: "gradient",
+          layout: "centered",
+          showBadge: true,
+          badgeText: "SOC2 & ISO27001 Ready",
+        },
+        styling: {
+          gradient:
+            "radial-gradient(circle at 20% 20%, #22D3EE22, #0F172A 60%), radial-gradient(circle at 80% 0%, #A855F722, #0B1220 60%)",
+          textColor: "#E2E8F0",
+        },
+      },
+      {
+        id: "stats",
+        type: "stats",
+        enabled: true,
+        order: 1,
+        content: {
+          title: "Proven scale",
+          stats: [
+            { value: "12M+", label: "Monthly API Calls", icon: "server" },
+            { value: "99.99%", label: "Uptime", icon: "shield" },
+            { value: "42%", label: "Faster Onboarding", icon: "zap" },
+            { value: "18", label: "Markets Supported", icon: "globe" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#0F172A",
+          textColor: "#E2E8F0",
+        },
+      },
+      {
+        id: "featured-services",
+        type: "featured-services",
+        enabled: true,
+        order: 2,
+        content: {
+          heading: "Platform modules",
+          description:
+            "Mix and match capabilities to launch faster and stay compliant.",
+          layout: "cards",
+          showBadges: true,
+          ctaText: "Explore Module",
+        },
+        styling: {
+          backgroundColor: "#0B1220",
+          textColor: "#E2E8F0",
+        },
+      },
+      {
+        id: "featured-products",
+        type: "featured-products",
+        enabled: true,
+        order: 3,
+        content: {
+          title: "Solutions by outcome",
+          subtitle: "From onboarding to fraud to payouts",
+          layout: "tiles",
+          columns: 3,
+          showBadges: true,
+          ctaText: "See Details",
+        },
+        styling: {
+          backgroundColor: "#0F172A",
+          textColor: "#E2E8F0",
+        },
+      },
+      {
+        id: "social-proof",
+        type: "social-proof",
+        enabled: true,
+        order: 4,
+        content: {
+          heading: "Trusted by operators and auditors",
+          subheading: "Customer results and compliance wins",
+          layout: "grid",
+        },
+        styling: {
+          backgroundColor: "#0B1220",
+          textColor: "#E2E8F0",
+        },
+      },
+      {
+        id: "video-section",
+        type: "video-section",
+        enabled: true,
+        order: 5,
+        content: {
+          title: "Watch the platform in action",
+          description: "2-minute overview of onboarding and monitoring flows",
+          videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        },
+        styling: {
+          backgroundColor: "#0F172A",
+          textColor: "#E2E8F0",
+        },
+      },
+      {
+        id: "contact",
+        type: "contact",
+        enabled: true,
+        order: 6,
+        content: {
+          heading: "Talk to solutions engineering",
+          subheading: "Sandbox in hours, production in days",
+          showMap: false,
+          showContactDetails: true,
+          showBusinessHours: false,
+          showSocialLinks: true,
+        },
+        styling: {
+          backgroundColor: "#111827",
+          textColor: "#E2E8F0",
+        },
+      },
+      {
+        id: "footer",
+        type: "footer",
+        enabled: true,
+        order: 7,
+        content: {
+          copyright: true,
+          showNewsletter: true,
+          newsletterTitle: "Ship faster with Trust Lab",
+          newsletterDescription:
+            "Security updates, feature launches, and playbooks.",
+          showSocialMedia: true,
+          showTrustBadges: true,
+          trustBadges: [
+            { text: "SOC2", icon: "shield" },
+            { text: "ISO27001", icon: "lock" },
+            { text: "PCI Ready", icon: "credit-card" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#0B1220",
+          textColor: "#E2E8F0",
+        },
+      },
+    ],
+  },
+  // ============================================================================
+  // INDUSTRY THEMES - REAL ESTATE / PROPERTY
+  // ============================================================================
+  {
+    id: "real-estate-luxe",
+    name: "Luxe Property Showcase",
+    description:
+      "Elegant showcase for brokers, developers, and property managers featuring rich visuals and calls to tour.",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
+    category: "industry",
+    industry: "real-estate",
+    colors: {
+      primary: "#1F2937",
+      secondary: "#C08457",
+      accent: "#F3EDE4",
+      background: "#F7F5F2",
+      text: "#1F2937",
+    },
+    sections: [
+      {
+        id: "hero",
+        type: "hero",
+        enabled: true,
+        order: 0,
+        content: {
+          title: "Residences Crafted for Living Well",
+          subtitle: "Premium locations, thoughtful design, curated amenities",
+          description:
+            "Explore available listings, virtual tours, and private showings tailored to your lifestyle.",
+          primaryCTA: "Schedule a Tour",
+          secondaryCTA: "Browse Listings",
+          backgroundType: "image",
+          layout: "split",
+        },
+        styling: {
+          backgroundImage: "/file.svg",
+          overlay: "rgba(0,0,0,0.35)",
+          textColor: "#FFFFFF",
+        },
+      },
+      {
+        id: "gallery",
+        type: "gallery",
+        enabled: true,
+        order: 1,
+        content: {
+          title: "Signature properties",
+          subtitle: "Curated homes and developments",
+          layout: "masonry",
+          showCaptions: true,
+        },
+        styling: {
+          backgroundColor: "#F7F5F2",
+          textColor: "#1F2937",
+        },
+      },
+      {
+        id: "featured-products",
+        type: "featured-products",
+        enabled: true,
+        order: 2,
+        content: {
+          title: "Available listings",
+          subtitle: "See pricing, floor plans, and amenities",
+          layout: "grid",
+          columns: 3,
+          showBadges: true,
+          ctaText: "View Details",
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#1F2937",
+        },
+      },
+      {
+        id: "social-proof",
+        type: "social-proof",
+        enabled: true,
+        order: 3,
+        content: {
+          heading: "What residents and partners say",
+          subheading: "Confidence from closings, leases, and hospitality",
+          layout: "grid",
+        },
+        styling: {
+          backgroundColor: "#F3EDE4",
+          textColor: "#1F2937",
+        },
+      },
+      {
+        id: "team",
+        type: "team",
+        enabled: true,
+        order: 4,
+        content: {
+          heading: "Your advisory team",
+          description:
+            "Agents, designers, and property managers guiding every step from tour to move-in.",
+          layout: "grid",
+          columns: 3,
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#1F2937",
+        },
+      },
+      {
+        id: "contact",
+        type: "contact",
+        enabled: true,
+        order: 5,
+        content: {
+          heading: "Book a viewing",
+          subheading: "Private and virtual tours available",
+          showMap: true,
+          showContactDetails: true,
+          showBusinessHours: true,
+          showSocialLinks: true,
+        },
+        styling: {
+          backgroundColor: "#1F2937",
+          textColor: "#FFFFFF",
+        },
+      },
+      {
+        id: "footer",
+        type: "footer",
+        enabled: true,
+        order: 6,
+        content: {
+          copyright: true,
+          showNewsletter: true,
+          newsletterTitle: "Market insights",
+          newsletterDescription: "Weekly listings and neighborhood intel.",
+          showSocialMedia: true,
+          showTrustBadges: true,
+          trustBadges: [
+            { text: "MLS Verified", icon: "check" },
+            { text: "Virtual Tours", icon: "video" },
+            { text: "Concierge Move-In", icon: "home" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#161E2E",
+          textColor: "#FFFFFF",
+        },
+      },
+    ],
+  },
+  // ============================================================================
+  // INDUSTRY THEMES - EDUCATION / ONLINE LEARNING
+  // ============================================================================
+  {
+    id: "education-digital-campus",
+    name: "Digital Campus",
+    description:
+      "Bright, structured theme for online courses, academies, and cohort-based programs.",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
+    category: "industry",
+    industry: "education",
+    colors: {
+      primary: "#2563EB",
+      secondary: "#F59E0B",
+      accent: "#E0ECFF",
+      background: "#F8FAFC",
+      text: "#0F172A",
+    },
+    sections: [
+      {
+        id: "hero",
+        type: "hero",
+        enabled: true,
+        order: 0,
+        content: {
+          title: "Programs that move careers forward",
+          subtitle: "Live cohorts, self-paced tracks, and mentorship",
+          description:
+            "Practical curriculum, hands-on projects, and career outcomes supported by real practitioners.",
+          primaryCTA: "Browse Programs",
+          secondaryCTA: "Book a Call",
+          backgroundType: "soft-gradient",
+          layout: "left",
+        },
+        styling: {
+          gradient: "linear-gradient(135deg, #E0ECFF 0%, #F8FAFC 100%)",
+          textColor: "#0F172A",
+        },
+      },
+      {
+        id: "stats",
+        type: "stats",
+        enabled: true,
+        order: 1,
+        content: {
+          title: "Learner impact",
+          stats: [
+            { value: "92%", label: "Job-ready grads", icon: "briefcase" },
+            { value: "35K", label: "Alumni worldwide", icon: "globe" },
+            { value: "4.8/5", label: "Course ratings", icon: "star" },
+            { value: "6 mo", label: "Avg. time to upskill", icon: "clock" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#0F172A",
+        },
+      },
+      {
+        id: "featured-products",
+        type: "featured-products",
+        enabled: true,
+        order: 2,
+        content: {
+          title: "Top programs",
+          subtitle: "Designed with industry partners",
+          layout: "grid",
+          columns: 3,
+          showBadges: true,
+          ctaText: "View Syllabus",
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#0F172A",
+        },
+      },
+      {
+        id: "featured-services",
+        type: "featured-services",
+        enabled: true,
+        order: 3,
+        content: {
+          heading: "Student experience",
+          description:
+            "Mentorship, career coaching, and community support that keep learners on track.",
+          layout: "cards",
+          showBadges: true,
+          ctaText: "Explore Support",
+        },
+        styling: {
+          backgroundColor: "#F8FAFC",
+          textColor: "#0F172A",
+        },
+      },
+      {
+        id: "social-proof",
+        type: "social-proof",
+        enabled: true,
+        order: 4,
+        content: {
+          heading: "Alumni stories",
+          subheading: "Career transitions and promotions from our graduates",
+          layout: "carousel",
+        },
+        styling: {
+          backgroundColor: "#E0ECFF",
+          textColor: "#0F172A",
+        },
+      },
+      {
+        id: "contact",
+        type: "contact",
+        enabled: true,
+        order: 5,
+        content: {
+          heading: "Talk to admissions",
+          subheading: "Get guidance on the right program and financing",
+          showMap: false,
+          showContactDetails: true,
+          showBusinessHours: true,
+          showSocialLinks: true,
+        },
+        styling: {
+          backgroundColor: "#2563EB",
+          textColor: "#FFFFFF",
+        },
+      },
+      {
+        id: "footer",
+        type: "footer",
+        enabled: true,
+        order: 6,
+        content: {
+          copyright: true,
+          showNewsletter: true,
+          newsletterTitle: "Stay ahead",
+          newsletterDescription: "Program launches, scholarships, and events.",
+          showSocialMedia: true,
+          showTrustBadges: true,
+          trustBadges: [
+            { text: "Accredited Partners", icon: "check" },
+            { text: "Career Coaching", icon: "user" },
+            { text: "Certifications", icon: "award" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#0F172A",
+          textColor: "#FFFFFF",
+        },
+      },
+    ],
+  },
+  // ============================================================================
+  // INDUSTRY THEMES - FITNESS / WELLNESS STUDIO
+  // ============================================================================
+  {
+    id: "fitness-boutique",
+    name: "Boutique Fitness",
+    description:
+      "High-energy, modern layout for gyms, studios, and trainers with schedules, passes, and transformations.",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
+    category: "industry",
+    industry: "services",
+    colors: {
+      primary: "#111827",
+      secondary: "#F97316",
+      accent: "#FDE68A",
+      background: "#0B0F1A",
+      text: "#F9FAFB",
+    },
+    features: {
+      animations: ["slide-up", "pulse"],
+    },
+    sections: [
+      {
+        id: "hero",
+        type: "hero",
+        enabled: true,
+        order: 0,
+        content: {
+          title: "Train with Intensity. Recover with Intention.",
+          subtitle: "Small-group sessions, 1:1 coaching, and recovery labs",
+          description:
+            "Personalized programming, evidence-based coaching, and community accountability.",
+          primaryCTA: "Start a Trial",
+          secondaryCTA: "View Schedule",
+          backgroundType: "image",
+          layout: "centered",
+        },
+        styling: {
+          backgroundImage: "/file.svg",
+          overlay: "linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.7))",
+          textColor: "#F9FAFB",
+        },
+      },
+      {
+        id: "stats",
+        type: "stats",
+        enabled: true,
+        order: 1,
+        content: {
+          title: "Proven results",
+          stats: [
+            {
+              value: "12-Week",
+              label: "Transformation Plans",
+              icon: "activity",
+            },
+            { value: "4.9/5", label: "Member Rating", icon: "star" },
+            { value: "24/7", label: "Access & Support", icon: "clock" },
+            { value: "3x", label: "Avg. Strength Gains", icon: "zap" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#0B0F1A",
+          textColor: "#F9FAFB",
+        },
+      },
+      {
+        id: "featured-services",
+        type: "featured-services",
+        enabled: true,
+        order: 2,
+        content: {
+          heading: "Programs & experiences",
+          description:
+            "Strength, conditioning, mobility, recovery, and nutrition—pick your track.",
+          layout: "grid",
+          showBadges: true,
+          ctaText: "Book Session",
+        },
+        styling: {
+          backgroundColor: "#111827",
+          textColor: "#F9FAFB",
+        },
+      },
+      {
+        id: "social-proof",
+        type: "social-proof",
+        enabled: true,
+        order: 3,
+        content: {
+          heading: "Member transformations",
+          subheading: "Stories from the community",
+          layout: "carousel",
+        },
+        styling: {
+          backgroundColor: "#0B0F1A",
+          textColor: "#F9FAFB",
+        },
+      },
+      {
+        id: "featured-products",
+        type: "featured-products",
+        enabled: true,
+        order: 4,
+        content: {
+          title: "Passes & memberships",
+          subtitle: "Drop-ins, class packs, and unlimited options",
+          layout: "grid",
+          columns: 3,
+          showBadges: true,
+          ctaText: "Choose Plan",
+        },
+        styling: {
+          backgroundColor: "#111827",
+          textColor: "#F9FAFB",
+        },
+      },
+      {
+        id: "contact",
+        type: "contact",
+        enabled: true,
+        order: 5,
+        content: {
+          heading: "Visit the studio",
+          subheading: "Tours and intro consults available",
+          showMap: true,
+          showContactDetails: true,
+          showBusinessHours: true,
+          showSocialLinks: true,
+        },
+        styling: {
+          backgroundColor: "#F97316",
+          textColor: "#111827",
+        },
+      },
+      {
+        id: "footer",
+        type: "footer",
+        enabled: true,
+        order: 6,
+        content: {
+          copyright: true,
+          showNewsletter: true,
+          newsletterTitle: "Stay in the loop",
+          newsletterDescription: "New classes, challenges, and events.",
+          showSocialMedia: true,
+          showTrustBadges: true,
+          trustBadges: [
+            { text: "Certified Coaches", icon: "user" },
+            { text: "Recovery Lab", icon: "heart" },
+            { text: "Community Events", icon: "calendar" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#0B0F1A",
+          textColor: "#F9FAFB",
+        },
+      },
+    ],
+  },
+  // ============================================================================
+  // INDUSTRY THEMES - HOSPITALITY / BOUTIQUE HOTEL
+  // ============================================================================
+  {
+    id: "hospitality-boutique-stay",
+    name: "Boutique Stay",
+    description:
+      "Warm, immersive storytelling for hotels, resorts, and luxury rentals with booking-friendly CTAs.",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
+    category: "industry",
+    industry: "services",
+    colors: {
+      primary: "#1B1A1F",
+      secondary: "#D4A373",
+      accent: "#F1E9DD",
+      background: "#F9F6F1",
+      text: "#1B1A1F",
+    },
+    sections: [
+      {
+        id: "hero",
+        type: "hero",
+        enabled: true,
+        order: 0,
+        content: {
+          title: "Arrive Inspired, Depart Restored",
+          subtitle: "Boutique stays with curated experiences",
+          description:
+            "Thoughtful interiors, locally inspired dining, and concierge itineraries tailored to every guest.",
+          primaryCTA: "Check Availability",
+          secondaryCTA: "View Rooms",
+          backgroundType: "image",
+          layout: "left",
+        },
+        styling: {
+          backgroundImage: "/file.svg",
+          overlay: "rgba(0,0,0,0.4)",
+          textColor: "#FFFFFF",
+        },
+      },
+      {
+        id: "gallery",
+        type: "gallery",
+        enabled: true,
+        order: 1,
+        content: {
+          title: "Spaces & moments",
+          subtitle: "Suites, lounges, dining, and amenities",
+          layout: "grid",
+          showCaptions: true,
+        },
+        styling: {
+          backgroundColor: "#F9F6F1",
+          textColor: "#1B1A1F",
+        },
+      },
+      {
+        id: "featured-products",
+        type: "featured-products",
+        enabled: true,
+        order: 2,
+        content: {
+          title: "Rooms & offers",
+          subtitle: "Suites, packages, and seasonal escapes",
+          layout: "grid",
+          columns: 3,
+          showBadges: true,
+          ctaText: "Book Now",
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#1B1A1F",
+        },
+      },
+      {
+        id: "featured-services",
+        type: "featured-services",
+        enabled: true,
+        order: 3,
+        content: {
+          heading: "Experiences",
+          description:
+            "Spa, dining, excursions, and concierge-planned itineraries for every stay.",
+          layout: "cards",
+          showBadges: true,
+          ctaText: "Plan Experience",
+        },
+        styling: {
+          backgroundColor: "#F1E9DD",
+          textColor: "#1B1A1F",
+        },
+      },
+      {
+        id: "social-proof",
+        type: "social-proof",
+        enabled: true,
+        order: 4,
+        content: {
+          heading: "Guest impressions",
+          subheading: "Reviews from recent stays",
+          layout: "carousel",
+        },
+        styling: {
+          backgroundColor: "#FFFFFF",
+          textColor: "#1B1A1F",
+        },
+      },
+      {
+        id: "contact",
+        type: "contact",
+        enabled: true,
+        order: 5,
+        content: {
+          heading: "Plan your visit",
+          subheading: "Concierge available 24/7",
+          showMap: true,
+          showContactDetails: true,
+          showBusinessHours: true,
+          showSocialLinks: true,
+        },
+        styling: {
+          backgroundColor: "#1B1A1F",
+          textColor: "#FFFFFF",
+        },
+      },
+      {
+        id: "footer",
+        type: "footer",
+        enabled: true,
+        order: 6,
+        content: {
+          copyright: true,
+          showNewsletter: true,
+          newsletterTitle: "Stay inspired",
+          newsletterDescription: "Seasonal offers and curated itineraries.",
+          showSocialMedia: true,
+          showTrustBadges: true,
+          trustBadges: [
+            { text: "Concierge 24/7", icon: "clock" },
+            { text: "Locally Curated", icon: "map" },
+            { text: "Wellness Ready", icon: "heart" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#151419",
+          textColor: "#FFFFFF",
+        },
+      },
+    ],
+  },
+  // ============================================================================
+  // INDUSTRY THEMES - CONSTRUCTION / TRADES
+  // ============================================================================
+  {
+    id: "construction-buildcraft",
+    name: "BuildCraft",
+    description:
+      "Confident, project-focused theme for construction, trades, and field services showcasing projects and services.",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
+    category: "industry",
+    industry: "services",
+    colors: {
+      primary: "#0F172A",
+      secondary: "#F59E0B",
+      accent: "#F4F4F5",
+      background: "#0B1220",
+      text: "#E5E7EB",
+    },
+    sections: [
+      {
+        id: "hero",
+        type: "hero",
+        enabled: true,
+        order: 0,
+        content: {
+          title: "Building with precision and safety",
+          subtitle: "Commercial, residential, and specialty projects",
+          description:
+            "Certified crews, transparent timelines, and quality materials for every scope.",
+          primaryCTA: "Request a Bid",
+          secondaryCTA: "View Projects",
+          backgroundType: "image",
+          layout: "left",
+        },
+        styling: {
+          backgroundImage: "/file.svg",
+          overlay: "rgba(0,0,0,0.55)",
+          textColor: "#E5E7EB",
+        },
+      },
+      {
+        id: "stats",
+        type: "stats",
+        enabled: true,
+        order: 1,
+        content: {
+          title: "Operational excellence",
+          stats: [
+            { value: "250+", label: "Projects Delivered", icon: "briefcase" },
+            { value: "18", label: "Crew Certifications", icon: "shield" },
+            { value: "12", label: "Trade Specialties", icon: "hammer" },
+            { value: "4.9/5", label: "Safety Rating", icon: "check" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#0F172A",
+          textColor: "#E5E7EB",
+        },
+      },
+      {
+        id: "featured-services",
+        type: "featured-services",
+        enabled: true,
+        order: 2,
+        content: {
+          heading: "Core services",
+          description:
+            "General contracting, design-build, tenant improvements, and maintenance programs.",
+          layout: "grid",
+          showBadges: true,
+          ctaText: "Request Service",
+        },
+        styling: {
+          backgroundColor: "#0B1220",
+          textColor: "#E5E7EB",
+        },
+      },
+      {
+        id: "gallery",
+        type: "gallery",
+        enabled: true,
+        order: 3,
+        content: {
+          title: "Featured projects",
+          subtitle: "Recent builds and renovations",
+          layout: "masonry",
+          showCaptions: true,
+        },
+        styling: {
+          backgroundColor: "#0F172A",
+          textColor: "#E5E7EB",
+        },
+      },
+      {
+        id: "social-proof",
+        type: "social-proof",
+        enabled: true,
+        order: 4,
+        content: {
+          heading: "Client references",
+          subheading: "Owners, developers, and facility teams",
+          layout: "grid",
+        },
+        styling: {
+          backgroundColor: "#F4F4F5",
+          textColor: "#0F172A",
+        },
+      },
+      {
+        id: "contact",
+        type: "contact",
+        enabled: true,
+        order: 5,
+        content: {
+          heading: "Let's build",
+          subheading: "Timeline, scope, and budget alignment",
+          showMap: true,
+          showContactDetails: true,
+          showBusinessHours: true,
+          showSocialLinks: true,
+        },
+        styling: {
+          backgroundColor: "#0B1220",
+          textColor: "#E5E7EB",
+        },
+      },
+      {
+        id: "footer",
+        type: "footer",
+        enabled: true,
+        order: 6,
+        content: {
+          copyright: true,
+          showNewsletter: true,
+          newsletterTitle: "Project insights",
+          newsletterDescription:
+            "Bid openings, safety updates, and portfolio news.",
+          showSocialMedia: true,
+          showTrustBadges: true,
+          trustBadges: [
+            { text: "Licensed & Bonded", icon: "shield" },
+            { text: "Safety First", icon: "alert" },
+            { text: "Certified Crews", icon: "award" },
+          ],
+        },
+        styling: {
+          backgroundColor: "#0F172A",
+          textColor: "#E5E7EB",
+        },
+      },
+    ],
+  },
 
   // ============================================================================
   // SEASONAL THEMES - HOLIDAY/CHRISTMAS
@@ -330,8 +1424,8 @@ export const defaultThemes: StorefrontTheme[] = [
     name: "Holiday Magic",
     description:
       "Warm, festive Christmas theme with elegant snowfall effects and gift-focused design perfect for the holiday season",
-    thumbnail: "/themes/holiday.jpg",
-    previewImage: "/themes/previews/holiday-full.jpg",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
     category: "seasonal",
     season: "winter",
     event: "christmas",
@@ -549,8 +1643,8 @@ export const defaultThemes: StorefrontTheme[] = [
     name: "Spooky Halloween",
     description:
       "Dark, atmospheric Halloween theme with eerie effects and bold orange accents perfect for seasonal promotions",
-    thumbnail: "/themes/halloween.jpg",
-    previewImage: "/themes/previews/halloween-full.jpg",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
     category: "seasonal",
     season: "fall",
     event: "halloween",
@@ -750,8 +1844,8 @@ export const defaultThemes: StorefrontTheme[] = [
     name: "Veterans Day Patriotic",
     description:
       "Honorable patriotic theme with red, white, and blue design to celebrate and honor our veterans",
-    thumbnail: "/themes/veterans-day.jpg",
-    previewImage: "/themes/previews/veterans-day-full.jpg",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
     category: "seasonal",
     season: "fall",
     event: "veterans-day",
@@ -954,8 +2048,8 @@ export const defaultThemes: StorefrontTheme[] = [
     name: "Summer Paradise",
     description:
       "Bright, energetic summer theme with beach vibes, vibrant colors, and vacation-ready design",
-    thumbnail: "/themes/summer.jpg",
-    previewImage: "/themes/previews/summer-full.jpg",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
     category: "seasonal",
     season: "summer",
     colors: {
@@ -1168,8 +2262,8 @@ export const defaultThemes: StorefrontTheme[] = [
     name: "Spring Renewal",
     description:
       "Fresh, vibrant spring theme with pastel colors, floral accents, and renewal-focused design",
-    thumbnail: "/themes/spring.jpg",
-    previewImage: "/themes/previews/spring-full.jpg",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
     category: "seasonal",
     season: "spring",
     colors: {
@@ -1368,8 +2462,8 @@ export const defaultThemes: StorefrontTheme[] = [
     name: "Tech Innovate",
     description:
       "Modern, sleek technology theme with gradient effects, perfect for SaaS, tech products, and digital services",
-    thumbnail: "/themes/tech.jpg",
-    previewImage: "/themes/previews/tech-full.jpg",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
     category: "industry",
     industry: "tech",
     colors: {
@@ -1553,8 +2647,8 @@ export const defaultThemes: StorefrontTheme[] = [
     name: "Gourmet Dining",
     description:
       "Elegant, appetizing theme for restaurants, cafes, and food businesses with mouth-watering design",
-    thumbnail: "/themes/restaurant.jpg",
-    previewImage: "/themes/previews/restaurant-full.jpg",
+    thumbnail: "/file.svg",
+    previewImage: "/file.svg",
     category: "industry",
     industry: "food",
     colors: {

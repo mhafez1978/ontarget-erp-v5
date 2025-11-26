@@ -195,6 +195,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Prevent duplicate team names within the same company
+    const existingTeam = await db.team.findFirst({
+      where: {
+        companyId,
+        name,
+      },
+    });
+
+    if (existingTeam) {
+      return NextResponse.json(
+        {
+          error:
+            "A team with this name already exists for this company. Please choose a different name.",
+        },
+        { status: 400 }
+      );
+    }
+
     // Create the team
     const team = await db.team.create({
       data: {

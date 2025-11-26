@@ -219,12 +219,22 @@ export function ThemeProductLayout({
         {products.slice(0, 3).map((product, idx) => (
           <Card
             key={product.id}
-            className={`overflow-hidden hover:rotate-0 transition-all duration-500 shadow-2xl border-2 border-purple-900 hover:shadow-purple-500/50 halloween-glow ${
+            className={`relative overflow-hidden hover:rotate-0 transition-all duration-500 shadow-2xl border-2 border-purple-900 hover:shadow-purple-500/50 halloween-glow bg-gradient-to-br from-[#0b0412] via-[#12071c] to-[#1a0b26] ${
               idx === 0 ? "-rotate-2" : idx === 1 ? "rotate-1" : "-rotate-1"
             }`}
           >
+            <div className="pointer-events-none absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_15%_20%,rgba(255,140,0,0.12),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(255,69,0,0.12),transparent_32%),radial-gradient(circle_at_60%_80%,rgba(128,90,213,0.15),transparent_40%)]" />
+            <div className="pointer-events-none absolute -left-4 top-6 text-5xl opacity-20 halloween-float">
+              🎃
+            </div>
+            <div className="pointer-events-none absolute right-4 bottom-6 text-4xl opacity-20 halloween-float">
+              🦇
+            </div>
+            <div className="pointer-events-none absolute left-8 bottom-10 text-3xl opacity-20 halloween-float">
+              🕸️
+            </div>
             {product.images && product.images[0]?.url && (
-              <div className="relative aspect-square overflow-hidden bg-muted">
+              <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-black to-purple-950 border-b border-purple-900/40">
                 <Image
                   src={product.images[0].url}
                   alt={product.name}
@@ -233,6 +243,7 @@ export function ThemeProductLayout({
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-purple-900/60 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,165,0,0.12),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(255,94,0,0.14),transparent_38%)] mix-blend-screen" />
               </div>
             )}
             <CardHeader className="bg-gradient-to-br from-purple-950 to-black text-white">

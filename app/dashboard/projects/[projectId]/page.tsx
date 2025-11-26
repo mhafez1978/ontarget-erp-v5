@@ -27,6 +27,8 @@ import { TaskDetailDialog } from "@/components/projects/task-detail-dialog";
 import { CreateTaskDialog } from "@/components/projects/create-task-dialog";
 import { ProjectNotes } from "@/components/projects/project-notes";
 import { StickyNote } from "lucide-react";
+import { EditProjectDialog } from "@/components/edit-project-dialog";
+import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 
 interface Task {
   id: string;
@@ -191,6 +193,8 @@ export default function ProjectDetailPage() {
   const [createTaskStatus, setCreateTaskStatus] = useState<
     "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "COMPLETED" | "BLOCKED"
   >("TODO");
+  const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+  const [isDeleteProjectOpen, setIsDeleteProjectOpen] = useState(false);
   const [user, setUser] = useState<{
     name: string | null;
     email: string | null;
@@ -261,12 +265,11 @@ export default function ProjectDetailPage() {
   }, [projectId]);
 
   const handleEdit = () => {
-    toast.info("Edit project dialog not yet implemented");
+    setIsEditProjectOpen(true);
   };
 
   const handleDelete = async () => {
-    // Will be implemented in Task 17.3
-    toast.info("Delete confirmation dialog not yet implemented");
+    setIsDeleteProjectOpen(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -589,7 +592,7 @@ export default function ProjectDetailPage() {
           open={isTaskDetailOpen}
           onOpenChange={setIsTaskDetailOpen}
           onSave={async () => {
-            // Refetch project data to update tasks
+            // Refetch project data to update tasks and board
             try {
               const response = await fetch(`/api/projects/${projectId}`);
               if (response.ok) {
@@ -598,6 +601,9 @@ export default function ProjectDetailPage() {
               }
             } catch (error) {
               console.error("Error refreshing project:", error);
+            } finally {
+              // Trigger task board to refetch tasks (priority, status, etc.)
+              setTaskRefreshTrigger((prev) => prev + 1);
             }
           }}
           onDelete={(taskId) => {
@@ -637,6 +643,53 @@ export default function ProjectDetailPage() {
             }
           }}
         />
+
+        {/* Edit Project Dialog */}
+        {project && (
+          <EditProjectDialog
+            open={isEditProjectOpen}
+            onOpenChange={setIsEditProjectOpen}
+            project={{
+              id: project.id,
+              name: project.name,
+              description: project.description,
+              teamId: project.teamId,
+              companyId: project.companyId,
+              status: project.status,
+              projectManagerId: project.projectManager?.id || null,
+              teamLeadId: project.teamLead?.id || null,
+              startDate: project.startDate,
+              endDate: project.endDate,
+              customerId: project.customerId,
+            }}
+            onSuccess={async () => {
+              try {
+                const response = await fetch(`/api/projects/${projectId}`);
+                if (response.ok) {
+                  const data = await response.json();
+                  setProject(data.project);
+                }
+              } catch (error) {
+                console.error("Error refreshing project after edit:", error);
+              }
+            }}
+          />
+        )}
+
+        {/* Delete Project Dialog */}
+        {project && (
+          <DeleteProjectDialog
+            open={isDeleteProjectOpen}
+            onOpenChange={setIsDeleteProjectOpen}
+            projectId={project.id}
+            projectName={project.name}
+            taskCount={project._count.tasks}
+            onSuccess={() => {
+              setIsDeleteProjectOpen(false);
+              router.push("/dashboard/projects");
+            }}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

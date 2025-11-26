@@ -165,61 +165,81 @@ export function ProjectTeamTab({
         </CardHeader>
       </Card>
 
-      {/* Team Members List */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {project.team.members.map((member) => (
-          <Card key={member.id}>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage
-                      src={member.staff.user.image || ""}
-                      alt={member.staff.user.name || "Team Member"}
-                    />
-                    <AvatarFallback>
-                      <User2 className="h-6 w-6" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">
-                        {member.staff.user.name || "Unnamed User"}
-                      </p>
-                      <Badge
-                        variant={getRoleBadgeVariant(member.role)}
-                        className="text-xs"
-                      >
-                        <span className="mr-1">{getRoleIcon(member.role)}</span>
-                        {member.role}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Mail className="h-3 w-3" />
-                      <span>{member.staff.user.email}</span>
+      {/* Team Members List (single column list) */}
+      <div className="space-y-4">
+        {project.team.members.map((member) => {
+          const isTeamLead =
+            project.teamLead && member.staff.id === project.teamLead.id;
+          const isProjectManager =
+            project.projectManager &&
+            member.staff.id === project.projectManager.id;
+
+          const displayRole = isTeamLead
+            ? "Team Lead"
+            : isProjectManager
+            ? "Project Manager"
+            : member.role;
+
+          const roleIcon = isTeamLead
+            ? <Crown className="h-4 w-4 text-yellow-600" />
+            : isProjectManager
+            ? <Shield className="h-4 w-4 text-blue-600" />
+            : getRoleIcon(member.role);
+
+          return (
+            <Card key={member.id}>
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage
+                        src={member.staff.user.image || ""}
+                        alt={member.staff.user.name || "Team Member"}
+                      />
+                      <AvatarFallback>
+                        <User2 className="h-6 w-6" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">
+                          {member.staff.user.name || "Unnamed User"}
+                        </p>
+                        <Badge
+                          variant={getRoleBadgeVariant(member.role)}
+                          className="text-xs"
+                        >
+                          <span className="mr-1">{roleIcon}</span>
+                          {displayRole}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Mail className="h-3 w-3" />
+                        <span>{member.staff.user.email}</span>
+                      </div>
                     </div>
                   </div>
+                  {onRemoveMember && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        handleRemoveMember(
+                          member.id,
+                          member.staff.user.name || "this member"
+                        )
+                      }
+                      disabled={removingMemberId === member.id}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <UserMinus className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-                {onRemoveMember && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      handleRemoveMember(
-                        member.id,
-                        member.staff.user.name || "this member"
-                      )
-                    }
-                    disabled={removingMemberId === member.id}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <UserMinus className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Empty State */}

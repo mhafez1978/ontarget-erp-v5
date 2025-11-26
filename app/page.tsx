@@ -13,8 +13,37 @@ import { Button } from "@/components/ui/button";
 import { VisitorTracker } from "@/components/visitor-tracker";
 import { AboutSection } from "@/components/about-section";
 import { ContactSection } from "@/components/contact-section";
+import { db } from "@/lib/db";
+import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
 
-export default function Home() {
+export default async function Home() {
+  const rootCompany = await db.company.findFirst({
+    where: { isRoot: true },
+    select: {
+      id: true,
+      name: true,
+      aiStorefrontEnabled: true,
+      aiStorefrontSpec: true,
+    },
+  });
+
+  const aiEnabled =
+    rootCompany?.aiStorefrontEnabled && rootCompany.aiStorefrontSpec;
+
+  if (aiEnabled && rootCompany?.aiStorefrontSpec) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <VisitorTracker />
+        <AiStorefrontRenderer
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          spec={rootCompany.aiStorefrontSpec as any}
+          slug=""
+          companyName={rootCompany.name}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <VisitorTracker />

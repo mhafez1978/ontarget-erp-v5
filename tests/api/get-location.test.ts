@@ -38,7 +38,13 @@ describe("GET /api/get-location (unit)", () => {
       throw new Error("Unexpected fetch to: " + url);
     }) as typeof fetch;
 
-    const res = await GET();
+    const mockRequest = {
+      headers: {
+        get: (_name: string) => null,
+      },
+    } as unknown as Request;
+
+    const res = await GET(mockRequest as any);
     const body = await (res as Response).json();
 
     expect(res.status).to.equal(200);
@@ -57,7 +63,13 @@ describe("GET /api/get-location (unit)", () => {
       throw new Error("Network down");
     }) as typeof fetch;
 
-    const res = await GET();
+    const mockRequest = {
+      headers: {
+        get: (_name: string) => null,
+      },
+    } as unknown as Request;
+
+    const res = await GET(mockRequest as any);
     const body = await (res as Response).json();
 
     expect(res.status).to.equal(200);

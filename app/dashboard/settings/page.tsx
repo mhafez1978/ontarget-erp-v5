@@ -27,6 +27,7 @@ import {
   Eye,
   EyeOff,
   UsersRound,
+  Sparkles,
 } from "lucide-react";
 import { StorageProviderCards } from "@/components/storage-provider-cards";
 import { EmailProviderCards } from "@/components/email-provider-cards";
@@ -101,6 +102,17 @@ export default function SettingsPage() {
     wechat: false,
   });
 
+  // AI Provider (LLM for AI Storefront) state - Super Admin only
+  const [aiProviderLoading, setAiProviderLoading] = useState(false);
+  const [aiProviderSaving, setAiProviderSaving] = useState(false);
+  const [aiProviderTesting, setAiProviderTesting] = useState(false);
+  const [aiProviderType, setAiProviderType] = useState("openai");
+  const [aiProviderEnabled, setAiProviderEnabled] = useState(false);
+  const [aiApiKey, setAiApiKey] = useState("");
+  const [aiModel, setAiModel] = useState("gpt-4o-mini");
+  const [aiApiBase, setAiApiBase] = useState("");
+  const [aiHasExistingKey, setAiHasExistingKey] = useState(false);
+
   // State to track password visibility for each provider
   const [showSecrets, setShowSecrets] = useState<{
     google: boolean;
@@ -146,7 +158,7 @@ export default function SettingsPage() {
     companyId: string;
     memberCount?: number;
     projectCount?: number;
-    members?: Array<{ id: string; user: { id: string } }>;
+    members?: Array<{ id: string; staffId: string; user: { id: string } }>;
   } | null>(null);
   const [teamsRefreshKey, setTeamsRefreshKey] = useState(0);
   const [activeUserManagementTab, setActiveUserManagementTab] = useState<
@@ -300,6 +312,46 @@ export default function SettingsPage() {
     loadSettings();
   }, []);
 
+  // Load AI provider (LLM) settings for Super Admin
+  useEffect(() => {
+    if (user.role !== "SUPER_ADMIN") return;
+
+    const loadAiProvider = async () => {
+      try {
+        setAiProviderLoading(true);
+        const response = await fetch(
+          "/api/settings/ai-provider?scope=GLOBAL"
+        );
+        if (!response.ok) {
+          return;
+        }
+        const data = await response.json();
+        if (data.provider) {
+          const provider = data.provider as {
+            provider: string;
+            isActive: boolean;
+            model?: string | null;
+            apiBase?: string | null;
+            hasApiKey: boolean;
+          };
+          setAiProviderType(provider.provider || "openai");
+          setAiProviderEnabled(!!provider.isActive);
+          setAiModel(provider.model || "gpt-4o-mini");
+          setAiApiBase(provider.apiBase || "");
+          setAiHasExistingKey(provider.hasApiKey);
+          // Never hydrate the real API key into the UI for security.
+          setAiApiKey("");
+        }
+      } catch (error) {
+        console.error("Failed to load AI provider settings:", error);
+      } finally {
+        setAiProviderLoading(false);
+      }
+    };
+
+    loadAiProvider();
+  }, [user.role]);
+
   const handleGeoTrackingToggle = async (checked: boolean) => {
     setIsLoading(true);
     try {
@@ -318,6 +370,105 @@ export default function SettingsPage() {
       console.error("Failed to update geo-tracking setting:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAiProviderSave = async () => {
+    if (user.role !== "SUPER_ADMIN") {
+      toast.error("Only Super Admin can manage AI provider settings");
+      return;
+    }
+
+    setAiProviderSaving(true);
+    try {
+      const response = await fetch("/api/settings/ai-provider", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          scope: "GLOBAL",
+          provider: aiProviderType || "openai",
+          isActive: aiProviderEnabled,
+          // Only send apiKey if user typed something, otherwise keep existing encrypted key in DB
+          apiKey: aiApiKey.trim() ? aiApiKey.trim() : undefined,
+          model: aiModel.trim() || undefined,
+          apiBase: aiApiBase.trim() || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(
+          data.error || "Failed to save AI provider settings. Please try again."
+        );
+        return;
+      }
+
+      const provider = data.provider as {
+        isActive: boolean;
+        model?: string | null;
+        apiBase?: string | null;
+        hasApiKey: boolean;
+      };
+
+      setAiProviderEnabled(!!provider.isActive);
+      setAiModel(provider.model || "gpt-4o-mini");
+      setAiApiBase(provider.apiBase || "");
+      setAiHasExistingKey(provider.hasApiKey);
+      // Clear local apiKey field after save to avoid showing secrets
+      setAiApiKey("");
+
+      toast.success("AI provider settings saved");
+    } catch (error) {
+      console.error("Failed to save AI provider settings:", error);
+      toast.error("Failed to save AI provider settings");
+    } finally {
+      setAiProviderSaving(false);
+    }
+  };
+
+  const handleAiProviderTest = async () => {
+    if (user.role !== "SUPER_ADMIN") {
+      toast.error("Only Super Admin can test AI provider");
+      return;
+    }
+
+    if (!aiProviderEnabled) {
+      toast.error("Enable the AI provider before running a connection test");
+      return;
+    }
+
+    setAiProviderTesting(true);
+    try {
+      const response = await fetch("/api/settings/ai-provider/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ scope: "GLOBAL" }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        toast.error(
+          data.error ||
+            data.message ||
+            "AI provider connection test failed. Verify your credentials."
+        );
+        return;
+      }
+
+      toast.success(
+        data.message || "AI provider connection test succeeded and is healthy"
+      );
+    } catch (error) {
+      console.error("AI provider test failed:", error);
+      toast.error("AI provider connection test failed");
+    } finally {
+      setAiProviderTesting(false);
     }
   };
 
@@ -2201,6 +2352,240 @@ export default function SettingsPage() {
             </AccordionContent>
           </AccordionItem>
 
+          {/* AI Storefront & LLM Provider - SUPER_ADMIN only */}
+          {user.role === "SUPER_ADMIN" && (
+            <AccordionItem value="ai-storefront-provider">
+              <AccordionTrigger className="text-xl font-semibold">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  AI Storefront & LLM Provider (Global)
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-4 space-y-6">
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+                    <div className="flex items-start gap-3">
+                      <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">
+                          Global AI Engine for Storefront Generation
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Configure a global LLM provider (OpenAI-compatible)
+                          that will power{" "}
+                          <span className="font-semibold">
+                            AI-generated storefronts
+                          </span>{" "}
+                          for companies on{" "}
+                          <span className="font-semibold">
+                            GROWTH and ENTERPRISE
+                          </span>{" "}
+                          plans. Essential plan continues to use the manual
+                          theme and content wizard.
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      The API key is stored encrypted in the database. We never
+                      show the raw key again after you save it.
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/30 p-4 space-y-3">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      OpenAI & Compatible Provider Setup (Quick Start)
+                    </p>
+                    <ol className="list-decimal list-inside text-xs text-blue-900 dark:text-blue-100 space-y-1">
+                      <li>
+                        Go to{" "}
+                        <a
+                          href="https://platform.openai.com/api-keys"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          platform.openai.com/api-keys
+                        </a>{" "}
+                        and create a secret key (or use an existing one).
+                      </li>
+                      <li>
+                        Paste the key into the <strong>API Key</strong> field
+                        below. It will be encrypted and never shown again.
+                      </li>
+                      <li>
+                        Leave <strong>API Base URL</strong> empty for OpenAI.
+                        For compatible providers (Azure OpenAI, self‑hosted
+                        vLLM/Ollama, etc.), put their base URL here and use the
+                        model name they document.
+                      </li>
+                      <li>
+                        Click <strong>Save Settings</strong>, then{" "}
+                        <strong>Test Connection</strong> to verify the model is
+                        reachable and responding.
+                      </li>
+                    </ol>
+                    <p className="text-xs text-blue-900 dark:text-blue-100">
+                      Note: all serious LLM providers require an API key. If you
+                      want a “free” option, you can point this at a
+                      self‑hosted/OpenAI‑compatible server that you control and
+                      give it a local key.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">
+                            Enable AI Storefront Engine
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            When enabled and credentials are valid, Growth /
+                            Enterprise companies can generate AI storefront
+                            specs.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={aiProviderEnabled}
+                          onCheckedChange={setAiProviderEnabled}
+                          disabled={aiProviderLoading || aiProviderSaving}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="ai-api-key">API Key</Label>
+                        <Input
+                          id="ai-api-key"
+                          type="password"
+                          placeholder={
+                            aiHasExistingKey
+                              ? "•••••••••••••••• (stored)"
+                              : "Enter OpenAI or compatible API key"
+                          }
+                          value={aiApiKey}
+                          onChange={(e) => setAiApiKey(e.target.value)}
+                          disabled={aiProviderLoading}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Leave blank to keep the existing key. Enter a new key
+                          to replace it.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="ai-provider-type">Provider</Label>
+                        <select
+                          id="ai-provider-type"
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={aiProviderType}
+                          onChange={(e) => setAiProviderType(e.target.value)}
+                          disabled={aiProviderLoading}
+                        >
+                          <option value="openai">
+                            OpenAI / OpenAI-compatible (default)
+                          </option>
+                          <option value="anthropic">Anthropic Claude</option>
+                        </select>
+                        <p className="text-xs text-muted-foreground">
+                          For Grok or other OpenAI-style APIs, keep{" "}
+                          <strong>OpenAI / OpenAI-compatible</strong> selected
+                          and set API base + model per their docs.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="ai-model">Model</Label>
+                        <Input
+                          id="ai-model"
+                          placeholder="e.g. gpt-4o-mini"
+                          value={aiModel}
+                          onChange={(e) => setAiModel(e.target.value)}
+                          disabled={aiProviderLoading}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Optional. Defaults to{" "}
+                          <code className="text-xs">gpt-4o-mini</code> if left
+                          blank.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="ai-api-base">API Base URL</Label>
+                        <Input
+                          id="ai-api-base"
+                          placeholder="Optional. Override base URL for compatible providers"
+                          value={aiApiBase}
+                          onChange={(e) => setAiApiBase(e.target.value)}
+                          disabled={aiProviderLoading}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Leave empty to use the default OpenAI API base. Set
+                          this for Azure OpenAI or other compatible providers.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="rounded-lg border bg-muted/20 p-4 space-y-2">
+                        <p className="text-sm font-medium">How this is used</p>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                          <li>
+                            The key/model are used by the resident AI to{" "}
+                            <span className="font-medium">
+                              generate AI storefront specs
+                            </span>{" "}
+                            per company.
+                          </li>
+                          <li>
+                            We enforce strict safety rules (no adult, gambling,
+                            drugs, weapons, or illegal content).
+                          </li>
+                          <li>
+                            If the model fails or is misconfigured, companies
+                            fall back to the manual themed storefront.
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={handleAiProviderSave}
+                            disabled={
+                              aiProviderLoading ||
+                              aiProviderSaving ||
+                              !aiProviderEnabled
+                            }
+                          >
+                            {aiProviderSaving ? "Saving..." : "Save Settings"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleAiProviderTest}
+                            disabled={
+                              aiProviderLoading ||
+                              aiProviderTesting ||
+                              !aiProviderEnabled
+                            }
+                          >
+                            {aiProviderTesting ? "Testing..." : "Test Connection"}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Save settings first, then run a connection test to
+                          confirm the LLM provider is reachable and responding
+                          with valid JSON.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
           {/* Storage Provider Configuration - SUPER_ADMIN and ADMIN */}
           {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
             <AccordionItem value="storage-provider">
@@ -2315,15 +2700,54 @@ export default function SettingsPage() {
                         companyId={selectedCompanyForTeams}
                         onCreateTeam={() => setShowCreateTeamDialog(true)}
                         onEditTeam={(team) => {
-                          setSelectedTeam(team);
+                          setSelectedTeam({
+                            id: team.id,
+                            name: team.name,
+                            description: team.description,
+                            companyId: team.companyId,
+                            memberCount: team.memberCount,
+                            projectCount: team.projectCount,
+                            members:
+                              team.members?.map((m) => ({
+                                id: m.id,
+                                staffId: m.staffId,
+                                user: { id: m.user?.id ?? "" },
+                              })) || [],
+                          });
                           setShowEditTeamDialog(true);
                         }}
                         onDeleteTeam={(team) => {
-                          setSelectedTeam(team);
+                          setSelectedTeam({
+                            id: team.id,
+                            name: team.name,
+                            description: team.description,
+                            companyId: team.companyId,
+                            memberCount: team.memberCount,
+                            projectCount: team.projectCount,
+                            members:
+                              team.members?.map((m) => ({
+                                id: m.id,
+                                staffId: m.staffId,
+                                user: { id: m.user?.id ?? "" },
+                              })) || [],
+                          });
                           setShowDeleteTeamDialog(true);
                         }}
                         onManageMembers={(team) => {
-                          setSelectedTeam(team);
+                          setSelectedTeam({
+                            id: team.id,
+                            name: team.name,
+                            description: team.description,
+                            companyId: team.companyId,
+                            memberCount: team.memberCount,
+                            projectCount: team.projectCount,
+                            members:
+                              team.members?.map((m) => ({
+                                id: m.id,
+                                staffId: m.staffId,
+                                user: { id: m.user?.id ?? "" },
+                              })) || [],
+                          });
                           setShowManageMembersDialog(true);
                         }}
                       />
@@ -2354,14 +2778,14 @@ export default function SettingsPage() {
       </div>
 
       {/* Team Management Dialogs */}
-      {(user.role === "SUPER_ADMIN"
+      {((user.role === "SUPER_ADMIN" || user.role === "ADMIN")
         ? selectedCompanyForTeams
         : user.companyId) && (
         <CreateTeamDialog
           open={showCreateTeamDialog}
           onOpenChange={setShowCreateTeamDialog}
           companyId={
-            (user.role === "SUPER_ADMIN"
+            ((user.role === "SUPER_ADMIN" || user.role === "ADMIN")
               ? selectedCompanyForTeams
               : user.companyId)!
           }
@@ -2404,7 +2828,8 @@ export default function SettingsPage() {
             existingMembers={
               selectedTeam.members?.map((m) => ({
                 id: m.id,
-                staffId: m.user.id,
+                // Use companyStaff.id so API duplicate checks and filters work correctly
+                staffId: m.staffId,
               })) || []
             }
             onSuccess={() => {

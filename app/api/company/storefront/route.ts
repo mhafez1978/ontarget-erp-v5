@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
         storeTheme: true,
         storeBanner: true,
         storeMetadata: true,
+        storeBlogEnabled: true,
       },
     });
 
@@ -168,6 +169,7 @@ export async function PUT(request: NextRequest) {
       isStoreEnabled,
       storeTheme,
       storeMetadata,
+      storeBlogEnabled,
     } = body;
 
     // Validate slug format
@@ -236,6 +238,7 @@ export async function PUT(request: NextRequest) {
         isStoreEnabled,
         storeTheme,
         storeMetadata,
+        storeBlogEnabled,
       },
       select: {
         slug: true,
@@ -245,6 +248,7 @@ export async function PUT(request: NextRequest) {
         storeTheme: true,
         storeBanner: true,
         storeMetadata: true,
+        storeBlogEnabled: true,
       },
     });
 

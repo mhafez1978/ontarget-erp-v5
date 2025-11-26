@@ -353,6 +353,7 @@ export async function PATCH(
       endDate,
       projectManagerId,
       teamLeadId,
+      customerId,
     } = body;
 
     console.log(
@@ -476,6 +477,26 @@ export async function PATCH(
       }
     }
 
+    // Validate customer is a COMPANY_CUSTOMER in the same company if provided
+    if (customerId) {
+      const customer = await db.companyMember.findFirst({
+        where: {
+          companyId: existingProject.companyId,
+          user: {
+            id: customerId,
+            role: "COMPANY_CUSTOMER",
+          },
+        },
+      });
+
+      if (!customer) {
+        return NextResponse.json(
+          { error: "Customer not found in this company" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Update project
     const updatedProject = await db.project.update({
       where: { id: projectId },
@@ -491,6 +512,7 @@ export async function PATCH(
         }),
         ...(projectManagerId !== undefined && { projectManagerId }),
         ...(teamLeadId !== undefined && { teamLeadId }),
+        ...(customerId !== undefined && { customerId }),
       },
       include: {
         team: true,

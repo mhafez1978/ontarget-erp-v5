@@ -52,6 +52,7 @@ interface Project {
   endDate: string | null;
   companyId: string;
   teamId: string;
+  customerId: string | null;
   managerId: string | null;
   leadId: string | null;
   createdAt: string;
@@ -454,6 +455,7 @@ export function ListView({ projects, onProjectsChange }: ListViewProps) {
             teamLeadId: selectedProject.teamLead?.id || null,
             startDate: selectedProject.startDate,
             endDate: selectedProject.endDate,
+            customerId: selectedProject.customerId,
           }}
           onSuccess={() => {
             setEditDialogOpen(false);

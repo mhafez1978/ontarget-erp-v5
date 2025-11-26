@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
+import {
+  buildMfaRedirectResponse,
+  createPendingMfaToken,
+} from "@/lib/mfa-pending";
 
 export async function GET(request: NextRequest) {
   try {
@@ -102,6 +106,7 @@ export async function GET(request: NextRequest) {
         isActive: true,
         image: true,
         plan: true,
+        mfaEnabled: true,
       },
     });
 
@@ -121,8 +126,12 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Update their profile picture if changed
-      if (picture && picture !== user.image) {
+      // Update their profile picture only if they don't already have a custom upload
+      const hasCustomProfileImage =
+        user.image?.startsWith("/uploads/profiles/") ||
+        user.image?.includes("/uploads/profiles/");
+
+      if (picture && picture !== user.image && !hasCustomProfileImage) {
         await db.user.update({
           where: { id: user.id },
           data: { image: picture },
@@ -152,6 +161,7 @@ export async function GET(request: NextRequest) {
           isActive: true,
           image: true,
           plan: true,
+          mfaEnabled: true,
         },
       });
 
@@ -206,6 +216,18 @@ export async function GET(request: NextRequest) {
         avatarUrl: picture,
         access_token: accessToken,
       });
+    }
+
+    // If MFA is enabled, redirect to MFA challenge without creating a session
+    if (user.mfaEnabled) {
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+      const pendingToken = createPendingMfaToken(
+        user.id,
+        user.email,
+        "yahoo"
+      );
+      return buildMfaRedirectResponse(appUrl, pendingToken, "yahoo");
     }
 
     // Create session using session manager
