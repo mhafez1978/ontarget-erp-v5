@@ -322,7 +322,7 @@ export default function ProfilePage() {
 
   return (
     <DashboardLayout user={user}>
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="p-6 max-w-6xl">
         <Tabs defaultValue="profile">
           <TabsList>
             <TabsTrigger value="profile">Profile information</TabsTrigger>
@@ -455,8 +455,8 @@ export default function ProfilePage() {
                             className="border-yellow-500"
                           />
                           <p className="text-xs text-yellow-600 mt-1">
-                            ⚠️ Please update your email address (GitHub didn't
-                            provide one)
+                            ⚠️ Please update your email address (GitHub
+                            didn&apos;t provide one)
                           </p>
                         </>
                       ) : (

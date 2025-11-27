@@ -60,6 +60,13 @@ interface AiStorefrontRendererProps {
   contactEmail?: string | null;
   contactPhone?: string | null;
   storeBanner?: string | null;
+  heroOverride?: {
+    title?: string;
+    subtitle?: string;
+    description?: string;
+    primaryCTA?: string;
+    secondaryCTA?: string;
+  } | null;
 }
 
 function readContentString(
@@ -96,6 +103,7 @@ export function AiStorefrontRenderer({
   contactEmail,
   contactPhone,
   storeBanner,
+  heroOverride,
 }: AiStorefrontRendererProps) {
   const sortedSections = [...spec.sections].sort((a, b) => a.order - b.order);
 
@@ -177,14 +185,26 @@ export function AiStorefrontRenderer({
 
     switch (type) {
       case "hero": {
-        const title = readContentString(contentRecord, "title") ?? companyName;
-        const subtitle = readContentString(contentRecord, "subtitle") ?? "";
+        const title =
+          heroOverride?.title ??
+          readContentString(contentRecord, "title") ??
+          companyName;
+        const subtitle =
+          heroOverride?.subtitle ??
+          readContentString(contentRecord, "subtitle") ??
+          "";
         const description =
-          readContentString(contentRecord, "description") ?? "";
+          heroOverride?.description ??
+          readContentString(contentRecord, "description") ??
+          "";
         const primaryCTA =
-          readContentString(contentRecord, "primaryCTA") ?? "Shop now";
+          heroOverride?.primaryCTA ??
+          readContentString(contentRecord, "primaryCTA") ??
+          "Shop now";
         const secondaryCTA =
-          readContentString(contentRecord, "secondaryCTA") ?? "";
+          heroOverride?.secondaryCTA ??
+          readContentString(contentRecord, "secondaryCTA") ??
+          "";
 
         const heroLayoutStyle = spec.meta.layoutStyle;
         const isCentered =
@@ -303,6 +323,92 @@ export function AiStorefrontRenderer({
                     )}
                   </div>
                 </div>
+              </div>
+            </div>
+          </section>
+        );
+      }
+
+      case "stats": {
+        const heading =
+          readContentString(contentRecord, "heading") ??
+          readContentString(contentRecord, "title") ??
+          "By the numbers";
+        const subheading =
+          readContentString(contentRecord, "subheading") ??
+          readContentString(contentRecord, "description") ??
+          "";
+
+        const rawItems = (contentRecord["items"] ??
+          contentRecord["stats"]) as unknown;
+
+        const items =
+          Array.isArray(rawItems) && rawItems.length > 0
+            ? rawItems
+                .map((item) => {
+                  if (!item || typeof item !== "object") return null;
+                  const record = item as Record<string, unknown>;
+                  const label =
+                    typeof record.label === "string" ? record.label : "";
+                  const valueRaw = record.value;
+                  const value =
+                    typeof valueRaw === "number"
+                      ? valueRaw.toString()
+                      : typeof valueRaw === "string"
+                      ? valueRaw
+                      : "";
+                  const icon =
+                    typeof record.icon === "string" ? record.icon : undefined;
+                  if (!label && !value) return null;
+                  return { label, value, icon };
+                })
+                .filter(Boolean) as { label: string; value: string; icon?: string }[]
+            : null;
+
+        if (!items || items.length === 0) {
+          // If there are no stats items, don't render the section
+          return null;
+        }
+
+        const primaryColor = spec.meta.primaryColor;
+        const accentColor = spec.meta.accentColor || spec.meta.secondaryColor;
+
+        return (
+          <section
+            key={section.id}
+            className="py-12 border-t bg-background"
+          >
+            <div className="container mx-auto px-4">
+              {(heading || subheading) && (
+                <div className="mb-8 text-center">
+                  {heading && (
+                    <h2 className="text-3xl font-bold">{heading}</h2>
+                  )}
+                  {subheading && (
+                    <p className="mt-2 text-muted-foreground">{subheading}</p>
+                  )}
+                </div>
+              )}
+              <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4 max-w-4xl mx-auto">
+                {items.map((item, index) => (
+                  <div
+                    key={`${item.label}-${index}`}
+                    className="rounded-lg border bg-card px-4 py-5 text-center shadow-sm"
+                    style={{
+                      borderColor: accentColor || primaryColor || undefined,
+                    }}
+                  >
+                    <div
+                      className="text-3xl font-extrabold"
+                      style={{ color: primaryColor || undefined }}
+                    >
+                      {item.value}
+                    </div>
+                    <div className="mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      {item.label}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </section>
@@ -515,43 +621,76 @@ export function AiStorefrontRenderer({
           </section>
         );
 
-      case "testimonials":
+      case "testimonials": {
+        const heading =
+          readContentString(contentRecord, "heading") ||
+          "What our customers say";
+        const subheading =
+          readContentString(contentRecord, "subheading") ||
+          "Trusted by our community";
+
+        const layoutVariantRaw =
+          section.layout &&
+          typeof (section.layout as Record<string, unknown>).variant ===
+            "string"
+            ? ((section.layout as Record<string, unknown>)
+                .variant as string)
+            : undefined;
+
+        const layoutVariant =
+          layoutVariantRaw ||
+          (spec.meta.tone === "playful" ? "marquee" : "grid");
+
+        const hasTestimonials = !!testimonials && testimonials.length > 0;
+
         return (
           <section key={section.id} className="py-12 border-t bg-muted/40">
             <div className="container mx-auto px-4">
-              {readContentString(contentRecord, "heading") && (
-                <div className="mb-6 text-center">
-                  <h2 className="text-3xl font-bold">
-                    {readContentString(contentRecord, "heading")}
-                  </h2>
-                  {readContentString(contentRecord, "subheading") && (
-                    <p className="mt-2 text-muted-foreground">
-                      {readContentString(contentRecord, "subheading")}
-                    </p>
-                  )}
-                </div>
-              )}
-              {testimonials && testimonials.length > 0 ? (
-                <div className="mt-4">
-                  <Marquee
-                    pauseOnHover
-                    className="border rounded-md bg-background"
-                  >
-                    {testimonials.map((t) => (
+              <div className="mb-6 text-center">
+                <h2 className="text-3xl font-bold">{heading}</h2>
+                {subheading && (
+                  <p className="mt-2 text-muted-foreground">{subheading}</p>
+                )}
+              </div>
+              {hasTestimonials ? (
+                layoutVariant === "grid" ? (
+                  <div className="mt-4 grid gap-6 md:grid-cols-3">
+                    {testimonials!.map((t) => (
                       <div
                         key={t.id}
-                        className="mx-4 my-2 rounded-lg border bg-card px-4 py-3 text-left shadow-sm min-w-[220px]"
+                        className="rounded-lg border bg-card px-4 py-3 text-left shadow-sm flex flex-col justify-between"
                       >
-                        <p className="text-xs text-muted-foreground italic line-clamp-3">
+                        <p className="text-sm text-muted-foreground italic">
                           “{t.testimonial}”
                         </p>
-                        <p className="mt-2 text-xs font-semibold">
+                        <p className="mt-3 text-sm font-semibold">
                           {t.customerName}
                         </p>
                       </div>
                     ))}
-                  </Marquee>
-                </div>
+                  </div>
+                ) : (
+                  <div className="mt-4">
+                    <Marquee
+                      pauseOnHover
+                      className="border rounded-md bg-background"
+                    >
+                      {testimonials!.map((t) => (
+                        <div
+                          key={t.id}
+                          className="mx-4 my-2 rounded-lg border bg-card px-4 py-3 text-left shadow-sm min-w-[220px]"
+                        >
+                          <p className="text-xs text-muted-foreground italic line-clamp-3">
+                            “{t.testimonial}”
+                          </p>
+                          <p className="mt-2 text-xs font-semibold">
+                            {t.customerName}
+                          </p>
+                        </div>
+                      ))}
+                    </Marquee>
+                  </div>
+                )
               ) : (
                 <p className="text-sm text-muted-foreground text-center">
                   No testimonials yet. Approved testimonials will be highlighted
@@ -565,6 +704,121 @@ export function AiStorefrontRenderer({
             </div>
           </section>
         );
+      }
+
+      case "faq": {
+        const heading =
+          readContentString(contentRecord, "heading") ??
+          "Frequently asked questions";
+        const subheading = readContentString(contentRecord, "subheading") ?? "";
+        const rawItems = contentRecord["items"];
+        const items =
+          Array.isArray(rawItems) && rawItems.length > 0
+            ? (rawItems
+                .map((item) => {
+                  if (!item || typeof item !== "object") return null;
+                  const record = item as Record<string, unknown>;
+                  const question =
+                    typeof record.question === "string"
+                      ? record.question
+                      : undefined;
+                  const answer =
+                    typeof record.answer === "string"
+                      ? record.answer
+                      : undefined;
+                  if (!question || !answer) return null;
+                  return { question, answer };
+                })
+                .filter(Boolean) as { question: string; answer: string }[])
+            : [];
+
+        return (
+          <section
+            key={section.id}
+            className="py-12 border-t bg-background"
+            id="faq"
+          >
+            <div className="container mx-auto px-4 max-w-3xl">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold">{heading}</h2>
+                {subheading && (
+                  <p className="mt-2 text-muted-foreground">{subheading}</p>
+                )}
+              </div>
+              {items.length > 0 ? (
+                <div className="space-y-4">
+                  {items.map((item, index) => (
+                    <div
+                      key={index}
+                      className="rounded-lg border bg-card px-4 py-3 text-left"
+                    >
+                      <p className="font-semibold">{item.question}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {item.answer}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center">
+                  Have questions? Reach out via the contact section below and
+                  we&apos;ll be happy to help.
+                </p>
+              )}
+            </div>
+          </section>
+        );
+      }
+
+      case "cta-band": {
+        const heading =
+          readContentString(contentRecord, "heading") ??
+          "Ready to take the next step?";
+        const subheading =
+          readContentString(contentRecord, "subheading") ??
+          "Get in touch with us today.";
+        const buttonLabel =
+          readContentString(contentRecord, "buttonLabel") ?? "Get in touch";
+        const buttonHref =
+          readContentString(contentRecord, "buttonHref") ?? "#contact";
+
+        const primaryColor = spec.meta.primaryColor;
+        const accentColor = spec.meta.accentColor || spec.meta.secondaryColor;
+        const bandColor = accentColor || primaryColor;
+        const darkBand = isHexColorDark(bandColor);
+
+        return (
+          <section key={section.id} className="py-10 border-t">
+            <div
+              className="container mx-auto px-4 rounded-lg shadow flex flex-col md:flex-row items-center justify-between gap-4"
+              style={{
+                backgroundColor: bandColor || undefined,
+                color: darkBand ? "#ffffff" : "#111827",
+              }}
+            >
+              <div className="space-y-1 text-center md:text-left">
+                <h2 className="text-2xl font-bold">{heading}</h2>
+                {subheading && (
+                  <p className="text-sm opacity-90">{subheading}</p>
+                )}
+              </div>
+              <div className="flex justify-center md:justify-end">
+                <a
+                  href={buttonHref}
+                  className={`inline-flex items-center ${buttonRadiusClass} border px-5 py-2.5 text-sm font-semibold`}
+                  style={{
+                    backgroundColor: darkBand ? "#ffffff" : "#111827",
+                    color: darkBand ? "#111827" : "#ffffff",
+                    borderColor: darkBand ? "#ffffff" : "#111827",
+                  }}
+                >
+                  {buttonLabel}
+                </a>
+              </div>
+            </div>
+          </section>
+        );
+      }
 
       case "contact":
         return (

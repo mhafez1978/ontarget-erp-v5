@@ -21,6 +21,9 @@ import {
   MessageSquare,
   Video,
   Plus,
+  Pencil,
+  Trash2,
+  Copy,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -31,41 +34,52 @@ import { Button } from "@/components/ui/button";
 interface KBArticle {
   id: string;
   title: string;
-  description: string;
+  summary: string | null;
   category: string;
   tags: string[];
-  icon: React.ReactNode;
   slug: string;
+  companyId: string | null;
+  companyName: string | null;
+  authorId: string;
+  authorName: string;
+  readTimeMinutes: number;
+  isGlobal: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
 }
 
-const articles: KBArticle[] = [
-  {
-    id: "1",
-    title: "How to Connect Google OAuth 2.0 Advanced",
-    description:
-      "Complete step-by-step guide to configure Google OAuth 2.0 for Gmail API email sending",
-    category: "Email Configuration",
-    tags: ["Gmail", "OAuth", "Email", "Setup"],
-    icon: <Mail className="h-5 w-5" />,
-    slug: "google-oauth-setup",
-  },
-  // Add more articles here in the future
-];
+interface Category {
+  name: string;
+  count: number;
+  icon: React.ReactNode;
+}
 
-const categories = [
-  {
-    name: "All Articles",
-    count: articles.length,
-    icon: <BookOpen className="h-4 w-4" />,
-  },
-  { name: "Email Configuration", count: 1, icon: <Mail className="h-4 w-4" /> },
-  { name: "Getting Started", count: 0, icon: <FileText className="h-4 w-4" /> },
-  {
-    name: "Settings & Permissions",
-    count: 0,
-    icon: <Settings className="h-4 w-4" />,
-  },
-];
+interface MyCompaniesResponse {
+  companies?: {
+    id: string;
+    name: string;
+    isOwner?: boolean;
+  }[];
+}
+
+interface SupportArticlesResponse {
+  articles?: {
+    id: string;
+    title: string;
+    summary?: string | null;
+    category?: string | null;
+    tags?: string[];
+    slug: string;
+    companyId?: string | null;
+    companyName?: string | null;
+    authorId: string;
+    authorName: string;
+    readTimeMinutes?: number;
+    isGlobal?: boolean;
+    canEdit?: boolean;
+    canDelete?: boolean;
+  }[];
+}
 
 export default function SupportPage() {
   const router = useRouter();
@@ -79,6 +93,12 @@ export default function SupportPage() {
     role: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [articles, setArticles] = useState<KBArticle[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [companies, setCompanies] = useState<
+    { id: string; name: string; isOwner?: boolean }[]
+  >([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
 
   // Check authentication
   useEffect(() => {
@@ -93,6 +113,27 @@ export default function SupportPage() {
         }
 
         setUser(data.user);
+        // Fetch companies after auth
+        try {
+          const companiesRes = await fetch("/api/company/my-companies");
+          if (companiesRes.ok) {
+            const companiesData: MyCompaniesResponse =
+              await companiesRes.json();
+            const list: { id: string; name: string; isOwner?: boolean }[] = (
+              companiesData.companies || []
+            ).map((c) => ({
+              id: c.id,
+              name: c.name,
+              isOwner: c.isOwner,
+            }));
+            setCompanies(list);
+            if (list.length > 0) {
+              setSelectedCompanyId(list[0].id);
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching companies for support page:", err);
+        }
       } catch (error) {
         console.error("Authentication check failed:", error);
         router.push("/login");
@@ -104,12 +145,118 @@ export default function SupportPage() {
     checkAuth();
   }, [router]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchArticles = async () => {
+      try {
+        const params = selectedCompanyId
+          ? `?companyId=${encodeURIComponent(selectedCompanyId)}`
+          : "";
+        const response = await fetch(`/api/support/articles${params}`);
+        if (!response.ok) {
+          console.error("Failed to fetch support articles");
+          return;
+        }
+        const data = await response.json();
+        const { articles: apiArticles = [] } =
+          (data as SupportArticlesResponse) || {};
+
+        const fetched: KBArticle[] = apiArticles.map((article) => ({
+          id: article.id,
+          title: article.title,
+          summary: article.summary ?? null,
+          category: article.category || "Uncategorized",
+          tags: Array.isArray(article.tags) ? article.tags : [],
+          slug: article.slug,
+          companyId: article.companyId ?? null,
+          companyName: article.companyName ?? null,
+          authorId: article.authorId,
+          authorName: article.authorName,
+          readTimeMinutes: article.readTimeMinutes ?? 5,
+          isGlobal: !!article.isGlobal,
+          canEdit: !!article.canEdit,
+          canDelete: !!article.canDelete,
+        }));
+        setArticles(fetched);
+
+        const categoryMap: Record<string, number> = {};
+        fetched.forEach((article) => {
+          const cat = article.category || "Uncategorized";
+          categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+        });
+        const categoryList: Category[] = [
+          {
+            name: "All Articles",
+            count: fetched.length,
+            icon: <BookOpen className="h-4 w-4" />,
+          },
+          ...Object.entries(categoryMap).map(([name, count]) => {
+            let icon: React.ReactNode = <BookOpen className="h-4 w-4" />;
+            if (name === "Email Configuration") {
+              icon = <Mail className="h-4 w-4" />;
+            } else if (name === "Getting Started") {
+              icon = <FileText className="h-4 w-4" />;
+            } else if (name === "Settings & Permissions") {
+              icon = <Settings className="h-4 w-4" />;
+            }
+            return { name, count, icon };
+          }),
+        ];
+        setCategories(categoryList);
+      } catch (error) {
+        console.error("Error fetching support articles:", error);
+      }
+    };
+
+    fetchArticles();
+  }, [user, selectedCompanyId]);
+
   // Handler for add button based on active tab
   const handleAddClick = () => {
     switch (activeTab) {
       case "kb-articles":
-        alert("Add KB Article functionality will be implemented here");
-        // TODO: Open add KB article dialog/sheet
+        (async () => {
+          try {
+            // const res = await fetch("/api/support/articles", {
+            //   method: "POST",
+            //   headers: { "Content-Type": "application/json" },
+            //   body: JSON.stringify({
+            //     title: "Untitled article",
+            //     summary: "",
+            //     category: "Getting Started",
+            //     tags: [],
+            //     content: "",
+            //     companyId: selectedCompanyId || undefined,
+            //   }),
+            // });
+
+            const res = await fetch("/api/support/articles", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                // Add a timestamp to ensure the slug is unique every time
+                title: `KB Article - ${new Date().toLocaleTimeString()}`,
+                summary: "",
+                category: "New KB Article,...",
+                tags: [],
+                content: "Content goes here, ...",
+                companyId: selectedCompanyId || undefined,
+              }),
+            });
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+              console.error("Failed to create article:", data);
+              return;
+            }
+            const created = data.article;
+            if (created) {
+              router.push(`/dashboard/support/${created.slug}?mode=edit`);
+            }
+          } catch (error) {
+            console.error("Error creating article:", error);
+          }
+        })();
         break;
       case "video-tutorials":
         alert("Add Video Tutorial functionality will be implemented here");
@@ -141,7 +288,9 @@ export default function SupportPage() {
   const filteredArticles = articles.filter((article) => {
     const matchesSearch =
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (article.summary || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       article.tags.some((tag) =>
         tag.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -175,20 +324,36 @@ export default function SupportPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                Support & Knowledge Base
-              </h1>
+              <h1 className="text-3xl font-bold tracking-tight">Support</h1>
               <p className="text-muted-foreground mt-2">
                 Find guides, tutorials, and answers to common questions
               </p>
             </div>
-            {/* Add Button - Shows for KB Articles, Video Tutorials, and FAQ tabs */}
-            {activeTab !== "contact" && (
-              <Button onClick={handleAddClick} className="shrink-0">
-                <Plus className="h-4 w-4 mr-2" />
-                {getAddButtonText()}
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              {companies.length > 0 && (
+                <div className="flex flex-col text-right justify-center">
+                  <select
+                    className="mt-1 border rounded py-3 px-2 text-sm bg-background"
+                    value={selectedCompanyId}
+                    onChange={(e) => setSelectedCompanyId(e.target.value)}
+                  >
+                    {companies.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                        {c.isOwner ? " (Owner)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {/* Add Button - Shows for KB Articles, Video Tutorials, and FAQ tabs */}
+              {activeTab !== "contact" && (
+                <Button onClick={handleAddClick} className="shrink-0">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {getAddButtonText()}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Tabs */}
@@ -326,7 +491,7 @@ export default function SupportPage() {
                             <CardHeader>
                               <div className="flex items-start gap-4">
                                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                  {article.icon}
+                                  <BookOpen className="h-5 w-5" />
                                 </div>
                                 <div className="flex-1">
                                   <div className="flex items-start justify-between">
@@ -334,9 +499,178 @@ export default function SupportPage() {
                                       <CardTitle className="text-lg hover:text-primary transition-colors">
                                         {article.title}
                                       </CardTitle>
-                                      <CardDescription className="mt-2">
-                                        {article.description}
-                                      </CardDescription>
+                                      {article.summary && (
+                                        <CardDescription className="mt-2">
+                                          {article.summary}
+                                        </CardDescription>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      {article.canEdit && (
+                                        <>
+                                          <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-7 w-7"
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              router.push(
+                                                `/dashboard/support/${article.slug}?mode=edit`
+                                              );
+                                            }}
+                                          >
+                                            <Pencil className="h-3 w-3" />
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-7 w-7"
+                                            onClick={async (e) => {
+                                              e.preventDefault();
+                                              const confirmed = window.confirm(
+                                                "Delete this article? This cannot be undone."
+                                              );
+                                              if (!confirmed) return;
+                                              try {
+                                                const res = await fetch(
+                                                  `/api/support/articles/${article.id}`,
+                                                  { method: "DELETE" }
+                                                );
+                                                const data = await res
+                                                  .json()
+                                                  .catch(() => null);
+                                                if (!res.ok) {
+                                                  console.error(
+                                                    "Delete error:",
+                                                    data
+                                                  );
+                                                  return;
+                                                }
+                                                setArticles((prev) =>
+                                                  prev.filter(
+                                                    (a) => a.id !== article.id
+                                                  )
+                                                );
+                                              } catch (err) {
+                                                console.error(
+                                                  "Delete failed:",
+                                                  err
+                                                );
+                                              }
+                                            }}
+                                          >
+                                            <Trash2 className="h-3 w-3" />
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-7 w-7"
+                                            onClick={async (e) => {
+                                              e.preventDefault();
+                                              try {
+                                                const detailsRes = await fetch(
+                                                  `/api/support/articles/by-slug?slug=${encodeURIComponent(
+                                                    article.slug
+                                                  )}`
+                                                );
+                                                const details = await detailsRes
+                                                  .json()
+                                                  .catch(() => null);
+                                                if (!detailsRes.ok) {
+                                                  console.error(
+                                                    "Failed to load article for clone:",
+                                                    details
+                                                  );
+                                                  return;
+                                                }
+                                                const original =
+                                                  details.article;
+
+                                                const res = await fetch(
+                                                  "/api/support/articles",
+                                                  {
+                                                    method: "POST",
+                                                    headers: {
+                                                      "Content-Type":
+                                                        "application/json",
+                                                    },
+                                                    body: JSON.stringify({
+                                                      title: `${article.title} (Copy)`,
+                                                      summary: article.summary,
+                                                      category:
+                                                        article.category,
+                                                      tags: article.tags,
+                                                      content: original.content,
+                                                      isGlobal:
+                                                        article.isGlobal,
+                                                      companyId:
+                                                        article.companyId ??
+                                                        undefined,
+                                                      readTimeMinutes:
+                                                        article.readTimeMinutes,
+                                                    }),
+                                                  }
+                                                );
+                                                const data = await res
+                                                  .json()
+                                                  .catch(() => null);
+                                                if (!res.ok) {
+                                                  console.error(
+                                                    "Clone error:",
+                                                    data
+                                                  );
+                                                  return;
+                                                }
+                                                const cloned = data.article;
+                                                if (cloned) {
+                                                  setArticles((prev) => [
+                                                    {
+                                                      id: cloned.id,
+                                                      title: cloned.title,
+                                                      summary:
+                                                        cloned.summary ?? null,
+                                                      category:
+                                                        cloned.category ||
+                                                        "Uncategorized",
+                                                      tags: Array.isArray(
+                                                        cloned.tags
+                                                      )
+                                                        ? cloned.tags
+                                                        : [],
+                                                      slug: cloned.slug,
+                                                      companyId:
+                                                        cloned.companyId ??
+                                                        null,
+                                                      companyName: null,
+                                                      authorId: cloned.authorId,
+                                                      authorName:
+                                                        article.authorName,
+                                                      readTimeMinutes:
+                                                        cloned.readTimeMinutes ??
+                                                        5,
+                                                      isGlobal:
+                                                        !!cloned.isGlobal,
+                                                      canEdit: true,
+                                                      canDelete: true,
+                                                    },
+                                                    ...prev,
+                                                  ]);
+                                                }
+                                              } catch (err) {
+                                                console.error(
+                                                  "Clone failed:",
+                                                  err
+                                                );
+                                              }
+                                            }}
+                                          >
+                                            <Copy className="h-3 w-3" />
+                                          </Button>
+                                        </>
+                                      )}
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2 mt-3">

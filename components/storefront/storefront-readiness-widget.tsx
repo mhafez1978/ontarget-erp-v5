@@ -12,6 +12,7 @@ import {
   TrendingUp,
   ExternalLink,
   RefreshCw,
+  Flag,
 } from "lucide-react";
 import { StorefrontReadiness } from "@/lib/storefront-readiness";
 import { Progress } from "@/components/ui/progress";
@@ -110,6 +111,7 @@ export function StorefrontReadinessWidget({
             Storefront Readiness
           </CardTitle>
           <div className="flex items-center gap-2">
+            <Flag className="h-5 w-5 mr-2" />
             <Badge
               variant="outline"
               className={`text-xl font-bold ${gradeBackground} ${gradeColor} border-0`}
@@ -143,16 +145,24 @@ export function StorefrontReadinessWidget({
 
         {/* Warnings */}
         {readiness.warnings.length > 0 && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="p-4 bg-red-300 text-white">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <ul className="list-disc list-inside space-y-1">
+              <ul className="list-disc list-inside space-y-1 text-white font-semibold">
                 {readiness.warnings.map((warning, idx) => (
-                  <li key={idx} className="text-sm">
+                  <li key={idx} className="text-sm ">
                     {warning}
                   </li>
                 ))}
               </ul>
+              <p className="mt-2 text-sm text-white font-semibold">
+                Please go to the
+                <span className="text-purple-900 ml-2 mr-2 font-bold text-md">
+                  <Link href="/dashboard/catalog">Catalog Page</Link>
+                </span>{" "}
+                and add products and/or services to improve your store
+                readiness.
+              </p>
             </AlertDescription>
           </Alert>
         )}

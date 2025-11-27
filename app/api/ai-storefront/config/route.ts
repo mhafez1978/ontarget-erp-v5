@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { validateSession } from "@/lib/session-manager";
+import { canUseAiStorefront } from "@/lib/billing/plan-gating";
+import { getAiStorefrontMonthlyLimit } from "@/lib/ai/ai-limits";
+import type { SubscriptionPlan } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,6 +35,18 @@ export async function GET(request: NextRequest) {
 
     const userId = validation.user.id;
     const userRole = validation.user.role;
+    const userPlan = validation.user.plan as SubscriptionPlan | null;
+
+    // Enforce plan gating for AI storefront config, except for SUPER_ADMIN.
+    if (userRole !== "SUPER_ADMIN" && !canUseAiStorefront(userPlan)) {
+      return NextResponse.json(
+        {
+          error:
+            "AI storefront is only available for Growth and Enterprise plans.",
+        },
+        { status: 403 }
+      );
+    }
 
     const user = await db.user.findUnique({
       where: { id: userId },
@@ -69,6 +84,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Enforce plan gating for AI storefront config, except for SUPER_ADMIN.
+    if (userRole !== "SUPER_ADMIN" && !canUseAiStorefront(userPlan)) {
+      return NextResponse.json(
+        {
+          error:
+            "AI storefront is only available for Growth and Enterprise plans.",
+        },
+        { status: 403 }
+      );
+    }
+
     const company = await db.company.findUnique({
       where: { id: companyId },
       select: {
@@ -84,9 +110,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Compute monthly AI usage for this user/plan
+    const planLimit = getAiStorefrontMonthlyLimit(userPlan);
+    let usedThisMonth: number | null = null;
+
+    if (planLimit !== "unlimited") {
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+
+      usedThisMonth = await db.aiStorefrontGenerationLog.count({
+        where: {
+          userId,
+          plan: userPlan ?? undefined,
+          createdAt: { gte: monthStart },
+        },
+      });
+    }
+
     return NextResponse.json({
       enabled: company.aiStorefrontEnabled,
       spec: company.aiStorefrontSpec,
+      usage: {
+        limit: planLimit,
+        used: usedThisMonth,
+      },
     });
   } catch (error) {
     console.error("[AI Storefront] Config fetch error:", error);

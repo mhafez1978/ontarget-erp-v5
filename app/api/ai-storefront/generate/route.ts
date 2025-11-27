@@ -8,17 +8,39 @@ import {
   type AiStorefrontInput,
 } from "@/lib/ai/ai-storefront-service";
 import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
-import { Prisma } from "@prisma/client";
+import { Prisma, SubscriptionPlan } from "@prisma/client";
 import { decrypt } from "@/lib/crypto";
 import type {
   ProductSummary,
   ServiceSummary,
   TestimonialSummary,
 } from "@/lib/ai/ai-storefront-service";
+import { canUseAiStorefront } from "@/lib/billing/plan-gating";
+import { getAiStorefrontMonthlyLimit } from "@/lib/ai/ai-limits";
+
+const BANNED_PROMPT_KEYWORDS = [
+  "porn",
+  "pornographic",
+  "xxx",
+  "sex",
+  "escort",
+  "gambling",
+  "casino",
+  "betting",
+  "illegal drugs",
+  "cocaine",
+  "heroin",
+  "meth",
+  "weapons",
+  "firearms",
+];
 
 const generateSchema = z.object({
   companyId: z.string(),
-  prompt: z.string().min(1, "Prompt is required"),
+  prompt: z
+    .string()
+    .min(1, "Prompt is required")
+    .max(2000, "Prompt is too long"),
   goal: z.enum(["sell-products", "sell-services", "lead-gen", "bookings"]),
   tone: z.enum(["playful", "serious", "luxury", "minimal"]),
   primaryColor: z.string().optional(),
@@ -75,18 +97,60 @@ export async function POST(request: NextRequest) {
       showTestimonials,
     } = parsed.data;
     const userId = validation.user.id;
-    const userPlan = validation.user.plan;
+    const userPlan = validation.user.plan as SubscriptionPlan | null;
     const userRole = validation.user.role;
 
-    // Enforce plan gating: AI storefront reserved for Growth/Enterprise.
-    const allowedPlans = ["GROWTH", "ENTERPRISE", "SUPER_USER"];
-    if (!allowedPlans.includes(userPlan)) {
+    // Enforce plan gating: AI storefront reserved for Growth/Enterprise plans.
+    if (userRole !== "SUPER_ADMIN" && !canUseAiStorefront(userPlan)) {
       return NextResponse.json(
         {
           error:
             "AI storefront is only available for Growth and Enterprise plans.",
         },
         { status: 403 }
+      );
+    }
+
+    // Enforce monthly AI generation limits per plan (except SUPER_ADMIN / unlimited)
+    const planLimit = getAiStorefrontMonthlyLimit(userPlan);
+    if (userRole !== "SUPER_ADMIN" && planLimit !== "unlimited") {
+      if (typeof planLimit === "number" && planLimit >= 0) {
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+
+        const usedThisMonth = await db.aiStorefrontGenerationLog.count({
+          where: {
+            userId,
+            plan: userPlan ?? undefined,
+            createdAt: { gte: monthStart },
+          },
+        });
+
+        if (usedThisMonth >= planLimit) {
+          return NextResponse.json(
+            {
+              error:
+                "You have reached your AI storefront generation limit for this month for your plan.",
+            },
+            { status: 429 }
+          );
+        }
+      }
+    }
+
+    // Input-side safety: basic prompt checks
+    const normalizedPrompt = prompt.toLowerCase();
+    const bannedHits = BANNED_PROMPT_KEYWORDS.filter((keyword) =>
+      normalizedPrompt.includes(keyword)
+    );
+    if (bannedHits.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Prompt contains disallowed topics. Please keep it professional and safe.",
+        },
+        { status: 400 }
       );
     }
 
@@ -134,8 +198,18 @@ export async function POST(request: NextRequest) {
         name: true,
         slogan: true,
         description: true,
+        industry: true,
         isRoot: true,
         storeBlogEnabled: true,
+        email: true,
+        phone: true,
+        addressLine1: true,
+        addressLine2: true,
+        city: true,
+        state: true,
+        country: true,
+        postalCode: true,
+        storeMetadata: true,
       },
     });
 
@@ -234,6 +308,27 @@ export async function POST(request: NextRequest) {
         })
       : 0;
 
+    const storeMetadata = company.storeMetadata as
+      | {
+          title?: string;
+          description?: string;
+          keywords?: string[];
+          contactEmail?: string;
+          contactPhone?: string;
+        }
+      | null;
+
+    const fullAddressParts = [
+      company.addressLine1,
+      company.addressLine2,
+      company.city,
+      company.state,
+      company.country,
+      company.postalCode,
+    ].filter(Boolean);
+    const fullAddress =
+      fullAddressParts.length > 0 ? fullAddressParts.join(", ") : null;
+
     const input: AiStorefrontInput = {
       company: {
         id: company.id,
@@ -242,7 +337,7 @@ export async function POST(request: NextRequest) {
         description: company.description,
         industry: company.isRoot
           ? "ERP SaaS platform for small businesses"
-          : null,
+          : company.industry ?? null,
       },
       products,
       services,
@@ -258,6 +353,16 @@ export async function POST(request: NextRequest) {
       showTestimonials: showTestimonials ?? true,
       blogEnabled,
       blogHasPosts: blogPostCount > 0,
+      contact: {
+        email: storeMetadata?.contactEmail || company.email || null,
+        phone: storeMetadata?.contactPhone || company.phone || null,
+        address: fullAddress,
+      },
+      seo: {
+        title: storeMetadata?.title || null,
+        description: storeMetadata?.description || null,
+        keywords: storeMetadata?.keywords || null,
+      },
       prompt,
       goal,
       tone,
@@ -312,6 +417,17 @@ export async function POST(request: NextRequest) {
           (result.spec as unknown as Prisma.InputJsonValue) ?? undefined,
       },
     });
+
+    // Log usage for this generation (except SUPER_ADMIN)
+    if (userRole !== "SUPER_ADMIN") {
+      await db.aiStorefrontGenerationLog.create({
+        data: {
+          companyId,
+          userId,
+          plan: userPlan ?? "GUEST",
+        },
+      });
+    }
 
     return NextResponse.json({ spec: result.spec, enabled: true });
   } catch (error) {

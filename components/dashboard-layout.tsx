@@ -387,7 +387,7 @@ export function DashboardLayout({
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
-        <div className={cn("container mx-auto p-6", containerClassName)}>
+        <div className={cn("container p-6", containerClassName)}>
           {children}
         </div>
       </main>

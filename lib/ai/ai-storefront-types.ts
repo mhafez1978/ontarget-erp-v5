@@ -45,6 +45,39 @@ export const aiFrontstoreSpecSchema = z.object({
   sections: z.array(aiFrontstoreSectionSchema),
 });
 
+export const StorefrontTestimonialSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  title: z.string().optional(),
+  company: z.string().optional(),
+  quote: z.string(),
+  image: z.string().url().optional(),
+});
+
+export const FeaturedTeamMemberSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: z.string().optional(),
+  jobTitle: z.string().optional(),
+  bio: z.string().optional(),
+  image: z.string().url().optional(),
+});
+
+export const FeaturedServiceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  image: z.string().url().optional(),
+});
+
+export const FeaturedProductSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  price: z.number().optional(),
+  image: z.string().url().optional(),
+});
+
 export type AiFrontstoreSectionType = z.infer<
   typeof aiFrontstoreSectionTypeSchema
 >;
@@ -52,3 +85,11 @@ export type AiFrontstoreSectionType = z.infer<
 export type AiFrontstoreSection = z.infer<typeof aiFrontstoreSectionSchema>;
 
 export type AiFrontstoreSpec = z.infer<typeof aiFrontstoreSpecSchema>;
+
+export type StorefrontTestimonial = z.infer<typeof StorefrontTestimonialSchema>;
+
+export type FeaturedTeamMember = z.infer<typeof FeaturedTeamMemberSchema>;
+
+export type FeaturedService = z.infer<typeof FeaturedServiceSchema>;
+
+export type FeaturedProduct = z.infer<typeof FeaturedProductSchema>;

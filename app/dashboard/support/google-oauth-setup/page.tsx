@@ -6,10 +6,17 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StaffAndAbove } from "@/components/role-guard";
+import { DashboardLayout } from "@/components/dashboard-layout";
 
 export default function GoogleOAuthSetupArticle() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<{
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    role: string;
+  } | null>(null);
 
   // Check authentication
   useEffect(() => {
@@ -23,6 +30,7 @@ export default function GoogleOAuthSetupArticle() {
           return;
         }
 
+        setUser(data.user);
         setLoading(false);
       } catch (error) {
         console.error("Authentication check failed:", error);
@@ -36,25 +44,28 @@ export default function GoogleOAuthSetupArticle() {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+      <DashboardLayout user={user || undefined}>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="mt-4 text-muted-foreground">Loading...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
     <StaffAndAbove>
-      <KBArticle
-        title="How to Connect Google OAuth 2.0 Advanced"
-        description="Complete step-by-step guide to configure Google OAuth 2.0 for Gmail API email sending"
-        category="Email Configuration"
-        tags={["Gmail", "OAuth", "Email", "Setup", "Google Cloud"]}
-        readTime="10 min"
-        lastUpdated="November 17, 2025"
-      >
+      <DashboardLayout user={user || undefined}>
+        <KBArticle
+          title="How to Connect Google OAuth 2.0 Advanced"
+          description="Complete step-by-step guide to configure Google OAuth 2.0 for Gmail API email sending"
+          category="Email Configuration"
+          tags={["Gmail", "OAuth", "Email", "Setup", "Google Cloud"]}
+          readTime="10 min"
+          lastUpdated="November 17, 2025"
+        >
         <Alert className="bg-amber-50 border-amber-200 mb-6">
           <AlertCircle className="h-5 w-5 text-amber-600" />
           <AlertDescription className="text-amber-900">
@@ -642,6 +653,7 @@ export default function GoogleOAuthSetupArticle() {
           </AlertDescription>
         </Alert>
       </KBArticle>
+      </DashboardLayout>
     </StaffAndAbove>
   );
 }

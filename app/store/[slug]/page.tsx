@@ -4,20 +4,23 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { defaultThemes } from "@/lib/storefront-themes";
+import { defaultThemes, type ThemeSection } from "@/lib/storefront-themes";
 import { ThemeRenderer } from "@/components/storefront/theme-renderer";
 import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
 import type { Metadata } from "next";
-import type { AiFrontstoreSpec } from "@/lib/ai/ai-storefront-types";
+import {
+  aiFrontstoreSpecSchema,
+  type AiFrontstoreSpec,
+} from "@/lib/ai/ai-storefront-types";
 
 // Force dynamic rendering to prevent caching issues
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 type PageProps = {
-  params: {
-    slug: string;
-  };
+  params: Promise<{
+    slug?: string;
+  }>;
 };
 
 interface StoreMetadata {
@@ -36,12 +39,22 @@ interface StoreMetadata {
     email?: string;
     phone?: string;
   };
+  // Optional saved layout/content sections from Content Wizard
+  sections?: ThemeSection[];
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
+
+  if (!slug) {
+    return {
+      title: "Store Not Found",
+      description: "The requested store could not be found.",
+    };
+  }
+
   const company = await db.company.findUnique({
     where: { slug },
     select: {
@@ -81,7 +94,11 @@ export async function generateMetadata({
   };
 }
 
-async function getStoreData(slug: string) {
+async function getStoreData(slug?: string) {
+  if (!slug) {
+    return null;
+  }
+
   const company = await db.company.findUnique({
     where: { slug },
     select: {
@@ -222,7 +239,12 @@ async function getStoreData(slug: string) {
 }
 
 export default async function StorefrontPage({ params }: PageProps) {
-  const { slug } = params;
+  const { slug } = await params;
+
+  if (!slug) {
+    notFound();
+  }
+
   const data = await getStoreData(slug);
 
   if (!data) {
@@ -259,15 +281,63 @@ export default async function StorefrontPage({ params }: PageProps) {
     displayOrder: member.displayOrder || 0,
   }));
 
-  const aiEnabled =
-    company.aiStorefrontEnabled && !!company.aiStorefrontSpec;
-  const aiSpec =
-    (company.aiStorefrontSpec as unknown as AiFrontstoreSpec | null) ?? null;
+  let aiSpec: AiFrontstoreSpec | null = null;
+  if (company.aiStorefrontEnabled && company.aiStorefrontSpec) {
+    const parsed = aiFrontstoreSpecSchema.safeParse(company.aiStorefrontSpec);
+    if (parsed.success) {
+      aiSpec = parsed.data;
+    } else {
+      console.error(
+        "[Storefront] Invalid aiStorefrontSpec for company",
+        company.id,
+        parsed.error
+      );
+    }
+  }
+  const aiEnabled = company.aiStorefrontEnabled && !!aiSpec;
   const aiMeta = aiSpec?.meta ?? null;
   const headerLogo: string | null =
     company.logo || company.logoLight || company.logoDark || null;
 
   if (aiEnabled && aiSpec) {
+    const metadata = company.storeMetadata as StoreMetadata | null;
+    const promoBannerSection =
+      metadata?.sections &&
+      Array.isArray(metadata.sections)
+        ? (metadata.sections as ThemeSection[]).find(
+            (s) => s.type === "promo-banner" && s.enabled
+          )
+        : undefined;
+
+    const heroSection =
+      metadata?.sections &&
+      Array.isArray(metadata.sections)
+        ? (metadata.sections as ThemeSection[]).find(
+            (s) => s.type === "hero" && s.enabled
+          )
+        : undefined;
+
+    const heroOverride =
+      heroSection && heroSection.content
+        ? {
+            title:
+              (heroSection.content.heading as string | undefined) ||
+              (heroSection.content.title as string | undefined),
+            subtitle:
+              (heroSection.content.subheading as string | undefined) ||
+              (heroSection.content.subtitle as string | undefined),
+            description:
+              (heroSection.content.description as string | undefined) ||
+              undefined,
+            primaryCTA:
+              (heroSection.content.ctaText as string | undefined) ||
+              (heroSection.content.primaryCTA as string | undefined),
+            secondaryCTA:
+              (heroSection.content.secondaryCtaText as string | undefined) ||
+              (heroSection.content.secondaryCTA as string | undefined),
+          }
+        : null;
+
     return (
       <div className="min-h-screen bg-background">
         {/* Store Disabled Banner */}
@@ -281,7 +351,10 @@ export default async function StorefrontPage({ params }: PageProps) {
           style={
             aiMeta
               ? {
-                  backgroundColor: aiMeta.primaryColor || undefined,
+                  // Prefer backgroundColor for nav if set (e.g., via refinement),
+                  // otherwise fall back to primaryColor.
+                  backgroundColor:
+                    aiMeta.backgroundColor || aiMeta.primaryColor || undefined,
                   color: aiMeta.textColor || undefined,
                   borderColor: aiMeta.accentColor || aiMeta.secondaryColor,
                 }
@@ -291,8 +364,9 @@ export default async function StorefrontPage({ params }: PageProps) {
           <div className="container mx-auto h-14 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {headerLogo ? (
-                <div className="relative h-14 w-[330px] border border-red-500 flex justify-start items-center">
+                <div className="relative h-14 w-[330px] flex justify-start items-center">
                   <Image
+                    className="object-contain drop-shadow-2xl"
                     src={headerLogo}
                     alt={company.name}
                     width={230}
@@ -305,7 +379,8 @@ export default async function StorefrontPage({ params }: PageProps) {
                 </h1>
               )}
             </div>
-            <nav className="hidden md:flex items-center gap-6 text-white">
+            {/* Nav links inherit color from header style so preview and live store match */}
+            <nav className="hidden md:flex items-center gap-6">
               <Link
                 href={`/store/${slug}`}
                 className="text-sm font-medium hover:underline"
@@ -368,6 +443,35 @@ export default async function StorefrontPage({ params }: PageProps) {
           </div>
         </header>
 
+        {/* Optional promo banner from Content Wizard (even when AI layout is enabled) */}
+        {promoBannerSection && (
+          <div
+            className="w-full py-3 px-4 text-center border-b"
+            style={{
+              background:
+                promoBannerSection.styling?.gradient ||
+                promoBannerSection.styling?.backgroundColor ||
+                undefined,
+              color: promoBannerSection.styling?.textColor || undefined,
+            }}
+          >
+            <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+              <span className="text-sm sm:text-base font-semibold">
+                {String(promoBannerSection.content.text || "")}
+              </span>
+              {promoBannerSection.content.link &&
+                promoBannerSection.content.linkText && (
+                  <Link
+                    href={String(promoBannerSection.content.link)}
+                    className="text-sm sm:text-base font-bold underline hover:opacity-80 transition-opacity"
+                  >
+                    {String(promoBannerSection.content.linkText)}
+                  </Link>
+                )}
+            </div>
+          </div>
+        )}
+
         <AiStorefrontRenderer
           spec={aiSpec}
           slug={slug}
@@ -387,6 +491,7 @@ export default async function StorefrontPage({ params }: PageProps) {
             null
           }
           storeBanner={company.storeBanner}
+          heroOverride={heroOverride}
         />
       </div>
     );
@@ -507,7 +612,13 @@ export default async function StorefrontPage({ params }: PageProps) {
 
       {/* Theme-based Content */}
       <ThemeRenderer
-        sections={selectedTheme.sections}
+        sections={
+          ((company.storeMetadata as StoreMetadata | null)?.sections &&
+            ((company.storeMetadata as StoreMetadata | null)?.sections?.length ?? 0) > 0
+            ? (company.storeMetadata as StoreMetadata | null)
+                ?.sections
+            : selectedTheme.sections) as ThemeSection[]
+        }
         slug={slug}
         companyName={company.name}
         featuredProducts={serializedProducts}

@@ -1065,7 +1065,7 @@ export function BaseThemeRenderer({
         const isHealthcareHero = themeId === "healthcare-precision-care";
         const isSummerParadise = themeId === "summer-paradise";
         const isFintechTrustLab = themeId === "fintech-trust-lab";
-          const storeBannerImage = normalizeImageSrc(storeBanner);
+        const storeBannerImage = normalizeImageSrc(storeBanner);
         const defaultHeroFallback =
           "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1600&q=80";
 
@@ -1775,11 +1775,16 @@ export function BaseThemeRenderer({
             className={`py-16 ${bgClass} ${textClass} border-y`}
           >
             <div className="container mx-auto px-4">
-              {content.title && (
+              {(content.heading || content.title) && (
                 <div className="text-center mb-12">
                   <h2 className="text-3xl md:text-4xl font-bold animate-fade-in">
-                    {renderContent(content.title)}
+                    {renderContent(content.heading || content.title)}
                   </h2>
+                  {content.description && (
+                    <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+                      {renderContent(content.description)}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -2433,8 +2438,7 @@ export function BaseThemeRenderer({
 
         const baseGrid =
           "grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3";
-        const gridClass =
-          layout === "masonry" ? `${baseGrid}` : `${baseGrid}`;
+        const gridClass = layout === "masonry" ? `${baseGrid}` : `${baseGrid}`;
 
         return (
           <section key={section.id} className={`py-16 ${bgClass} ${textClass}`}>

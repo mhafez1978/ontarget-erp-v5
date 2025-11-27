@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -36,13 +36,17 @@ interface ContentWizardProps {
     country?: string;
     postalCode?: string;
   };
+  initialSections?: ThemeSection[];
   onContentChange: (sections: ThemeSection[]) => void;
+  onSave?: () => void;
 }
 
 export function ContentWizard({
   themeId,
   companyData,
+  initialSections,
   onContentChange,
+  onSave,
 }: ContentWizardProps) {
   const [currentThemeId, setCurrentThemeId] = useState(themeId);
   const theme = useMemo(
@@ -58,6 +62,9 @@ export function ContentWizard({
     return initialTheme?.sections[0]?.id || "";
   });
 
+  // Track whether we've already applied initialSections to avoid loops
+  const hasAppliedInitialSectionsRef = useRef(false);
+
   // Update when theme changes
   if (themeId !== currentThemeId) {
     setCurrentThemeId(themeId);
@@ -70,7 +77,24 @@ export function ContentWizard({
 
   useEffect(() => {
     onContentChange(sections);
-  }, [sections, onContentChange]);
+    // We intentionally omit onContentChange from dependencies because callers
+    // often pass an inline callback, which would cause this effect to fire on
+    // every parent render and create an update loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sections]);
+
+  // Apply externally provided initial sections (e.g. from AI export)
+  useEffect(() => {
+    if (
+      !hasAppliedInitialSectionsRef.current &&
+      initialSections &&
+      initialSections.length > 0
+    ) {
+      setSections(initialSections);
+      setSelectedSection(initialSections[0]?.id || "");
+      hasAppliedInitialSectionsRef.current = true;
+    }
+  }, [initialSections]);
 
   // Initialize sections with company data on mount
   useEffect(() => {
@@ -463,6 +487,113 @@ export function ContentWizard({
               </>
             )}
 
+            {/* Promo Banner Section */}
+            {currentSection.type === "promo-banner" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="promo-text">Banner Text</Label>
+                  <Textarea
+                    id="promo-text"
+                    value={(currentSection.content.text as string) || ""}
+                    onChange={(e) =>
+                      updateSectionContent(
+                        currentSection.id,
+                        "text",
+                        e.target.value
+                      )
+                    }
+                    placeholder="🔥 BLACK FRIDAY: UP TO 70% OFF + FREE SHIPPING | ENDS IN:"
+                    rows={2}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="promo-link-text">
+                      Button Text (optional)
+                    </Label>
+                    <Input
+                      id="promo-link-text"
+                      value={(currentSection.content.linkText as string) || ""}
+                      onChange={(e) =>
+                        updateSectionContent(
+                          currentSection.id,
+                          "linkText",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Shop Now"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="promo-link">Button Link (optional)</Label>
+                    <Input
+                      id="promo-link"
+                      value={(currentSection.content.link as string) || ""}
+                      onChange={(e) =>
+                        updateSectionContent(
+                          currentSection.id,
+                          "link",
+                          e.target.value
+                        )
+                      }
+                      placeholder="#products"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Stats Section */}
+            {currentSection.type === "stats" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="heading">Section Heading</Label>
+                  <Input
+                    id="heading"
+                    value={
+                      (currentSection.content.heading as string) ||
+                      (currentSection.content.title as string) ||
+                      ""
+                    }
+                    onChange={(e) => {
+                      updateSectionContent(
+                        currentSection.id,
+                        "heading",
+                        e.target.value
+                      );
+                      // Keep legacy title in sync for renderer
+                      updateSectionContent(
+                        currentSection.id,
+                        "title",
+                        e.target.value
+                      );
+                    }}
+                    placeholder="Trusted by Thousands"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (optional)</Label>
+                  <Textarea
+                    id="description"
+                    value={
+                      (currentSection.content.description as string) || ""
+                    }
+                    onChange={(e) =>
+                      updateSectionContent(
+                        currentSection.id,
+                        "description",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Short intro above your stats"
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
+
             {/* Social Proof Section */}
             {currentSection.type === "social-proof" && (
               <>
@@ -659,6 +790,273 @@ export function ContentWizard({
                     rows={6}
                   />
                 </div>
+
+                {/* FAQ items for About section (optional) */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">FAQ Items (optional)</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Use this area to manage common questions and answers
+                        about your business.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSections((prev) =>
+                          prev.map((section) => {
+                            if (section.id !== currentSection.id) {
+                              return section;
+                            }
+                            const rawItems = Array.isArray(
+                              section.content.faqItems
+                            )
+                              ? [
+                                  ...(section.content
+                                    .faqItems as Array<Record<string, unknown>>),
+                                ]
+                              : [];
+                            rawItems.push({
+                              question: "",
+                              answer: "",
+                            });
+                            return {
+                              ...section,
+                              content: {
+                                ...section.content,
+                                faqItems: rawItems,
+                              },
+                            };
+                          })
+                        );
+                      }}
+                    >
+                      Add question
+                    </Button>
+                  </div>
+
+                  {Array.isArray(currentSection.content.faqItems) &&
+                    (currentSection.content
+                      .faqItems as Array<Record<string, unknown>>).length >
+                      0 && (
+                      <div className="space-y-3">
+                        {(currentSection.content
+                          .faqItems as Array<Record<string, unknown>>).map(
+                          (item, index) => {
+                            const question =
+                              typeof item.question === "string"
+                                ? item.question
+                                : "";
+                            const answer =
+                              typeof item.answer === "string"
+                                ? item.answer
+                                : "";
+                            return (
+                              <div
+                                key={index}
+                                className="border rounded-md p-3 space-y-2"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    Q{index + 1}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-xs text-muted-foreground"
+                                    onClick={() => {
+                                      setSections((prev) =>
+                                        prev.map((section) => {
+                                          if (
+                                            section.id !== currentSection.id
+                                          ) {
+                                            return section;
+                                          }
+                                          const rawItems = Array.isArray(
+                                            section.content.faqItems
+                                          )
+                                            ? [
+                                                ...(section.content
+                                                  .faqItems as Array<
+                                                  Record<string, unknown>
+                                                >),
+                                              ]
+                                            : [];
+                                          rawItems.splice(index, 1);
+                                          return {
+                                            ...section,
+                                            content: {
+                                              ...section.content,
+                                              faqItems: rawItems,
+                                            },
+                                          };
+                                        })
+                                      );
+                                    }}
+                                  >
+                                    Remove
+                                  </Button>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs">
+                                    Question
+                                  </Label>
+                                  <Input
+                                    value={question}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      setSections((prev) =>
+                                        prev.map((section) => {
+                                          if (
+                                            section.id !== currentSection.id
+                                          ) {
+                                            return section;
+                                          }
+                                          const rawItems = Array.isArray(
+                                            section.content.faqItems
+                                          )
+                                            ? [
+                                                ...(section.content
+                                                  .faqItems as Array<
+                                                  Record<string, unknown>
+                                                >),
+                                              ]
+                                            : [];
+                                          const existing =
+                                            rawItems[index] &&
+                                            typeof rawItems[index] ===
+                                              "object"
+                                              ? (rawItems[index] as Record<
+                                                  string,
+                                                  unknown
+                                                >)
+                                              : {};
+                                          rawItems[index] = {
+                                            ...existing,
+                                            question: value,
+                                          };
+                                          return {
+                                            ...section,
+                                            content: {
+                                              ...section.content,
+                                              faqItems: rawItems,
+                                            },
+                                          };
+                                        })
+                                      );
+                                    }}
+                                    placeholder="What services do you offer?"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs">Answer</Label>
+                                  <Textarea
+                                    value={answer}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      setSections((prev) =>
+                                        prev.map((section) => {
+                                          if (
+                                            section.id !== currentSection.id
+                                          ) {
+                                            return section;
+                                          }
+                                          const rawItems = Array.isArray(
+                                            section.content.faqItems
+                                          )
+                                            ? [
+                                                ...(section.content
+                                                  .faqItems as Array<
+                                                  Record<string, unknown>
+                                                >),
+                                              ]
+                                            : [];
+                                          const existing =
+                                            rawItems[index] &&
+                                            typeof rawItems[index] ===
+                                              "object"
+                                              ? (rawItems[index] as Record<
+                                                  string,
+                                                  unknown
+                                                >)
+                                              : {};
+                                          rawItems[index] = {
+                                            ...existing,
+                                            answer: value,
+                                          };
+                                          return {
+                                            ...section,
+                                            content: {
+                                              ...section.content,
+                                              faqItems: rawItems,
+                                            },
+                                          };
+                                        })
+                                      );
+                                    }}
+                                    placeholder="We specialize in..."
+                                    rows={3}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          }
+                        )}
+                      </div>
+                    )}
+                </div>
+              </>
+            )}
+
+            {/* Team Section */}
+            {currentSection.type === "team" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="heading">Section Heading</Label>
+                  <Input
+                    id="heading"
+                    value={(currentSection.content.heading as string) || ""}
+                    onChange={(e) =>
+                      updateSectionContent(
+                        currentSection.id,
+                        "heading",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Meet the Team"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={
+                      (currentSection.content.description as string) || ""
+                    }
+                    onChange={(e) =>
+                      updateSectionContent(
+                        currentSection.id,
+                        "description",
+                        e.target.value
+                      )
+                    }
+                    placeholder="A short description of your team"
+                    rows={2}
+                  />
+                </div>
+
+                <div className="p-4 border rounded-md bg-muted/50 space-y-1">
+                  <div className="text-xs text-muted-foreground">
+                    Individual team members are auto-populated from your
+                    company&apos;s featured staff. Edit those in the Teams
+                    &amp; Workforce area.
+                  </div>
+                </div>
               </>
             )}
 
@@ -826,6 +1224,14 @@ export function ContentWizard({
             )}
           </CardContent>
         </Card>
+      )}
+
+      {onSave && (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={onSave}>
+            Save Storefront
+          </Button>
+        </div>
       )}
     </div>
   );

@@ -148,6 +148,12 @@ model User {
   // Storefront blog posts authored by this user
   storefrontPosts StorefrontPost[]
 
+  // AI storefront generation logs
+  aiStorefrontGenerations AiStorefrontGenerationLog[]
+
+  // Support / Knowledge Base articles authored by this user
+  supportArticles SupportArticle[]
+
   // Payment system relations
   invoices Invoice[]
 
@@ -188,6 +194,7 @@ model Company {
   name         String
   slogan       String?
   description  String? @db.Text
+  industry     String? // Optional industry/vertical hint for AI storefront and theming
   logo         String?
   logoLight    String? // Logo for light theme
   logoDark     String? // Logo for dark theme
@@ -258,6 +265,9 @@ model Company {
   invoices        Invoice[]
   payments        Payment[]
 
+  // AI storefront usage
+  aiStorefrontGenerations AiStorefrontGenerationLog[]
+
   // Storage configuration - NEW SYSTEM: Uses StorageProvider table
   // Subscription-based backup: ESSENTIAL (uses global), PROFESSIONAL (optional backup), ENTERPRISE (no backup)
   storageBackupEnabled Boolean @default(true) // If true and has custom storage, also backup to global storage (charged feature)
@@ -278,12 +288,30 @@ model Company {
   // Testimonial relations
   testimonials Testimonial[]
 
+  // Support / Knowledge Base articles for this company
+  supportArticles SupportArticle[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([ownerId])
   @@index([name])
   @@index([isRoot])
+}
+
+// AI storefront generation usage tracking
+model AiStorefrontGenerationLog {
+  id        String           @id @default(cuid())
+  companyId String
+  userId    String
+  plan      SubscriptionPlan
+  createdAt DateTime         @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([userId, createdAt])
 }
 
 // Storefront blog posts (optional blogroll for company storefronts)
@@ -313,6 +341,40 @@ model StorefrontPost {
 
   @@unique([companyId, slug])
   @@index([companyId])
+  @@index([status])
+}
+
+// Support / Knowledge Base articles
+model SupportArticle {
+  id        String  @id @default(cuid())
+  companyId String?
+  authorId  String
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  author  User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  title    String
+  slug     String
+  summary  String? @db.Text
+  category String?
+  tags     String? @db.Text
+
+  // --- ADD THIS LINE ---
+  featuredImage String? @db.LongText 
+  // ---------------------
+
+  content String @db.LongText
+
+  isGlobal        Boolean @default(false)
+  readTimeMinutes Int     @default(5)
+  status          String  @default("PUBLISHED")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId])
+  @@index([authorId])
   @@index([status])
 }
 
