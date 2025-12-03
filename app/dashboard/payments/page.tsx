@@ -262,7 +262,8 @@ export default function PaymentsPage() {
       if (response.ok) {
         const { linkToken } = await response.json();
         // TODO: Initialize Plaid Link UI with linkToken
-        console.log("Plaid link token received:", linkToken);
+        // Do not log the token value to console to avoid exposing it in logs
+        console.info("Plaid link token obtained (redacted)");
         toast.info("Plaid Link integration coming soon");
       } else {
         toast.error("Failed to initialize bank account linking");

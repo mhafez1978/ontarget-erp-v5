@@ -99,8 +99,9 @@ export async function POST(request: NextRequest) {
       // But log the error for admin investigation
     }
 
-    console.log("Password reset token for", email, ":", resetToken);
-    console.log("Reset URL:", resetUrl);
+    // Do not log the raw reset token or URL in any environment — sensitive data.
+    // Keep a minimal audit log without exposing secrets.
+    console.info(`Password reset requested for ${email} (token redacted)`);
 
     return NextResponse.json({
       success: true,

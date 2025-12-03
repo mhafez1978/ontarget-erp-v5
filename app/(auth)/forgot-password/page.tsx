@@ -51,14 +51,8 @@ export default function ForgotPasswordPage() {
 
       setSuccess(true);
 
-      // In development, show the token in console
-      if (data.token) {
-        console.log("Password reset token:", data.token);
-        console.log(
-          "Reset URL:",
-          `${window.location.origin}/reset-password?token=${data.token}`
-        );
-      }
+      // We intentionally don't print full tokens to the console to avoid leaking
+      // sensitive values in logs even in development.
     } catch (err) {
       console.error("Forgot password error:", err);
       setError("An error occurred. Please try again.");
