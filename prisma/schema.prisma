@@ -72,6 +72,8 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  // composite: quick lookup for sessions for a user and expiry checks
+  @@index([userId, expires])
 }
 
 model User {
@@ -186,6 +188,7 @@ model PasswordReset {
   @@index([userId])
   @@index([token])
   @@index([expires])
+    // (no composite indexes here) - keep token/expiry indexes only
 }
 
 // Company Model
@@ -303,6 +306,7 @@ model Company {
   @@index([ownerId])
   @@index([name])
   @@index([isRoot])
+    // (no composite indexes added here by accident)
 }
 
 // AI storefront generation usage tracking
@@ -451,6 +455,8 @@ model Subscription {
   @@index([status])
   @@index([plan])
   @@index([trialEndsAt])
+  // composite index to quickly find the subscription for a subscriber by status
+  @@index([subscriberCompanyId, status])
 }
 
 // Subscription Status Enum
@@ -485,6 +491,8 @@ model CompanyMember {
   @@index([userId])
   @@index([companyId])
   @@index([role])
+  // composite: quick queries for members by company and role
+  @@index([companyId, role])
 }
 
 // Company Member Role Enum (separate from UserRole)
@@ -677,6 +685,8 @@ model AuditLog {
   @@index([action])
   @@index([entityType])
   @@index([createdAt])
+  // composite index to enable fast retrieval of recent logs for a company
+  @@index([companyId, createdAt])
 }
 
 // Geo Tracking Settings
@@ -890,6 +900,8 @@ model Cart {
   @@index([userId])
   @@index([companyId])
   @@index([expiresAt])
+  // composite: fast lookup for user carts scoped to a company
+  @@index([userId, companyId])
 }
 
 // Cart Item Model
@@ -969,6 +981,9 @@ model StorefrontOrder {
   @@index([paymentStatus])
   @@index([customerEmail])
   @@index([createdAt])
+  // composite indexes to improve company-scoped status filters and recent order queries
+  @@index([companyId, status])
+  @@index([companyId, createdAt])
 }
 
 // Storefront Order Item Model
@@ -1286,6 +1301,9 @@ model FailedLoginAttempt {
   @@index([ipAddress])
   @@index([attemptedAt])
   @@index([userId])
+  // Composite: search attempts for an IP or email over a time range
+  @@index([ipAddress, attemptedAt])
+  @@index([email, attemptedAt])
 }
 
 // Security: IP Blacklist
@@ -1693,6 +1711,8 @@ model Project {
   @@index([projectManagerId])
   @@index([teamLeadId])
   @@index([status])
+  // composite index to accelerate queries for projects by company and status
+  @@index([companyId, status])
 }
 
 // Task Model - Projects have many tasks
