@@ -31,11 +31,8 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-
 // can we get this tax rate based on where the guest or customer ordering from ?
-const getTaxRateByLocation = ()=>{
-    
-}
+
 const TAX_RATE = 0.08; // 8% tax
 const STORAGE_KEY = "ontarget-cart";
 

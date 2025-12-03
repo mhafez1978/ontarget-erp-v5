@@ -1067,9 +1067,9 @@ export async function generateAiStorefront(
     company,
     goal,
     tone,
-    products,
-    services,
-    testimonials,
+    products: products.slice(0, 10),
+    services: services.slice(0, 10),
+    testimonials: testimonials.slice(0, 5),
     brandColors: input.brandColors,
     showLocation: input.showLocation ?? true,
     showTeam: input.showTeam ?? true,
@@ -1602,6 +1602,8 @@ function normalizeModelOutputToSpec(
         .filter(Boolean) as { question: string; answer: string }[];
       if (parsed.length > 0) {
         items = parsed;
+      } else {
+        items = defaultItems;
       }
     }
 
@@ -1883,7 +1885,12 @@ export function runSafetyChecks(
 ): AiStorefrontResult["safety"] {
   const text = JSON.stringify(spec).toLowerCase();
 
-  const hits = FORBIDDEN_KEYWORDS.filter((keyword) => text.includes(keyword));
+  // Create regex for whole words only
+  const hits = FORBIDDEN_KEYWORDS.filter((keyword) => {
+    // Escape special regex characters if necessary, though your list looks safe
+    const regex = new RegExp(`\\b${keyword}\\b`, "i");
+    return regex.test(text);
+  });
 
   if (hits.length > 0) {
     return {

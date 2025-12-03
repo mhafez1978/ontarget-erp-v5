@@ -1,29 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 export async function POST(request: NextRequest) {
   try {
-    // Get user from session cookie
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("session");
-
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Validate session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    // Parse session to get user
-    let userId: string;
-    try {
-      const sessionData = JSON.parse(sessionCookie.value);
-      userId = sessionData.userId;
-    } catch {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
+    const { user: sessionUser } = validation;
 
     // Get user with company memberships
     const user = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: sessionUser.id },
       include: {
         companyMemberships: {
           include: {
@@ -169,26 +160,17 @@ export async function POST(request: NextRequest) {
 // GET folders for a company
 export async function GET(request: NextRequest) {
   try {
-    // Get user from session cookie
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("session");
-
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Validate session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    // Parse session to get user
-    let userId: string;
-    try {
-      const sessionData = JSON.parse(sessionCookie.value);
-      userId = sessionData.userId;
-    } catch {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
+    const { user: sessionUser } = validation;
 
     // Get user with company memberships
     const user = await db.user.findUnique({
-      where: { id: userId },
+      where: { id: sessionUser.id },
       include: {
         companyMemberships: true,
         ownedCompanies: true,

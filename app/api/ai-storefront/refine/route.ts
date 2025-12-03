@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 import { canUseAiStorefront } from "@/lib/billing/plan-gating";
 import { decrypt } from "@/lib/crypto";
 import {
@@ -51,19 +50,9 @@ const refineSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const body = await request.json();
@@ -173,7 +162,10 @@ export async function POST(request: NextRequest) {
     try {
       spec = aiFrontstoreSpecSchema.parse(company.aiStorefrontSpec);
     } catch (error) {
-      console.error("[AI Storefront Refine] Failed to parse existing spec:", error);
+      console.error(
+        "[AI Storefront Refine] Failed to parse existing spec:",
+        error
+      );
       return NextResponse.json(
         {
           error:
@@ -188,7 +180,7 @@ export async function POST(request: NextRequest) {
       // Load global AI provider config, if any
       let providerConfig: AiProviderConfig | undefined;
 
-      const aiProviderClient: any = (db as any).aiProviderSetting;
+      const aiProviderClient = db.aiProviderSetting;
       if (
         !aiProviderClient ||
         typeof aiProviderClient.findFirst !== "function"
@@ -472,7 +464,8 @@ export async function POST(request: NextRequest) {
       spec.meta.tone = tone;
 
       // Derive buttonStyle and cornerStyle from tone (matching normalizeModelOutputToSpec)
-      let buttonStyle: "solid" | "outline" | "pill" = spec.meta.buttonStyle || "solid";
+      let buttonStyle: "solid" | "outline" | "pill" =
+        spec.meta.buttonStyle || "solid";
       let cornerStyle: "rounded" | "soft" | "sharp" =
         spec.meta.cornerStyle || "soft";
 
@@ -504,7 +497,9 @@ export async function POST(request: NextRequest) {
     if (emphasis && emphasis !== "balanced") {
       const sections = [...spec.sections];
 
-      const findAndRemove = (type: AiFrontstoreSpec["sections"][number]["type"]) => {
+      const findAndRemove = (
+        type: AiFrontstoreSpec["sections"][number]["type"]
+      ) => {
         const idx = sections.findIndex((s) => s.type === type);
         if (idx === -1) return undefined;
         const [removed] = sections.splice(idx, 1);

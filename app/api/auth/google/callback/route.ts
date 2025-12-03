@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
 import crypto from "crypto";
 import { trackLoginMethod } from "@/lib/account-tracking";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
-import {
-  buildMfaRedirectResponse,
-  createPendingMfaToken,
-} from "@/lib/mfa-pending";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // GET /api/auth/google/callback
@@ -116,7 +111,6 @@ export async function GET(request: NextRequest) {
         isActive: true,
         image: true,
         plan: true,
-        mfaEnabled: true,
       },
     });
 
@@ -136,12 +130,8 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Update their profile picture only if user hasn't uploaded a custom one
-      const hasCustomProfileImage =
-        user.image?.startsWith("/uploads/profiles/") ||
-        user.image?.includes("/uploads/profiles/");
-
-      if (picture && picture !== user.image && !hasCustomProfileImage) {
+      // Update their profile picture if changed
+      if (picture && picture !== user.image) {
         await db.user.update({
           where: { id: user.id },
           data: { image: picture },
@@ -171,7 +161,6 @@ export async function GET(request: NextRequest) {
           isActive: true,
           image: true,
           plan: true,
-          mfaEnabled: true,
         },
       });
 
@@ -294,18 +283,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // If MFA is enabled, redirect to MFA challenge without creating a session
-    if (user.mfaEnabled) {
-      const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-      const pendingToken = createPendingMfaToken(
-        user.id,
-        user.email,
-        "google"
-      );
-      return buildMfaRedirectResponse(appUrl, pendingToken, "google");
-    }
-
     // Get user's geolocation
     let geoData = null;
     try {
@@ -359,25 +336,6 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Create session cookie
-    const cookieStore = await cookies();
-    if (user) {
-      cookieStore.set("userId", user.id, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: "/",
-      });
-      cookieStore.set("sessionToken", sessionToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: "/",
-      });
-    }
-
     console.log(
       "Google OAuth successful for user:",
       user.email,
@@ -386,16 +344,32 @@ export async function GET(request: NextRequest) {
     );
 
     // Check if user needs to select a plan (new users with GUEST plan)
-    if (user.plan === "GUEST") {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
-      );
+    const redirectUrl =
+      user.plan === "GUEST"
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
+        : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
+
+    const response = NextResponse.redirect(redirectUrl);
+
+    // Set session cookies on response
+    if (user) {
+      response.cookies.set("userId", user.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: "/",
+      });
+      response.cookies.set("sessionToken", sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: "/",
+      });
     }
 
-    // Redirect to dashboard
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
-    );
+    return response;
   } catch (error) {
     console.error("Error in Google OAuth callback:", error);
     return NextResponse.redirect(

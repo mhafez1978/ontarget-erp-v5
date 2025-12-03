@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 import { TRANSACTIONAL_TEMPLATES } from "@/lib/email-templates/transactional";
 import { SEASONAL_TEMPLATES } from "@/lib/email-templates/seasonal";
 import type { TemplateDefinition } from "@/lib/email-templates";
@@ -54,23 +53,16 @@ function generateDefaultBlocks(
   return blocks;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    // Validate session
-    const validation = await validateSession(sessionToken);
+    const { user } = validation;
 
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (validation.user.role !== "SUPER_ADMIN") {
+    if (user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Only super admins can generate global templates" },
         { status: 403 }

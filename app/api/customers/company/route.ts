@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Verify user has access to this company (either owner or member)
+    // Verify user has access to this company (owner, member, or staff)
     const hasAccess = await db.company.findFirst({
       where: {
         id: companyId,
@@ -47,6 +47,13 @@ export async function GET(request: NextRequest) {
           { ownerId: user.id },
           {
             members: {
+              some: {
+                userId: user.id,
+              },
+            },
+          },
+          {
+            staff: {
               some: {
                 userId: user.id,
               },

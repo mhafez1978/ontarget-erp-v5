@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/session-manager";
-import { cookies } from "next/headers";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -9,19 +8,9 @@ interface RouteContext {
 
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const user = validation.user;
@@ -103,8 +92,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("session");
+    const sessionCookie = request.cookies.get("session");
 
     if (!sessionCookie?.value) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 const createPostSchema = z.object({
   companyId: z.string(),
@@ -17,20 +16,12 @@ const createPostSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
+    const { user } = validation;
 
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get("companyId");
@@ -46,7 +37,7 @@ export async function GET(request: NextRequest) {
     const userId = validation.user.id;
     const userRole = validation.user.role;
 
-    const user = await db.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -62,13 +53,13 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const isOwner = user.ownedCompanies.length > 0;
-    const isMember = user.companyMemberships.length > 0;
-    const isAdminOrManager = user.companyMemberships.some(
+    const isOwner = dbUser.ownedCompanies.length > 0;
+    const isMember = dbUser.companyMemberships.length > 0;
+    const isAdminOrManager = dbUser.companyMemberships.some(
       (m) => m.role === "ADMIN" || m.role === "MANAGER"
     );
 
@@ -119,20 +110,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
+    const { user } = validation;
 
     const body = await request.json();
     const parsed = createPostSchema.safeParse(body);
@@ -162,7 +145,7 @@ export async function POST(request: NextRequest) {
     const userId = validation.user.id;
     const userRole = validation.user.role;
 
-    const user = await db.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -178,13 +161,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const isOwner = user.ownedCompanies.length > 0;
-    const isMember = user.companyMemberships.length > 0;
-    const isAdminOrManager = user.companyMemberships.some(
+    const isOwner = dbUser.ownedCompanies.length > 0;
+    const isMember = dbUser.companyMemberships.length > 0;
+    const isAdminOrManager = dbUser.companyMemberships.some(
       (m) => m.role === "ADMIN" || m.role === "MANAGER"
     );
 
@@ -221,8 +204,7 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date();
-    const publishedAt =
-      status === "PUBLISHED" ? now : undefined;
+    const publishedAt = status === "PUBLISHED" ? now : undefined;
 
     const post = await db.storefrontPost.create({
       data: {
@@ -259,4 +241,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,26 +14,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
+    const { user } = validation;
 
     const userId = validation.user.id;
     const userRole = validation.user.role;
 
     // Check that user can access this company (SUPER_ADMIN, owner, or ADMIN/MANAGER member)
-    const user = await db.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -50,13 +41,13 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const isOwner = user.ownedCompanies.length > 0;
-    const isMember = user.companyMemberships.length > 0;
-    const isAdminOrManager = user.companyMemberships.some(
+    const isOwner = dbUser.ownedCompanies.length > 0;
+    const isMember = dbUser.companyMemberships.length > 0;
+    const isAdminOrManager = dbUser.companyMemberships.some(
       (m) => m.role === "ADMIN" || m.role === "MANAGER"
     );
 
@@ -80,10 +71,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!company) {
-      return NextResponse.json(
-        { error: "Company not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
     // Featured products/services like the live storefront, with a fallback to any active/published

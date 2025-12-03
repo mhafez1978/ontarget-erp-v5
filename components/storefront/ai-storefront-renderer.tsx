@@ -344,7 +344,7 @@ export function AiStorefrontRenderer({
 
         const items =
           Array.isArray(rawItems) && rawItems.length > 0
-            ? rawItems
+            ? (rawItems
                 .map((item) => {
                   if (!item || typeof item !== "object") return null;
                   const record = item as Record<string, unknown>;
@@ -362,7 +362,11 @@ export function AiStorefrontRenderer({
                   if (!label && !value) return null;
                   return { label, value, icon };
                 })
-                .filter(Boolean) as { label: string; value: string; icon?: string }[]
+                .filter(Boolean) as {
+                label: string;
+                value: string;
+                icon?: string;
+              }[])
             : null;
 
         if (!items || items.length === 0) {
@@ -374,16 +378,11 @@ export function AiStorefrontRenderer({
         const accentColor = spec.meta.accentColor || spec.meta.secondaryColor;
 
         return (
-          <section
-            key={section.id}
-            className="py-12 border-t bg-background"
-          >
+          <section key={section.id} className="py-12 border-t bg-background">
             <div className="container mx-auto px-4">
               {(heading || subheading) && (
                 <div className="mb-8 text-center">
-                  {heading && (
-                    <h2 className="text-3xl font-bold">{heading}</h2>
-                  )}
+                  {heading && <h2 className="text-3xl font-bold">{heading}</h2>}
                   {subheading && (
                     <p className="mt-2 text-muted-foreground">{subheading}</p>
                   )}
@@ -633,8 +632,7 @@ export function AiStorefrontRenderer({
           section.layout &&
           typeof (section.layout as Record<string, unknown>).variant ===
             "string"
-            ? ((section.layout as Record<string, unknown>)
-                .variant as string)
+            ? ((section.layout as Record<string, unknown>).variant as string)
             : undefined;
 
         const layoutVariant =

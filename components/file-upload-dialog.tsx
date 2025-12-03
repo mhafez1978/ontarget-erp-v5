@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Upload, X, FileIcon, CheckCircle } from "lucide-react";
+import { Upload, X, FileIcon, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,7 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { validateFile, formatFileSize } from "@/lib/file-utils";
 
 interface FileUploadDialogProps {
   open: boolean;
@@ -38,6 +40,7 @@ export function FileUploadDialog({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -55,14 +58,30 @@ export function FileUploadDialog({
     setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
+      const file = e.dataTransfer.files[0];
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        setValidationError(validation.error || "Invalid file");
+        toast.error(validation.error);
+        return;
+      }
+      setSelectedFile(file);
+      setValidationError(null);
     }
   }, []);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
-        setSelectedFile(e.target.files[0]);
+        const file = e.target.files[0];
+        const validation = validateFile(file);
+        if (!validation.valid) {
+          setValidationError(validation.error || "Invalid file");
+          toast.error(validation.error);
+          return;
+        }
+        setSelectedFile(file);
+        setValidationError(null);
       }
     },
     []
@@ -129,6 +148,7 @@ export function FileUploadDialog({
     setUploading(false);
     setUploadProgress(0);
     setUploadComplete(false);
+    setValidationError(null);
     onOpenChange(false);
   };
 
@@ -167,6 +187,13 @@ export function FileUploadDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {validationError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{validationError}</AlertDescription>
+            </Alert>
+          )}
+
           {!selectedFile ? (
             <div
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${

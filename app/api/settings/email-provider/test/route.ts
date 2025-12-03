@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import nodemailer from "nodemailer";
 import { encrypt, decrypt } from "@/lib/crypto";
+import { validateSession } from "@/lib/session-manager";
 
 const testSchema = z.object({
   provider: z.enum([
@@ -43,8 +43,7 @@ const testSchema = z.object({
 // POST - Test email provider connection
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
+    const sessionToken = req.cookies.get("sessionToken")?.value;
 
     if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

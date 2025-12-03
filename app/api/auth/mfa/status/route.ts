@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import { PENDING_COOKIE, verifyPendingMfaToken } from "@/lib/mfa-pending";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(PENDING_COOKIE)?.value;
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get(PENDING_COOKIE)?.value;
   const payload = verifyPendingMfaToken(token);
 
   if (!payload) {

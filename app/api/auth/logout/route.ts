@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { revokeSession } from "@/lib/session-manager";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 export async function POST(request: NextRequest) {
   try {
-    // Get session token from cookie
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
+    // Get session token from request cookies
+    const sessionToken = request.cookies.get("sessionToken")?.value;
 
     if (!sessionToken) {
       // No session, but still clear cookie and return success

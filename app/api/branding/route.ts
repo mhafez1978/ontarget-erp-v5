@@ -1,23 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // Check if this is for dashboard context (company-specific branding allowed)
     const { searchParams } = new URL(request.url);
     const context = searchParams.get("context");
     const isDashboard = context === "dashboard";
 
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
     // Only apply company-specific white-label branding in dashboard context
-    if (isDashboard && sessionToken) {
-      const validation = await validateSession(sessionToken);
+    if (isDashboard) {
+      const validation = await validateSessionForAPI(request);
 
-      if (validation.valid && validation.user) {
+      if (validation.valid) {
         const userId = validation.user.id;
 
         const user = await db.user.findUnique({

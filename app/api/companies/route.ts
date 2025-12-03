@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
     const { user } = validation;
 
     // Fetch companies based on role
-    // SUPER_ADMIN sees all companies they own
-    // ADMIN sees companies they own + companies they're members of
-    // Others see only companies they own
+    // SUPER_ADMIN/ADMIN: owned companies + companies they're members/staff of
+    // MANAGER/STAFF/CONTRACTOR: companies they're staff members of
+    // Others: only companies they own
     let companies;
 
     if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
@@ -51,6 +51,20 @@ export async function GET(request: NextRequest) {
               },
             },
           },
+          companyStaff: {
+            include: {
+              company: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  logo: true,
+                  isRoot: true,
+                  createdAt: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -58,7 +72,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
-      // Combine owned and member companies (remove duplicates)
+      // Combine owned, member, and staff companies (remove duplicates)
       const companyMap = new Map();
 
       // Add owned companies
@@ -73,6 +87,13 @@ export async function GET(request: NextRequest) {
         }
       });
 
+      // Add staff companies
+      userWithCompanies.companyStaff.forEach((staff) => {
+        if (!companyMap.has(staff.company.id)) {
+          companyMap.set(staff.company.id, staff.company);
+        }
+      });
+
       companies = Array.from(companyMap.values());
 
       // Sort: root company first, then by creation date (oldest first)
@@ -83,6 +104,34 @@ export async function GET(request: NextRequest) {
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
       });
+    } else if (
+      user.role === "MANAGER" ||
+      user.role === "STAFF" ||
+      user.role === "CONTRACTOR"
+    ) {
+      // Staff roles see companies they're staff members of
+      const staffMemberships = await db.companyStaff.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              logo: true,
+              isRoot: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+      companies = staffMemberships.map((staff) => staff.company);
     } else {
       // Other roles only see companies they own
       companies = await db.company.findMany({

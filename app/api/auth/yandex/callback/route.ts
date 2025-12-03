@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
 import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
@@ -217,21 +216,24 @@ export async function GET(request: NextRequest) {
 
     // If MFA is enabled, redirect to MFA challenge without creating a session
     if (user.mfaEnabled) {
-      const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-      const pendingToken = createPendingMfaToken(
-        user.id,
-        user.email,
-        "yandex"
-      );
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+      const pendingToken = createPendingMfaToken(user.id, user.email, "yandex");
       return buildMfaRedirectResponse(appUrl, pendingToken, "yandex");
     }
 
     // Create session using session manager
-    const cookieStore = await cookies();
     const session = await createSession({ userId: user.id });
 
-    cookieStore.set("sessionToken", session.sessionToken, {
+    // Determine redirect URL
+    const redirectUrl =
+      user.plan === "GUEST"
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
+        : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
+
+    const response = NextResponse.redirect(redirectUrl);
+
+    // Set session cookie on response
+    response.cookies.set("sessionToken", session.sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -239,17 +241,7 @@ export async function GET(request: NextRequest) {
       path: "/",
     });
 
-    // Check if user needs to select a plan (new users with GUEST plan)
-    if (user.plan === "GUEST") {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
-      );
-    }
-
-    // Redirect to dashboard
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
-    );
+    return response;
   } catch (error) {
     console.error("Error in Yandex OAuth callback:", error);
     return NextResponse.redirect(

@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
+import { validateSessionForAPI } from "@/lib/validate-session";
 import { validateSession } from "@/lib/session-manager";
 
 // GET - Fetch storage providers
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -44,7 +34,7 @@ export async function GET(request: NextRequest) {
     } else if (user.role === "ADMIN") {
       // Admins can only see their company storage
       const companies = await db.company.findMany({
-        where: { ownerId: userId },
+        where: { members: { some: { id: userId } } },
         select: { id: true },
       });
       const companyIds = companies.map((c) => c.id);
@@ -71,34 +61,26 @@ export async function GET(request: NextRequest) {
 // POST - Create or update storage provider
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const user = validation.user;
     const userId = validation.user.id;
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
     const body = await request.json();
     const { provider, config, scope, companyId, isActive, enableGlobalBackup } =
       body;
 
-    // Validate permissions
-    if (scope === "GLOBAL" && user.role !== "SUPER_ADMIN") {
+    if (!provider || !config) {
+      return NextResponse.json(
+        { error: "Provider and config are required" },
+        { status: 400 }
+      );
+    }
+
+    if (scope === "GLOBAL" && !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Only super admins can configure global storage" },
         { status: 403 }
@@ -185,8 +167,7 @@ export async function POST(request: NextRequest) {
 // PATCH - Activate/deactivate storage provider
 export async function PATCH(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
+    const sessionToken = request.cookies.get("sessionToken")?.value;
 
     if (!sessionToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

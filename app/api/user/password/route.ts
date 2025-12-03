@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 // Zod schema for password update
 const updatePasswordSchema = z.object({
@@ -20,18 +19,9 @@ const updatePasswordSchema = z.object({
 // Update user's password and handle authMethod transition
 export async function PATCH(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Validate session
-    const validation = await validateSession(sessionToken);
-
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const userId = validation.user.id;

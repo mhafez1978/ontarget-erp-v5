@@ -4203,7 +4203,9 @@ export default function SupportArticlePage() {
     return (
       <DashboardLayout user={user || undefined}>
         <div className="flex items-center justify-center h-96">
-          <p className="text-muted-foreground">Article not found.</p>
+          <p className="text-muted-foreground">
+            We couldn&apos;t find any articles.
+          </p>
         </div>
       </DashboardLayout>
     );
@@ -4278,7 +4280,7 @@ export default function SupportArticlePage() {
                 onClick={() => setEditMode(true)}
               >
                 <Pencil className="h-4 w-4" />
-                Edit Article
+                Edit
               </Button>
             )}
             {article.canEdit && editMode && (

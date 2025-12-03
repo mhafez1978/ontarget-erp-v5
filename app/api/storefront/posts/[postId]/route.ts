@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 const updatePostSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
@@ -20,20 +19,12 @@ export async function PUT(
 ) {
   try {
     const { postId } = await context.params;
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
+    const { user } = validation;
 
     const body = await request.json();
     const parsed = updatePostSchema.safeParse(body);
@@ -68,7 +59,7 @@ export async function PUT(
     const userRole = validation.user.role;
     const companyId = existingPost.companyId;
 
-    const user = await db.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -84,13 +75,13 @@ export async function PUT(
       },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const isOwner = user.ownedCompanies.length > 0;
-    const isMember = user.companyMemberships.length > 0;
-    const isAdminOrManager = user.companyMemberships.some(
+    const isOwner = dbUser.ownedCompanies.length > 0;
+    const isMember = dbUser.companyMemberships.length > 0;
+    const isAdminOrManager = dbUser.companyMemberships.some(
       (m) => m.role === "ADMIN" || m.role === "MANAGER"
     );
 
@@ -118,10 +109,7 @@ export async function PUT(
 
     if (data.status !== undefined) {
       updateData.status = data.status;
-      if (
-        data.status === "PUBLISHED" &&
-        existingPost.status !== "PUBLISHED"
-      ) {
+      if (data.status === "PUBLISHED" && existingPost.status !== "PUBLISHED") {
         updateData.publishedAt = new Date();
       }
     }
@@ -178,20 +166,12 @@ export async function DELETE(
 ) {
   try {
     const { postId } = await context.params;
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
+    const { user } = validation;
 
     const existingPost = await db.storefrontPost.findUnique({
       where: { id: postId },
@@ -209,7 +189,7 @@ export async function DELETE(
     const userRole = validation.user.role;
     const companyId = existingPost.companyId;
 
-    const user = await db.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -225,13 +205,13 @@ export async function DELETE(
       },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const isOwner = user.ownedCompanies.length > 0;
-    const isMember = user.companyMemberships.length > 0;
-    const isAdminOrManager = user.companyMemberships.some(
+    const isOwner = dbUser.ownedCompanies.length > 0;
+    const isMember = dbUser.companyMemberships.length > 0;
+    const isAdminOrManager = dbUser.companyMemberships.some(
       (m) => m.role === "ADMIN" || m.role === "MANAGER"
     );
 
@@ -258,4 +238,3 @@ export async function DELETE(
     );
   }
 }
-

@@ -168,7 +168,7 @@ export function StorageProviderSettings({
               <Label htmlFor="path">Storage Path</Label>
               <Input
                 id="path"
-                placeholder="/var/storage/cold"
+                placeholder="../var/storage/cold"
                 value={config.path || ""}
                 onChange={(e) => setConfig({ ...config, path: e.target.value })}
               />

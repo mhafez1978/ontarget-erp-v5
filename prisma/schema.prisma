@@ -285,6 +285,12 @@ model Company {
   // File system relations
   folders FileFolder[] // Company folder structure
 
+  // Time tracking
+  timeEntries TimeEntry[]
+
+  // Payroll
+  payrollJurisdictions PayrollJurisdiction[]
+
   // Testimonial relations
   testimonials Testimonial[]
 
@@ -544,6 +550,24 @@ model CompanyStaff {
   onboardingToken     OnboardingToken? // One-to-one relation
   isActive            Boolean              @default(true) // Account active status (disabled after 48h if onboarding incomplete)
 
+  // Time tracking
+  timeEntries TimeEntry[]
+
+  // Payroll jurisdiction
+  payrollJurisdictionId String?
+  payrollJurisdiction   PayrollJurisdiction? @relation(fields: [payrollJurisdictionId], references: [id])
+
+  // Employment classification
+  employmentClassification String? // "W2_EMPLOYEE", "1099_CONTRACTOR", "INTERNATIONAL_CONTRACTOR"
+
+  // Compensation
+  payRate      Decimal? @db.Decimal(10, 2) // Hourly or annual
+  payFrequency String?  @default("HOURLY") // "HOURLY", "SALARY_ANNUAL", "SALARY_BIWEEKLY"
+  currency     String?  @default("USD") // ISO currency code
+
+  // Tax withholding (from W-4 or equivalent)
+  taxWithholdingConfig Json? // Marital status, allowances, additional withholding
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -554,6 +578,7 @@ model CompanyStaff {
   @@index([employmentType])
   @@index([status])
   @@index([hireDate])
+  @@index([payrollJurisdictionId])
 }
 
 // Employment Type Enum
@@ -1806,6 +1831,64 @@ model OnboardingToken {
   @@index([isUsed])
 }
 
+// Time Entry - Employee clock in/out tracking
+model TimeEntry {
+  id String @id @default(cuid())
+
+  staffId String
+  staff   CompanyStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Clock times
+  clockIn  DateTime
+  clockOut DateTime?
+
+  // Break tracking
+  breakStart DateTime?
+  breakEnd   DateTime?
+  breakMinutes Int @default(0) // Total break time in minutes
+
+  // Calculated fields
+  totalMinutes Int? // Total minutes worked (clockOut - clockIn - breaks)
+  totalHours   Decimal? @db.Decimal(5, 2) // Total hours worked (for display)
+
+  // Status
+  status TimeEntryStatus @default(CLOCKED_IN)
+
+  // Notes and location
+  notes     String? @db.Text
+  ipAddress String?
+  location  String? // Optional: GPS coordinates or office location
+
+  // Approval workflow
+  isApproved Boolean   @default(false)
+  approvedBy String?
+  approvedAt DateTime?
+
+  // Link to payroll entry (when time is processed for payment)
+  payrollEntryId String?
+  payrollEntry   PayrollEntry? @relation(fields: [payrollEntryId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([staffId])
+  @@index([companyId])
+  @@index([clockIn])
+  @@index([status])
+  @@index([isApproved])
+  @@index([payrollEntryId])
+}
+
+// Time Entry Status Enum
+enum TimeEntryStatus {
+  CLOCKED_IN   // Currently working
+  ON_BREAK     // On break
+  CLOCKED_OUT  // Finished for the day
+}
+
 // File/Folder System - Hierarchical file storage
 model FileFolder {
   id String @id @default(cuid())
@@ -2004,6 +2087,36 @@ model LedgerInvoice {
   @@index([dueDate])
 }
 
+// Payroll Jurisdiction - Tax rules per country/region
+model PayrollJurisdiction {
+  id          String  @id @default(cuid())
+  code        String  @unique // "US-CA", "US-NY", "CA-ON", "UK", "FR"
+  name        String // "California, USA", "Ontario, Canada"
+  countryCode String // ISO 2-letter: "US", "CA", "GB", "FR"
+  regionCode  String? // State/province code: "CA", "ON", "QC"
+
+  // Tax configuration (JSON for flexibility)
+  taxConfig Json // Income tax brackets, payroll taxes, deductions
+
+  // Compliance requirements
+  requiredForms   Json? // ["W-4", "State_W-4", "I-9"]
+  filingFrequency String? // "WEEKLY", "BIWEEKLY", "MONTHLY", "QUARTERLY"
+
+  // Status
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  companies      Company[]
+  staff          CompanyStaff[]
+  payrollEntries PayrollEntry[]
+
+  @@index([countryCode])
+  @@index([code])
+}
+
 // Payroll Entry - Employee payment records
 model PayrollEntry {
   id String @id @default(cuid())
@@ -2026,7 +2139,7 @@ model PayrollEntry {
   netAmount   Decimal @default(0) @db.Decimal(15, 2)
 
   // Tax details (region-specific)
-  taxRegion    String? // US, EU, ASIA
+  taxRegion    String? // DEPRECATED: Use jurisdictionId instead
   taxBreakdown Json? // Detailed tax calculations {federal, state, local, social_security, etc}
 
   // Payment status
@@ -2038,6 +2151,23 @@ model PayrollEntry {
 
   notes String? @db.Text
 
+  // Jurisdiction
+  jurisdictionId String?
+  jurisdiction   PayrollJurisdiction? @relation(fields: [jurisdictionId], references: [id])
+
+  // Currency
+  currency String @default("USD")
+
+  // Hours worked (from TimeEntry)
+  hoursWorked   Decimal? @db.Decimal(8, 2)
+  overtimeHours Decimal? @db.Decimal(8, 2)
+
+  // Deductions
+  deductionsBreakdown Json? // Health insurance, 401k, etc.
+
+  // Linked time entries (hours from time tracking system)
+  timeEntries TimeEntry[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2045,6 +2175,7 @@ model PayrollEntry {
   @@index([staffId])
   @@index([periodStart, periodEnd])
   @@index([status])
+  @@index([jurisdictionId])
 }
 
 // Expense Entry - Business expense tracking

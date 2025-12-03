@@ -15,6 +15,7 @@ export const aiFrontstoreSectionTypeSchema = z.enum([
 
 export const aiFrontstoreSectionSchema = z.object({
   id: z.string(),
+  className: z.string().optional(),
   type: aiFrontstoreSectionTypeSchema,
   order: z.number().int(),
   content: z.record(z.string(), z.unknown()),

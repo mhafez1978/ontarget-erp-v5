@@ -1,22 +1,12 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/session-manager";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Validate session
-    const validation = await validateSession(sessionToken);
-
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -149,6 +139,8 @@ export async function GET(request: Request) {
         path: { startsWith: p },
       }));
 
+      const employeesBase = `/${sanitizedCompanyName}-store/Employees`;
+
       folders = await db.fileFolder.findMany({
         where: {
           companyId,
@@ -159,6 +151,8 @@ export async function GET(request: Request) {
             ...projectPathPrefixes,
             // Include the Projects root so users can expand it
             { path: projectsBase },
+            // Include the Employees root so users can expand it to see their folder
+            { path: employeesBase },
           ],
         },
         include: {
@@ -196,20 +190,11 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Validate session
-    const validation = await validateSession(sessionToken);
-
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -320,8 +305,17 @@ type FolderWithChildren = {
   name: string;
   path: string;
   type: string;
+  parentId: string | null;
+  ownerId: string | null;
   isPasswordProtected: boolean;
   fileCount: number;
+  files: Array<{
+    id: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    createdAt: string;
+  }>;
   children: FolderWithChildren[];
 };
 
@@ -331,10 +325,18 @@ function buildFolderTree(
     name: string;
     path: string;
     type: string;
-    isPasswordProtected: boolean;
     parentId: string | null;
+    ownerId: string | null;
+    isPasswordProtected: boolean;
     _count?: { files: number };
     fileCount?: number;
+    files?: Array<{
+      id: string;
+      fileName: string;
+      fileSize: number;
+      mimeType: string;
+      createdAt: Date;
+    }>;
   }>
 ): FolderWithChildren[] {
   const folderMap = new Map<string, FolderWithChildren>();
@@ -347,8 +349,19 @@ function buildFolderTree(
       name: folder.name,
       path: folder.path,
       type: folder.type,
+      parentId: folder.parentId,
+      ownerId: folder.ownerId,
       isPasswordProtected: folder.isPasswordProtected,
       fileCount: folder._count?.files || folder.fileCount || 0,
+      files: folder.files
+        ? folder.files.map((f) => ({
+            id: f.id,
+            fileName: f.fileName,
+            fileSize: f.fileSize,
+            mimeType: f.mimeType,
+            createdAt: f.createdAt.toISOString(),
+          }))
+        : [],
       children: [],
     });
   });

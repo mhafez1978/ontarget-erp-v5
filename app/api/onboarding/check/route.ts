@@ -1,21 +1,11 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ needsOnboarding: false });
-    }
-
-    // Validate session
-    const validation = await validateSession(sessionToken);
-
-    if (!validation.valid || !validation.user) {
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
       return NextResponse.json({ needsOnboarding: false });
     }
 

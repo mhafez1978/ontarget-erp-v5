@@ -71,7 +71,7 @@ async function getGlobalStorage(): Promise<{
     // Fallback to default LOCAL storage
     return {
       provider: "LOCAL",
-      config: { path: "/var/storage/cold" },
+      config: { path: "../var/storage/cold" },
     };
   }
 
@@ -343,7 +343,7 @@ async function deleteFromLocal(filePath: string): Promise<void> {
 /**
  * Upload file to storage with subscription-based backup rules
  *
- * ESSENTIAL: Primary = Global storage (e.g., /var/storage/cold/CompanyName/...)
+ * ESSENTIAL: Primary = Global storage (e.g., ../var/storage/cold/CompanyName/...)
  * GROWTH: Primary = Company storage, Backup = Global (if backup enabled)
  * ENTERPRISE: Primary = Company storage only, no backup
  */
@@ -375,7 +375,7 @@ export async function uploadDocument(
   // Upload to primary storage
   if (storage.primary.provider === "LOCAL") {
     const basePath =
-      (storage.primary.config.path as string) || "/var/storage/cold";
+      (storage.primary.config.path as string) || "../var/storage/cold";
     const fullPath = `${basePath}/${primaryPath}`;
     await uploadToLocal(fullPath, fileBuffer);
   }
@@ -387,7 +387,7 @@ export async function uploadDocument(
 
     if (storage.backup.provider === "LOCAL") {
       const backupBasePath =
-        (storage.backup.config.path as string) || "/var/storage/cold";
+        (storage.backup.config.path as string) || "../var/storage/cold";
       const fullPath = `${backupBasePath}/${backupPath}`;
       await uploadToLocal(fullPath, fileBuffer);
     }
@@ -398,7 +398,7 @@ export async function uploadDocument(
   const primaryFullPath =
     storage.primary.provider === "LOCAL"
       ? `${
-          (storage.primary.config.path as string) || "/var/storage/cold"
+          (storage.primary.config.path as string) || "../var/storage/cold"
         }/${primaryPath}`
       : primaryPath;
 
@@ -406,7 +406,7 @@ export async function uploadDocument(
     backupPath && storage.backup
       ? storage.backup.provider === "LOCAL"
         ? `${
-            (storage.backup.config.path as string) || "/var/storage/cold"
+            (storage.backup.config.path as string) || "../var/storage/cold"
           }/${backupPath}`
         : backupPath
       : undefined;
@@ -474,18 +474,24 @@ export async function listCompanyFiles(
 
   const basePath =
     storage.primary.provider === "LOCAL"
-      ? `/var/storage/cold/${company.name}`
+      ? `../var/storage/cold/${company.name}`
       : storage.primary.path;
 
   if (storage.primary.provider === "LOCAL") {
     const files = await listFromLocal(basePath);
-    return files.map((file) => ({
+    // Filter files by category if not "All"
+    const filteredFiles = files.filter((file) => {
+      if (category === "All") return true;
+      // Check if file path includes the category folder
+      return file.name.startsWith(`${category}/`);
+    });
+    return filteredFiles.map((file) => ({
       name: file.name,
       size: file.size,
       type: "", // TODO: Detect MIME type
       path: `${basePath}/${file.name}`,
       uploadedAt: file.mtime,
-      category: "Other", // TODO: Detect from path
+      category: category === "All" ? "Other" : category, // TODO: Detect from path
     }));
   }
 

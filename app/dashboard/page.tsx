@@ -27,17 +27,18 @@ import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
 function getRoleView(
   role: string,
   userName?: string | null,
+  companyId?: string | null,
   onRoleChange?: () => void
 ) {
   switch (role) {
     case "SUPER_ADMIN":
       return <SuperAdminView userName={userName} />;
     case "ADMIN":
-      return <AdminView userName={userName} />;
+      return <AdminView userName={userName} companyId={companyId} />;
     case "MANAGER":
-      return <ManagerView userName={userName} />;
+      return <ManagerView userName={userName} companyId={companyId} />;
     case "STAFF":
-      return <StaffView userName={userName} />;
+      return <StaffView userName={userName} companyId={companyId} />;
     case "ERP_CUSTOMER":
       return (
         <ErpCustomerView userName={userName} onRoleChange={onRoleChange} />
@@ -45,7 +46,7 @@ function getRoleView(
     case "COMPANY_CUSTOMER":
       return <CompanyCustomerView userName={userName} />;
     case "CONTRACTOR":
-      return <ContractorView userName={userName} />;
+      return <ContractorView userName={userName} companyId={companyId} />;
     case "SUPPLIER":
       return <SupplierView userName={userName} />;
     case "GUEST":
@@ -61,11 +62,13 @@ export default function DashboardPage() {
     email: string | null;
     image: string | null;
     role: string;
+    companyId?: string | null;
   }>({
     name: null,
     email: null,
     image: null,
     role: "GUEST",
+    companyId: null,
   });
   const [loading, setLoading] = useState(true);
 
@@ -86,6 +89,7 @@ export default function DashboardPage() {
           email: data.user.email,
           image: data.user.image,
           role: data.user.role,
+          companyId: data.user.companyId,
         });
       } else {
         // Not authenticated, redirect to login
@@ -125,7 +129,7 @@ export default function DashboardPage() {
     <DashboardLayout user={user}>
       <div className="space-y-6">
         {/* Role-based Welcome Message */}
-        {getRoleView(user.role, user.name, handleRoleChange)}
+        {getRoleView(user.role, user.name, user.companyId, handleRoleChange)}
       </div>
     </DashboardLayout>
   );

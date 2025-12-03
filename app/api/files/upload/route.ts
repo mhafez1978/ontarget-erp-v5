@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { uploadDocument } from "@/lib/storage-service";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { PLAN_LIMITS, calculateExtraStorageCost } from "@/lib/plan-limits";
+import { validateFile } from "@/lib/file-utils";
 
 export const runtime = "nodejs";
 
@@ -61,10 +62,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
+    // Validate file type and size using file-utils
+    const fileValidation = validateFile(file, MAX_FILE_SIZE);
+    if (!fileValidation.valid) {
       return NextResponse.json(
-        { error: "File too large. Maximum size is 100MB" },
+        { error: fileValidation.error },
         { status: 400 }
       );
     }
@@ -138,12 +140,13 @@ export async function POST(request: NextRequest) {
 
     // Check user permissions
     const isSuperAdmin = user.role === "SUPER_ADMIN";
+    const isAdmin = sessionUser.role === "ADMIN";
     const ownsCompany = user.ownedCompanies.some((c) => c.id === companyId);
     const isMember = user.companyMemberships.some(
       (m) => m.companyId === companyId
     );
 
-    if (!isSuperAdmin && !ownsCompany && !isMember) {
+    if (!isSuperAdmin && !isAdmin && !ownsCompany && !isMember) {
       return NextResponse.json(
         { error: "You do not have access to this company" },
         { status: 403 }
@@ -163,6 +166,7 @@ export async function POST(request: NextRequest) {
       if (
         !isSuperAdmin &&
         !ownsCompany &&
+        !isAdmin &&
         folder.ownerId !== user.id &&
         membership?.role !== "ADMIN"
       ) {

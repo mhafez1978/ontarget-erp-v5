@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
 import crypto from "crypto";
 import { validateSession } from "@/lib/session-manager";
 
 // GET - Fetch user's cart
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-    const sessionId = cookieStore.get("cartSessionId")?.value;
+    const sessionToken = request.cookies.get("sessionToken")?.value;
+    const sessionId = request.cookies.get("cartSessionId")?.value;
 
     let cart;
     let userId;
@@ -94,9 +92,8 @@ export async function GET() {
 // POST - Add item to cart
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-    let sessionId = cookieStore.get("cartSessionId")?.value;
+    const sessionToken = request.cookies.get("sessionToken")?.value;
+    let sessionId = request.cookies.get("cartSessionId")?.value;
 
     let userId;
     if (sessionToken) {
@@ -146,6 +143,8 @@ export async function POST(request: NextRequest) {
 
     // Find or create cart
     let cart;
+    let newSessionId: string | null = null;
+
     if (userId) {
       // Logged-in user
       cart = await db.cart.findFirst({
@@ -165,12 +164,7 @@ export async function POST(request: NextRequest) {
       // Guest user
       if (!sessionId) {
         sessionId = crypto.randomUUID();
-        cookieStore.set("cartSessionId", sessionId, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 30 * 24 * 60 * 60, // 30 days
-        });
+        newSessionId = sessionId;
       }
 
       cart = await db.cart.findUnique({
@@ -245,11 +239,23 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       cart: updatedCart,
       item: cartItem,
     });
+
+    // Set session cookie for guest users if new session was created
+    if (newSessionId) {
+      response.cookies.set("cartSessionId", newSessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+      });
+    }
+
+    return response;
   } catch (error) {
     console.error("Error adding to cart:", error);
     return NextResponse.json(

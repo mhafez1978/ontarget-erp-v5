@@ -10,8 +10,13 @@ import {
   ChevronDown,
   Upload,
   Lock,
+  Unlock,
   RefreshCw,
   FolderPlus,
+  Grid3x3,
+  List,
+  Download,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,9 +34,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileUploadDialog } from "@/components/file-upload-dialog";
 import { CreateFolderDialog } from "@/components/create-folder-dialog";
 import { FileContextMenu } from "@/components/file-context-menu";
+import { FolderPasswordDialog } from "@/components/folder-password-dialog";
+import {
+  getFileIcon,
+  formatFileSize,
+  canPreviewImage,
+  getAllowedFileTypesDescription,
+  getBlockedFileTypesDescription,
+} from "@/lib/file-utils";
 
 interface FileItem {
   id: string;
@@ -75,8 +90,23 @@ export function HierarchicalFileExplorer({
   const [selectedFolder, setSelectedFolder] = useState<FolderNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordDialogMode, setPasswordDialogMode] = useState<
+    "set" | "verify" | "remove"
+  >("set");
+  const [lockedFolder, setLockedFolder] = useState<FolderNode | null>(null);
   const [allFolders, setAllFolders] = useState<FolderNode[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [downloadingMultiple, setDownloadingMultiple] = useState(false);
+  const [storageInfo, setStorageInfo] = useState<{
+    used: number;
+    limit: number;
+    plan: string;
+  } | null>(null);
 
   const fetchFolderTree = useCallback(async () => {
     setLoading(true);
@@ -128,6 +158,19 @@ export function HierarchicalFileExplorer({
             }
           }
         }
+      }
+
+      // Fetch storage info
+      const storageResponse = await fetch(
+        `/api/company/storage?companyId=${companyId}`
+      );
+      if (storageResponse.ok) {
+        const storageData = await storageResponse.json();
+        setStorageInfo({
+          used: storageData.company?.storageUsedGB || 0,
+          limit: storageData.storageLimit || 10,
+          plan: storageData.company?.plan || "ESSENTIAL",
+        });
       }
     } catch (error) {
       console.error("Failed to fetch folders:", error);
@@ -249,6 +292,104 @@ export function HierarchicalFileExplorer({
     });
   };
 
+  const handleFolderClick = (node: FolderNode) => {
+    // Check if folder is password protected
+    if (node.isPasswordProtected && selectedFolder?.id !== node.id) {
+      setLockedFolder(node);
+      setPasswordDialogMode("verify");
+      setShowPasswordDialog(true);
+    } else {
+      setSelectedFolder(node);
+      setSelectedFileIds(new Set()); // Clear selection when changing folders
+      if (node.children && node.children.length > 0) {
+        toggleFolder(node.id);
+      }
+    }
+  };
+
+  const handlePasswordVerified = () => {
+    if (lockedFolder) {
+      setSelectedFolder(lockedFolder);
+      setLockedFolder(null);
+    }
+  };
+
+  const handleLockFolder = () => {
+    if (!selectedFolder) return;
+    setPasswordDialogMode("set");
+    setShowPasswordDialog(true);
+  };
+
+  const handleUnlockFolder = () => {
+    if (!selectedFolder) return;
+    setPasswordDialogMode("remove");
+    setShowPasswordDialog(true);
+  };
+
+  const toggleFileSelection = (fileId: string) => {
+    setSelectedFileIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(fileId)) {
+        next.delete(fileId);
+      } else {
+        next.add(fileId);
+      }
+      return next;
+    });
+  };
+
+  const selectAllFiles = () => {
+    if (!selectedFolder?.files) return;
+    setSelectedFileIds(new Set(selectedFolder.files.map((f) => f.id)));
+  };
+
+  const deselectAllFiles = () => {
+    setSelectedFileIds(new Set());
+  };
+
+  const handleDownloadMultiple = async () => {
+    if (selectedFileIds.size === 0) return;
+
+    setDownloadingMultiple(true);
+    try {
+      const response = await fetch("/api/files/download-multiple", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileIds: Array.from(selectedFileIds) }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to download files");
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary link and trigger download
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `files-${new Date().toISOString().split("T")[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`${selectedFileIds.size} files downloaded successfully`);
+      deselectAllFiles();
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to download files"
+      );
+    } finally {
+      setDownloadingMultiple(false);
+    }
+  };
+
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -268,12 +409,7 @@ export function HierarchicalFileExplorer({
               isSelected ? "bg-muted" : ""
             }`}
             style={{ paddingLeft: `${level * 20 + 12}px` }}
-            onClick={() => {
-              setSelectedFolder(node);
-              if (hasChildren) {
-                toggleFolder(node.id);
-              }
-            }}
+            onClick={() => handleFolderClick(node)}
           >
             {hasChildren && (
               <button
@@ -301,7 +437,7 @@ export function HierarchicalFileExplorer({
             <span className="flex-1 text-sm font-medium">{node.name}</span>
 
             {node.isPasswordProtected && (
-              <Lock className="h-3 w-3 text-muted-foreground" />
+              <Lock className="h-3 w-3 text-amber-600" />
             )}
 
             {node.fileCount > 0 && (
@@ -353,33 +489,138 @@ export function HierarchicalFileExplorer({
       );
     }
 
+    if (viewMode === "grid") {
+      return (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {selectedFolder.files.map((file) => {
+            const FileIcon = getFileIcon(file.mimeType);
+            const isSelected = selectedFileIds.has(file.id);
+            const showPreview = canPreviewImage(file.mimeType);
+
+            return (
+              <FileContextMenu
+                key={file.id}
+                fileId={file.id}
+                fileName={file.fileName}
+                canDelete={isAdmin}
+                onFileDeleted={fetchFolderTree}
+              >
+                <div
+                  className={`relative border rounded-lg p-4 hover:bg-muted/50 cursor-pointer transition-all ${
+                    isSelected ? "ring-2 ring-primary bg-muted/50" : ""
+                  }`}
+                  onClick={(e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                      toggleFileSelection(file.id);
+                    }
+                  }}
+                >
+                  <div className="absolute top-2 right-2 z-10">
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleFileSelection(file.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    {showPreview ? (
+                      <div className="w-full h-32 relative rounded overflow-hidden bg-muted">
+                        <img
+                          src={`/api/files/${file.id}?preview=true`}
+                          alt={file.fileName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback to icon if image fails to load
+                            e.currentTarget.style.display = "none";
+                            const fallback = e.currentTarget
+                              .nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                        <div
+                          className="hidden w-full h-full items-center justify-center"
+                          style={{ display: "none" }}
+                        >
+                          <FileIcon className="h-16 w-16 text-muted-foreground" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-full h-32 flex items-center justify-center bg-muted rounded">
+                        <FileIcon className="h-16 w-16 text-muted-foreground" />
+                      </div>
+                    )}
+
+                    <div className="w-full">
+                      <div
+                        className="font-medium text-sm truncate"
+                        title={file.fileName}
+                      >
+                        {file.fileName}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatFileSize(file.fileSize)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(file.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </FileContextMenu>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // List view
     return (
       <div className="space-y-2">
-        {selectedFolder.files.map((file) => (
-          <FileContextMenu
-            key={file.id}
-            fileId={file.id}
-            fileName={file.fileName}
-            canDelete={isAdmin}
-            onFileDeleted={fetchFolderTree}
-          >
-            <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
-              <File className="h-5 w-5 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">
-                  {file.fileName}
+        {selectedFolder.files.map((file) => {
+          const FileIcon = getFileIcon(file.mimeType);
+          const isSelected = selectedFileIds.has(file.id);
+
+          return (
+            <FileContextMenu
+              key={file.id}
+              fileId={file.id}
+              fileName={file.fileName}
+              canDelete={isAdmin}
+              onFileDeleted={fetchFolderTree}
+            >
+              <div
+                className={`flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-all ${
+                  isSelected ? "ring-2 ring-primary bg-muted/50" : ""
+                }`}
+                onClick={(e) => {
+                  if (e.ctrlKey || e.metaKey) {
+                    toggleFileSelection(file.id);
+                  }
+                }}
+              >
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => toggleFileSelection(file.id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <FileIcon className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">
+                    {file.fileName}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatFileSize(file.fileSize)} •{" "}
+                    {new Date(file.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {formatFileSize(file.fileSize)} •{" "}
-                  {new Date(file.createdAt).toLocaleDateString()}
+                  Right-click for options
                 </div>
               </div>
-              <div className="text-xs text-muted-foreground">
-                Right-click for options
-              </div>
-            </div>
-          </FileContextMenu>
-        ))}
+            </FileContextMenu>
+          );
+        })}
       </div>
     );
   };
@@ -461,6 +702,33 @@ export function HierarchicalFileExplorer({
         </div>
       </CardHeader>
       <CardContent>
+        {/* Storage Info Alert */}
+        {storageInfo && (
+          <Alert className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Upload Guidelines</AlertTitle>
+            <AlertDescription className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>Storage Used:</span>
+                <span className="font-medium">
+                  {storageInfo.used.toFixed(2)} GB / {storageInfo.limit} GB
+                </span>
+              </div>
+              <div className="text-xs space-y-1">
+                <p>
+                  <strong>Max file size:</strong> 100MB per file
+                </p>
+                <p>
+                  <strong>Allowed:</strong> {getAllowedFileTypesDescription()}
+                </p>
+                <p>
+                  <strong>Blocked:</strong> {getBlockedFileTypesDescription()}
+                </p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-3 gap-6">
           {/* Folder Tree */}
           <div className="col-span-1 border rounded-lg p-4 max-h-[600px] overflow-y-auto">
@@ -493,17 +761,105 @@ export function HierarchicalFileExplorer({
             onDrop={handleDrop}
           >
             <div className="mb-4 flex items-center justify-between">
-              <div className="font-semibold text-sm">
-                {selectedFolder ? selectedFolder.path : "Files"}
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm">
+                  {selectedFolder ? selectedFolder.path : "Files"}
+                </span>
+                {selectedFolder?.files && selectedFolder.files.length > 0 && (
+                  <Badge variant="outline">
+                    {selectedFolder.files.length} files
+                  </Badge>
+                )}
               </div>
-              {selectedFolder && isAdmin && (
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => setShowUploadDialog(true)}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload
+              <div className="flex gap-2">
+                {/* View Toggle */}
+                <div className="flex border rounded-md">
+                  <Button
+                    size="sm"
+                    variant={viewMode === "list" ? "secondary" : "ghost"}
+                    className="rounded-r-none"
+                    onClick={() => setViewMode("list")}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={viewMode === "grid" ? "secondary" : "ghost"}
+                    className="rounded-l-none"
+                    onClick={() => setViewMode("grid")}
+                  >
+                    <Grid3x3 className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
+
+                {/* Multi-select actions */}
+                {selectedFileIds.size > 0 && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDownloadMultiple}
+                      disabled={downloadingMultiple}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      {downloadingMultiple
+                        ? "Preparing..."
+                        : `Download (${selectedFileIds.size})`}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={deselectAllFiles}
+                    >
+                      Clear
+                    </Button>
+                  </>
+                )}
+
+                {/* Folder actions */}
+                {selectedFolder && isAdmin && (
+                  <>
+                    {!selectedFolder.isPasswordProtected &&
+                      !selectedFolder.path.endsWith("-store") && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleLockFolder}
+                        >
+                          <Lock className="h-4 w-4 mr-2" />
+                          Lock
+                        </Button>
+                      )}
+                    {selectedFolder.isPasswordProtected && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleUnlockFolder}
+                      >
+                        <Unlock className="h-4 w-4 mr-2" />
+                        Unlock
+                      </Button>
+                    )}
+                    <Button size="sm" onClick={() => setShowUploadDialog(true)}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload
+                    </Button>
+                  </>
+                )}
+
+                {/* Select all button */}
+                {selectedFolder?.files &&
+                  selectedFolder.files.length > 0 &&
+                  selectedFileIds.size < selectedFolder.files.length && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={selectAllFiles}
+                    >
+                      Select All
+                    </Button>
+                  )}
+              </div>
             </div>
 
             {isDragging && selectedFolder && isAdmin && (
@@ -544,6 +900,23 @@ export function HierarchicalFileExplorer({
         folders={allFolders}
         onFolderCreated={fetchFolderTree}
       />
+      {(selectedFolder || lockedFolder) && (
+        <FolderPasswordDialog
+          open={showPasswordDialog}
+          onOpenChange={setShowPasswordDialog}
+          folderId={(lockedFolder || selectedFolder)!.id}
+          folderName={(lockedFolder || selectedFolder)!.name}
+          isPasswordProtected={
+            (lockedFolder || selectedFolder)!.isPasswordProtected
+          }
+          mode={passwordDialogMode}
+          onSuccess={
+            passwordDialogMode === "verify"
+              ? handlePasswordVerified
+              : fetchFolderTree
+          }
+        />
+      )}
     </Card>
   );
 }

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import speakeasy from "speakeasy";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
@@ -12,8 +11,7 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const pendingToken = cookieStore.get(PENDING_COOKIE)?.value;
+    const pendingToken = request.cookies.get(PENDING_COOKIE)?.value;
     const payload = verifyPendingMfaToken(pendingToken);
 
     if (!payload) {
@@ -119,8 +117,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[MFA Login] Error:", error);
     return NextResponse.json(
-        { error: "Failed to verify MFA code" },
-        { status: 500 }
-      );
+      { error: "Failed to verify MFA code" },
+      { status: 500 }
+    );
   }
 }

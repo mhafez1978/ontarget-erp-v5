@@ -96,7 +96,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
   } | null>(null);
 
   // Local storage fields
-  const [localPath, setLocalPath] = useState("/var/storage/cold");
+  const [localPath, setLocalPath] = useState("../var/storage/cold");
 
   // AWS S3 fields
   const [awsAccessKeyId, setAwsAccessKeyId] = useState("");
@@ -185,7 +185,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
         data.provider.provider === provider.type
       ) {
         const p = data.provider;
-        setLocalPath(p.config?.path || "/var/storage/cold");
+        setLocalPath(p.config?.path || "../var/storage/cold");
         setAwsAccessKeyId(p.config?.accessKeyId || "");
         setAwsSecretAccessKey(p.config?.secretAccessKey || "");
         setAwsBucket(p.config?.bucket || "");
@@ -219,7 +219,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
   };
 
   const resetForm = () => {
-    setLocalPath("/var/storage/cold");
+    setLocalPath("../var/storage/cold");
     setAwsAccessKeyId("");
     setAwsSecretAccessKey("");
     setAwsBucket("");
@@ -383,7 +383,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                 <Input
                   value={localPath}
                   onChange={(e) => setLocalPath(e.target.value)}
-                  placeholder="/var/storage/cold"
+                  placeholder="../var/storage/cold"
                 />
                 <p className="text-xs text-muted-foreground">
                   Absolute path to the directory on your server
@@ -394,11 +394,11 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                 <AlertDescription>
                   <strong>Need help?</strong> Create the directory with{" "}
                   <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                    mkdir -p /var/storage/cold
+                    mkdir -p ../var/storage/cold
                   </code>{" "}
                   and set permissions with{" "}
                   <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                    chmod 755 /var/storage/cold
+                    chmod 755 ../var/storage/cold
                   </code>
                   . Ensure your application has read/write access.
                 </AlertDescription>

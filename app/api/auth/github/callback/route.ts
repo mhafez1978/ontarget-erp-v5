@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
 import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
@@ -302,32 +301,20 @@ export async function GET(request: NextRequest) {
 
     // If MFA is enabled, redirect to MFA challenge without creating a session
     if (user.mfaEnabled) {
-      const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-      const pendingToken = createPendingMfaToken(
-        user.id,
-        user.email,
-        "github"
-      );
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+      const pendingToken = createPendingMfaToken(user.id, user.email, "github");
       return buildMfaRedirectResponse(appUrl, pendingToken, "github");
     }
 
     // Create session token
-    const cookieStore = await cookies();
     const session = await createSession({
       userId: user.id,
       userAgent: request.headers.get("user-agent") || undefined,
     });
 
-    cookieStore.set("sessionToken", session.sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: "/",
-    });
+    // Determine redirect URL
+    let redirectUrl: string;
 
-    // Redirect based on context
     if (context === "storefront" && companyId) {
       // Get company slug for redirect
       const company = await db.company.findUnique({
@@ -336,27 +323,31 @@ export async function GET(request: NextRequest) {
       });
 
       if (company?.slug) {
-        return NextResponse.redirect(
-          `${process.env.NEXT_PUBLIC_APP_URL}/store/${company.slug}`
-        );
+        redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/store/${company.slug}`;
       } else {
         // Fallback if company not found
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/`);
+        redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/`;
       }
+    } else if (user.plan === "GUEST") {
+      // ROOT PLATFORM - new users need to select a plan
+      redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`;
+    } else {
+      // ROOT PLATFORM - existing users go to dashboard
+      redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
     }
 
-    // ROOT PLATFORM redirects
-    // Check if user needs to select a plan (new users with GUEST plan)
-    if (user.plan === "GUEST") {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
-      );
-    }
+    const response = NextResponse.redirect(redirectUrl);
 
-    // Redirect to dashboard
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
-    );
+    // Set session cookie on response
+    response.cookies.set("sessionToken", session.sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Error in GitHub OAuth callback:", error);
     return NextResponse.redirect(

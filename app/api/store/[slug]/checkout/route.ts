@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
+import { validateSessionForAPI } from "@/lib/validate-session";
 import { validateSession } from "@/lib/session-manager";
 
 export type CheckoutDb = {
@@ -222,9 +222,8 @@ export async function POST(
 ) {
   try {
     const { slug } = await params;
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-    const sessionId = cookieStore.get("cartSessionId")?.value;
+    const sessionToken = request.cookies.get("sessionToken")?.value;
+    const sessionId = request.cookies.get("cartSessionId")?.value;
 
     let userId;
     if (sessionToken) {
@@ -237,11 +236,13 @@ export async function POST(
     const body = await request.json();
     const result = await processCheckout(slug, userId, sessionId, body);
 
+    const response = NextResponse.json(result.body, { status: result.status });
+
     if (result.clearGuestSession) {
-      cookieStore.delete("cartSessionId");
+      response.cookies.delete("cartSessionId");
     }
 
-    return NextResponse.json(result.body, { status: result.status });
+    return response;
   } catch (error) {
     console.error("Error processing checkout:", error);
     return NextResponse.json(

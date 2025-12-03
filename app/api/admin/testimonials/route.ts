@@ -1,30 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 // GET - Fetch all testimonials for a company (admin only)
 export async function GET(request: NextRequest) {
   try {
-    // Get user from cookie
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Validate session
-    const validation = await validateSession(sessionToken);
-
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Get user from session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const session = validation.user;
 
-    if (!session?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session.email) {
+      return NextResponse.json(
+        { error: "Email not found in session" },
+        { status: 400 }
+      );
     }
 
     // Get user with company access

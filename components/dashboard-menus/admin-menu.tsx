@@ -14,6 +14,7 @@ import {
   Store,
   HelpCircle,
   MessageSquare,
+  Clock,
 } from "lucide-react";
 
 export const adminMenuItems = [
@@ -29,6 +30,7 @@ export const adminMenuItems = [
     icon: MessageSquare,
   },
   { href: "/dashboard/workforce", label: "Workforce", icon: UsersRound },
+  { href: "/dashboard/timesheet", label: "Timesheet", icon: Clock },
   { href: "/dashboard/ledger", label: "Ledger", icon: BookOpen },
   { href: "/dashboard/security", label: "Security", icon: Shield },
   { href: "/dashboard/hub", label: "Hub", icon: Mail },

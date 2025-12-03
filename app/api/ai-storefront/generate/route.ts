@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 import {
   generateAiStorefront,
   type AiStorefrontInput,
@@ -54,19 +53,9 @@ const generateSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const body = await request.json();
@@ -214,10 +203,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!company) {
-      return NextResponse.json(
-        { error: "Company not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
     // Load product/service/testimonial summaries
@@ -308,15 +294,13 @@ export async function POST(request: NextRequest) {
         })
       : 0;
 
-    const storeMetadata = company.storeMetadata as
-      | {
-          title?: string;
-          description?: string;
-          keywords?: string[];
-          contactEmail?: string;
-          contactPhone?: string;
-        }
-      | null;
+    const storeMetadata = company.storeMetadata as {
+      title?: string;
+      description?: string;
+      keywords?: string[];
+      contactEmail?: string;
+      contactPhone?: string;
+    } | null;
 
     const fullAddressParts = [
       company.addressLine1,
@@ -386,8 +370,7 @@ export async function POST(request: NextRequest) {
         aiProvider && aiProvider.apiKey
           ? {
               provider:
-                (aiProvider.provider as AiProviderType | undefined) ||
-                "openai",
+                (aiProvider.provider as AiProviderType | undefined) || "openai",
               apiKey: decrypt(aiProvider.apiKey),
               model: aiProvider.model || undefined,
               apiBase: aiProvider.apiBase || undefined,

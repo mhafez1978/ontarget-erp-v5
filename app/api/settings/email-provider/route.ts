@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { encrypt } from "@/lib/crypto";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 const emailProviderSchema = z.object({
   provider: z.enum([
@@ -64,19 +63,9 @@ const emailProviderSchema = z.object({
 // GET - Fetch email provider settings
 export async function GET(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(req);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -85,10 +74,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const scope = searchParams.get("scope");
     const companyId = searchParams.get("companyId");
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
 
     // SUPER_ADMIN can fetch GLOBAL settings
     if (scope === "GLOBAL" && user.role === "SUPER_ADMIN") {
@@ -134,22 +119,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST - Create or update email provider settings
+// POST - Create or update email provider
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(req);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const userId = validation.user.id;

@@ -720,10 +720,9 @@
 // }
 
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 const createArticleSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -741,28 +740,22 @@ const createArticleSchema = z.object({
 function buildAccessibleCompanyIds(user: {
   ownedCompanies: { id: string }[];
   companyMemberships: { companyId: string }[];
+  companyStaff: { companyId: string }[];
 }) {
   const owned = user.ownedCompanies?.map((c) => c.id) ?? [];
   const member = user.companyMemberships?.map((m) => m.companyId) ?? [];
-  return Array.from(new Set([...owned, ...member]));
+  const staff = user.companyStaff?.map((s) => s.companyId) ?? [];
+  return Array.from(new Set([...owned, ...member, ...staff]));
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
+    const { user } = validation;
 
     const { searchParams } = new URL(request.url);
     const companyIdParam = searchParams.get("companyId");
@@ -771,7 +764,7 @@ export async function GET(request: NextRequest) {
     const userId = validation.user.id;
     const userRole = validation.user.role;
 
-    const user = await db.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -783,16 +776,19 @@ export async function GET(request: NextRequest) {
         companyMemberships: {
           select: { companyId: true },
         },
+        companyStaff: {
+          select: { companyId: true },
+        },
       },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const accessibleCompanyIds = buildAccessibleCompanyIds(user);
+    const accessibleCompanyIds = buildAccessibleCompanyIds(dbUser);
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (companyIdParam) {
       if (
@@ -816,7 +812,7 @@ export async function GET(request: NextRequest) {
       where.status = statusParam.toUpperCase();
     }
 
-    const supportArticleClient: any = (db as any).supportArticle;
+    const supportArticleClient: typeof db.supportArticle = db.supportArticle;
     if (
       !supportArticleClient ||
       typeof supportArticleClient.findMany !== "function"
@@ -858,7 +854,26 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const articlesWithPermissions = articles.map((article: any) => {
+    type ArticleDbResult = {
+      id: string;
+      title: string;
+      slug: string;
+      summary: string | null;
+      category: string | null;
+      tags: string | null;
+      featuredImage: string | null;
+      readTimeMinutes: number | null;
+      status: string;
+      isGlobal: boolean;
+      companyId: string | null;
+      authorId: string;
+      createdAt: Date;
+      updatedAt: Date;
+      company?: { id: string; name: string } | null;
+      author?: { id: string; name: string | null; email: string | null } | null;
+    };
+
+    const articlesWithPermissions = articles.map((article: ArticleDbResult) => {
       const isAuthor = article.authorId === userId;
       const companyId = article.companyId;
       const canManageByCompany =
@@ -872,7 +887,7 @@ export async function GET(request: NextRequest) {
         summary: article.summary,
         category: article.category,
         tags: article.tags
-          ? (article.tags as string).split(",").map((t: string) => t.trim())
+          ? article.tags.split(",").map((t: string) => t.trim())
           : [],
         featuredImage: article.featuredImage,
         readTimeMinutes: article.readTimeMinutes,
@@ -901,20 +916,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
+    const { user } = validation;
 
     const body = await request.json();
     const parsed = createArticleSchema.safeParse(body);
@@ -946,7 +953,7 @@ export async function POST(request: NextRequest) {
     const userId = validation.user.id;
     const userRole = validation.user.role;
 
-    const user = await db.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -957,17 +964,20 @@ export async function POST(request: NextRequest) {
         companyMemberships: {
           select: { companyId: true, role: true },
         },
+        companyStaff: {
+          select: { companyId: true },
+        },
       },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const accessibleCompanyIds = buildAccessibleCompanyIds(user);
+    const accessibleCompanyIds = buildAccessibleCompanyIds(dbUser);
 
     let targetCompanyId: string | null = companyId ?? null;
-    let targetIsGlobal = isGlobal ?? false;
+    const targetIsGlobal = isGlobal ?? false;
 
     if (targetIsGlobal) {
       if (userRole !== "SUPER_ADMIN") {
@@ -1005,7 +1015,7 @@ export async function POST(request: NextRequest) {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const supportArticleClient: any = (db as any).supportArticle;
+      const supportArticleClient: typeof db.supportArticle = db.supportArticle;
       if (
         !supportArticleClient ||
         typeof supportArticleClient.findFirst !== "function"
@@ -1028,7 +1038,7 @@ export async function POST(request: NextRequest) {
       finalSlug = `${baseSlug}-${suffix}`;
     }
 
-    const supportArticleClient: any = (db as any).supportArticle;
+    const supportArticleClient: typeof db.supportArticle = db.supportArticle;
     if (
       !supportArticleClient ||
       typeof supportArticleClient.create !== "function"
@@ -1052,7 +1062,7 @@ export async function POST(request: NextRequest) {
         featuredImage: featuredImage || null,
         isGlobal: targetIsGlobal,
         readTimeMinutes: readTimeMinutes ?? 5,
-        status: "PUBLISHED",
+        status: "Draft",
       },
       select: {
         id: true,

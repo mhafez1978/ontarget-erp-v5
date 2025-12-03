@@ -30,6 +30,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { StaffAndAbove } from "@/components/role-guard";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface KBArticle {
   id: string;
@@ -401,9 +402,9 @@ export default function SupportPage() {
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Categories Sidebar */}
                 <div className="lg:col-span-1">
-                  <Card>
+                  <Card className="bg-yellow-200/60 font-semibold">
                     <CardHeader>
-                      <CardTitle className="text-sm font-medium">
+                      <CardTitle className="text-lg font-black">
                         Categories
                       </CardTitle>
                     </CardHeader>
@@ -430,7 +431,7 @@ export default function SupportPage() {
                                 ? "secondary"
                                 : "outline"
                             }
-                            className="text-xs"
+                            className="text-xs font-black border-2 border-black bg-emerald-500/20 text-emerald-800"
                           >
                             {category.count}
                           </Badge>
@@ -440,7 +441,7 @@ export default function SupportPage() {
                   </Card>
 
                   {/* Quick Links */}
-                  <Card className="mt-4">
+                  <Card className="mt-4 bg-pink-50/50 font-semibold">
                     <CardHeader>
                       <CardTitle className="text-sm font-medium">
                         Need More Help?
@@ -466,7 +467,7 @@ export default function SupportPage() {
                 </div>
 
                 {/* Articles Grid */}
-                <div className="lg:col-span-3">
+                <div className="lg:col-span-3 font-semibold space-y-4">
                   {filteredArticles.length === 0 ? (
                     <Card>
                       <CardContent className="flex flex-col items-center justify-center py-12">
@@ -481,13 +482,13 @@ export default function SupportPage() {
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="grid gap-6 grid-cols-1">
                       {filteredArticles.map((article) => (
                         <Link
                           key={article.id}
                           href={`/dashboard/support/${article.slug}`}
                         >
-                          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                          <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-emerald-50/50">
                             <CardHeader>
                               <div className="flex items-start gap-4">
                                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -526,39 +527,65 @@ export default function SupportPage() {
                                             type="button"
                                             size="icon"
                                             variant="ghost"
-                                            className="h-7 w-7"
-                                            onClick={async (e) => {
+                                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" // Added generic styling for delete indication
+                                            onClick={(e) => {
                                               e.preventDefault();
-                                              const confirmed = window.confirm(
-                                                "Delete this article? This cannot be undone."
-                                              );
-                                              if (!confirmed) return;
-                                              try {
-                                                const res = await fetch(
-                                                  `/api/support/articles/${article.id}`,
-                                                  { method: "DELETE" }
-                                                );
-                                                const data = await res
-                                                  .json()
-                                                  .catch(() => null);
-                                                if (!res.ok) {
-                                                  console.error(
-                                                    "Delete error:",
-                                                    data
-                                                  );
-                                                  return;
-                                                }
-                                                setArticles((prev) =>
-                                                  prev.filter(
-                                                    (a) => a.id !== article.id
-                                                  )
-                                                );
-                                              } catch (err) {
-                                                console.error(
-                                                  "Delete failed:",
-                                                  err
-                                                );
-                                              }
+
+                                              // Trigger the confirmation toast
+                                              toast("Delete this article?", {
+                                                description:
+                                                  "This action cannot be undone.",
+                                                action: {
+                                                  label: "Delete",
+                                                  // The actual delete logic moves here
+                                                  onClick: async () => {
+                                                    try {
+                                                      const res = await fetch(
+                                                        `/api/support/articles/${article.id}`,
+                                                        { method: "DELETE" }
+                                                      );
+
+                                                      if (!res.ok) {
+                                                        const data = await res
+                                                          .json()
+                                                          .catch(() => null);
+                                                        console.error(
+                                                          "Delete error:",
+                                                          data
+                                                        );
+                                                        toast.error(
+                                                          "Failed to delete article"
+                                                        );
+                                                        return;
+                                                      }
+
+                                                      // Update UI on success
+                                                      setArticles((prev) =>
+                                                        prev.filter(
+                                                          (a) =>
+                                                            a.id !== article.id
+                                                        )
+                                                      );
+                                                      toast.success(
+                                                        "Article deleted successfully"
+                                                      );
+                                                    } catch (err) {
+                                                      console.error(
+                                                        "Delete failed:",
+                                                        err
+                                                      );
+                                                      toast.error(
+                                                        "Something went wrong"
+                                                      );
+                                                    }
+                                                  },
+                                                },
+                                                cancel: {
+                                                  label: "Cancel",
+                                                  onClick: () => {},
+                                                },
+                                                duration: 5000, // Give user time to decide
+                                              });
                                             }}
                                           >
                                             <Trash2 className="h-3 w-3" />

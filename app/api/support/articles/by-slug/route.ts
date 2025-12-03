@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 function buildAccessibleCompanyIds(user: {
   ownedCompanies: { id: string }[];
@@ -14,20 +13,12 @@ function buildAccessibleCompanyIds(user: {
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
+    const { user } = validation;
 
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get("slug");
@@ -70,7 +61,7 @@ export async function GET(request: NextRequest) {
     const userId = validation.user.id;
     const userRole = validation.user.role;
 
-    const user = await db.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -84,7 +75,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const accessibleCompanyIds = user ? buildAccessibleCompanyIds(user) : [];
+    const accessibleCompanyIds = dbUser
+      ? buildAccessibleCompanyIds(dbUser)
+      : [];
 
     const isAuthor = article.authorId === userId;
     const canManageByCompany =

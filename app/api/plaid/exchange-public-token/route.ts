@@ -1,28 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
 import { encrypt } from "@/lib/encryption";
-import { validateSession } from "@/lib/session-manager";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 export async function POST(request: NextRequest) {
   try {
     // Get user from session
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
-
-    const userId = validation.user.id;
+    const { user } = validation;
+    const userId = user.id;
 
     const { companyId, publicToken } = await request.json();
 
@@ -34,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has access
-    const user = await db.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: userId },
       include: {
         ownedCompanies: true,
@@ -44,14 +34,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const hasAccess =
       user.role === "SUPER_ADMIN" ||
-      user.ownedCompanies.some((c) => c.id === companyId) ||
-      user.companyMemberships.some(
+      dbUser.ownedCompanies.some((c) => c.id === companyId) ||
+      dbUser.companyMemberships.some(
         (m) =>
           m.companyId === companyId &&
           ["ADMIN", "MANAGER"].includes(m.role as string)
