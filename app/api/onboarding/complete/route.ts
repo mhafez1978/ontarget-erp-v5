@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 
 export async function POST(request: Request) {
   try {
@@ -23,6 +24,14 @@ export async function POST(request: Request) {
     });
 
     if (!onboardingToken) {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_COMPLETION_FAILED,
+        companyId: null,
+        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityId: null,
+        description: `Attempted onboarding completion with invalid token: ${token}`,
+        metadata: { token },
+      });
       return NextResponse.json(
         { error: "Invalid onboarding token" },
         { status: 404 }
@@ -37,6 +46,15 @@ export async function POST(request: Request) {
     }
 
     if (new Date() > onboardingToken.expiresAt) {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_COMPLETION_FAILED,
+        userId: onboardingToken.staff.userId,
+        companyId: onboardingToken.staff.companyId,
+        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityId: onboardingToken.staffId,
+        description: `Attempt to complete onboarding with expired token`,
+        metadata: { token, expired: true },
+      });
       return NextResponse.json(
         { error: "Onboarding token expired" },
         { status: 400 }
@@ -62,6 +80,15 @@ export async function POST(request: Request) {
     );
 
     if (missingDocs.length > 0) {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_COMPLETION_FAILED,
+        userId: onboardingToken.staff.userId,
+        companyId: onboardingToken.staff.companyId,
+        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityId: onboardingToken.staffId,
+        description: `Attempted onboarding completion but missing documents: ${missingDocs.join(", ")}`,
+        metadata: { token, missingDocs },
+      });
       return NextResponse.json(
         {
           error: "Missing required documents",
@@ -90,6 +117,17 @@ export async function POST(request: Request) {
       data: {
         onboardingComplete: true,
       },
+    });
+
+    // Audit: onboarding completed
+    await createAuditLog({
+      action: AUDIT_ACTIONS.ONBOARDING_COMPLETED,
+      userId: onboardingToken.staff.userId,
+      companyId: onboardingToken.staff.companyId,
+      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityId: onboardingToken.staffId,
+      description: `Onboarding completed for ${onboardingToken.staffId}`,
+      metadata: { token: onboardingToken.token },
     });
 
     return NextResponse.json({

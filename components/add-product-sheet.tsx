@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import {
   Sheet,
@@ -64,9 +64,19 @@ interface AddProductSheetProps {
 }
 
 interface ImageFile {
+  // url is either a remote URL or a local object URL for file previews
   url: string;
   isFeatured: boolean;
   order: number;
+  // optional file object when the image originates from a local upload
+  file?: File | null;
+  // local id to correlate uploads -> responses
+  localId?: string;
+  // upload state
+  progress?: number; // 0-100
+  error?: string | null;
+  uploadedId?: string | null;
+  uploadedUrl?: string | null;
 }
 
 export function AddProductSheet({
@@ -106,10 +116,37 @@ export function AddProductSheet({
     useState<AddressData>(initialAddressData);
   const [images, setImages] = useState<ImageFile[]>([]);
   const [imageUrl, setImageUrl] = useState("");
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Track if form is dirty
   const isFormDirty = useFormDirty(initialFormData, formData);
 
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+
+    const newEntries: ImageFile[] = fileArray.map((f, i) => ({
+      url: URL.createObjectURL(f),
+      file: f,
+      isFeatured: images.length === 0 && i === 0, // if no images yet, first file is featured
+      order: images.length + i,
+      localId: `local-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+      progress: 0,
+      error: null,
+      uploadedId: null,
+      uploadedUrl: null,
+    }));
+
+    // if there are existing images and none are featured, mark first new as featured
+    if (!images.some((img) => img.isFeatured) && newEntries.length > 0) {
+      newEntries[0].isFeatured = true;
+    }
+
+    setImages((prev) => [...prev, ...newEntries]);
+  };
+  // Adds an image from a typed URL into the images list (preserves order and featured logic)
   const handleAddImage = () => {
     if (!imageUrl.trim()) return;
 
@@ -124,6 +161,14 @@ export function AddProductSheet({
   };
 
   const handleRemoveImage = (index: number) => {
+    const removed = images[index];
+    // Revoke object URL if it was a local file preview
+    if (removed?.file && removed.url?.startsWith("blob:")) {
+      try {
+        URL.revokeObjectURL(removed.url);
+      } catch {}
+    }
+
     const updatedImages = images.filter((_, i) => i !== index);
     // Re-index order
     const reindexed = updatedImages.map((img, i) => ({ ...img, order: i }));
@@ -158,6 +203,15 @@ export function AddProductSheet({
     setIsSubmitting(true);
 
     try {
+      // Separate URL images from locally-uploaded file entries
+      const urlImages = images
+        .filter((img) => !img.file)
+        .map((img) => ({
+          url: img.url,
+          isFeatured: img.isFeatured || false,
+          order: img.order,
+        }));
+
       const response = await fetch("/api/catalog/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -174,13 +228,134 @@ export function AddProductSheet({
             : 10,
           trackInventory: result.data.trackInventory,
           address: addressData,
-          images,
+          images: urlImages,
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to create product");
+      }
+
+      // Parse created product
+      const createData = await response.json();
+      const product = createData?.product;
+
+      // If there are file images, upload them now (post product creation)
+      const fileImages = images.filter((img) => img.file);
+
+      if (fileImages.length > 0) {
+        setIsUploadingFiles(true);
+        try {
+          const uploadResults: any[] = [];
+
+          // upload each file separately so we can show per-file progress and per-file errors
+          for (const fimg of fileImages) {
+            if (!fimg.file) continue;
+
+            // prepare FormData for single file
+            const fd = new FormData();
+            fd.append("images", fimg.file, fimg.file.name);
+
+            // Use XHR for progress events
+            const xhrUpload = () =>
+              new Promise<any>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", `/api/catalog/products/${product.id}/images`);
+
+                xhr.upload.onprogress = (event) => {
+                  if (event.lengthComputable) {
+                    const pct = Math.round((event.loaded / event.total) * 100);
+                    setImages((prev) =>
+                      prev.map((p) =>
+                        p.localId === fimg.localId ? { ...p, progress: pct } : p
+                      )
+                    );
+                  }
+                };
+
+                xhr.onload = () => {
+                  if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                      const res = JSON.parse(xhr.responseText);
+                      resolve(res);
+                    } catch (e) {
+                      resolve({ success: true, images: [] });
+                    }
+                  } else {
+                    reject(new Error(`Upload failed (${xhr.status})`));
+                  }
+                };
+
+                xhr.onerror = () => reject(new Error("Network error"));
+                xhr.send(fd);
+              });
+
+            try {
+              const result = await xhrUpload();
+              const uploaded = Array.isArray(result.images)
+                ? result.images[0]
+                : null;
+              uploadResults.push(uploaded);
+
+              // mark the image entry as uploaded
+              setImages((prev) =>
+                prev.map((p) =>
+                  p.localId === fimg.localId
+                    ? {
+                        ...p,
+                        progress: 100,
+                        uploadedId: uploaded?.id || null,
+                        uploadedUrl: uploaded?.url || null,
+                        file: null,
+                      }
+                    : p
+                )
+              );
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              setImages((prev) =>
+                prev.map((p) =>
+                  p.localId === fimg.localId ? { ...p, error: msg } : p
+                )
+              );
+              // continue with other files
+            }
+          }
+
+          const uploadData = { images: uploadResults };
+
+          // If the featured image selected is a file-based image, set it using the feature endpoint
+          const featuredIndex = images.findIndex((img) => img.isFeatured);
+          const featuredImage = images[featuredIndex];
+
+          if (featuredImage?.file || featuredImage?.uploadedId) {
+            // If featuredImage was a file, find the uploaded corresponding object by localId -> uploadedList
+            if (featuredImage.file) {
+              const fileIndex = fileImages.findIndex(
+                (fi) =>
+                  fi.localId === featuredImage.localId ||
+                  fi.url === featuredImage.url
+              );
+              const corresponding = uploadData.images[fileIndex];
+              if (corresponding && corresponding.id) {
+                await fetch(
+                  `/api/catalog/products/${product.id}/images/${corresponding.id}/feature`,
+                  { method: "PATCH" }
+                );
+              }
+            } else if (featuredImage.uploadedId) {
+              await fetch(
+                `/api/catalog/products/${product.id}/images/${featuredImage.uploadedId}/feature`,
+                { method: "PATCH" }
+              );
+            }
+          }
+        } catch (uploadErr) {
+          console.error("File upload failed:", uploadErr);
+        } finally {
+          setIsUploadingFiles(false);
+        }
       }
 
       // Reset form and close sheet
@@ -381,7 +556,7 @@ export function AddProductSheet({
           <div className="space-y-2">
             <Label>Product Images</Label>
             <div className="space-y-2">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Input
                   type="url"
                   placeholder="Enter image URL"
@@ -404,6 +579,34 @@ export function AddProductSheet({
                 >
                   <Upload className="h-4 w-4" />
                 </Button>
+                {/* file upload input */}
+                <label
+                  // clickable drag/drop area that triggers file selection or accepts drops
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const files = e.dataTransfer?.files || null;
+                    handleFilesSelected(files);
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  className="flex items-center gap-2 ml-2 cursor-pointer border-dashed border-2 border-muted rounded-md px-3 py-2 hover:bg-muted/50"
+                >
+                  <input
+                    ref={(el) => {
+                      fileInputRef.current = el;
+                    }}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => handleFilesSelected(e.target.files)}
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">Upload files</span>
+                    <span className="text-xs text-muted-foreground">
+                      (click or drag & drop — multiple allowed)
+                    </span>
+                  </div>
+                </label>
               </div>
 
               {images.length > 0 && (
@@ -451,12 +654,40 @@ export function AddProductSheet({
                           Featured
                         </div>
                       )}
+                      {/* upload progress / error overlay */}
+                      {typeof image.progress === "number" &&
+                        image.progress < 100 && (
+                          <div className="absolute inset-0 flex items-end">
+                            <div className="w-full bg-black/30 p-2">
+                              <div className="w-full bg-muted h-2 rounded overflow-hidden">
+                                <div
+                                  style={{ width: `${image.progress}%` }}
+                                  className="h-2 bg-primary"
+                                />
+                              </div>
+                              <div className="text-xs text-white mt-1 text-right">
+                                {image.progress}%
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      {image.error && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-red-700/70 text-white p-2 text-xs">
+                          {image.error}
+                        </div>
+                      )}
+                      {image.uploadedUrl && (
+                        <div className="absolute top-2 left-2 bg-green-600 text-white px-2 py-0.5 rounded text-xs">
+                          Uploaded
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Add image URLs. Click the star to set a featured image.
+                Add image URLs or upload image files. Click the star to set a
+                featured image.
               </p>
             </div>
           </div>
@@ -474,9 +705,14 @@ export function AddProductSheet({
             <Button
               type="submit"
               className={`flex-1 ${getPulsateClassName(isFormDirty)}`}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploadingFiles}
             >
-              {isSubmitting ? (
+              {isUploadingFiles ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading images...
+                </>
+              ) : isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating...

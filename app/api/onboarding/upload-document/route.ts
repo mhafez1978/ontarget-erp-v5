@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { uploadDocument } from "@/lib/storage-service";
+import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
+import { checkSequentialUpload } from "@/lib/onboarding";
 
 export async function POST(request: Request) {
   try {
@@ -16,7 +18,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify onboarding token
+    // Verify onboarding token (include staff's existing documents so we can
+    // enforce sequential upload ordering on required documents)
     const onboardingToken = await db.onboardingToken.findUnique({
       where: { token },
       include: {
@@ -24,12 +27,22 @@ export async function POST(request: Request) {
           include: {
             company: true,
             user: true,
+            employmentDocuments: true,
           },
         },
       },
     });
 
     if (!onboardingToken) {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_DOCUMENT_UPLOAD_FAILED,
+        companyId: null,
+        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityId: null,
+        description: `Invalid onboarding token used for upload attempt`,
+        metadata: { token },
+      });
+
       return NextResponse.json(
         { error: "Invalid onboarding token" },
         { status: 404 }
@@ -69,6 +82,16 @@ export async function POST(request: Request) {
     ];
 
     if (!validDocTypes.includes(docType)) {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_DOCUMENT_UPLOAD_FAILED,
+        userId: onboardingToken.staff.user.id,
+        companyId: onboardingToken.staff.company?.id,
+        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityId: onboardingToken.staffId,
+        description: `Invalid document type attempted: ${docType}`,
+        metadata: { token, docType },
+      });
+
       return NextResponse.json(
         { error: "Invalid document type" },
         { status: 400 }
@@ -77,6 +100,16 @@ export async function POST(request: Request) {
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_DOCUMENT_UPLOAD_FAILED,
+        userId: onboardingToken.staff.user.id,
+        companyId: onboardingToken.staff.company?.id,
+        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityId: onboardingToken.staffId,
+        description: `File too large for ${docType}`,
+        metadata: { token, fileSize: file.size },
+      });
+
       return NextResponse.json(
         { error: "File size exceeds 10MB limit" },
         { status: 400 }
@@ -93,8 +126,44 @@ export async function POST(request: Request) {
     ];
 
     if (!allowedTypes.includes(file.type)) {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_DOCUMENT_UPLOAD_FAILED,
+        userId: onboardingToken.staff.user.id,
+        companyId: onboardingToken.staff.company?.id,
+        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityId: onboardingToken.staffId,
+        description: `Invalid mime-type for ${docType}`,
+        metadata: { token, mimeType: file.type },
+      });
+
       return NextResponse.json(
         { error: "Invalid file type. Allowed: PDF, JPEG, PNG, WebP" },
+        { status: 400 }
+      );
+    }
+
+    // Enforce sequential uploads for required document types
+    const uploaded = onboardingToken.staff.employmentDocuments.map((d) => d.docType);
+    const check = checkSequentialUpload(docType, uploaded);
+
+    if (!check.ok) {
+      // Audit: rejected upload due to out-of-order
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_DOCUMENT_UPLOAD_FAILED,
+        userId: onboardingToken.staff.user.id,
+        companyId: onboardingToken.staff.company?.id,
+        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityId: onboardingToken.staffId,
+        description: `Rejected upload for ${docType}: missing prerequisites`,
+        metadata: { token, docType, missingPrereqs: check.missingPrereqs },
+      });
+
+      return NextResponse.json(
+        {
+          error: "Upload out of order",
+          message: `Please upload the following required documents first: ${check.missingPrereqs?.join(", ")}`,
+          missingPrereqs: check.missingPrereqs,
+        },
         { status: 400 }
       );
     }
@@ -144,6 +213,17 @@ export async function POST(request: Request) {
         storageProvider,
         status: "PENDING",
       },
+    });
+
+    // Audit: document uploaded (architected as PENDING review)
+    await createAuditLog({
+      action: AUDIT_ACTIONS.ONBOARDING_DOCUMENT_UPLOADED,
+      userId: onboardingToken.staff.user.id,
+      companyId: onboardingToken.staff.company?.id,
+      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityId: onboardingToken.staffId,
+      description: `Uploaded onboarding document: ${docType}`,
+      metadata: { docId: employmentDoc.id, docType: employmentDoc.docType, fileName: employmentDoc.fileName, status: employmentDoc.status },
     });
 
     return NextResponse.json({

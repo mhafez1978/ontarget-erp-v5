@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import {
   Sheet,
@@ -59,6 +59,12 @@ interface ImageFile {
   url: string;
   isFeatured: boolean;
   order: number;
+  file?: File | null;
+  localId?: string;
+  progress?: number;
+  error?: string | null;
+  uploadedId?: string | null;
+  uploadedUrl?: string | null;
 }
 
 export function AddServiceSheet({
@@ -94,10 +100,36 @@ export function AddServiceSheet({
   const [addressData, setAddressData] =
     useState<AddressData>(initialAddressData);
   const [images, setImages] = useState<ImageFile[]>([]);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Track if form is dirty
   const isFormDirty = useFormDirty(initialFormData, formData);
+
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+
+    const newEntries: ImageFile[] = fileArray.map((f, i) => ({
+      url: URL.createObjectURL(f),
+      file: f,
+      isFeatured: images.length === 0 && i === 0,
+      order: images.length + i,
+      localId: `local-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+      progress: 0,
+      error: null,
+      uploadedId: null,
+      uploadedUrl: null,
+    }));
+
+    if (!images.some((img) => img.isFeatured) && newEntries.length > 0) {
+      newEntries[0].isFeatured = true;
+    }
+
+    setImages((prev) => [...prev, ...newEntries]);
+  };
 
   const handleAddImage = () => {
     if (!imageUrl.trim()) return;
@@ -113,6 +145,13 @@ export function AddServiceSheet({
   };
 
   const handleRemoveImage = (index: number) => {
+    const removed = images[index];
+    if (removed?.file && removed.url?.startsWith("blob:")) {
+      try {
+        URL.revokeObjectURL(removed.url);
+      } catch {}
+    }
+
     const updatedImages = images.filter((_, i) => i !== index);
     // Re-index order
     const reindexed = updatedImages.map((img, i) => ({ ...img, order: i }));
@@ -147,6 +186,14 @@ export function AddServiceSheet({
     setIsSubmitting(true);
 
     try {
+      const urlImages = images
+        .filter((img) => !img.file)
+        .map((img) => ({
+          url: img.url,
+          isFeatured: img.isFeatured || false,
+          order: img.order,
+        }));
+
       const response = await fetch("/api/catalog/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -158,13 +205,126 @@ export function AddServiceSheet({
           category: result.data.category || null,
           companyId: result.data.companyId,
           address: addressData,
-          images,
+          images: urlImages,
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to create service");
+      }
+
+      const createData = await response.json();
+      const service = createData?.service;
+
+      // Upload local files (if any)
+      const fileImages = images.filter((img) => img.file);
+
+      if (fileImages.length > 0) {
+        setIsUploadingFiles(true);
+        try {
+          const uploadResults: any[] = [];
+
+          for (const fimg of fileImages) {
+            if (!fimg.file) continue;
+
+            const fd = new FormData();
+            fd.append("images", fimg.file, fimg.file.name);
+
+            const xhrUpload = () =>
+              new Promise<any>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", `/api/catalog/services/${service.id}/images`);
+
+                xhr.upload.onprogress = (event) => {
+                  if (event.lengthComputable) {
+                    const pct = Math.round((event.loaded / event.total) * 100);
+                    setImages((prev) =>
+                      prev.map((p) =>
+                        p.localId === fimg.localId ? { ...p, progress: pct } : p
+                      )
+                    );
+                  }
+                };
+
+                xhr.onload = () => {
+                  if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                      const res = JSON.parse(xhr.responseText);
+                      resolve(res);
+                    } catch (e) {
+                      resolve({ success: true, images: [] });
+                    }
+                  } else {
+                    reject(new Error(`Upload failed (${xhr.status})`));
+                  }
+                };
+
+                xhr.onerror = () => reject(new Error("Network error"));
+                xhr.send(fd);
+              });
+
+            try {
+              const result = await xhrUpload();
+              const uploaded = Array.isArray(result.images)
+                ? result.images[0]
+                : null;
+              uploadResults.push(uploaded);
+
+              setImages((prev) =>
+                prev.map((p) =>
+                  p.localId === fimg.localId
+                    ? {
+                        ...p,
+                        progress: 100,
+                        uploadedId: uploaded?.id || null,
+                        uploadedUrl: uploaded?.url || null,
+                        file: null,
+                      }
+                    : p
+                )
+              );
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              setImages((prev) =>
+                prev.map((p) =>
+                  p.localId === fimg.localId ? { ...p, error: msg } : p
+                )
+              );
+            }
+          }
+
+          const uploadData = { images: uploadResults };
+
+          // If featured image is one of the uploaded files, mark it after upload
+          const featuredIndex = images.findIndex((img) => img.isFeatured);
+          const featuredImage = images[featuredIndex];
+          if (featuredImage?.file || featuredImage?.uploadedId) {
+            if (featuredImage.file) {
+              const fileIndex = fileImages.findIndex(
+                (fi) =>
+                  fi.localId === featuredImage.localId ||
+                  fi.url === featuredImage.url
+              );
+              const corresponding = uploadData.images[fileIndex];
+              if (corresponding && corresponding.id) {
+                await fetch(
+                  `/api/catalog/services/${service.id}/images/${corresponding.id}/feature`,
+                  { method: "PATCH" }
+                );
+              }
+            } else if (featuredImage.uploadedId) {
+              await fetch(
+                `/api/catalog/services/${service.id}/images/${featuredImage.uploadedId}/feature`,
+                { method: "PATCH" }
+              );
+            }
+          }
+        } catch (uploadErr) {
+          console.error("Service image upload failed:", uploadErr);
+        } finally {
+          setIsUploadingFiles(false);
+        }
       }
 
       // Reset form and close sheet
@@ -308,7 +468,7 @@ export function AddServiceSheet({
           <div className="space-y-2">
             <Label>Service Images</Label>
             <div className="space-y-2">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Input
                   type="url"
                   placeholder="Enter image URL"
@@ -331,6 +491,32 @@ export function AddServiceSheet({
                 >
                   <Upload className="h-4 w-4" />
                 </Button>
+                <label
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const files = e.dataTransfer?.files || null;
+                    handleFilesSelected(files);
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  className="flex items-center gap-2 ml-2 cursor-pointer border-dashed border-2 border-muted rounded-md px-3 py-2 hover:bg-muted/50"
+                >
+                  <input
+                    ref={(el) => {
+                      fileInputRef.current = el;
+                    }}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => handleFilesSelected(e.target.files)}
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">Upload files</span>
+                    <span className="text-xs text-muted-foreground">
+                      (click or drag & drop — multiple allowed)
+                    </span>
+                  </div>
+                </label>
               </div>
 
               {images.length > 0 && (
@@ -378,12 +564,39 @@ export function AddServiceSheet({
                           Featured
                         </div>
                       )}
+                      {typeof image.progress === "number" &&
+                        image.progress < 100 && (
+                          <div className="absolute inset-0 flex items-end">
+                            <div className="w-full bg-black/30 p-2">
+                              <div className="w-full bg-muted h-2 rounded overflow-hidden">
+                                <div
+                                  style={{ width: `${image.progress}%` }}
+                                  className="h-2 bg-primary"
+                                />
+                              </div>
+                              <div className="text-xs text-white mt-1 text-right">
+                                {image.progress}%
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      {image.error && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-red-700/70 text-white p-2 text-xs">
+                          {image.error}
+                        </div>
+                      )}
+                      {image.uploadedUrl && (
+                        <div className="absolute top-2 left-2 bg-green-600 text-white px-2 py-0.5 rounded text-xs">
+                          Uploaded
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Add image URLs. Click the star to set a featured image.
+                Add image URLs or upload image files. Click the star to set a
+                featured image.
               </p>
             </div>
           </div>
@@ -401,9 +614,14 @@ export function AddServiceSheet({
             <Button
               type="submit"
               className={`flex-1 ${getPulsateClassName(isFormDirty)}`}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploadingFiles}
             >
-              {isSubmitting ? (
+              {isUploadingFiles ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading images...
+                </>
+              ) : isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating...

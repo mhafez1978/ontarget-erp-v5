@@ -9,7 +9,7 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "prisma/seed.ts",
+    seed: "prisma/seed.mjs",
     // REMOVE THIS LINE BELOW - It is causing the SQL error
     // initShadowDb: "prisma/init-shadow-db.ts",
   },

@@ -398,7 +398,7 @@ model Testimonial {
   customerName  String
   customerEmail String
   customerTitle String? // e.g., "CEO at TechCorp"
-  customerPhoto String? // Optional photo URL
+  customerPhoto String? @db.LongText // Optional photo URL (base64 or long URL)
 
   // Testimonial content
   rating      Int    @default(5) // 1-5 stars

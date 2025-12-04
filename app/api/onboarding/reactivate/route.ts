@@ -104,8 +104,8 @@ export async function POST(request: NextRequest) {
     await db.companyStaff.update({
       where: { id: staff.id },
       data: {
-        // Add isActive field when schema is updated
-        // isActive: true,
+        // Ensure account is active again when onboarding is reactivated
+        isActive: true,
       },
     });
 

@@ -17,10 +17,12 @@ import { Star, MessageSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface TestimonialFormProps {
-  slug: string;
+  slug?: string;
+  /** Optional full API path to POST/GET testimonials. If present it takes precedence over slug. */
+  apiPath?: string;
 }
 
-export function TestimonialForm({ slug }: TestimonialFormProps) {
+export function TestimonialForm({ slug, apiPath }: TestimonialFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rating, setRating] = useState(5);
@@ -31,13 +33,24 @@ export function TestimonialForm({ slug }: TestimonialFormProps) {
     customerTitle: "",
     testimonial: "",
   });
+  const [customerPhoto, setCustomerPhoto] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/storefront/${slug}/testimonials`, {
+      // Use explicit apiPath when provided (homepage root case) otherwise fall back to slug-based storefront endpoint
+      const path =
+        apiPath || (slug ? `/api/storefront/${slug}/testimonials` : undefined);
+
+      if (!path) {
+        throw new Error(
+          "No target endpoint configured for testimonial submission"
+        );
+      }
+
+      const response = await fetch(path, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -45,12 +58,16 @@ export function TestimonialForm({ slug }: TestimonialFormProps) {
         body: JSON.stringify({
           ...formData,
           rating,
+          // include base64 data URL if user attached a photo
+          customerPhoto: customerPhoto || undefined,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        // log server details for easier debugging in dev
+        console.error("Testimonial submit error response:", data);
         throw new Error(data.error || "Failed to submit testimonial");
       }
 
@@ -70,6 +87,7 @@ export function TestimonialForm({ slug }: TestimonialFormProps) {
         customerTitle: "",
         testimonial: "",
       });
+      setCustomerPhoto(null);
       setRating(5);
       setOpen(false);
     } catch (error) {
@@ -174,6 +192,64 @@ export function TestimonialForm({ slug }: TestimonialFormProps) {
                 setFormData({ ...formData, customerTitle: e.target.value })
               }
             />
+          </div>
+
+          {/* Image upload */}
+          <div className="space-y-2">
+            <Label htmlFor="customerPhoto">Upload a photo (optional)</Label>
+            <input
+              id="customerPhoto"
+              type="file"
+              accept="image/*"
+              disabled={loading}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                // basic validations
+                if (!file.type.startsWith("image/")) {
+                  toast.error("Please select an image file.");
+                  return;
+                }
+
+                // limit to 2MB client-side
+                const MAX = 2 * 1024 * 1024;
+                if (file.size > MAX) {
+                  toast.error("Image too large. Max 2MB.");
+                  return;
+                }
+
+                // convert to data url
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const result = reader.result as string | ArrayBuffer | null;
+                  if (typeof result === "string") setCustomerPhoto(result);
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
+
+            {customerPhoto ? (
+              <div className="flex items-center gap-3">
+                <img
+                  src={customerPhoto}
+                  alt="preview"
+                  className="h-12 w-12 rounded-full object-cover"
+                />
+                <button
+                  type="button"
+                  className="text-xs underline text-muted-foreground"
+                  onClick={() => setCustomerPhoto(null)}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Optional: upload a small profile photo for your testimonial (max
+                2MB).
+              </p>
+            )}
           </div>
 
           {/* Testimonial */}

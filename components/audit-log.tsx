@@ -494,7 +494,11 @@ export function AuditLog({ maxHeight = 600, limit = 50 }: AuditLogProps) {
                       ? [evt.city, evt.state, evt.country]
                           .filter(Boolean)
                           .join(", ")
-                      : "Unknown location"}
+                      : // If we have no descriptive location, show the IP if available
+                        evt.ipv4 ||
+                        evt.ipv6 ||
+                        evt.ipAddress ||
+                        "Unknown location"}
                   </span>
                   {evt.countryFlag && (
                     <span className="text-lg leading-none">

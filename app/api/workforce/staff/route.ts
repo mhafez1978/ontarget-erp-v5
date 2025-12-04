@@ -282,6 +282,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Audit: onboarding token created for new staff
+    await createAuditLog({
+      action: AUDIT_ACTIONS.ONBOARDING_TOKEN_CREATED,
+      userId,
+      companyId,
+      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityId: staff.id,
+      description: `Created onboarding token for ${name} (${email})`,
+      metadata: { token: onboardingToken.token, expiresAt: onboardingToken.expiresAt.toISOString() },
+    });
+
     // Send welcome email with onboarding link
     let emailSent = false;
     let emailError = null;

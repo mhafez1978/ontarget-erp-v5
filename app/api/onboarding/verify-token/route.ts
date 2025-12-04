@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 
 export async function GET(request: Request) {
   try {
@@ -54,6 +55,17 @@ export async function GET(request: Request) {
     }
 
     if (new Date() > onboardingToken.expiresAt) {
+      // Audit: expired token was accessed (useful for analytics / admin troubleshooting)
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_TOKEN_VIEWED,
+        userId: onboardingToken.staff.user.id,
+        companyId: onboardingToken.staff.company?.id,
+        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityId: onboardingToken.staff.id,
+        description: `Expired onboarding token accessed for ${onboardingToken.staff.user.email}`,
+        metadata: { token: onboardingToken.token, expired: true },
+      });
+
       return NextResponse.json(
         { error: "Onboarding token expired", expired: true },
         { status: 400 }
@@ -88,6 +100,17 @@ export async function GET(request: Request) {
     const missingDocs = requiredDocs.filter(
       (doc) => !uploadedDocs.includes(doc as never)
     );
+
+    // Audit: token viewed / verified
+    await createAuditLog({
+      action: AUDIT_ACTIONS.ONBOARDING_TOKEN_VIEWED,
+      userId: onboardingToken.staff.user.id,
+      companyId: onboardingToken.staff.company?.id,
+      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityId: onboardingToken.staff.id,
+      description: `Onboarding token verified for ${onboardingToken.staff.user.email}`,
+      metadata: { token: onboardingToken.token, missingDocs },
+    });
 
     return NextResponse.json({
       valid: true,

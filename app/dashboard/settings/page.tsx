@@ -319,9 +319,7 @@ export default function SettingsPage() {
     const loadAiProvider = async () => {
       try {
         setAiProviderLoading(true);
-        const response = await fetch(
-          "/api/settings/ai-provider?scope=GLOBAL"
-        );
+        const response = await fetch("/api/settings/ai-provider?scope=GLOBAL");
         if (!response.ok) {
           return;
         }
@@ -2268,15 +2266,19 @@ export default function SettingsPage() {
                           </li>
                         </ol>
                         <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-950/30 rounded border border-orange-200 dark:border-orange-800">
-                          <p className="text-xs text-orange-900 dark:text-orange-100">
-                            <strong>Important:</strong> WeChat OAuth requires:
+                          <div className="text-xs text-orange-900 dark:text-orange-100 space-y-2">
+                            <p>
+                              <strong>Important:</strong> WeChat OAuth requires:
+                            </p>
                             <ul className="ml-4 mt-1 list-disc">
                               <li>Chinese business registration</li>
                               <li>Verification (3-7 business days)</li>
                               <li>Annual fee (¥300 RMB)</li>
                             </ul>
-                            Essential for Chinese market access.
-                          </p>
+                            <p className="!m-0">
+                              Essential for Chinese market access.
+                            </p>
+                          </div>
                         </div>
                       </div>
 
@@ -2570,7 +2572,9 @@ export default function SettingsPage() {
                               !aiProviderEnabled
                             }
                           >
-                            {aiProviderTesting ? "Testing..." : "Test Connection"}
+                            {aiProviderTesting
+                              ? "Testing..."
+                              : "Test Connection"}
                           </Button>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -2778,14 +2782,14 @@ export default function SettingsPage() {
       </div>
 
       {/* Team Management Dialogs */}
-      {((user.role === "SUPER_ADMIN" || user.role === "ADMIN")
+      {(user.role === "SUPER_ADMIN" || user.role === "ADMIN"
         ? selectedCompanyForTeams
         : user.companyId) && (
         <CreateTeamDialog
           open={showCreateTeamDialog}
           onOpenChange={setShowCreateTeamDialog}
           companyId={
-            ((user.role === "SUPER_ADMIN" || user.role === "ADMIN")
+            (user.role === "SUPER_ADMIN" || user.role === "ADMIN"
               ? selectedCompanyForTeams
               : user.companyId)!
           }

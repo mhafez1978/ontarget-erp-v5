@@ -75,8 +75,8 @@ export async function GET(request: Request) {
         await db.companyStaff.update({
           where: { id: staff.id },
           data: {
-            // Add isActive: false when schema is migrated
-            // isActive: false,
+            // Mark account inactive when onboarding was not completed in time
+            isActive: false,
           },
         });
 
@@ -97,6 +97,17 @@ export async function GET(request: Request) {
             tokenExpiresAt: token.expiresAt.toISOString(),
             disabledAt: now.toISOString(),
           },
+        });
+
+        // Additional onboarding-specific audit entry
+        await createAuditLog({
+          action: AUDIT_ACTIONS.ONBOARDING_EXPIRED,
+          userId: staff.userId,
+          companyId: staff.companyId,
+          entityType: ENTITY_TYPES.STAFF_MEMBER,
+          entityId: staff.id,
+          description: `Onboarding token expired for ${staff.user.email}`,
+          metadata: { token: token.token, expiresAt: token.expiresAt.toISOString() },
         });
 
         disabledAccounts.push(staff.user.email || "");

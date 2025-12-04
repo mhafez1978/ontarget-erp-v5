@@ -1,5 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Small in-memory TTL cache for recent lookups to reduce provider calls.
+// Use globalThis to survive hot module reloads in development.
+type CacheItem = { payload: any; expiresAt: number };
+const CACHE_TTL_MS =
+  Number(process.env.GET_LOCATION_CACHE_TTL_MS) || 5 * 60 * 1000; // 5m default
+
+const CACHE_KEY = "__get_location_cache_v1" as const;
+if (!(globalThis as any)[CACHE_KEY]) {
+  (globalThis as any)[CACHE_KEY] = new Map<string, CacheItem>();
+}
+const globalCache: Map<string, CacheItem> = (globalThis as any)[CACHE_KEY];
+
+function getCached(ipKey: string) {
+  const entry = globalCache.get(ipKey);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    globalCache.delete(ipKey);
+    return null;
+  }
+  return entry.payload;
+}
+
+function setCached(ipKey: string, payload: any) {
+  globalCache.set(ipKey, { payload, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+// Test helper — clear cache (exported for unit tests)
+export function __clearGetLocationCache() {
+  globalCache.clear();
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Get client IP from headers (forwarded by proxy/load balancer)
@@ -15,6 +46,17 @@ export async function GET(request: NextRequest) {
     const apiUrl = clientIp
       ? `https://ipapi.co/${clientIp}/json/`
       : "https://ipapi.co/json/";
+
+    // Cache key - prefer client IP but fall back to server-level key
+    const origin = request?.nextUrl?.origin || "unknown";
+    const cacheKey = clientIp ? `ip:${clientIp}` : `server:${origin}`;
+
+    // Check cache first
+    const cached = getCached(cacheKey);
+    if (cached) {
+      // Return cached payload directly
+      return NextResponse.json(cached);
+    }
 
     // Fetch from ipapi.co - this will return location for the specified IP
     const response = await fetch(apiUrl, {
@@ -109,12 +151,44 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // If ipapi returned minimal data (no city/country), try a lightweight fallback
+    // provider to improve location accuracy (e.g. ipwho.is). Keep this tolerant
+    // — don't fail if the secondary provider is down.
+    let fallbackData: any = null;
+    if ((!data.city || !data.country_name) && data.ip) {
+      try {
+        const altResp = await fetch(`https://ipwho.is/${data.ip}`, {
+          headers: { "User-Agent": "NextJS-App" },
+          signal: AbortSignal.timeout(3000),
+        });
+
+        if (altResp.ok) {
+          const altJson = await altResp.json();
+          // ipwho.is uses different field names but provides city/region/country
+          if (altJson && altJson.success !== false) {
+            fallbackData = altJson;
+            // normalize fields onto `data` so later code can use them uniformly
+            data.city = data.city || altJson.city || null;
+            data.region = data.region || altJson.region || null;
+            data.country_name = data.country_name || altJson.country || null;
+            data.country_code =
+              data.country_code || altJson.country_code || null;
+            data.latitude = data.latitude || altJson.latitude || null;
+            data.longitude = data.longitude || altJson.longitude || null;
+          }
+        }
+      } catch (err) {
+        // Best-effort only — leave original data as-is on any error
+        console.debug("ipwho.is fallback failed:", err);
+      }
+    }
+
     // Convert country code to flag emoji
     const flag = data.country_code
       ? countryCodeToFlag(data.country_code)
       : null;
 
-    return NextResponse.json({
+    const payload = {
       ip: data.ip || "Unknown",
       ipv4: ipv4,
       ipv6: ipv6,
@@ -125,7 +199,16 @@ export async function GET(request: NextRequest) {
       flag,
       latitude: data.latitude || null,
       longitude: data.longitude || null,
-    });
+    };
+
+    // Store successful lookup in cache (best-effort)
+    try {
+      setCached(cacheKey, payload);
+    } catch (err) {
+      console.debug("Failed to set geo cache:", err);
+    }
+
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("Geo-location API error:", error);
 

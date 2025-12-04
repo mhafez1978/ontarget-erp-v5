@@ -3,7 +3,6 @@ import {
   ArrowRight,
   BarChart3,
   Users,
-  Zap,
   Shield,
   Globe2,
   Sparkles,
@@ -15,6 +14,9 @@ import { AboutSection } from "@/components/about-section";
 import { ContactSection } from "@/components/contact-section";
 import { db } from "@/lib/db";
 import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
+import { TestimonialForm } from "@/components/storefront/testimonial-form";
+import Image from "next/image";
+import { Marquee } from "@/components/ui/marquee";
 
 export default async function Home() {
   const rootCompany = await db.company.findFirst({
@@ -22,6 +24,7 @@ export default async function Home() {
     select: {
       id: true,
       name: true,
+      slug: true,
       aiStorefrontEnabled: true,
       aiStorefrontSpec: true,
     },
@@ -30,6 +33,26 @@ export default async function Home() {
   const aiEnabled =
     rootCompany?.aiStorefrontEnabled && rootCompany.aiStorefrontSpec;
 
+  // Fetch approved testimonials for the root company (OnTarget ERP homepage)
+  const approvedTestimonials = rootCompany
+    ? await db.testimonial.findMany({
+        where: { companyId: rootCompany.id, status: "APPROVED" },
+        orderBy: [
+          { isFeatured: "desc" },
+          { displayOrder: "asc" },
+          { createdAt: "desc" },
+        ],
+        // fetch enough testimonials to fill 8 stacks * 3 visible cards each = 24
+        take: 24,
+        select: {
+          id: true,
+          customerName: true,
+          testimonial: true,
+          customerPhoto: true,
+        },
+      })
+    : [];
+
   if (aiEnabled && rootCompany?.aiStorefrontSpec) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -37,7 +60,7 @@ export default async function Home() {
         <AiStorefrontRenderer
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           spec={rootCompany.aiStorefrontSpec as any}
-          slug=""
+          slug={rootCompany.slug || ""}
           companyName={rootCompany.name}
         />
       </div>
@@ -249,7 +272,7 @@ export default async function Home() {
           </div>
 
           {/* CTA Banner */}
-          <div className="w-full bg-indigo-600 shadow-xl shadow-indigo-200 py-10 px-20 flex flex-col md:flex-row justify-between items-center gap-6 mt-8 rounded-lg">
+          <div className="w-full bg-indigo-600 shadow-xl shadow-indigo-200 py-10 px-20 flex flex-col md:flex-row justify-between items-center gap-6 mt-8 mb-20 rounded-lg">
             <div className="text-white text-center md:text-left">
               <span className="text-4xl font-medium block mb-2">
                 Ready to Get Started?
@@ -269,6 +292,138 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Testimonials Section (global OnTarget homepage) */}
+      {approvedTestimonials && approvedTestimonials.length > 0 && (
+        <section
+          id="testimonials"
+          className="py-20 border-t bg-gray-100 skew-3 mt-20"
+        >
+          <div className="w-full flex flex-col">
+            <h3 className="text-3xl font-bold text-center text-black mb-14 -skew-3">
+              <span className="italic text-amber-500">What</span> our customers
+              say about our platform.
+            </h3>
+            <div className="flex justify-center items-center">
+              {/* full-bleed 8-column vertical marquee — spans viewport with no side padding */}
+              <div className="container mx-auto">
+                <div className="flex items-center justify-center w-full ">
+                  <div className="relative flex items-center justify-center gap-4 overflow-hidden perspective-near">
+                    {(() => {
+                      const stacks = 8;
+                      type T = {
+                        id: string;
+                        customerName: string;
+                        testimonial: string;
+                        customerPhoto?: string | null;
+                      };
+                      const rows: T[][] = Array.from(
+                        { length: stacks },
+                        () => []
+                      );
+                      approvedTestimonials.forEach((t, idx) => {
+                        rows[idx % stacks].push(t as T);
+                      });
+
+                      // card height used on md+ (md:h-36 -> 144px), gap ~24px -> track height for 3 visible cards
+                      const cardHeight = 120; // md:h-48 => 192px
+                      const gap = 24;
+                      const trackHeight = 4 * cardHeight + 2 * gap; // 3 cards + 2 gaps
+
+                      return (
+                        <div
+                          key="marquee-group"
+                          className="flex flex-row items-center gap-4 mx-auto"
+                          style={{
+                            transform:
+                              "translateX(-6px) translateY(-4px) translateZ(-4px) rotateX(6deg) rotateY(-4deg) rotateZ(4deg)",
+                          }}
+                        >
+                          {rows.map((col, i) => (
+                            <Marquee
+                              key={`col-${i}`}
+                              pauseOnHover
+                              vertical
+                              className="[--duration:45s] [--gap:1.5rem] flex-none"
+                              style={{
+                                height: `${trackHeight}px`,
+                                width: `calc(100% / 8)`,
+                              }}
+                              reverse={i % 2 === 1}
+                            >
+                              {col.map((t) => (
+                                <div
+                                  key={t.id}
+                                  className="w-full h-48 md:h-48 flex flex-col justify-center items-start px-6 py-4 bg-card border rounded-md shadow-md"
+                                >
+                                  <div className="flex items-center gap-3 w-full">
+                                    {t.customerPhoto ? (
+                                      <div className="w-12 h-12 rounded-full overflow-hidden shrink-0">
+                                        <Image
+                                          src={t.customerPhoto}
+                                          alt={t.customerName}
+                                          width={48}
+                                          height={48}
+                                          className="object-cover"
+                                          unoptimized
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="w-12 h-12 rounded-full overflow-hidden bg-muted-foreground/10 shrink-0">
+                                        <Image
+                                          src="/images/placeholder-avatar.svg"
+                                          alt="placeholder"
+                                          width={48}
+                                          height={48}
+                                          unoptimized
+                                        />
+                                      </div>
+                                    )}
+
+                                    <div className="flex-1 min-w-0">
+                                      <p className="italic text-sm text-muted-foreground line-clamp-3">
+                                        “{t.testimonial}”
+                                      </p>
+                                      <p className="mt-2 text-sm font-semibold truncate">
+                                        {t.customerName}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </Marquee>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {rootCompany && (
+              <div id="submit-testimonial" className="pb-4 px-4 mt-14 -skew-3">
+                <div className="container mx-auto text-center">
+                  <h3 className="text-2xl font-bold mb-4">
+                    Share your experience with OnTarget
+                  </h3>
+                  <div className="max-w-2xl mx-auto">
+                    <TestimonialForm
+                      // If the root company has a slug use the normal storefront route
+                      // otherwise use the new by-id API endpoint so the homepage can accept guest testimonials
+                      slug={rootCompany.slug ?? undefined}
+                      apiPath={
+                        rootCompany.slug
+                          ? undefined
+                          : `/api/storefront/by-id/${rootCompany.id}/testimonials`
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Pricing Section */}
       <section id="pricing" className="py-20 px-4">
@@ -652,22 +807,4 @@ export default async function Home() {
   );
 }
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="group relative overflow-hidden rounded-2xl border bg-background p-8 transition-all hover:shadow-lg hover:border-primary/50">
-      <div className="mb-4 text-primary transition-transform group-hover:scale-110">
-        {icon}
-      </div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-muted-foreground">{description}</p>
-    </div>
-  );
-}
+// FeatureCard removed (not used on this page)

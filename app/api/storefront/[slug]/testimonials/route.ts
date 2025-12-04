@@ -60,8 +60,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const { slug } = await context.params;
     const body = await request.json();
 
-    const { customerName, customerEmail, customerTitle, rating, testimonial } =
-      body;
+    const {
+      customerName,
+      customerEmail,
+      customerTitle,
+      rating,
+      testimonial,
+      customerPhoto,
+    } = body;
 
     // Validation
     if (!customerName || !customerEmail || !testimonial) {
@@ -74,6 +80,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!rating || rating < 1 || rating > 5) {
       return NextResponse.json(
         { error: "Rating must be between 1 and 5" },
+        { status: 400 }
+      );
+    }
+
+    if (customerPhoto && typeof customerPhoto !== "string") {
+      return NextResponse.json(
+        { error: "Invalid customerPhoto" },
+        { status: 400 }
+      );
+    }
+
+    const MAX_CUSTOMER_PHOTO_CHARS = 8_000_000;
+    if (customerPhoto && customerPhoto.length > MAX_CUSTOMER_PHOTO_CHARS) {
+      return NextResponse.json(
+        {
+          error: `customerPhoto is too large. Max ${MAX_CUSTOMER_PHOTO_CHARS} characters. Received ${customerPhoto.length}`,
+        },
         { status: 400 }
       );
     }
@@ -94,6 +117,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         customerName,
         customerEmail,
         customerTitle: customerTitle || null,
+        customerPhoto: customerPhoto || null,
         rating: parseInt(rating),
         testimonial,
         status: "PENDING",

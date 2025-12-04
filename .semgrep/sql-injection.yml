@@ -1,0 +1,39 @@
+rules:
+  - id: prisma-execute-raw-unsafe
+    message: Avoid using Prisma $executeRawUnsafe or $queryRawUnsafe — these run unsanitized SQL and are high risk for injection.
+    languages: [js, ts]
+    severity: ERROR
+    patterns:
+      - pattern: db.$executeRawUnsafe($X)
+      - pattern: db.$queryRawUnsafe($X)
+
+  - id: prisma-query-raw-usage
+    message: Any use of db.$queryRaw should be reviewed. Ensure values are parameterized — do not interpolate user-controlled identifiers (table/column names).
+    languages: [js, ts]
+    severity: WARNING
+    patterns:
+      - pattern: db.$queryRaw`$SQL`
+
+  - id: raw-sql-identifier-interpolation
+    message: Interpolating template expressions directly into SQL identifiers is dangerous (e.g. table/column names). Whitelist user-supplied identifiers instead of direct interpolation.
+    languages: [js, ts]
+    severity: ERROR
+    patterns:
+      - pattern: |
+          db.$queryRaw`SELECT * FROM ${...}`
+      - pattern: |
+          db.$queryRaw`INSERT INTO ${...}`
+      - pattern: |
+          db.$queryRaw`UPDATE ${...}`
+
+  - id: string-concat-sql
+    message: Building SQL using string concatenation or + is risky. Use parameterized queries or Prisma ORM methods instead.
+    languages: [js, ts]
+    severity: WARNING
+    patterns:
+      - pattern: $X + $Y
+      - pattern: $X + $Y + $Z
+
+metadata:
+  author: security-team
+  severity: medium

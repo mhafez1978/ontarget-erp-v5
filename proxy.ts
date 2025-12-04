@@ -56,24 +56,23 @@ export async function proxy(request: NextRequest) {
             },
           });
 
-          // If user is staff and onboarding incomplete, redirect to onboarding
+          // If user is staff and onboarding incomplete, block dashboard access
+          // We enforce a hard-block: users must complete onboarding before accessing /dashboard
           if (staff && !staff.onboardingComplete) {
-            // Check if onboarding token exists and is not expired
+            // Prefer to redirect to the token-based onboarding page when we have a token
+            // (the /onboarding/[token] page already handles expired/used tokens and will show
+            // a helpful message). If no token exists or onboarding is otherwise unusable,
+            // redirect to a generic /onboarding/unavailable page that instructs the user
+            // to contact their administrator. This ensures users cannot access the dashboard
+            // while onboarding is incomplete.
             if (staff.onboardingToken && !staff.onboardingToken.isUsed) {
-              const now = new Date();
-              const expiresAt = new Date(staff.onboardingToken.expiresAt);
-
-              // Only redirect if token is still valid
-              if (expiresAt > now) {
-                return NextResponse.redirect(
-                  new URL(
-                    `/onboarding/${staff.onboardingToken.token}`,
-                    request.url
-                  )
-                );
-              }
-              // If token expired, let them through but they'll see disabled state
+              return NextResponse.redirect(
+                new URL(`/onboarding/${staff.onboardingToken.token}`, request.url)
+              );
             }
+
+            // Token missing or already marked used but onboarding still incomplete — block
+            return NextResponse.redirect(new URL(`/onboarding/unavailable`, request.url));
           }
         } catch (error) {
           console.error("Middleware onboarding check failed:", error);

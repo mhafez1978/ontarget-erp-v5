@@ -5,6 +5,7 @@ import {
   type TaxConfig,
   type TaxWithholdingConfig,
 } from "./tax-calculator";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 import type {
   PayrollProcessResult,
   PayrollProcessResultEntry,
@@ -32,21 +33,10 @@ export async function processPayrollForCompany(
 ): Promise<PayrollProcessResult> {
   const payDate = options?.payDate ? new Date(options.payDate) : new Date();
 
-  let ledger = await db.ledger.findUnique({
-    where: { companyId },
-  });
-
-  if (!ledger) {
-    ledger = await db.ledger.create({
-      data: {
-        companyId,
-        totalRevenue: new Decimal(0),
-        totalExpenses: new Decimal(0),
-        totalPayroll: new Decimal(0),
-        currentBalance: new Decimal(0),
-      },
-    });
-  }
+  // Don't eagerly query for the ledger — we only need it when we actually have
+  // pending payroll entries to process. Deferring the lookup/creation avoids
+  // unnecessary DB writes and simplifies unit testing.
+  let ledger: any = null;
 
   const pendingEntries = await db.timeEntry.findMany({
     where: {
@@ -74,6 +64,21 @@ export async function processPayrollForCompany(
       currencyBreakdown: [],
       payrollEntries: [],
     };
+  }
+
+  // If we have pending entries and a ledger hasn't been resolved yet, try to
+  // find the company's ledger and create one if necessary.
+  ledger = await db.ledger.findUnique({ where: { companyId } });
+  if (!ledger) {
+    ledger = await db.ledger.create({
+      data: {
+        companyId,
+        totalRevenue: new Decimal(0),
+        totalExpenses: new Decimal(0),
+        totalPayroll: new Decimal(0),
+        currentBalance: new Decimal(0),
+      },
+    });
   }
 
   type PendingEntry = (typeof pendingEntries)[number];
@@ -111,11 +116,30 @@ export async function processPayrollForCompany(
   for (const { staff, entries } of staffGroups.values()) {
     const payRate = staff.payRate ? new Decimal(staff.payRate) : new Decimal(0);
     if (payRate.lte(0)) {
+      const reason = "Missing or invalid pay rate";
       skippedTimeEntries.push({
         entryId: entries[0].id,
         staffId: staff.id,
-        reason: "Missing or invalid pay rate",
+        reason,
       });
+      // Audit and defensive log
+      try {
+        await createAuditLog({
+          action: AUDIT_ACTIONS.PAYROLL_ENTRY_SKIPPED,
+          companyId,
+          entityType: "TimeEntry",
+          entityId: entries[0].id,
+          description: `Skipped payroll processing for staff ${staff.id}: ${reason}`,
+          metadata: { staffId: staff.id, reason },
+        });
+      } catch (err) {
+        console.error(
+          "Failed to write audit log for skipped payroll entry:",
+          err
+        );
+      }
+
+      console.warn(`Payroll: skipping staff ${staff.id} - ${reason}`);
       continue;
     }
 
@@ -144,11 +168,29 @@ export async function processPayrollForCompany(
     }, 0);
 
     if (totalMinutes <= 0) {
+      const reason = "No recorded hours on approved entries";
       skippedTimeEntries.push({
         entryId: entries[0].id,
         staffId: staff.id,
-        reason: "No recorded hours on approved entries",
+        reason,
       });
+      try {
+        await createAuditLog({
+          action: AUDIT_ACTIONS.PAYROLL_ENTRY_SKIPPED,
+          companyId,
+          entityType: "TimeEntry",
+          entityId: entries[0].id,
+          description: `Skipped payroll processing for staff ${staff.id}: ${reason}`,
+          metadata: { staffId: staff.id, reason },
+        });
+      } catch (err) {
+        console.error(
+          "Failed to write audit log for skipped payroll entry:",
+          err
+        );
+      }
+
+      console.warn(`Payroll: skipping staff ${staff.id} - ${reason}`);
       continue;
     }
 
@@ -213,6 +255,28 @@ export async function processPayrollForCompany(
       },
     });
 
+    // Audit the creation of the payroll entry
+    try {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.PAYROLL_ENTRY_CREATED,
+        companyId,
+        entityType: "PayrollEntry",
+        entityId: payrollEntry.id,
+        description: `Payroll entry created for staff ${staff.id}`,
+        metadata: {
+          staffId: staff.id,
+          payrollEntryId: payrollEntry.id,
+          gross: payrollEntry.grossAmount?.toString?.() ?? null,
+          net: payrollEntry.netAmount?.toString?.() ?? null,
+        },
+      });
+    } catch (err) {
+      console.error(
+        "Failed to write audit log for payroll entry creation:",
+        err
+      );
+    }
+
     await db.timeEntry.updateMany({
       where: {
         id: {
@@ -258,6 +322,25 @@ export async function processPayrollForCompany(
         },
       },
     });
+
+    // Log the payroll run
+    try {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.PAYROLL_RUN,
+        companyId,
+        entityType: "Ledger",
+        entityId: ledger.id,
+        description: `Payroll run processed: gross delta ${totalPayrollDelta.toFixed(
+          2
+        )}`,
+        metadata: {
+          delta: totalPayrollDelta.toFixed(2),
+          entriesProcessed: processedEntriesCount,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to write audit log for payroll run:", err);
+    }
   }
 
   const currencyBreakdown: PayrollSummaryCurrencyTotal[] = Array.from(
