@@ -38,6 +38,9 @@ export function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [siteKey, setSiteKey] = useState<string | null>(null);
+  const [captchaLoaded, setCaptchaLoaded] = useState(false);
+  const [captchaActive, setCaptchaActive] = useState(false);
+  const [captchaBypass, setCaptchaBypass] = useState(false);
 
   useEffect(() => {
     const loadSiteKey = async () => {
@@ -45,11 +48,11 @@ export function ContactSection() {
         const resp = await fetch("/api/public/captcha/site-key");
         if (resp.ok) {
           const data = await resp.json();
-          if (data.active && data.siteKey) {
-            setSiteKey(data.siteKey);
-          } else {
-            setSiteKey(null);
-          }
+          const bypass = Boolean(data?.bypassActive);
+          setCaptchaBypass(bypass);
+          const active = !bypass && Boolean(data?.active && data?.siteKey);
+          setCaptchaActive(active);
+          setSiteKey(active ? String(data.siteKey) : null);
         }
       } catch (e) {
         console.warn("Failed to load captcha site key", e);
@@ -58,6 +61,37 @@ export function ContactSection() {
     };
     loadSiteKey();
   }, []);
+
+  // Load Google reCAPTCHA v3 script when siteKey becomes available
+  useEffect(() => {
+    if (!siteKey) return;
+    if (typeof window === "undefined") return;
+    if (document.getElementById("grecaptcha-script")) {
+      try {
+        // prefer readiness over script onload
+        // @ts-ignore
+        window.grecaptcha?.ready?.(() => setCaptchaLoaded(true));
+      } catch {
+        setCaptchaLoaded(true);
+      }
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = "grecaptcha-script";
+    script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      try {
+        // @ts-ignore
+        window.grecaptcha?.ready?.(() => setCaptchaLoaded(true));
+      } catch {
+        setCaptchaLoaded(true);
+      }
+    };
+    script.onerror = () => setCaptchaLoaded(false);
+    document.head.appendChild(script);
+  }, [siteKey]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,11 +109,26 @@ export function ContactSection() {
     setIsSubmitting(true);
 
     try {
+      if (captchaActive && siteKey && !captchaLoaded && !captchaBypass) {
+        toast.error(
+          "Captcha is still loading. Please wait a moment and try again."
+        );
+        return;
+      }
       // Obtain captcha token if captcha is active
       // If not available/inactive, omit the token entirely.
       let captchaToken = "";
       try {
-        if (window.grecaptcha && siteKey) {
+        if (!captchaBypass && window.grecaptcha && siteKey && captchaLoaded) {
+          // Ensure grecaptcha is fully ready before executing
+          await new Promise<void>((resolve) => {
+            try {
+              // @ts-ignore — grecaptcha types not fully defined
+              window.grecaptcha.ready(() => resolve());
+            } catch {
+              resolve();
+            }
+          });
           captchaToken = await window.grecaptcha.execute(siteKey, {
             action: "contact",
           });
@@ -89,6 +138,18 @@ export function ContactSection() {
       }
 
       // Build payload and only include captchaToken when non-empty
+      if (
+        !captchaBypass &&
+        captchaActive &&
+        siteKey &&
+        (!captchaToken || captchaToken.length < 10)
+      ) {
+        toast.error(
+          "Captcha did not generate a token. Please wait a moment, disable ad-blockers, and ensure this domain is allowed in your reCAPTCHA settings."
+        );
+        return;
+      }
+
       const payload: Record<string, unknown> = { ...formData };
       if (captchaToken && captchaToken.length > 0) {
         payload["captchaToken"] = captchaToken;
@@ -101,11 +162,25 @@ export function ContactSection() {
       });
 
       if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        toast.error(
-          payload?.message ||
-            "There was an issue sending your message. Please try again later."
-        );
+        const payload = await res.json().catch(() => ({} as any));
+        if (payload?.errorCode === "captcha_missing") {
+          toast.error(
+            "Captcha is enabled but no token was generated. Ensure the reCAPTCHA script loaded (disable ad-blockers) and your domain is allowed in the reCAPTCHA console."
+          );
+        } else if (payload?.errorCode === "captcha_failed") {
+          const scoreInfo =
+            typeof payload?.captcha?.score === "number"
+              ? ` (score: ${payload.captcha.score})`
+              : "";
+          toast.error(
+            `Captcha verification failed${scoreInfo}. Please retry or contact support.`
+          );
+        } else {
+          toast.error(
+            payload?.message ||
+              "There was an issue sending your message. Please try again later."
+          );
+        }
         return;
       }
 
@@ -402,7 +477,7 @@ export function ContactSection() {
                     </>
                   )}
                 </Button>
-                {siteKey ? (
+                {captchaActive && siteKey ? (
                   <div className="mt-2 text-[11px] text-muted-foreground text-center">
                     Protected by reCAPTCHA •
                     <a
@@ -422,6 +497,11 @@ export function ContactSection() {
                     >
                       Terms
                     </a>
+                  </div>
+                ) : null}
+                {captchaBypass ? (
+                  <div className="mt-2 text-[11px] text-muted-foreground text-center">
+                    Captcha bypass active for localhost testing.
                   </div>
                 ) : null}
                 <p className="text-xs text-muted-foreground text-center mt-2">

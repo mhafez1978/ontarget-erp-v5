@@ -1,7 +1,7 @@
-const { PrismaClient } = require("@prisma/client");
+const { db } = require("./db.mjs");
 
 (async () => {
-  const prisma = new PrismaClient();
+  const prisma = db;
   try {
     const testimonials = await prisma.testimonial.findMany({
       include: { company: { select: { id: true, slug: true, name: true } } },
@@ -37,6 +37,5 @@ const { PrismaClient } = require("@prisma/client");
     console.error("Error querying testimonials:", err.message || err);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
   }
 })();

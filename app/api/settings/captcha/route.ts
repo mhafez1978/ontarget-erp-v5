@@ -99,7 +99,9 @@ export async function POST(request: NextRequest) {
         );
       }
       const existing = hasModel
-        ? await (db as any).captchaProvider.findFirst({ where: { scope: "GLOBAL" } })
+        ? await (db as any).captchaProvider.findFirst({
+            where: { scope: "GLOBAL" },
+          })
         : null;
       if (existing) {
         await (db as any).captchaProvider.update({
@@ -147,7 +149,9 @@ export async function POST(request: NextRequest) {
         );
       }
       const existing = hasModel
-        ? await (db as any).captchaProvider.findFirst({ where: { scope: company.id } })
+        ? await (db as any).captchaProvider.findFirst({
+            where: { scope: company.id },
+          })
         : null;
       if (existing) {
         await (db as any).captchaProvider.update({

@@ -7,9 +7,7 @@
  * Usage: node sync-user-subscriptions.mjs
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const db = new PrismaClient();
+import { db } from "./scripts/db.mjs";
 
 async function syncSubscriptions() {
   console.log("🔄 Starting subscription sync...\n");

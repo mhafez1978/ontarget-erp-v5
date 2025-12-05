@@ -1,7 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import * as readline from "readline";
 
-const prisma = new PrismaClient();
+import { db } from "./scripts/db.mjs";
+
+const prisma = db;
 
 const rl = readline.createInterface({
   input: process.stdin,

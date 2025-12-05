@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { db } from "./scripts/db.mjs";
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 async function checkGhadaCatalog() {
   try {

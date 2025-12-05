@@ -1,6 +1,6 @@
-const { PrismaClient } = require("@prisma/client");
+const { db } = require("./db.mjs");
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 async function addMany(companyId, count = 9) {
   const samples = Array.from({ length: count }).map((_, i) => ({
@@ -28,7 +28,6 @@ async function addMany(companyId, count = 9) {
     console.error("Error creating testimonials:", err.message || err);
     process.exitCode = 1;
   } finally {
-    await prisma.$disconnect();
   }
 }
 

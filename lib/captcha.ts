@@ -85,3 +85,31 @@ export async function verifyGoogleCaptcha(
     return false;
   }
 }
+
+export async function verifyGoogleCaptchaDetailed(
+  token: string,
+  secret: string
+): Promise<{
+  success: boolean;
+  score?: number;
+  action?: string;
+  challenge_ts?: string;
+  hostname?: string;
+  "error-codes"?: string[];
+}> {
+  try {
+    const resp = await fetch(
+      "https://www.google.com/recaptcha/api/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ secret, response: token }),
+      }
+    );
+    const data = (await resp.json()) as any;
+    return data ?? { success: false };
+  } catch (e) {
+    console.error("[captcha] Detailed verification error:", e);
+    return { success: false, "error-codes": ["exception"] } as any;
+  }
+}

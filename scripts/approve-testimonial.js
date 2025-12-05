@@ -1,6 +1,6 @@
-const { PrismaClient } = require("@prisma/client");
+const { db } = require("./db.mjs");
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 async function approve(id) {
   try {
@@ -14,7 +14,6 @@ async function approve(id) {
     console.error("Error approving testimonial:", err.message || err);
     process.exitCode = 1;
   } finally {
-    await prisma.$disconnect();
   }
 }
 

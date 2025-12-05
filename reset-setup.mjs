@@ -5,9 +5,9 @@
  * Helps manage the initial SUPER_ADMIN setup
  */
 
-import { PrismaClient } from "@prisma/client";
+import { db } from "./scripts/db.mjs";
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 const colors = {
   reset: "\x1b[0m",

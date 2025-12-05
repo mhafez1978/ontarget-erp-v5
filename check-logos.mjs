@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { db } from "./scripts/db.mjs";
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 async function main() {
   const rootCompany = await prisma.company.findFirst({
@@ -11,10 +11,10 @@ async function main() {
       logo: true,
       logoLight: true,
       logoDark: true,
-    }
+    },
   });
 
-  console.log('Root Company Data:');
+  console.log("Root Company Data:");
   console.log(JSON.stringify(rootCompany, null, 2));
 }
 

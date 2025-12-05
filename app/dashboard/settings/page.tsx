@@ -228,19 +228,42 @@ export default function SettingsPage() {
         }
 
         // Load OAuth provider settings
+        let providers: OAuthProvider[] = [];
         const oauthResponse = await fetch("/api/settings/oauth-providers");
         if (oauthResponse.ok) {
           const oauthData = await oauthResponse.json();
-          const providers: OAuthProvider[] = oauthData.providers || [];
+          providers = oauthData.providers || [];
 
           // Set scope and customization permission
           setOauthScope(oauthData.scope || "COMPANY");
           setCanCustomizeOAuth(oauthData.canCustomize || false);
-
-          const googleProvider = providers.find(
-            (p: OAuthProvider) => p.provider === "google"
-          );
         }
+
+        // Prepare provider lookups for use below even if captcha fails
+        const googleProvider = providers.find(
+          (p: OAuthProvider) => p.provider === "google"
+        );
+        const microsoftProviderPre = providers.find(
+          (p: OAuthProvider) => p.provider === "microsoft"
+        );
+        const githubProviderPre = providers.find(
+          (p: OAuthProvider) => p.provider === "github"
+        );
+        const linkedinProviderPre = providers.find(
+          (p: OAuthProvider) => p.provider === "linkedin"
+        );
+        const yahooProviderPre = providers.find(
+          (p: OAuthProvider) => p.provider === "yahoo"
+        );
+        const lineProviderPre = providers.find(
+          (p: OAuthProvider) => p.provider === "line"
+        );
+        const yandexProviderPre = providers.find(
+          (p: OAuthProvider) => p.provider === "yandex"
+        );
+        const wechatProviderPre = providers.find(
+          (p: OAuthProvider) => p.provider === "wechat"
+        );
         // Load Captcha settings
         try {
           const captchaResp = await fetch("/api/settings/captcha");
@@ -255,27 +278,13 @@ export default function SettingsPage() {
           }
         } catch (e) {
           console.warn("Failed to load captcha settings", e);
-          const microsoftProvider = providers.find(
-            (p: OAuthProvider) => p.provider === "microsoft"
-          );
-          const githubProvider = providers.find(
-            (p: OAuthProvider) => p.provider === "github"
-          );
-          const linkedinProvider = providers.find(
-            (p: OAuthProvider) => p.provider === "linkedin"
-          );
-          const yahooProvider = providers.find(
-            (p: OAuthProvider) => p.provider === "yahoo"
-          );
-          const lineProvider = providers.find(
-            (p: OAuthProvider) => p.provider === "line"
-          );
-          const yandexProvider = providers.find(
-            (p: OAuthProvider) => p.provider === "yandex"
-          );
-          const wechatProvider = providers.find(
-            (p: OAuthProvider) => p.provider === "wechat"
-          );
+          const microsoftProvider = microsoftProviderPre;
+          const githubProvider = githubProviderPre;
+          const linkedinProvider = linkedinProviderPre;
+          const yahooProvider = yahooProviderPre;
+          const lineProvider = lineProviderPre;
+          const yandexProvider = yandexProviderPre;
+          const wechatProvider = wechatProviderPre;
 
           setOauthProviders({
             google: {

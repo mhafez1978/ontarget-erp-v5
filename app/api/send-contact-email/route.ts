@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email-service";
 import { z } from "zod";
-import { getCaptchaForScope, verifyGoogleCaptcha } from "@/lib/captcha";
+import {
+  getCaptchaForScope,
+  verifyGoogleCaptcha,
+  verifyGoogleCaptchaDetailed,
+} from "@/lib/captcha";
 
 // Simple in-memory rate limiter (per IP)
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
@@ -74,10 +78,47 @@ export async function POST(request: NextRequest) {
 
     // Check GLOBAL captcha settings; require captcha only if active
     const captcha = await getCaptchaForScope(undefined);
-    if (captcha?.isActive) {
+    const isLocalhostRequest = (() => {
+      const host = request.headers.get("host") || "";
+      return host.includes("localhost") || host.includes("127.0.0.1");
+    })();
+    const BYPASS_CAPTCHA =
+      (process.env.NODE_ENV !== "production" &&
+        String(process.env.CAPTCHA_BYPASS || "").toLowerCase() === "true") ||
+      (isLocalhostRequest &&
+        String(process.env.CAPTCHA_ALLOW_LOCALHOST || "").toLowerCase() ===
+          "true");
+
+    if (captcha?.isActive && !BYPASS_CAPTCHA) {
       if (!captchaToken) {
+        const DEBUG_CAPTCHA =
+          process.env.NODE_ENV !== "production" &&
+          String(process.env.DEBUG_CAPTCHA || "").toLowerCase() === "true";
+        if (DEBUG_CAPTCHA) {
+          return NextResponse.json(
+            {
+              message: "Captcha token is required",
+              errorCode: "captcha_missing",
+              debug: true,
+              captchaActive: true,
+              isLocalhostRequest,
+              bypassEnv: {
+                CAPTCHA_BYPASS: String(
+                  process.env.CAPTCHA_BYPASS || ""
+                ).toLowerCase(),
+                CAPTCHA_ALLOW_LOCALHOST: String(
+                  process.env.CAPTCHA_ALLOW_LOCALHOST || ""
+                ).toLowerCase(),
+              },
+            },
+            { status: 400 }
+          );
+        }
         return NextResponse.json(
-          { message: "Captcha token is required" },
+          {
+            message: "Captcha token is required",
+            errorCode: "captcha_missing",
+          },
           { status: 400 }
         );
       }
@@ -86,8 +127,44 @@ export async function POST(request: NextRequest) {
         captcha.secretKey
       );
       if (!okCaptcha) {
+        try {
+          const details = await verifyGoogleCaptchaDetailed(
+            captchaToken,
+            captcha.secretKey
+          );
+          console.warn("[send-contact-email] Captcha failed", {
+            hostname: details?.hostname,
+            score: details?.score,
+            success: details?.success,
+            errors: details?.["error-codes"],
+          });
+          const DEBUG_CAPTCHA =
+            process.env.NODE_ENV !== "production" &&
+            String(process.env.DEBUG_CAPTCHA || "").toLowerCase() === "true";
+          if (DEBUG_CAPTCHA) {
+            return NextResponse.json(
+              {
+                message: "Captcha verification failed",
+                errorCode: "captcha_failed",
+                captcha: {
+                  hostname: details?.hostname,
+                  score: details?.score,
+                  success: details?.success,
+                  errors: details?.["error-codes"],
+                },
+                debug: true,
+              },
+              { status: 400 }
+            );
+          }
+        } catch (e) {
+          console.warn("[send-contact-email] Captcha detailed log failed", e);
+        }
         return NextResponse.json(
-          { message: "Captcha verification failed" },
+          {
+            message: "Captcha verification failed",
+            errorCode: "captcha_failed",
+          },
           { status: 400 }
         );
       }
