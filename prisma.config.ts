@@ -1,17 +1,12 @@
 import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
 
+// Prisma 7: datasource url must live here, not in schema.prisma
 export default defineConfig({
-  // You likely don't need this unless you use Database Views
-  // experimental: {
-  //   externalTables: true,
-  // },
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
     seed: "prisma/seed.mjs",
-    // REMOVE THIS LINE BELOW - It is causing the SQL error
-    // initShadowDb: "prisma/init-shadow-db.ts",
   },
   datasource: {
     url: env("DATABASE_URL"),
