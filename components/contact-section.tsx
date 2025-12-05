@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +15,18 @@ import {
   Building2,
 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
+
+declare global {
+  interface Window {
+    grecaptcha?: {
+      execute: (
+        siteKey: string,
+        options?: { action?: string }
+      ) => Promise<string>;
+    };
+  }
+}
 
 export function ContactSection() {
   const [formData, setFormData] = useState({
@@ -24,15 +36,95 @@ export function ContactSection() {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [siteKey, setSiteKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadSiteKey = async () => {
+      try {
+        const resp = await fetch("/api/public/captcha/site-key");
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.active && data.siteKey) {
+            setSiteKey(data.siteKey);
+          } else {
+            setSiteKey(null);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to load captcha site key", e);
+        setSiteKey(null);
+      }
+    };
+    loadSiteKey();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // simple client-side validation
+    if (
+      !formData.name.trim() ||
+      !formData.email.trim() ||
+      !formData.message.trim()
+    ) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
     setIsSubmitting(true);
-    // TODO: Implement form submission logic
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    // Reset form
-    setFormData({ name: "", email: "", company: "", message: "" });
+
+    try {
+      // Obtain captcha token if captcha is active
+      // If not available/inactive, omit the token entirely.
+      let captchaToken = "";
+      try {
+        if (window.grecaptcha && siteKey) {
+          captchaToken = await window.grecaptcha.execute(siteKey, {
+            action: "contact",
+          });
+        }
+      } catch (e) {
+        console.warn("Captcha execute failed:", e);
+      }
+
+      // Build payload and only include captchaToken when non-empty
+      const payload: Record<string, unknown> = { ...formData };
+      if (captchaToken && captchaToken.length > 0) {
+        payload["captchaToken"] = captchaToken;
+      }
+
+      const res = await fetch("/api/send-contact-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        toast.error(
+          payload?.message ||
+            "There was an issue sending your message. Please try again later."
+        );
+        return;
+      }
+
+      // success -> reset form and notify user
+      setFormData({ name: "", email: "", company: "", message: "" });
+      setSubmitted(true);
+      toast.success("Message sent to the super admin. Thank you!");
+    } catch (err: unknown) {
+      console.error("Contact form error:", err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : String(
+              err ?? "Unable to send the message. Please try again later."
+            );
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
@@ -185,102 +277,159 @@ export function ContactSection() {
 
           {/* Right Column - Contact Form */}
           <div className="rounded-2xl border bg-card p-8 shadow-lg">
-            <h3 className="text-2xl font-bold mb-6">Send a Message</h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <label
-                  htmlFor="name"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            <h3 className="flex flex-row gap-2 items-center text-2xl font-bold mb-6">
+              <Send className="ml-2 h-6 w-6 transition-transform group-hover:translate-x-1" />
+              Send us a message
+            </h3>
+            {submitted ? (
+              <div className="flex flex-col items-center justify-center text-center space-y-3 py-10">
+                <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="h-10 w-10 text-green-600"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12l2 2 4-4M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"
+                    />
+                  </svg>
+                </div>
+                <div className="text-xl font-semibold">Message Sent</div>
+                <div className="text-sm text-muted-foreground max-w-md">
+                  Thank you for contacting us. We’ll get back to you within
+                  24–48 hours.
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setSubmitted(false)}
+                  className="mt-2"
                 >
-                  Your Name *
-                </label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="John Doe"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                />
+                  Send another message
+                </Button>
               </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="name"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Your Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="name"
+                    name="name"
+                    placeholder="John Doe"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <label
-                  htmlFor="email"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                <div className="space-y-2">
+                  <label
+                    htmlFor="email"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="john@company.com"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="company"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Company Name
+                  </label>
+                  <Input
+                    id="company"
+                    name="company"
+                    placeholder="Your Company"
+                    value={formData.company}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="message"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Message <span className="text-red-500">*</span>
+                  </label>
+                  <Textarea
+                    id="message"
+                    name="message"
+                    placeholder="Tell me about your project or inquiry..."
+                    className="min-h-[150px] resize-none"
+                    required
+                    value={formData.message}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full group"
+                  size="lg"
+                  disabled={isSubmitting}
                 >
-                  Email Address *
-                </label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="john@company.com"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="company"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Company Name
-                </label>
-                <Input
-                  id="company"
-                  name="company"
-                  placeholder="Your Company"
-                  value={formData.company}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="message"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Message *
-                </label>
-                <Textarea
-                  id="message"
-                  name="message"
-                  placeholder="Tell me about your project or inquiry..."
-                  className="min-h-[150px] resize-none"
-                  required
-                  value={formData.message}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full group"
-                size="lg"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  "Sending..."
-                ) : (
-                  <>
-                    Send Message
-                    <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </>
-                )}
-              </Button>
-
-              <p className="text-xs text-muted-foreground text-center">
-                By submitting this form, you agree to our privacy policy.
-                We&apos;ll respond within 24-48 hours.
-              </p>
-            </form>
+                  {isSubmitting ? (
+                    "Sending..."
+                  ) : (
+                    <>
+                      Send
+                      <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </>
+                  )}
+                </Button>
+                {siteKey ? (
+                  <div className="mt-2 text-[11px] text-muted-foreground text-center">
+                    Protected by reCAPTCHA •
+                    <a
+                      href="https://policies.google.com/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline ml-1"
+                    >
+                      Privacy
+                    </a>
+                    <span> • </span>
+                    <a
+                      href="https://policies.google.com/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      Terms
+                    </a>
+                  </div>
+                ) : null}
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  By submitting this form, you agree to our privacy policy.
+                  We&apos;ll respond within 24-48 hours.
+                </p>
+              </form>
+            )}
           </div>
         </div>
       </div>

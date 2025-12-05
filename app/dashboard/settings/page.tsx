@@ -240,6 +240,21 @@ export default function SettingsPage() {
           const googleProvider = providers.find(
             (p: OAuthProvider) => p.provider === "google"
           );
+        }
+        // Load Captcha settings
+        try {
+          const captchaResp = await fetch("/api/settings/captcha");
+          if (captchaResp.ok) {
+            const data = await captchaResp.json();
+            setGlobalCaptchaActive(!!data.isActive);
+            setGlobalCaptchaSiteKey(data.siteKey || "");
+            setCompanyCaptchaFallback({
+              active: !!data.fallback?.isActive,
+              siteKey: data.fallback?.siteKey || "",
+            });
+          }
+        } catch (e) {
+          console.warn("Failed to load captcha settings", e);
           const microsoftProvider = providers.find(
             (p: OAuthProvider) => p.provider === "microsoft"
           );
@@ -424,6 +439,81 @@ export default function SettingsPage() {
       toast.error("Failed to save AI provider settings");
     } finally {
       setAiProviderSaving(false);
+    }
+  };
+
+  // Captcha settings state
+  const [globalCaptchaActive, setGlobalCaptchaActive] = useState(false);
+  const [globalCaptchaSiteKey, setGlobalCaptchaSiteKey] = useState("");
+  const [globalCaptchaSecretKey, setGlobalCaptchaSecretKey] = useState("");
+  const [captchaSaving, setCaptchaSaving] = useState(false);
+  const [companyCaptchaActive, setCompanyCaptchaActive] = useState(false);
+  const [companyCaptchaSiteKey, setCompanyCaptchaSiteKey] = useState("");
+  const [companyCaptchaSecretKey, setCompanyCaptchaSecretKey] = useState("");
+  const [companyCaptchaFallback, setCompanyCaptchaFallback] = useState<{
+    active: boolean;
+    siteKey: string;
+  }>({ active: false, siteKey: "" });
+
+  const saveGlobalCaptcha = async () => {
+    if (user.role !== "SUPER_ADMIN") {
+      toast.error("Only Super Admin can manage global captcha");
+      return;
+    }
+    setCaptchaSaving(true);
+    try {
+      const resp = await fetch("/api/settings/captcha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: "GOOGLE_RECAPTCHA",
+          siteKey: globalCaptchaSiteKey.trim(),
+          secretKey: globalCaptchaSecretKey.trim(),
+          isActive: globalCaptchaActive,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        toast.error(data.error || "Failed to save global captcha");
+      } else {
+        toast.success("Global captcha settings saved");
+        setGlobalCaptchaSecretKey("");
+      }
+    } catch (e) {
+      toast.error("Error saving captcha settings");
+    } finally {
+      setCaptchaSaving(false);
+    }
+  };
+
+  const saveCompanyCaptcha = async () => {
+    if (user.role !== "ADMIN") {
+      toast.error("Only Company Admin can manage company captcha");
+      return;
+    }
+    setCaptchaSaving(true);
+    try {
+      const resp = await fetch("/api/settings/captcha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: "GOOGLE_RECAPTCHA",
+          siteKey: companyCaptchaSiteKey.trim(),
+          secretKey: companyCaptchaSecretKey.trim(),
+          isActive: companyCaptchaActive,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        toast.error(data.error || "Failed to save company captcha");
+      } else {
+        toast.success("Company captcha settings saved");
+        setCompanyCaptchaSecretKey("");
+      }
+    } catch (e) {
+      toast.error("Error saving captcha settings");
+    } finally {
+      setCaptchaSaving(false);
     }
   };
 
@@ -2619,6 +2709,194 @@ export default function SettingsPage() {
               <AccordionContent>
                 <div className="pt-4">
                   <EmailProviderCards userRole={user.role} />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Captcha Settings */}
+          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
+            <AccordionItem value="captcha-config">
+              <AccordionTrigger className="text-xl font-semibold">
+                <div className="flex items-center gap-2">
+                  <Key className="h-5 w-5" />
+                  Captcha Settings
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-4 space-y-6">
+                  {/* Captcha Setup Instructions */}
+                  <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          How to set up reCAPTCHA
+                        </p>
+                        <ol className="list-decimal list-inside text-sm space-y-2 text-blue-800 dark:text-blue-200">
+                          <li>
+                            Visit{" "}
+                            <a
+                              href="https://www.google.com/recaptcha/admin/create"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline"
+                            >
+                              Google reCAPTCHA Admin
+                            </a>{" "}
+                            and create a new site.
+                          </li>
+                          <li>
+                            Choose reCAPTCHA type:
+                            <strong className="ml-1">v3</strong> (recommended
+                            for frictionless UX) or
+                            <strong className="ml-1">v2</strong> (checkbox).
+                          </li>
+                          <li>
+                            Add domain: set your app origin{" "}
+                            <code className="bg-black/5 dark:bg-white/10 px-1 py-0.5 rounded">
+                              {process.env.NEXT_PUBLIC_APP_URL}
+                            </code>{" "}
+                            (and other environments if needed).
+                          </li>
+                          <li>
+                            After creating, copy the <strong>Site Key</strong>{" "}
+                            and <strong>Secret Key</strong>.
+                          </li>
+                          <li>
+                            As <strong>Super Admin</strong>, paste keys into the{" "}
+                            <strong>Global Captcha</strong> section and toggle
+                            it on. Homepage forms will use Global captcha when
+                            active.
+                          </li>
+                          <li>
+                            As <strong>Company Admin</strong>, optionally
+                            configure <strong>Company Captcha</strong> for
+                            storefront forms. Storefront uses Company captcha
+                            when active; otherwise falls back to Global.
+                          </li>
+                          <li>
+                            Click <strong>Save</strong>. Secret keys are stored
+                            encrypted and never shown back in the UI.
+                          </li>
+                          <li>
+                            Test: open homepage, submit the contact form. If
+                            Global captcha is active, you should see the captcha
+                            execute client-side and the request succeed.
+                          </li>
+                        </ol>
+                        <p className="text-xs text-muted-foreground">
+                          Note: When captcha is inactive, submissions are still
+                          rate-limited server-side and will skip captcha
+                          verification.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {user.role === "SUPER_ADMIN" && (
+                    <div className="rounded-lg border p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">
+                          Enable Global Captcha
+                        </Label>
+                        <Switch
+                          checked={globalCaptchaActive}
+                          onCheckedChange={setGlobalCaptchaActive}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Global Site Key</Label>
+                          <Input
+                            value={globalCaptchaSiteKey}
+                            onChange={(e) =>
+                              setGlobalCaptchaSiteKey(e.target.value)
+                            }
+                            placeholder="Google reCAPTCHA site key"
+                          />
+                        </div>
+                        <div>
+                          <Label>Global Secret Key</Label>
+                          <Input
+                            type="password"
+                            value={globalCaptchaSecretKey}
+                            onChange={(e) =>
+                              setGlobalCaptchaSecretKey(e.target.value)
+                            }
+                            placeholder="Google reCAPTCHA secret key"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={saveGlobalCaptcha}
+                          disabled={captchaSaving}
+                        >
+                          Save Global Captcha
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Homepage guest contact uses <strong>Global</strong>{" "}
+                        captcha when enabled. Secrets are stored encrypted and
+                        never shown back.
+                      </p>
+                    </div>
+                  )}
+
+                  {user.role === "ADMIN" && (
+                    <div className="rounded-lg border p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">
+                          Enable Company Captcha
+                        </Label>
+                        <Switch
+                          checked={companyCaptchaActive}
+                          onCheckedChange={setCompanyCaptchaActive}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Company Site Key</Label>
+                          <Input
+                            value={companyCaptchaSiteKey}
+                            onChange={(e) =>
+                              setCompanyCaptchaSiteKey(e.target.value)
+                            }
+                            placeholder="Google reCAPTCHA site key"
+                          />
+                        </div>
+                        <div>
+                          <Label>Company Secret Key</Label>
+                          <Input
+                            type="password"
+                            value={companyCaptchaSecretKey}
+                            onChange={(e) =>
+                              setCompanyCaptchaSecretKey(e.target.value)
+                            }
+                            placeholder="Google reCAPTCHA secret key"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={saveCompanyCaptcha}
+                          disabled={captchaSaving}
+                        >
+                          Save Company Captcha
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Company storefront forms use the{" "}
+                        <strong>Company</strong> captcha when enabled; otherwise
+                        fallback to Global if available.
+                      </p>
+                      {companyCaptchaFallback.active && (
+                        <div className="text-xs text-muted-foreground">
+                          Global fallback is active.
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </AccordionContent>
             </AccordionItem>

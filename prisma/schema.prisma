@@ -1378,6 +1378,11 @@ enum StorageProviderType {
   DIGITALOCEAN // DigitalOcean Spaces
 }
 
+// Captcha Provider Type Enum
+enum CaptchaProviderType {
+  GOOGLE_RECAPTCHA
+}
+
 // Email Provider Configuration
 model EmailProvider {
   id       String            @id @default(cuid())
@@ -1431,6 +1436,31 @@ model EmailProvider {
   // Scope - global (super admin) or company-specific
   scope     String  @default("GLOBAL") // "GLOBAL" or company ID
   companyId String? // If company-specific
+
+  // Metadata
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([provider])
+  @@index([isActive])
+  @@index([scope])
+  @@index([companyId])
+}
+
+// Captcha Provider Configuration
+model CaptchaProvider {
+  id        String              @id @default(cuid())
+  provider  CaptchaProviderType @default(GOOGLE_RECAPTCHA)
+  isActive  Boolean             @default(false)
+
+  // Keys
+  siteKey   String?
+  secretKey String? @db.Text // Encrypted
+
+  // Scope - global (super admin) or company-specific
+  scope     String  @default("GLOBAL") // "GLOBAL" or company ID
+  companyId String?
 
   // Metadata
   createdById String

@@ -1,0 +1,87 @@
+import { db } from "./db";
+import { decrypt } from "./encryption";
+
+export type CaptchaProvider = "GOOGLE_RECAPTCHA";
+
+export type CaptchaSettings = {
+  provider: CaptchaProvider;
+  siteKey: string;
+  secretKey: string;
+  scope: string; // "GLOBAL" or companyId
+  isActive: boolean;
+} | null;
+
+interface CaptchaRecord {
+  siteKey?: string | null;
+  secretKey?: string | null;
+  scope: string;
+  isActive: boolean;
+}
+
+interface CaptchaRepo {
+  findFirst: (args: {
+    where: { scope: string; isActive: boolean };
+  }) => Promise<CaptchaRecord | null>;
+}
+
+export async function getCaptchaForScope(
+  companyId?: string
+): Promise<CaptchaSettings> {
+  const repo = (db as unknown as { captchaProvider?: CaptchaRepo })
+    .captchaProvider;
+  if (!repo || typeof repo.findFirst !== "function") {
+    return null;
+  }
+
+  if (companyId) {
+    const companyProvider = await repo.findFirst({
+      where: { scope: companyId, isActive: true },
+    });
+    if (companyProvider?.siteKey && companyProvider?.secretKey) {
+      return {
+        provider: "GOOGLE_RECAPTCHA",
+        siteKey: companyProvider.siteKey,
+        secretKey: decrypt(companyProvider.secretKey!),
+        scope: companyProvider.scope,
+        isActive: companyProvider.isActive,
+      };
+    }
+  }
+
+  const globalProvider = await repo.findFirst({
+    where: { scope: "GLOBAL", isActive: true },
+  });
+  if (globalProvider?.siteKey && globalProvider?.secretKey) {
+    return {
+      provider: "GOOGLE_RECAPTCHA",
+      siteKey: globalProvider.siteKey,
+      secretKey: decrypt(globalProvider.secretKey!),
+      scope: globalProvider.scope,
+      isActive: globalProvider.isActive,
+    };
+  }
+  return null;
+}
+
+export async function verifyGoogleCaptcha(
+  token: string,
+  secret: string
+): Promise<boolean> {
+  try {
+    const resp = await fetch(
+      "https://www.google.com/recaptcha/api/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ secret, response: token }),
+      }
+    );
+    const data = (await resp.json()) as { success?: boolean; score?: number };
+    if (!data?.success) return false;
+    if (typeof data?.score === "number" && data.score < 0.5) return false;
+    return true;
+  } catch (e) {
+    console.error("[captcha] Verification error:", e);
+    return false;
+  }
+}

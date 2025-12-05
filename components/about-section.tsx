@@ -29,32 +29,54 @@ export function AboutSection() {
           {/* Left Column - Bio */}
           <div className="space-y-6">
             <div className="prose prose-slate dark:prose-invert max-w-none">
-              <h3 className="text-2xl font-bold mb-4">Mohamed Hafez</h3>
+              {/* <h3 className="text-2xl font-bold mb-4">Mohamed Hafez</h3> */}
               <p className="text-muted-foreground leading-relaxed">
-                A Full Stack Web Developer, Amazon Certified Cloud Practitioner,
-                and Microsoft Certified Systems Engineer. When I&apos;m NOT
-                coding, I&apos;m with Family.
+                Mohamed Hafez a Full Stack Web Developer, Amazon Certified Cloud
+                Practitioner, and Microsoft Certified Systems Engineer. When
+                I&apos;m NOT coding, I&apos;m with Family.
               </p>
               <p className="text-muted-foreground leading-relaxed">
                 With a unique blend of development expertise and enterprise
                 architecture experience, I&apos;ve dedicated my career to
                 building solutions that help businesses operate more
-                efficiently. OnTarget ERP v5 represents the culmination of years
-                of experience working with diverse organizations and
+                efficiently. OnTarget Ai Driven ERP represents the culmination
+                of years of experience working with diverse organizations and
                 understanding their real-world challenges.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                Based in Lowell, MA, I run Nodes Unlimited LLC, focusing on
-                creating scalable, cloud-native applications that drive business
-                transformation.
+                Based in Lowell, MA. I run Nodes Unlimited LLC, a next
+                generation cloud web hosting service focusing on creating
+                scalable, cloud-native applications that drive business
+                transformation. I also, run Blooming Brands Inc - a full service
+                online marketing and branding agency focuing on helping small
+                business grow their online presence.
               </p>
             </div>
 
             {/* Company Info */}
-            <div className="border-l-4 border-primary pl-6 py-2">
+            <div className="border-l-4 border-red-500 pl-6 py-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Briefcase className="h-5 w-5 text-primary" />
+                <span className="font-semibold">Geeks On Demand LLC</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Charlotte, North Carolina
+              </p>
+            </div>
+            <div className="border-l-4 border-amber-500 pl-6 py-2">
               <div className="flex items-center gap-2 mb-2">
                 <Briefcase className="h-5 w-5 text-primary" />
                 <span className="font-semibold">Nodes Unlimited LLC</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Lowell, Massachusetts
+              </p>
+            </div>
+            <div className="border-l-4 border-green-500 pl-6 py-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Briefcase className="h-5 w-5 text-primary" />
+                <span className="font-semibold">Blooming Brands Inc</span>{" "}
+                &quot;OnTarget ERP&quot;
               </div>
               <p className="text-sm text-muted-foreground">
                 Lowell, Massachusetts

@@ -355,6 +355,37 @@ export async function sendEmail(
 }
 
 /**
+ * Returns the primary SUPER_ADMIN recipient email.
+ * Guards against missing Prisma models by returning null.
+ */
+export async function getSuperAdminRecipient(): Promise<{
+  email: string;
+} | null> {
+  try {
+    const userRepo = (
+      db as unknown as {
+        user?: {
+          findFirst: (args: {
+            where: { role: string; email: { not: null } };
+          }) => Promise<{ email: string } | null>;
+        };
+      }
+    ).user;
+    if (!userRepo || typeof userRepo.findFirst !== "function") {
+      return null;
+    }
+    const admin = await userRepo.findFirst({
+      where: { role: "SUPER_ADMIN", email: { not: null } },
+    });
+    if (admin?.email) return { email: admin.email };
+    return null;
+  } catch (e) {
+    console.error("[Email Service] getSuperAdminRecipient error:", e);
+    return null;
+  }
+}
+
+/**
  * Email Templates
  */
 
