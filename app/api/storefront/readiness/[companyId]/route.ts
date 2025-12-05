@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
 import { checkStorefrontReadiness } from "@/lib/storefront-readiness";
 
-const prisma = new PrismaClient();
+const prisma = db;
 
 /**
  * GET /api/storefront/readiness/[companyId]
@@ -92,7 +92,5 @@ export async function GET(
       { error: "Failed to check storefront readiness" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
