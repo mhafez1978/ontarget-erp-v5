@@ -10,10 +10,7 @@ export async function GET(request: NextRequest) {
     if (!validation.valid) return validation.response;
     const user = validation.user;
 
-    const hasModel =
-      (db as unknown as { captchaProvider?: { findFirst: Function } })
-        .captchaProvider &&
-      typeof (db as any).captchaProvider.findFirst === "function";
+    const hasModel = !!(db as any)?.captchaProvider?.findFirst;
 
     // SUPER_ADMIN sees GLOBAL; ADMIN sees company override and global
     if (user.role === "SUPER_ADMIN") {
@@ -101,11 +98,11 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-      const existing = await db.captchaProvider.findFirst({
-        where: { scope: "GLOBAL" },
-      });
+      const existing = hasModel
+        ? await (db as any).captchaProvider.findFirst({ where: { scope: "GLOBAL" } })
+        : null;
       if (existing) {
-        await db.captchaProvider.update({
+        await (db as any).captchaProvider.update({
           where: { id: existing.id },
           data: {
             provider: "GOOGLE_RECAPTCHA",
@@ -116,7 +113,7 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        await db.captchaProvider.create({
+        await (db as any).captchaProvider.create({
           data: {
             provider: "GOOGLE_RECAPTCHA",
             siteKey,
@@ -149,11 +146,11 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-      const existing = await db.captchaProvider.findFirst({
-        where: { scope: company.id },
-      });
+      const existing = hasModel
+        ? await (db as any).captchaProvider.findFirst({ where: { scope: company.id } })
+        : null;
       if (existing) {
-        await db.captchaProvider.update({
+        await (db as any).captchaProvider.update({
           where: { id: existing.id },
           data: {
             provider: "GOOGLE_RECAPTCHA",
@@ -164,7 +161,7 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        await db.captchaProvider.create({
+        await (db as any).captchaProvider.create({
           data: {
             provider: "GOOGLE_RECAPTCHA",
             siteKey,
