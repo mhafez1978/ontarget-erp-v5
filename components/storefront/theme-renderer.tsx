@@ -882,7 +882,7 @@ export function BaseThemeRenderer({
 
             <a
               href="#contact"
-              className="inline-block mt-12 bg-[#ff6b00] text-black font-extrabold px-12 py-4 rounded-md text-lg shadow-[0_0_25px_rgba(255,107,0,0.5)] hover:bg-[#e55f00] transition border-4 border-black"
+              className="inline-block mt-12 bg-[#ff6b00] text-black font-extrabold px-12 py-4 rounded-md text-lg shadow-[0_0_25px rgba(255,107,0,0.5)] hover:bg-[#e55f00] transition border-4 border-black"
             >
               Request a Free Quote →
             </a>
@@ -1822,37 +1822,47 @@ export function BaseThemeRenderer({
                 </div>
               ) : (
                 <div className="grid gap-6 md:grid-cols-3">
-                  {postList.map((p: any, idx: number) => (
-                    <a
-                      key={p.id || idx}
-                      href={`/store/${slug}/posts/${p.slug}`}
-                      className="block rounded-lg border bg-card hover:bg-accent transition-colors overflow-hidden"
-                    >
-                      {p.heroImage && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={p.heroImage}
-                          alt={p.title}
-                          className="w-full h-40 object-cover"
-                        />
-                      )}
-                      <div className="p-4 space-y-2">
-                        <h3 className="text-lg font-semibold">
-                          {renderContent(p.title)}
-                        </h3>
-                        {p.excerpt && (
-                          <p className="text-sm text-muted-foreground">
-                            {renderContent(p.excerpt)}
-                          </p>
+                  {postList.map(
+                    (
+                      p: {
+                        id?: string;
+                        slug?: string;
+                        heroImage?: string | null;
+                        title?: string | null;
+                      },
+                      idx: number
+                    ) => (
+                      <a
+                        key={p.id || idx}
+                        href={`/store/${slug}/posts/${p.slug}`}
+                        className="block rounded-lg border bg-card hover:bg-accent transition-colors overflow-hidden"
+                      >
+                        {p.heroImage && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={p.heroImage}
+                            alt={p.title}
+                            className="w-full h-40 object-cover"
+                          />
                         )}
-                        {p.publishedAt && (
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(p.publishedAt).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </a>
-                  ))}
+                        <div className="p-4 space-y-2">
+                          <h3 className="text-lg font-semibold">
+                            {renderContent(p.title)}
+                          </h3>
+                          {p.excerpt && (
+                            <p className="text-sm text-muted-foreground">
+                              {renderContent(p.excerpt)}
+                            </p>
+                          )}
+                          {p.publishedAt && (
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(p.publishedAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </a>
+                    )
+                  )}
                 </div>
               )}
             </div>

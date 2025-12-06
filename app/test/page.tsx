@@ -104,7 +104,7 @@ export default function CraftAndBuildOrangeBlack() {
             href="#contact"
             className="inline-block mt-14 bg-[#ff6b00] text-black font-extrabold 
                  px-14 py-4 rounded-md text-lg 
-                 shadow-[0_0_35px_rgba(255,107,0,0.6)] 
+                shadow-[0_0_35px rgba(255,107,0,0.6)] 
                  hover:bg-[#e55f00] transition border-4 border-black"
           >
             Request a Free Quote →
@@ -162,7 +162,7 @@ export default function CraftAndBuildOrangeBlack() {
               key={i}
               className="bg-black rounded-xl shadow-xl overflow-hidden border-4 border-[#ff6b00]"
             >
-              <img src={p.img} className="h-64 w-full object-cover" />
+              <img src={p.img} alt={p.title || "project image"} className="h-64 w-full object-cover" />
               <div className="p-6">
                 <h4 className="text-xl font-extrabold text-[#ff6b00]">
                   {p.title}
@@ -249,7 +249,7 @@ export default function CraftAndBuildOrangeBlack() {
               key={i}
               className="bg-black min-w-[320px] p-8 rounded-xl border-l-8 border-[#ff6b00] shadow-xl"
             >
-              <p className="italic text-gray-200">"{t}"</p>
+              <p className="italic text-gray-200">&quot;{t}&quot;</p>
             </div>
           ))}
         </div>
