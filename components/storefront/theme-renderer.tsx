@@ -1829,6 +1829,8 @@ export function BaseThemeRenderer({
                         slug?: string;
                         heroImage?: string | null;
                         title?: string | null;
+                        excerpt?: string | null;
+                        publishedAt?: string | Date | null;
                       },
                       idx: number
                     ) => (
@@ -1841,7 +1843,7 @@ export function BaseThemeRenderer({
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={p.heroImage}
-                            alt={p.title}
+                            alt={p.title ?? undefined}
                             className="w-full h-40 object-cover"
                           />
                         )}
