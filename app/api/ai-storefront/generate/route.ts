@@ -412,14 +412,24 @@ export async function POST(request: NextRequest) {
         where: { scope: "GLOBAL", isActive: true },
       });
 
+      // Narrow the provider response to a record so we can safely check keys.
+      const aiProviderRecord = aiProvider as Record<string, unknown> | null;
+
       providerConfig =
-        aiProvider && aiProvider.apiKey
+        aiProviderRecord && typeof aiProviderRecord.apiKey === "string"
           ? {
               provider:
-                (aiProvider.provider as AiProviderType | undefined) || "openai",
-              apiKey: decrypt(aiProvider.apiKey),
-              model: aiProvider.model || undefined,
-              apiBase: aiProvider.apiBase || undefined,
+                (aiProviderRecord.provider as AiProviderType | undefined) ||
+                "openai",
+              apiKey: decrypt(aiProviderRecord.apiKey as string),
+              model:
+                typeof aiProviderRecord.model === "string"
+                  ? (aiProviderRecord.model as string)
+                  : undefined,
+              apiBase:
+                typeof aiProviderRecord.apiBase === "string"
+                  ? (aiProviderRecord.apiBase as string)
+                  : undefined,
             }
           : undefined;
     }
@@ -528,7 +538,7 @@ export async function POST(request: NextRequest) {
           // Ensure unique slug
           let finalSlug = slugFromModel;
           let suffix = 1;
-           
+
           while (true) {
             const existing = await db.storefrontPost.findFirst({
               where: { companyId: company.id, slug: finalSlug },
@@ -579,7 +589,7 @@ export async function POST(request: NextRequest) {
             // Ensure unique slug (append suffix if necessary)
             let finalSlug = sampleSlug;
             let suffix = 1;
-             
+
             while (true) {
               const existing = await db.storefrontPost.findFirst({
                 where: { companyId: company.id, slug: finalSlug },
@@ -640,7 +650,15 @@ export async function POST(request: NextRequest) {
         where: { id: companyId },
         select: { storeMetadata: true },
       })) as { storeMetadata?: Prisma.InputJsonValue | null } | null;
-      const existing = prev?.storeMetadata || {};
+
+      // Make sure the stored metadata is an object before spreading.
+      const existing =
+        prev &&
+        prev.storeMetadata &&
+        typeof prev.storeMetadata === "object" &&
+        !Array.isArray(prev.storeMetadata)
+          ? (prev.storeMetadata as Record<string, unknown>)
+          : {};
 
       await db.company.update({
         where: { id: companyId },
