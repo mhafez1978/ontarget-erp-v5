@@ -19,7 +19,8 @@ import {
   type AiProviderType,
   type ChatMessage,
 } from "@/lib/ai/model-client";
-import { Prisma, SubscriptionPlan } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import type { SubscriptionPlan } from "@/lib/types/subscription";
 
 const BANNED_PROMPT_KEYWORDS = [
   "porn",
@@ -325,7 +326,7 @@ export async function POST(request: NextRequest) {
         // normalization here. Previous strict parsing could fail when the LLM
         // returns slightly different structures (string version, nested spec,
         // or arrays), which is what caused the ZodError you saw.
-        const raw = await callStorefrontModel<any>(
+        const raw = await callStorefrontModel<unknown>(
           messages,
           z.any(),
           providerConfig

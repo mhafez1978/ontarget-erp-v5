@@ -8,8 +8,13 @@ import {
 } from "@/lib/ai/ai-storefront-service";
 import { z as zod } from "zod";
 import { callStorefrontModel } from "@/lib/ai/model-client";
-import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
-import { Prisma, SubscriptionPlan } from "@prisma/client";
+import type {
+  AiProviderConfig,
+  AiProviderType,
+  ChatMessage,
+} from "@/lib/ai/model-client";
+import { Prisma } from "@prisma/client";
+import type { SubscriptionPlan } from "@/lib/types/subscription";
 import { decrypt } from "@/lib/crypto";
 import type {
   ProductSummary,
@@ -390,7 +395,13 @@ export async function POST(request: NextRequest) {
     // Load global AI provider config, if any
     let providerConfig: AiProviderConfig | undefined;
 
-    const aiProviderClient: any = (db as any).aiProviderSetting;
+    // aiProviderSetting delegate may not exist on older DB snapshots. Treat as unknown and
+    // narrow to the minimal shape we need (findFirst) to avoid using `any`.
+    const aiProviderClient = (db as unknown as Record<string, unknown>)[
+      "aiProviderSetting"
+    ] as
+      | { findFirst?: (opts?: unknown) => Promise<unknown | null> }
+      | undefined;
     if (!aiProviderClient || typeof aiProviderClient.findFirst !== "function") {
       console.error(
         "[AI Storefront] Prisma client is missing AiProviderSetting model. Run `npx prisma generate` and restart the dev server."
@@ -429,10 +440,11 @@ export async function POST(request: NextRequest) {
     // If the caller provided a heroSize preference, enforce it on the persisted spec
     try {
       if (heroSize && result.spec && typeof result.spec === "object") {
-        (result.spec as any).meta = {
-          ...(result.spec as any).meta,
-          heroSize,
-        };
+        // Normalize spec to an object shape then safely merge meta
+        const specObj = result.spec as Record<string, unknown> | null;
+        const prevMeta =
+          (specObj?.meta as Record<string, unknown> | undefined) || {};
+        specObj!.meta = { ...prevMeta, heroSize } as unknown;
       }
     } catch (e) {
       // swallow - not critical, but ensure we don't crash
@@ -471,7 +483,17 @@ export async function POST(request: NextRequest) {
         const systemPrompt =
           "You are an experienced SEO content writer. Produce a short, high-quality blog post in HTML focusing on the company's core offering and helpful insights. Return ONLY JSON matching this shape: { title, slug (optional), excerpt (brief plain text), contentHtml (HTML string). Use a descriptive slug friendly for URLs. Keep it professional and SEO-friendly. Do not include unrelated or unsafe content.";
 
-        const userContext = {
+        const userContext: {
+          company: {
+            id: string;
+            name?: string | null;
+            description?: string | null;
+          };
+          prompt?: string;
+          goal?: string;
+          tone?: string;
+          blogHint?: string;
+        } = {
           company: {
             id: company.id,
             name: company.name,
@@ -481,12 +503,12 @@ export async function POST(request: NextRequest) {
           goal,
           tone,
           blogHint: "starter post",
-        } as any;
+        };
 
-        const messages = [
+        const messages: ChatMessage[] = [
           { role: "system", content: systemPrompt },
           { role: "user", content: JSON.stringify(userContext, null, 2) },
-        ] as any;
+        ];
 
         // Use model to generate a JSON post if an API key is configured
         const generated = await callStorefrontModel(
@@ -506,7 +528,7 @@ export async function POST(request: NextRequest) {
           // Ensure unique slug
           let finalSlug = slugFromModel;
           let suffix = 1;
-          // eslint-disable-next-line no-constant-condition
+           
           while (true) {
             const existing = await db.storefrontPost.findFirst({
               where: { companyId: company.id, slug: finalSlug },
@@ -557,7 +579,7 @@ export async function POST(request: NextRequest) {
             // Ensure unique slug (append suffix if necessary)
             let finalSlug = sampleSlug;
             let suffix = 1;
-            // eslint-disable-next-line no-constant-condition
+             
             while (true) {
               const existing = await db.storefrontPost.findFirst({
                 where: { companyId: company.id, slug: finalSlug },
@@ -611,13 +633,13 @@ export async function POST(request: NextRequest) {
         prompt: prompt || undefined,
         refineNotes: undefined,
         emphasis: undefined,
-      } as any;
+      } as Prisma.InputJsonValue;
 
       // Merge into existing storeMetadata without clobbering other keys
       const prev = (await db.company.findUnique({
         where: { id: companyId },
         select: { storeMetadata: true },
-      })) as any;
+      })) as { storeMetadata?: Prisma.InputJsonValue | null } | null;
       const existing = prev?.storeMetadata || {};
 
       await db.company.update({

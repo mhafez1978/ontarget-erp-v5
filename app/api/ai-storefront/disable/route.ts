@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { canUseAiStorefront } from "@/lib/billing/plan-gating";
-import type { SubscriptionPlan } from "@prisma/client";
+import type { SubscriptionPlan } from "@/lib/types/subscription";
 
 const disableSchema = z.object({
   companyId: z.string(),
