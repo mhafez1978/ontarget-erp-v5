@@ -58,9 +58,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     // Check access
     const hasAccess =
-      user.ownedCompanies.some((c) => c.id === testimonial.companyId) ||
+      user.ownedCompanies.some(
+        (c: { id: string }) => c.id === testimonial.companyId
+      ) ||
       user.companyMemberships.some(
-        (m) => m.companyId === testimonial.companyId
+        (m: { companyId: string }) => m.companyId === testimonial.companyId
       );
 
     if (!hasAccess) {
@@ -156,9 +158,11 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     // Check access
     const hasAccess =
-      user.ownedCompanies.some((c) => c.id === testimonial.companyId) ||
+      user.ownedCompanies.some(
+        (c: { id: string }) => c.id === testimonial.companyId
+      ) ||
       user.companyMemberships.some(
-        (m) => m.companyId === testimonial.companyId
+        (m: { companyId: string }) => m.companyId === testimonial.companyId
       );
 
     if (!hasAccess) {
