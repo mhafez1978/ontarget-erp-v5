@@ -50,8 +50,10 @@ export async function GET(request: NextRequest) {
 
     // Check if user has access to this company
     const hasAccess =
-      user.ownedCompanies.some((c) => c.id === companyId) ||
-      user.companyMemberships.some((m) => m.companyId === companyId);
+      user.ownedCompanies.some((c: { id: string }) => c.id === companyId) ||
+      user.companyMemberships.some(
+        (m: { companyId: string }) => m.companyId === companyId
+      );
 
     if (!hasAccess) {
       return NextResponse.json(
