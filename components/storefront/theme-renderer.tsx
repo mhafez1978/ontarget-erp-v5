@@ -108,6 +108,10 @@ export interface ThemeRendererProps {
   featuredServices: Service[];
   featuredTeamMembers: TeamMember[];
   testimonials: Testimonial[];
+  /** live total customers count from DB if available */
+  customersCount?: number;
+  /** live approved testimonials count from DB if available */
+  approvedTestimonialsCount?: number;
   themeId: string;
   storeBanner?: string | null;
   storeMetadata?: {
@@ -118,6 +122,15 @@ export interface ThemeRendererProps {
       linkedin?: string;
     };
   } | null;
+  /** preview posts fetched from server (published posts) */
+  posts?: {
+    id: string;
+    title: string;
+    slug: string;
+    excerpt?: string | null;
+    heroImage?: string | null;
+    publishedAt?: string | Date | null;
+  }[];
 }
 
 export function BaseThemeRenderer({
@@ -128,6 +141,9 @@ export function BaseThemeRenderer({
   featuredServices,
   featuredTeamMembers,
   testimonials,
+  posts,
+  customersCount,
+  approvedTestimonialsCount,
   themeId,
   storeBanner,
   storeMetadata,
@@ -1768,6 +1784,82 @@ export function BaseThemeRenderer({
         );
       }
 
+      case "posts": {
+        const heading = content.heading || content.title || "From our blog";
+        const subheading =
+          content.subheading ||
+          content.description ||
+          "We will be sharing insights and updates here soon.";
+
+        const postList =
+          Array.isArray(posts) && posts.length > 0
+            ? posts
+            : Array.isArray(content.posts)
+            ? (content.posts as Array<Record<string, unknown>>)
+            : [];
+
+        return (
+          <section
+            key={section.id}
+            className={`py-12 ${bgClass} ${textClass}`}
+            id="posts"
+          >
+            <div className="container mx-auto px-4">
+              <div className="mb-6 text-center">
+                <h2 className="text-3xl font-bold">{renderContent(heading)}</h2>
+                {subheading && (
+                  <p className="mt-2 text-muted-foreground">
+                    {renderContent(subheading)}
+                  </p>
+                )}
+              </div>
+
+              {postList.length === 0 ? (
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">
+                    No published posts yet. Please check back soon.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-3">
+                  {postList.map((p: any, idx: number) => (
+                    <a
+                      key={p.id || idx}
+                      href={`/store/${slug}/posts/${p.slug}`}
+                      className="block rounded-lg border bg-card hover:bg-accent transition-colors overflow-hidden"
+                    >
+                      {p.heroImage && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.heroImage}
+                          alt={p.title}
+                          className="w-full h-40 object-cover"
+                        />
+                      )}
+                      <div className="p-4 space-y-2">
+                        <h3 className="text-lg font-semibold">
+                          {renderContent(p.title)}
+                        </h3>
+                        {p.excerpt && (
+                          <p className="text-sm text-muted-foreground">
+                            {renderContent(p.excerpt)}
+                          </p>
+                        )}
+                        {p.publishedAt && (
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(p.publishedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      }
+
       case "stats":
         return (
           <section
@@ -1789,26 +1881,115 @@ export function BaseThemeRenderer({
               )}
 
               {/* Stats - Enhanced with icons and animations */}
-              {Array.isArray(content.stats) && content.stats.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                  {(content.stats as Array<Record<string, unknown>>).map(
-                    (stat, index) => (
+              {(() => {
+                const rawStats = Array.isArray(content.stats)
+                  ? (content.stats as Array<Record<string, unknown>>).slice()
+                  : [];
+
+                const ensureStat = (
+                  labelName: string,
+                  value?: string | number
+                ) => {
+                  const idx = rawStats.findIndex((s) =>
+                    (s.label || "")
+                      .toString()
+                      .toLowerCase()
+                      .includes(labelName.toLowerCase())
+                  );
+                  const strVal =
+                    value === undefined ? undefined : String(value);
+                  if (idx >= 0) {
+                    if (strVal !== undefined)
+                      rawStats[idx] = { ...rawStats[idx], value: strVal };
+                  } else if (strVal !== undefined) {
+                    rawStats.push({ label: labelName, value: strVal });
+                  }
+                };
+
+                if (featuredProducts && featuredProducts.length > 0) {
+                  ensureStat("Products", featuredProducts.length);
+                }
+
+                if (featuredServices && featuredServices.length > 0) {
+                  ensureStat("Services", featuredServices.length);
+                }
+
+                // Customers: prefer DB value; default to 5 when zero or absent
+                if (typeof customersCount === "number") {
+                  const val = customersCount === 0 ? 5 : customersCount;
+                  ensureStat("Customers", val);
+                } else {
+                  const existing = rawStats.find((s) =>
+                    (s.label || "")
+                      .toString()
+                      .toLowerCase()
+                      .includes("customer")
+                  );
+                  if (!existing) ensureStat("Customers", 5);
+                }
+
+                // Testimonials: prefer DB approved count; default to 5
+                if (typeof approvedTestimonialsCount === "number") {
+                  const val =
+                    approvedTestimonialsCount === 0
+                      ? 5
+                      : approvedTestimonialsCount;
+                  ensureStat("Testimonials", val);
+                } else {
+                  const existing = rawStats.find((s) =>
+                    (s.label || "")
+                      .toString()
+                      .toLowerCase()
+                      .includes("testimonial")
+                  );
+                  if (!existing) ensureStat("Testimonials", 5);
+                }
+
+                if (!rawStats || rawStats.length === 0) return null;
+
+                const order = [
+                  "products",
+                  "services",
+                  "customers",
+                  "testimonials",
+                ];
+                rawStats.sort((a, b) => {
+                  const ai = order.findIndex((k) =>
+                    (a.label || "").toString().toLowerCase().includes(k)
+                  );
+                  const bi = order.findIndex((k) =>
+                    (b.label || "").toString().toLowerCase().includes(k)
+                  );
+                  return ai - bi;
+                });
+
+                return (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    {rawStats.map((stat, index) => (
                       <div
                         key={index}
                         className="text-center p-6 rounded-xl bg-linear-to-br from-background to-muted/30 stat-item hover:shadow-lg transition-all duration-300 hover:scale-105"
                         style={{ animationDelay: `${index * 0.1}s` }}
                       >
                         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
-                          {stat.icon === "users" && (
+                          {((stat.icon as string) || "")
+                            .toLowerCase()
+                            .includes("user") && (
                             <Users className="h-7 w-7 text-primary" />
                           )}
-                          {stat.icon === "package" && (
+                          {((stat.icon as string) || "")
+                            .toLowerCase()
+                            .includes("pack") && (
                             <Package className="h-7 w-7 text-primary" />
                           )}
-                          {stat.icon === "award" && (
+                          {((stat.icon as string) || "")
+                            .toLowerCase()
+                            .includes("award") && (
                             <Award className="h-7 w-7 text-primary" />
                           )}
-                          {stat.icon === "star" && (
+                          {((stat.icon as string) || "")
+                            .toLowerCase()
+                            .includes("star") && (
                             <Star className="h-7 w-7 text-primary fill-primary" />
                           )}
                           {!stat.icon && (
@@ -1816,16 +1997,16 @@ export function BaseThemeRenderer({
                           )}
                         </div>
                         <div className="text-4xl md:text-5xl font-bold mb-2 gradient-text">
-                          {stat.value as string}
+                          {String(stat.value)}
                         </div>
                         <div className="text-sm md:text-base opacity-70 font-medium">
-                          {stat.label as string}
+                          {String(stat.label)}
                         </div>
                       </div>
-                    )
-                  )}
-                </div>
-              )}
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </section>
         );
@@ -2462,7 +2643,7 @@ export function BaseThemeRenderer({
                     key={item.id}
                     className="group overflow-hidden rounded-xl border border-border bg-muted/40"
                   >
-                    <div className="relative aspect-[4/3] w-full">
+                    <div className="relative aspect-4/3 w-full">
                       <Image
                         src={item.imageUrl}
                         alt={item.name}

@@ -70,6 +70,85 @@ export async function POST(request: NextRequest) {
     }
 
     const { companyId, refineNotes, heroSize, tone, emphasis } = parsed.data;
+    // Try to detect a simple color tweak in refinement notes and coerce it into
+    // a CSS hex color we can store in the spec.meta.backgroundColor and
+    // per-section styling. This accepts:
+    //  - explicit hex (e.g. #ff0000)
+    //  - tailwind-like tokens (e.g. sky-200, red-500)
+    //  - simple color words (e.g. red, purple)
+    const simpleNavbarBgColor = (() => {
+      if (!refineNotes) return null;
+      const note = refineNotes.toLowerCase();
+
+      // Only consider explicit requests aimed at header/navbar/banner
+      const mentionsNavbar =
+        /\b(navbar|nav bar|top bar|bar top|header|topbar|cta band|promo banner|banner)\b/.test(
+          note
+        );
+      if (!mentionsNavbar) return null;
+
+      // 1) hex color (3 or 6 digits)
+      const hexMatch = note.match(/#([0-9a-f]{3,6})/i);
+      if (hexMatch) {
+        const hex = hexMatch[0];
+        // Normalize 3-digit to 6-digit
+        if (/^#[0-9a-f]{3}$/i.test(hex)) {
+          return hex
+            .slice(1)
+            .split("")
+            .map((c) => c + c)
+            .join("#")
+            .replace(/^/, "#");
+        }
+        return hex;
+      }
+
+      // 2) tailwind token or explicit shade like "sky-200" or "red-500"
+      const tw = note.match(
+        /\b([a-z]+)-(50|100|200|300|400|500|600|700|800|900)\b/
+      );
+      const defaultShade = "500"; // default shade when only a color name is used
+
+      // Basic palette mapping for a few common color families and shades.
+      // This is intentionally small — we only need sensible fallbacks for
+      // common quick commands. If we see a token we don't know, do not match.
+      const palette: Record<string, Record<string, string>> = {
+        sky: { "200": "#bae6fd", "500": "#0ea5e9" },
+        blue: { "200": "#bfdbfe", "500": "#3b82f6" },
+        red: { "200": "#fecaca", "500": "#ef4444" },
+        purple: { "200": "#ddd6fe", "500": "#8b5cf6" },
+        pink: { "200": "#fbcfe8", "500": "#ec4899" },
+        green: { "200": "#bbf7d0", "500": "#10b981" },
+        teal: { "200": "#99f6e4", "500": "#14b8a6" },
+        slate: { "200": "#e2e8f0", "500": "#64748b" },
+        gray: { "200": "#e5e7eb", "500": "#6b7280" },
+        amber: { "200": "#fde68a", "500": "#f59e0b" },
+        orange: { "200": "#fed7aa", "500": "#fb923c" },
+        indigo: { "200": "#c7d2fe", "500": "#6366f1" },
+      };
+
+      if (tw) {
+        const name = tw[1];
+        const shade = tw[2];
+        const family = palette[name];
+        if (family && (family[shade] || family[defaultShade])) {
+          return family[shade] || family[defaultShade];
+        }
+        return null;
+      }
+
+      // 3) plain color name e.g. "make it red" or "change top bar to purple"
+      const nameOnly = note.match(
+        /\b(red|blue|purple|pink|green|teal|slate|gray|amber|orange|indigo)\b/
+      );
+      if (nameOnly) {
+        const name = nameOnly[1];
+        const family = palette[name];
+        if (family) return family[defaultShade];
+      }
+
+      return null;
+    })();
 
     const userId = validation.user.id;
     const userRole = validation.user.role;
@@ -176,7 +255,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Optional model-based refinement of copy using refineNotes
-    if (refineNotes && refineNotes.trim().length > 0) {
+    // Skip model call if we detected a simple navbar background tweak.
+    if (refineNotes && refineNotes.trim().length > 0 && !simpleNavbarBgColor) {
       // Load global AI provider config, if any
       let providerConfig: AiProviderConfig | undefined;
 
@@ -241,26 +321,80 @@ export async function POST(request: NextRequest) {
       ];
 
       try {
-        const updatedSpec = await callStorefrontModel(
+        // Use z.any() to accept the model's raw output and perform tolerant
+        // normalization here. Previous strict parsing could fail when the LLM
+        // returns slightly different structures (string version, nested spec,
+        // or arrays), which is what caused the ZodError you saw.
+        const raw = await callStorefrontModel<any>(
           messages,
-          aiFrontstoreSpecSchema,
+          z.any(),
           providerConfig
         );
 
-        if (updatedSpec) {
-          const safety = runSafetyChecks(updatedSpec);
-          if (safety.blocked) {
-            return NextResponse.json(
-              {
-                error:
-                  "Refined AI storefront content was blocked by safety filters. Please adjust your refinement notes.",
-                reasons: safety.reasons,
-              },
-              { status: 400 }
-            );
-          }
+        if (raw) {
+          // Try to find a candidate spec inside the model output
+          const candidate = (() => {
+            if (raw && typeof raw === "object") {
+              if (Array.isArray(raw)) return raw[0];
+              // Common wrapper keys
+              for (const key of [
+                "spec",
+                "aiStorefrontSpec",
+                "storefrontSpec",
+                "result",
+              ]) {
+                if (raw[key] && typeof raw[key] === "object") return raw[key];
+              }
+              return raw;
+            }
+            return null;
+          })();
 
-          spec = updatedSpec;
+          if (candidate && typeof candidate === "object") {
+            // Coerce some simple issues: version may be string or array
+            if (candidate.version && typeof candidate.version !== "number") {
+              if (Array.isArray(candidate.version) && candidate.version[0]) {
+                candidate.version = Number(candidate.version[0]);
+              } else if (typeof candidate.version === "string") {
+                const n = Number(candidate.version);
+                candidate.version = Number.isFinite(n) ? n : candidate.version;
+              }
+            }
+
+            // If meta or sections are missing, try to look for them nested in common places
+            if (!candidate.meta && candidate.spec && candidate.spec.meta) {
+              candidate.meta = candidate.spec.meta;
+            }
+            if (
+              !candidate.sections &&
+              candidate.spec &&
+              candidate.spec.sections
+            ) {
+              candidate.sections = candidate.spec.sections;
+            }
+
+            try {
+              // Validate with the strict schema - if it passes, accept it.
+              const validated = aiFrontstoreSpecSchema.parse(candidate);
+              const safety = runSafetyChecks(validated);
+              if (safety.blocked) {
+                return NextResponse.json(
+                  {
+                    error:
+                      "Refined AI storefront content was blocked by safety filters. Please adjust your refinement notes.",
+                    reasons: safety.reasons,
+                  },
+                  { status: 400 }
+                );
+              }
+
+              spec = validated;
+            } catch (parseErr) {
+              // If schema validation still fails, bubble up to the regenerate
+              // fallback below by throwing and letting the outer catch run.
+              throw parseErr;
+            }
+          }
         }
       } catch (error) {
         console.error(
@@ -371,6 +505,14 @@ export async function POST(request: NextRequest) {
             rating: t.rating ?? 5,
           }));
 
+          // Get counts for customers and approved testimonials
+          const customersCount = await db.companyMember.count({
+            where: { companyId, user: { role: "COMPANY_CUSTOMER" } },
+          });
+          const approvedTestimonialsCount = await db.testimonial.count({
+            where: { companyId, status: "APPROVED" },
+          });
+
           const blogEnabled = !!companyDetails.storeBlogEnabled;
           const blogPostCount = blogEnabled
             ? await db.storefrontPost.count({
@@ -404,6 +546,8 @@ export async function POST(request: NextRequest) {
             products,
             services,
             testimonials,
+            customersCount,
+            approvedTestimonialsCount,
             brandColors: {
               primary: spec.meta.primaryColor,
               secondary: spec.meta.secondaryColor,
@@ -453,6 +597,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Apply structured tweaks to the spec in-place
+
+    // Simple navbar/top bar background color tweak — prefer a CSS color hex
+    // (generated above) instead of a Tailwind class so the renderer can use it
+    // directly when previewing and persisting the spec.
+    if (simpleNavbarBgColor) {
+      spec.meta.backgroundColor = simpleNavbarBgColor;
+
+      // Apply to common top-band sections so the preview header/footer mirrors
+      // the wanted change.
+      const targetTypes: AiFrontstoreSpec["sections"][number]["type"][] = [
+        "cta-band",
+        "highlights",
+        "hero",
+      ];
+
+      spec.sections = spec.sections.map((section) => {
+        if (targetTypes.includes(section.type)) {
+          return {
+            ...section,
+            styling: {
+              ...(section.styling || {}),
+              backgroundColor: simpleNavbarBgColor,
+            },
+          };
+        }
+        return section;
+      });
+    }
 
     // Hero size tweak
     if (heroSize) {

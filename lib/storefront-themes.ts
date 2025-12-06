@@ -6,6 +6,7 @@ export interface ThemeSection {
     | "social-proof"
     | "featured-products"
     | "featured-services"
+    | "posts"
     | "team"
     | "about"
     | "contact"

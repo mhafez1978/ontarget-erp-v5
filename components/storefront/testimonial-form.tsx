@@ -107,7 +107,7 @@ export function TestimonialForm({ slug, apiPath }: TestimonialFormProps) {
       <DialogTrigger asChild>
         <Button
           size="lg"
-          className="gap-3 px-8 py-6 text-lg font-bold shadow-2xl hover:shadow-primary/50 hover:scale-105 transition-all duration-300 bg-gradient-to-r from-primary via-primary/90 to-primary hover:from-primary/90 hover:via-primary hover:to-primary/90 border-2 border-primary/20"
+          className="gap-3 px-8 py-6 text-lg font-bold shadow-2xl hover:shadow-primary/50 hover:scale-105 transition-all duration-300 bg-linear-to-r from-primary via-primary/90 to-primary hover:from-primary/90 hover:via-primary hover:to-primary/90 border-2 border-primary/20"
         >
           <MessageSquare className="h-6 w-6" />
           <span>Share Your Experience</span>

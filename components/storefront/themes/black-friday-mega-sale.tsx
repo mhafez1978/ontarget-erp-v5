@@ -75,8 +75,8 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
         className="relative overflow-hidden bg-black text-white"
         style={{ backgroundImage: gradient }}
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(248,250,252,0.12),transparent_55%),radial-gradient(circle_at_bottom,_rgba(248,113,113,0.25),transparent_55%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_left,_rgba(59,130,246,0.25),transparent_55%)] mix-blend-screen opacity-40" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(248,250,252,0.12),transparent_55%),radial-gradient(circle_at_bottom,rgba(248,113,113,0.25),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(59,130,246,0.25),transparent_55%)] mix-blend-screen opacity-40" />
 
         <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-6 max-w-xl">
@@ -91,7 +91,7 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
 
             <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
               <span className="block text-white">{title}</span>
-              <span className="mt-2 block bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-red-400 to-white">
+              <span className="mt-2 block bg-clip-text text-transparent bg-linear-to-r from-yellow-400 via-red-400 to-white">
                 {subtitle}
               </span>
             </h1>
@@ -166,15 +166,11 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
                 </div>
                 <div className="rounded-xl bg-white/5 px-3 py-3">
                   <p className="text-[11px] text-gray-400">Free Shipping</p>
-                  <p className="text-lg font-semibold text-white">
-                    Over $75
-                  </p>
+                  <p className="text-lg font-semibold text-white">Over $75</p>
                 </div>
                 <div className="rounded-xl bg-white/5 px-3 py-3">
                   <p className="text-[11px] text-gray-400">Returns</p>
-                  <p className="text-lg font-semibold text-white">
-                    60 days
-                  </p>
+                  <p className="text-lg font-semibold text-white">60 days</p>
                 </div>
               </div>
             </div>
@@ -222,9 +218,9 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
               {featuredProducts.slice(0, 3).map((product) => (
                 <Card
                   key={product.id}
-                  className="relative overflow-hidden border-red-500/60 bg-gradient-to-b from-zinc-950 to-zinc-900 text-white"
+                  className="relative overflow-hidden border-red-500/60 bg-linear-to-b from-zinc-950 to-zinc-900 text-white"
                 >
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400" />
+                  <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-yellow-400 via-red-500 to-yellow-400" />
                   {product.images && product.images[0]?.url && (
                     <div className="relative aspect-square w-full overflow-hidden bg-zinc-900">
                       <Image
@@ -303,7 +299,7 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
                   className="relative overflow-hidden border border-red-500/50 bg-zinc-950 text-white"
                 >
                   {service.images && service.images[0]?.url && (
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-900">
+                    <div className="relative aspect-4/3 w-full overflow-hidden bg-zinc-900">
                       <Image
                         src={service.images[0].url}
                         alt={service.name}
@@ -443,9 +439,7 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
                     <figcaption className="text-sm font-medium">
                       {name}
                     </figcaption>
-                    {title && (
-                      <p className="text-xs text-gray-400">{title}</p>
-                    )}
+                    {title && <p className="text-xs text-gray-400">{title}</p>}
                   </div>
                 </div>
                 <blockquote className="mt-2 text-xs text-gray-200 line-clamp-4">
@@ -516,10 +510,10 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
                   </Marquee>
                 </div>
 
-                <div className="from-black pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b" />
-                <div className="from-black pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t" />
-                <div className="from-black pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r" />
-                <div className="from-black pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l" />
+                <div className="from-black pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-linear-to-b" />
+                <div className="from-black pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-linear-to-t" />
+                <div className="from-black pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-linear-to-r" />
+                <div className="from-black pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-linear-to-l" />
               </div>
             );
           })()}
@@ -532,9 +526,7 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
 
       {/* Contact section */}
       {(() => {
-        const section = sections.find(
-          (s) => s.type === "contact" && s.enabled
-        );
+        const section = sections.find((s) => s.type === "contact" && s.enabled);
         if (!section) return null;
         const content = (section.content || {}) as Record<string, unknown>;
 
@@ -634,9 +626,7 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
 
       {/* Footer */}
       {(() => {
-        const section = sections.find(
-          (s) => s.type === "footer" && s.enabled
-        );
+        const section = sections.find((s) => s.type === "footer" && s.enabled);
         const content = (section?.content || {}) as Record<string, unknown>;
         const year = new Date().getFullYear();
         const name =

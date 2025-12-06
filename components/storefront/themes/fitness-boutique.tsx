@@ -23,7 +23,9 @@ export function FitnessBoutiqueTheme(props: ThemeRendererProps) {
     return <BaseThemeRenderer {...props} />;
   }
 
-  const remainingSections = sections.filter((section) => section !== heroSection);
+  const remainingSections = sections.filter(
+    (section) => section !== heroSection
+  );
   const content = (heroSection.content || {}) as Record<string, unknown>;
 
   const title =
@@ -67,7 +69,7 @@ export function FitnessBoutiqueTheme(props: ThemeRendererProps) {
   return (
     <>
       <section className="relative overflow-hidden bg-[#0B0F1A] text-[#F9FAFB]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(249,250,251,0.08),transparent_60%),radial-gradient(circle_at_bottom,_rgba(248,113,113,0.18),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(249,250,251,0.08),transparent_60%),radial-gradient(circle_at_bottom,rgba(248,113,113,0.18),transparent_55%)]" />
         <div className="absolute inset-0 opacity-30 bg-[linear-gradient(135deg,rgba(15,23,42,0.8),rgba(17,24,39,0.9))]" />
 
         <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:flex-row lg:items-center lg:justify-between">
@@ -146,4 +148,3 @@ export function FitnessBoutiqueTheme(props: ThemeRendererProps) {
     </>
   );
 }
-

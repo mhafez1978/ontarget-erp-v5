@@ -23,11 +23,12 @@ export function EducationDigitalCampusTheme(props: ThemeRendererProps) {
     return <BaseThemeRenderer {...props} />;
   }
 
-  const remainingSections = sections.filter((section) => section !== heroSection);
+  const remainingSections = sections.filter(
+    (section) => section !== heroSection
+  );
   const content = (heroSection.content || {}) as Record<string, unknown>;
 
-  const title =
-    asText(content.title) || "Programs that move careers forward";
+  const title = asText(content.title) || "Programs that move careers forward";
   const subtitle =
     asText(content.subtitle) ||
     "Live cohorts, self-paced tracks, and mentorship";
@@ -62,7 +63,7 @@ export function EducationDigitalCampusTheme(props: ThemeRendererProps) {
   return (
     <>
       <section className="relative overflow-hidden bg-[#F8FAFC] text-[#0F172A]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.18),transparent_60%),radial-gradient(circle_at_bottom,_rgba(248,250,252,0.9),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.18),transparent_60%),radial-gradient(circle_at_bottom,rgba(248,250,252,0.9),transparent_60%)]" />
 
         <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-xl space-y-6">
@@ -122,9 +123,7 @@ export function EducationDigitalCampusTheme(props: ThemeRendererProps) {
                   <p className="text-xs font-semibold text-[#0F172A]">
                     {item.title}
                   </p>
-                  <p className="mt-1 text-[11px] text-slate-600">
-                    {item.text}
-                  </p>
+                  <p className="mt-1 text-[11px] text-slate-600">{item.text}</p>
                 </div>
               ))}
             </div>
@@ -136,4 +135,3 @@ export function EducationDigitalCampusTheme(props: ThemeRendererProps) {
     </>
   );
 }
-

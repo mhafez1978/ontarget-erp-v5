@@ -204,6 +204,16 @@ export function StorefrontReadinessWidget({
           <div className="flex items-center gap-2">
             <div
               className={`w-2 h-2 rounded-full ${
+                readiness.counts.customers > 0 ? "bg-green-500" : "bg-gray-300"
+              }`}
+            />
+            <span className="text-sm">
+              <strong>{readiness.counts.customers}</strong> Customers
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-2 h-2 rounded-full ${
                 readiness.counts.testimonials > 0
                   ? "bg-green-500"
                   : "bg-gray-300"

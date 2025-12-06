@@ -54,7 +54,7 @@ export function ThemeProductLayout({
         {products.slice(0, 3).map((product, idx) => (
           <Card
             key={product.id}
-            className="overflow-hidden transform hover:scale-[1.02] transition-all duration-300 shadow-xl hover:shadow-2xl border border-red-500 black-friday-flash animate-in fade-in duration-500 relative"
+            className="overflow-hidden transform hover:scale-[1.02] transition-all shadow-xl hover:shadow-2xl border border-red-500 black-friday-flash animate-in fade-in duration-500 relative"
           >
             <BorderBeam
               size={250}
@@ -154,7 +154,7 @@ export function ThemeProductLayout({
                   sizes="(max-width: 768px) 100vw, 33vw"
                   priority={idx === 0}
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/30" />
+                <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-white/30" />
               </div>
             )}
             <CardHeader className="text-center">
@@ -219,7 +219,7 @@ export function ThemeProductLayout({
         {products.slice(0, 3).map((product, idx) => (
           <Card
             key={product.id}
-            className={`relative overflow-hidden hover:rotate-0 transition-all duration-500 shadow-2xl border-2 border-purple-900 hover:shadow-purple-500/50 halloween-glow bg-gradient-to-br from-[#0b0412] via-[#12071c] to-[#1a0b26] ${
+            className={`relative overflow-hidden hover:rotate-0 transition-all duration-500 shadow-2xl border-2 border-purple-900 hover:shadow-purple-500/50 halloween-glow bg-linear-to-br from-[#0b0412] via-[#12071c] to-[#1a0b26] ${
               idx === 0 ? "-rotate-2" : idx === 1 ? "rotate-1" : "-rotate-1"
             }`}
           >
@@ -234,7 +234,7 @@ export function ThemeProductLayout({
               🕸️
             </div>
             {product.images && product.images[0]?.url && (
-              <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-black to-purple-950 border-b border-purple-900/40">
+              <div className="relative aspect-square overflow-hidden bg-linear-to-b from-black to-purple-950 border-b border-purple-900/40">
                 <Image
                   src={product.images[0].url}
                   alt={product.name}
@@ -242,11 +242,11 @@ export function ThemeProductLayout({
                   className="object-cover hover:scale-110 hover:brightness-75 transition-all duration-300"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-purple-900/60 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-linear-to-t from-purple-900/60 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,165,0,0.12),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(255,94,0,0.14),transparent_38%)] mix-blend-screen" />
               </div>
             )}
-            <CardHeader className="bg-gradient-to-br from-purple-950 to-black text-white">
+            <CardHeader className="bg-linear-to-br from-purple-950 to-black text-white">
               <div className="flex items-start justify-between">
                 <CardTitle className="line-clamp-1">
                   👻 {product.name}
@@ -382,7 +382,7 @@ export function ThemeProductLayout({
                 </p>
               </CardContent>
               <CardFooter>
-                <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-full">
+                <Button className="w-full bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-full">
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart
                 </Button>
@@ -431,10 +431,10 @@ export function ThemeProductLayout({
                   className="object-cover hover:scale-105 hover:rotate-1 transition-all duration-700"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-green-50 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-linear-to-t from-green-50 to-transparent" />
               </div>
             )}
-            <CardHeader className="bg-gradient-to-b from-green-50 to-white">
+            <CardHeader className="bg-linear-to-b from-green-50 to-white">
               <div className="flex items-start justify-between">
                 <CardTitle className="line-clamp-1 text-green-800">
                   🌸 {product.name}
@@ -477,7 +477,7 @@ export function ThemeProductLayout({
         {products.slice(0, 3).map((product) => (
           <Card
             key={product.id}
-            className="overflow-hidden shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 bg-gradient-to-br from-slate-900 to-slate-800 text-white border border-cyan-500/30 hover:border-cyan-500 group tech-pulse tech-scan tech-glitch"
+            className="overflow-hidden shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 bg-linear-to-br from-slate-900 to-slate-800 text-white border border-cyan-500/30 hover:border-cyan-500 group tech-pulse tech-scan tech-glitch"
           >
             {product.images && product.images[0]?.url && (
               <div className="relative aspect-square overflow-hidden bg-slate-950">
@@ -488,7 +488,7 @@ export function ThemeProductLayout({
                   className="object-cover group-hover:scale-110 transition-transform duration-300 opacity-90"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-transparent to-transparent" />
                 <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 blur-3xl group-hover:bg-cyan-500/20 transition-all" />
               </div>
             )}
@@ -561,7 +561,7 @@ export function ThemeProductLayout({
                   />
                 </div>
               )}
-              <div className="flex-1 p-8 flex flex-col justify-center bg-gradient-to-br from-amber-50 to-white">
+              <div className="flex-1 p-8 flex flex-col justify-center bg-linear-to-br from-amber-50 to-white">
                 <div>
                   <div className="flex items-start justify-between mb-3">
                     <CardTitle className="text-2xl font-serif text-amber-900">

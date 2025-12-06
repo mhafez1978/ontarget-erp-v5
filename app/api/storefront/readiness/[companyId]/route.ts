@@ -47,8 +47,10 @@ export async function GET(
             },
             testimonials: {
               where: {
+                // Count ALL approved testimonials for readiness — featured-only was
+                // causing the storefront readiness to report 0 when testimonials
+                // existed but weren't marked featured.
                 status: "APPROVED",
-                isFeatured: true,
               },
             },
           },
@@ -60,12 +62,18 @@ export async function GET(
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
+    // Get total customers (users with COMPANY_CUSTOMER role)
+    const customersCount = await prisma.companyMember.count({
+      where: { companyId: company.id, user: { role: "COMPANY_CUSTOMER" } },
+    });
+
     // Prepare data for readiness check
     const storefrontData = {
       productsCount: company._count?.products || 0,
       servicesCount: company._count?.services || 0,
       teamMembersCount: company._count?.staff || 0,
       testimonialsCount: company._count?.testimonials || 0,
+      customersCount,
       hasBanner: !!company.storeBanner,
       hasLogo: !!company.logo,
       hasDescription: !!company.description && company.description.length > 20,

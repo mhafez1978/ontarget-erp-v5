@@ -25,6 +25,14 @@ export const aiFrontstoreSectionSchema = z.object({
       backgroundColor: z.string().optional(),
       textColor: z.string().optional(),
       gradient: z.string().optional(),
+      // Per-section optional background / imagery
+      backgroundImage: z
+        .object({ url: z.string().optional(), alt: z.string().optional() })
+        .optional(),
+      overlayColor: z.string().optional(),
+      overlayOpacity: z.number().min(0).max(1).optional(),
+      // Per-section animation hints (e.g. "fade-up", "slide-in")
+      animations: z.array(z.string()).optional(),
     })
     .optional(),
 });
@@ -42,6 +50,23 @@ export const aiFrontstoreSpecSchema = z.object({
     heroSize: z.enum(["compact", "full"]).optional(),
     buttonStyle: z.enum(["solid", "outline", "pill"]).optional(),
     cornerStyle: z.enum(["rounded", "soft", "sharp"]).optional(),
+    // Optional high-level hero/background image. Prefer an internal asset key or URL.
+    backgroundImage: z
+      .object({ url: z.string().optional(), alt: z.string().optional() })
+      .optional(),
+    // Overlay when a background image is present to help text contrast.
+    overlayColor: z.string().optional(),
+    overlayOpacity: z.number().min(0).max(1).optional(),
+    // Animation hints the renderer can use for subtle effects (fade, slide, parallax)
+    animations: z.array(z.string()).optional(),
+    // SEO metadata helpers for export to Content Wizard
+    seo: z
+      .object({
+        metaTitle: z.string().optional(),
+        metaDescription: z.string().optional(),
+        keywords: z.array(z.string()).optional(),
+      })
+      .optional(),
   }),
   sections: z.array(aiFrontstoreSectionSchema),
 });

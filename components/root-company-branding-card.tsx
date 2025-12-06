@@ -378,7 +378,7 @@ export function RootCompanyBrandingCard() {
 
   if (loading) {
     return (
-      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+      <Card className="border-2 border-primary/20 bg-linear-to-br from-primary/5 to-transparent">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -393,7 +393,7 @@ export function RootCompanyBrandingCard() {
   }
 
   return (
-    <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+    <Card className="border-2 border-primary/20 bg-linear-to-br from-primary/5 to-transparent">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">

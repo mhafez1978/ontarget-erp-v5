@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Marquee } from "@/components/ui/marquee";
 import { TestimonialForm } from "@/components/storefront/testimonial-form";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,26 @@ interface AiStorefrontRendererProps {
   featuredProducts?: FeaturedProduct[];
   featuredServices?: FeaturedService[];
   testimonials?: StorefrontTestimonial[];
+  /** preview posts fetched from server (published posts) */
+  posts?: {
+    id: string;
+    title: string;
+    slug: string;
+    excerpt?: string | null;
+    heroImage?: string | null;
+    publishedAt?: string | Date | null;
+  }[];
+  /** live total customers count from DB if available */
+  customersCount?: number;
+  /** live approved testimonials count from DB if available (used to populate the "Testimonials" stat) */
+  approvedTestimonialsCount?: number;
+  /** Admin-managed support articles that function as FAQs (title/summary/content) */
+  supportFaqs?: {
+    id: string;
+    title: string;
+    summary?: string | null;
+    content?: string | null;
+  }[];
   featuredTeamMembers?: FeaturedTeamMember[];
   contactEmail?: string | null;
   contactPhone?: string | null;
@@ -99,11 +120,15 @@ export function AiStorefrontRenderer({
   featuredProducts,
   featuredServices,
   testimonials,
+  posts,
+  supportFaqs,
   featuredTeamMembers,
   contactEmail,
   contactPhone,
   storeBanner,
   heroOverride,
+  customersCount,
+  approvedTestimonialsCount,
 }: AiStorefrontRendererProps) {
   const sortedSections = [...spec.sections].sort((a, b) => a.order - b.order);
 
@@ -179,6 +204,27 @@ export function AiStorefrontRenderer({
     }
   };
 
+  const mapAnimationsToClass = (animations?: string[] | unknown) => {
+    if (!Array.isArray(animations)) return "";
+    const cls: string[] = [];
+    for (const a of animations) {
+      if (typeof a !== "string") continue;
+      const token = a.toLowerCase();
+      if (token.includes("fade") || token.includes("fade-up"))
+        cls.push("animate-fade-in");
+      else if (
+        token.includes("slide-right") ||
+        token.includes("slide-in-right")
+      )
+        cls.push("animate-slide-in-right");
+      else if (token.includes("slide") || token.includes("slide-in"))
+        cls.push("animate-slide-in-left");
+      else if (token.includes("scale")) cls.push("animate-scale-in");
+      else if (token.includes("parallax")) cls.push("bg-fixed");
+    }
+    return cls.join(" ");
+  };
+
   const renderSection = (section: AiFrontstoreSection) => {
     const { type, content } = section;
     const contentRecord = content as Record<string, unknown>;
@@ -228,8 +274,34 @@ export function AiStorefrontRenderer({
         const heroSize = spec.meta.heroSize || "compact";
         const heroSectionClasses =
           heroSize === "full"
-            ? "relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-background py-16 min-h-[80vh] flex items-center"
-            : "relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-background py-16";
+            ? "relative overflow-hidden bg-linear-to-br from-primary/10 via-background to-background py-16 min-h-[80vh] flex items-center"
+            : "relative overflow-hidden bg-linear-to-br from-primary/10 via-background to-background py-16";
+
+        const sectionStyling = section.styling as
+          | {
+              backgroundImage?: { url?: string; alt?: string } | null;
+              overlayColor?: string | null;
+              overlayOpacity?: number | null;
+              animations?: unknown;
+            }
+          | undefined;
+        const heroBgUrl =
+          sectionStyling?.backgroundImage?.url ||
+          spec.meta.backgroundImage?.url ||
+          storeBanner;
+        const heroBgAlt =
+          sectionStyling?.backgroundImage?.alt ||
+          spec.meta.backgroundImage?.alt ||
+          `${companyName} hero background`;
+        const heroOverlayColor =
+          sectionStyling?.overlayColor ?? spec.meta.overlayColor;
+        const heroOverlayOpacity =
+          typeof sectionStyling?.overlayOpacity === "number"
+            ? sectionStyling.overlayOpacity
+            : spec.meta.overlayOpacity;
+        const heroAnimationClass = mapAnimationsToClass(
+          sectionStyling?.animations ?? spec.meta.animations
+        );
 
         return (
           <section
@@ -239,23 +311,38 @@ export function AiStorefrontRenderer({
               backgroundColor: backgroundColor || undefined,
             }}
           >
-            {storeBanner && (
-              <div className="absolute inset-0 -z-10 opacity-50">
+            {heroBgUrl && (
+              <div
+                className={`absolute inset-0 -z-10 ${
+                  heroAnimationClass ? heroAnimationClass + " " : ""
+                }`}
+              >
                 <Image
-                  src={storeBanner}
-                  alt={`${companyName} hero background`}
+                  src={heroBgUrl}
+                  alt={heroBgAlt}
                   fill
                   className="object-cover"
                   sizes="100vw"
                 />
               </div>
             )}
+            {heroOverlayColor && typeof heroOverlayOpacity === "number" && (
+              <div
+                aria-hidden
+                className="absolute inset-0 -z-5"
+                style={{
+                  background: heroOverlayColor,
+                  opacity: heroOverlayOpacity,
+                }}
+              />
+            )}
             <div className="relative container mx-auto px-4">
               <div
                 className={
-                  isCentered
+                  (isCentered
                     ? "max-w-3xl mx-auto text-center space-y-4"
-                    : "grid gap-8 md:grid-cols-2 items-center"
+                    : "grid gap-8 md:grid-cols-2 items-center") +
+                  (heroAnimationClass ? ` ${heroAnimationClass}` : "")
                 }
               >
                 <div
@@ -342,7 +429,7 @@ export function AiStorefrontRenderer({
         const rawItems = (contentRecord["items"] ??
           contentRecord["stats"]) as unknown;
 
-        const items =
+        let items =
           Array.isArray(rawItems) && rawItems.length > 0
             ? (rawItems
                 .map((item) => {
@@ -368,6 +455,88 @@ export function AiStorefrontRenderer({
                 icon?: string;
               }[])
             : null;
+
+        // If DB counts are provided we prefer using them for authoritative values
+        // Update or insert Customers/Testimonials accordingly
+        const ensureItem = (labelName: string, value?: string | number) => {
+          if (!value && value !== 0) return;
+          const strVal = typeof value === "number" ? String(value) : value;
+          const idx = items?.findIndex((it) =>
+            it.label.toLowerCase().includes(labelName.toLowerCase())
+          );
+          if (idx !== undefined && idx !== null && items && idx >= 0) {
+            items[idx] = { ...items[idx], value: strVal };
+          } else if (items) {
+            items.push({ label: labelName, value: strVal });
+          }
+        };
+
+        // Ensure items is an array so we can append/override values from DB
+        items = items || [];
+
+        // If the AI didn't supply any items but we have at least some counts
+        // derived from the page props (featuredProducts/services/testimonials) or DB,
+        // populate a sensible default set so the section still renders.
+        if (items.length === 0) {
+          // Use preview arrays length as a hint (may be limited) and let DB counts
+          // override below where provided.
+          if (Array.isArray(featuredProducts) && featuredProducts.length > 0) {
+            items.push({
+              label: "Products",
+              value: String(featuredProducts.length),
+            });
+          }
+          if (Array.isArray(featuredServices) && featuredServices.length > 0) {
+            items.push({
+              label: "Services",
+              value: String(featuredServices.length),
+            });
+          }
+          if (Array.isArray(testimonials) && testimonials.length > 0) {
+            items.push({
+              label: "Testimonials",
+              value: String(testimonials.length),
+            });
+          }
+        }
+
+        if (items && items.length >= 0) {
+          if (typeof customersCount === "number" && customersCount >= 0) {
+            ensureItem("Customers", customersCount.toLocaleString());
+          }
+          if (
+            typeof approvedTestimonialsCount === "number" &&
+            approvedTestimonialsCount >= 0
+          ) {
+            // If there are 0 approved testimonials, treat the starting state as 5
+            // for the storefront 'By the numbers' display so new stores look populated.
+            const displayValue =
+              approvedTestimonialsCount === 0 ? 5 : approvedTestimonialsCount;
+            ensureItem("Testimonials", displayValue.toLocaleString());
+            // Ensure Customers item exists (even when customersCount isn't provided)
+            const hasCustomers = items.some((it) => /customer/i.test(it.label));
+            if (!hasCustomers) {
+              // Use DB count when available, otherwise default to 0
+              const val =
+                typeof customersCount === "number" ? customersCount : 0;
+              items.push({ label: "Customers", value: String(val) });
+            }
+          }
+
+          // Ensure Testimonials exists — show default 5 when none
+          const hasTestimonialItem = items.some((it) =>
+            /testimonial/i.test(it.label)
+          );
+          if (!hasTestimonialItem) {
+            const val =
+              typeof approvedTestimonialsCount === "number"
+                ? approvedTestimonialsCount === 0
+                  ? 5
+                  : approvedTestimonialsCount
+                : 5;
+            items.push({ label: "Testimonials", value: String(val) });
+          }
+        }
 
         if (!items || items.length === 0) {
           // If there are no stats items, don't render the section
@@ -401,7 +570,9 @@ export function AiStorefrontRenderer({
                       className="text-3xl font-extrabold"
                       style={{ color: primaryColor || undefined }}
                     >
-                      {item.value}
+                      {/^\d+$/.test(item.value)
+                        ? Number(item.value).toLocaleString()
+                        : item.value}
                     </div>
                     <div className="mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       {item.label}
@@ -579,6 +750,83 @@ export function AiStorefrontRenderer({
         );
 
       case "posts":
+        // If the server provided posts for this company, render a preview grid
+        // so the homepage actually shows published articles. Otherwise fall
+        // back to a simple CTA that links to the posts page.
+        if (Array.isArray(posts) && posts.length > 0) {
+          return (
+            <section
+              key={section.id}
+              id="posts"
+              className="py-12 border-t bg-background"
+            >
+              <div className="container mx-auto px-4">
+                {(readContentString(contentRecord, "heading") ||
+                  readContentString(contentRecord, "title")) && (
+                  <div className="mb-6 text-center">
+                    <h2 className="text-3xl font-bold">
+                      {readContentString(contentRecord, "heading") ||
+                        readContentString(contentRecord, "title")}
+                    </h2>
+                    {readContentString(contentRecord, "subheading") && (
+                      <p className="mt-2 text-muted-foreground">
+                        {readContentString(contentRecord, "subheading")}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <div className="grid gap-6 md:grid-cols-3">
+                  {posts.map((p) => (
+                    <Link
+                      key={p.id}
+                      href={`/store/${slug}/posts/${p.slug}`}
+                      className="block rounded-lg border bg-card hover:bg-accent transition-colors overflow-hidden"
+                    >
+                      {p.heroImage && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.heroImage}
+                          alt={p.title}
+                          className="w-full h-40 object-cover"
+                        />
+                      )}
+                      <div className="p-4 space-y-2">
+                        <h3 className="text-lg font-semibold">{p.title}</h3>
+                        {p.excerpt && (
+                          <p className="text-sm text-muted-foreground">
+                            {p.excerpt}
+                          </p>
+                        )}
+                        {p.publishedAt && (
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(p.publishedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-6 text-center">
+                  <a
+                    href={slug ? `/store/${slug}/posts` : "/posts"}
+                    className={`inline-flex items-center ${buttonRadiusClass} border px-4 py-2 text-sm font-semibold`}
+                    style={{
+                      borderColor:
+                        spec.meta.accentColor || spec.meta.primaryColor,
+                      backgroundColor: spec.meta.primaryColor,
+                      color: isHexColorDark(spec.meta.primaryColor)
+                        ? "#ffffff"
+                        : "#111827",
+                    }}
+                  >
+                    {readContentString(contentRecord, "ctaLabel") ||
+                      "Visit blog"}
+                  </a>
+                </div>
+              </div>
+            </section>
+          );
+        }
         return (
           <section
             key={section.id}
@@ -691,12 +939,50 @@ export function AiStorefrontRenderer({
                 )
               ) : (
                 <p className="text-sm text-muted-foreground text-center">
-                  No testimonials yet. Approved testimonials will be highlighted
-                  here.
+                  No testimonials yet. Testimonials will be highlighted here.
                 </p>
               )}
+              {/* CTA / Submit Button (from AI spec if present) */}
+              {(() => {
+                const ctaLabel =
+                  readContentString(contentRecord, "ctaLabel") ||
+                  (readContentString(contentRecord, "ctaText") as string) ||
+                  "Share your experience";
+                const ctaHref =
+                  readContentString(contentRecord, "ctaHref") ||
+                  (readContentString(contentRecord, "ctaLink") as string) ||
+                  "#submit-testimonial";
+
+                // Avoid rendering a duplicate CTA if it simply anchors to the
+                // testimonial submission area — the TestimonialForm below already
+                // renders a prominent submission trigger. Only render the AI-provided
+                // CTA when it does not point at the testimonial anchor.
+                const ctaHrefLower = (ctaHref || "").toLowerCase();
+                const isTestimonialAnchor =
+                  ctaHrefLower.includes("testimonial");
+                if (isTestimonialAnchor) return null;
+
+                return (
+                  <div className="mt-6 text-center">
+                    <a
+                      href={ctaHref}
+                      className={`inline-flex items-center ${buttonRadiusClass} border px-5 py-2 text-sm font-semibold`}
+                      style={{
+                        borderColor:
+                          spec.meta.accentColor || spec.meta.primaryColor,
+                        backgroundColor: spec.meta.primaryColor,
+                        color: isHexColorDark(spec.meta.primaryColor)
+                          ? "#fff"
+                          : "#111827",
+                      }}
+                    >
+                      {ctaLabel}
+                    </a>
+                  </div>
+                );
+              })()}
               {/* Allow visitors to submit a testimonial */}
-              <div className="mt-8 flex justify-center">
+              <div id="submit-testimonial" className="mt-8 flex justify-center">
                 <TestimonialForm slug={slug} />
               </div>
             </div>
@@ -730,6 +1016,50 @@ export function AiStorefrontRenderer({
                 .filter(Boolean) as { question: string; answer: string }[])
             : [];
 
+        // Merge admin-supplied FAQs (support articles) with AI-generated
+        // FAQ items. Admin FAQs appear first (featured by admins/managers),
+        // then fall back to AI generated items. Deduplicate by question.
+        const adminFaqs: { question: string; answer: string }[] =
+          Array.isArray(supportFaqs) && supportFaqs.length > 0
+            ? (supportFaqs
+                .map((s) => {
+                  const question = s.title;
+                  // prefer summary short text for answer, otherwise fall back to content
+                  const raw = s.summary ?? s.content ?? "";
+                  // strip any HTML tags if content contains HTML
+                  const answer =
+                    typeof raw === "string"
+                      ? raw.replace(/<[^>]*>/g, "").trim()
+                      : "";
+                  if (!question || !answer) return null;
+                  return { question, answer } as {
+                    question: string;
+                    answer: string;
+                  };
+                })
+                .filter(Boolean) as { question: string; answer: string }[])
+            : [];
+
+        // Ensure AI items are used when provided
+        const aiItems = items;
+
+        // Combine, admin-first, and dedupe by normalized question
+        const seen = new Set<string>();
+        const combined = [] as { question: string; answer: string }[];
+
+        const pushIfNew = (
+          it: { question: string; answer: string } | undefined
+        ) => {
+          if (!it) return;
+          const key = it.question.trim().toLowerCase();
+          if (seen.has(key)) return;
+          seen.add(key);
+          combined.push(it);
+        };
+
+        for (const a of adminFaqs) pushIfNew(a);
+        for (const a of aiItems) pushIfNew(a);
+
         return (
           <section
             key={section.id}
@@ -743,9 +1073,9 @@ export function AiStorefrontRenderer({
                   <p className="mt-2 text-muted-foreground">{subheading}</p>
                 )}
               </div>
-              {items.length > 0 ? (
+              {combined.length > 0 ? (
                 <div className="space-y-4">
-                  {items.map((item, index) => (
+                  {combined.map((item, index) => (
                     <div
                       key={index}
                       className="rounded-lg border bg-card px-4 py-3 text-left"
@@ -902,12 +1232,12 @@ export function AiStorefrontRenderer({
                   )}
                   <h3 className="font-semibold">{member.name}</h3>
                   {member.jobTitle && (
-                    <p className="w-full text-xs text-muted-foreground break-words">
+                    <p className="w-full text-xs text-muted-foreground wrap-break-word">
                       {member.jobTitle}
                     </p>
                   )}
                   {member.bio && (
-                    <p className="w-full mt-2 text-xs text-muted-foreground break-words max-h-24">
+                    <p className="w-full mt-2 text-xs text-muted-foreground wrap-break-word max-h-24">
                       {member.bio}
                     </p>
                   )}
@@ -924,7 +1254,7 @@ export function AiStorefrontRenderer({
         .map(renderSection)}
 
       {/* Simple footer unified with AI meta */}
-      <footer
+      {/* <footer
         className="border-t mt-8 py-6"
         style={{
           backgroundColor: spec.meta.backgroundColor || undefined,
@@ -940,7 +1270,7 @@ export function AiStorefrontRenderer({
             Powered by your OnTarget Brands Inc.
           </span>
         </div>
-      </footer>
+      </footer> */}
     </>
   );
 }

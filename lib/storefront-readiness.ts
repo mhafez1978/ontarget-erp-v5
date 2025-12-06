@@ -15,6 +15,7 @@ export interface StorefrontReadiness {
     teamMembers: boolean;
     testimonials: boolean;
     banner: boolean;
+    customers: boolean;
     logo: boolean;
     description: boolean;
     contact: boolean;
@@ -24,6 +25,7 @@ export interface StorefrontReadiness {
     services: number;
     teamMembers: number;
     testimonials: number;
+    customers: number;
   };
   suggestions: string[];
   warnings: string[];
@@ -34,6 +36,7 @@ interface StorefrontData {
   servicesCount: number;
   teamMembersCount: number;
   testimonialsCount: number;
+  customersCount?: number;
   hasBanner: boolean;
   hasLogo: boolean;
   hasDescription: boolean;
@@ -156,6 +159,13 @@ export function checkStorefrontReadiness(
     score += weights.contact;
   }
 
+  // Customers (informational) — do not alter scoring but surface suggestions
+  if ((data.customersCount ?? 0) === 0) {
+    suggestions.push(
+      "Consider building an initial customer base — encourage signups or import customer data."
+    );
+  }
+
   // Additional warnings
   if (data.isStoreEnabled && score < 50) {
     warnings.push(
@@ -192,6 +202,7 @@ export function checkStorefrontReadiness(
       services: data.servicesCount === 0,
       teamMembers: data.teamMembersCount === 0,
       testimonials: data.testimonialsCount === 0,
+      customers: (data.customersCount ?? 0) === 0,
       banner: !data.hasBanner,
       logo: !data.hasLogo,
       description: !data.hasDescription,
@@ -202,6 +213,7 @@ export function checkStorefrontReadiness(
       services: data.servicesCount,
       teamMembers: data.teamMembersCount,
       testimonials: data.testimonialsCount,
+      customers: data.customersCount ?? 0,
     },
     suggestions,
     warnings,

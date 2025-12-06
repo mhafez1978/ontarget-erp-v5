@@ -2374,7 +2374,7 @@ export default function SettingsPage() {
                               <li>Verification (3-7 business days)</li>
                               <li>Annual fee (¥300 RMB)</li>
                             </ul>
-                            <p className="!m-0">
+                            <p className="m-0!">
                               Essential for Chinese market access.
                             </p>
                           </div>

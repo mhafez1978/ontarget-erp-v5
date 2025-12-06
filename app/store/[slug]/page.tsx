@@ -6,6 +6,7 @@ import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { defaultThemes, type ThemeSection } from "@/lib/storefront-themes";
 import { ThemeRenderer } from "@/components/storefront/theme-renderer";
+import StorefrontLayout from "@/components/storefront/storefront-layout";
 import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
 import type { Metadata } from "next";
 import {
@@ -110,6 +111,7 @@ async function getStoreData(slug?: string) {
       slug: true,
       isStoreEnabled: true,
       storeTheme: true,
+      storeBlogEnabled: true,
       storeBanner: true,
       storeMetadata: true,
       aiStorefrontEnabled: true,
@@ -229,12 +231,55 @@ async function getStoreData(slug?: string) {
     take: 6, // Limit to 6 most recent/featured
   });
 
+  // Get total approved testimonials count (full count, not just the limited slice)
+  const approvedTestimonialsCount = await db.testimonial.count({
+    where: { companyId: company.id, status: "APPROVED" },
+  });
+
+  // Count company customers (users with COMPANY_CUSTOMER role attached via companyMember)
+  const customersCount = await db.companyMember.count({
+    where: { companyId: company.id, user: { role: "COMPANY_CUSTOMER" } },
+  });
+
   return {
     company,
     featuredProducts,
     featuredServices,
     featuredTeamMembers,
     testimonials,
+    // Fetch some recent published storefront posts for homepage previews
+    posts: await db.storefrontPost.findMany({
+      where: { companyId: company.id, status: "PUBLISHED" },
+      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        heroImage: true,
+        publishedAt: true,
+      },
+      take: 3,
+    }),
+    customersCount,
+    approvedTestimonialsCount,
+    // Include company support articles that look like FAQs (category 'FAQ' or tags contain 'faq')
+    faqs: await db.supportArticle.findMany({
+      where: {
+        companyId: company.id,
+        status: "PUBLISHED",
+        OR: [{ category: "FAQ" }, { tags: { contains: "faq" } }],
+      },
+      select: {
+        id: true,
+        title: true,
+        summary: true,
+        content: true,
+        createdAt: true,
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 10,
+    }),
   };
 }
 
@@ -257,6 +302,9 @@ export default async function StorefrontPage({ params }: PageProps) {
     featuredServices,
     featuredTeamMembers,
     testimonials,
+    posts,
+    customersCount,
+    approvedTestimonialsCount,
   } = data;
 
   // Serialize products and services for client component (convert Decimal to number)
@@ -302,16 +350,14 @@ export default async function StorefrontPage({ params }: PageProps) {
   if (aiEnabled && aiSpec) {
     const metadata = company.storeMetadata as StoreMetadata | null;
     const promoBannerSection =
-      metadata?.sections &&
-      Array.isArray(metadata.sections)
+      metadata?.sections && Array.isArray(metadata.sections)
         ? (metadata.sections as ThemeSection[]).find(
             (s) => s.type === "promo-banner" && s.enabled
           )
         : undefined;
 
     const heroSection =
-      metadata?.sections &&
-      Array.isArray(metadata.sections)
+      metadata?.sections && Array.isArray(metadata.sections)
         ? (metadata.sections as ThemeSection[]).find(
             (s) => s.type === "hero" && s.enabled
           )
@@ -339,109 +385,26 @@ export default async function StorefrontPage({ params }: PageProps) {
         : null;
 
     return (
-      <div className="min-h-screen bg-background">
+      <StorefrontLayout
+        slug={slug}
+        companyName={company.name}
+        logo={headerLogo}
+        logoLight={company.logoLight}
+        logoDark={company.logoDark}
+        storeBanner={company.storeBanner}
+        storeMetadata={company.storeMetadata}
+        aiMeta={aiMeta}
+        isStoreEnabled={company.isStoreEnabled}
+        storeBlogEnabled={company.storeBlogEnabled}
+        renderHero={false}
+      >
         {/* Store Disabled Banner */}
         {!company.isStoreEnabled && (
           <div className="bg-yellow-500 text-yellow-950 px-4 py-3 text-center font-medium">
             ⚠️ This store is currently disabled and only visible in preview mode
           </div>
         )}
-        <header
-          className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
-          style={
-            aiMeta
-              ? {
-                  // Prefer backgroundColor for nav if set (e.g., via refinement),
-                  // otherwise fall back to primaryColor.
-                  backgroundColor:
-                    aiMeta.backgroundColor || aiMeta.primaryColor || undefined,
-                  color: aiMeta.textColor || undefined,
-                  borderColor: aiMeta.accentColor || aiMeta.secondaryColor,
-                }
-              : undefined
-          }
-        >
-          <div className="container mx-auto h-14 px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {headerLogo ? (
-                <div className="relative h-14 w-[330px] flex justify-start items-center">
-                  <Image
-                    className="object-contain drop-shadow-2xl"
-                    src={headerLogo}
-                    alt={company.name}
-                    width={230}
-                    height={67}
-                  />
-                </div>
-              ) : (
-                <h1 className="text-white text-2xl font-bold">
-                  {company.name}
-                </h1>
-              )}
-            </div>
-            {/* Nav links inherit color from header style so preview and live store match */}
-            <nav className="hidden md:flex items-center gap-6">
-              <Link
-                href={`/store/${slug}`}
-                className="text-sm font-medium hover:underline"
-              >
-                Home
-              </Link>
-              <Link
-                href={`/store/${slug}/products`}
-                className="text-sm font-medium hover:underline"
-              >
-                Products
-              </Link>
-              <Link
-                href={`/store/${slug}/services`}
-                className="text-sm font-medium hover:underline"
-              >
-                Services
-              </Link>
-              <Link
-                href={`/store/${slug}/login`}
-                className="text-sm font-medium hover:underline"
-              >
-                Login
-              </Link>
-              <Button
-                size="sm"
-                variant="outline"
-                asChild
-                style={
-                  aiMeta
-                    ? {
-                        borderColor:
-                          aiMeta.accentColor || aiMeta.secondaryColor,
-                        color: aiMeta.textColor || "#111827",
-                      }
-                    : undefined
-                }
-              >
-                <Link href={`/store/${slug}/register`}>Register</Link>
-              </Button>
-              <Button
-                size="sm"
-                asChild
-                style={
-                  aiMeta
-                    ? {
-                        backgroundColor:
-                          aiMeta.accentColor || aiMeta.primaryColor,
-                        color: aiMeta.textColor || "#ffffff",
-                      }
-                    : undefined
-                }
-              >
-                <Link href={`/store/${slug}/cart`}>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Cart
-                </Link>
-              </Button>
-            </nav>
-          </div>
-        </header>
+        {/* header is provided by StorefrontLayout */}
 
         {/* Optional promo banner from Content Wizard (even when AI layout is enabled) */}
         {promoBannerSection && (
@@ -481,7 +444,10 @@ export default async function StorefrontPage({ params }: PageProps) {
           featuredProducts={serializedProducts}
           featuredServices={serializedServices}
           featuredTeamMembers={serializedTeamMembers}
+          posts={data.posts}
           testimonials={testimonials}
+          // admin-created FAQs (support articles) — merged by renderer with AI FAQs
+          supportFaqs={data.faqs ?? []}
           contactEmail={
             (company.storeMetadata as StoreMetadata | null)?.contactEmail ||
             null
@@ -491,9 +457,11 @@ export default async function StorefrontPage({ params }: PageProps) {
             null
           }
           storeBanner={company.storeBanner}
+          customersCount={customersCount}
+          approvedTestimonialsCount={approvedTestimonialsCount}
           heroOverride={heroOverride}
         />
-      </div>
+      </StorefrontLayout>
     );
   }
 
@@ -535,7 +503,20 @@ export default async function StorefrontPage({ params }: PageProps) {
     : "text-sm font-medium hover:underline";
 
   return (
-    <div className="min-h-screen bg-background">
+    <StorefrontLayout
+      slug={slug}
+      companyName={company.name}
+      logo={headerLogo}
+      logoLight={company.logoLight}
+      logoDark={company.logoDark}
+      storeBanner={company.storeBanner}
+      storeMetadata={company.storeMetadata}
+      aiMeta={aiMeta}
+      isStoreEnabled={company.isStoreEnabled}
+      storeBlogEnabled={company.storeBlogEnabled}
+      renderHero={false}
+      useThemeClass={headerClass}
+    >
       {/* Store Disabled Banner */}
       {!company.isStoreEnabled && (
         <div className="bg-yellow-500 text-yellow-950 px-4 py-3 text-center font-medium">
@@ -543,80 +524,15 @@ export default async function StorefrontPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Header */}
-      <header className={`sticky top-0 z-50 ${headerClass}`}>
-        <div className="container mx-auto px-4 py-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {headerLogo ? (
-                <div className="relative h-8 w-[330px]">
-                  <Image
-                    src={headerLogo}
-                    alt={company.name}
-                    fill
-                    className="object-contain"
-                    sizes="230px"
-                  />
-                </div>
-              ) : (
-                <h1 className="text-2xl font-bold">{company.name}</h1>
-              )}
-            </div>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href={`/store/${slug}`} className={linkClass}>
-                Home
-              </Link>
-              <Link href={`/store/${slug}/products`} className={linkClass}>
-                Products
-              </Link>
-              <Link href={`/store/${slug}/services`} className={linkClass}>
-                Services
-              </Link>
-              <Link href={`/store/${slug}/login`} className={linkClass}>
-                Login
-              </Link>
-              <Button
-                size="sm"
-                variant="outline"
-                className={
-                  isBlackFriday
-                    ? "border-red-600 text-black hover:text-white hover:bg-red-600/10"
-                    : isPrecisionCare
-                    ? "border-teal-600 text-teal-700 hover:bg-teal-50 "
-                    : ""
-                }
-                asChild
-              >
-                <Link href={`/store/${slug}/register`}>Register</Link>
-              </Button>
-              <Button
-                size="sm"
-                className={
-                  isBlackFriday
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : isPrecisionCare
-                    ? "bg-teal-600 hover:bg-teal-700 text-white"
-                    : ""
-                }
-                asChild
-              >
-                <Link href={`/store/${slug}/cart`}>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Cart
-                </Link>
-              </Button>
-            </nav>
-          </div>
-        </div>
-      </header>
+      {/* Header rendered by StorefrontLayout */}
 
       {/* Theme-based Content */}
       <ThemeRenderer
         sections={
           ((company.storeMetadata as StoreMetadata | null)?.sections &&
-            ((company.storeMetadata as StoreMetadata | null)?.sections?.length ?? 0) > 0
-            ? (company.storeMetadata as StoreMetadata | null)
-                ?.sections
+          ((company.storeMetadata as StoreMetadata | null)?.sections?.length ??
+            0) > 0
+            ? (company.storeMetadata as StoreMetadata | null)?.sections
             : selectedTheme.sections) as ThemeSection[]
         }
         slug={slug}
@@ -625,10 +541,13 @@ export default async function StorefrontPage({ params }: PageProps) {
         featuredServices={serializedServices}
         featuredTeamMembers={serializedTeamMembers}
         testimonials={testimonials}
+        customersCount={customersCount}
+        approvedTestimonialsCount={approvedTestimonialsCount}
         themeId={selectedTheme.id}
         storeBanner={company.storeBanner}
         storeMetadata={company.storeMetadata as StoreMetadata}
+        posts={posts}
       />
-    </div>
+    </StorefrontLayout>
   );
 }

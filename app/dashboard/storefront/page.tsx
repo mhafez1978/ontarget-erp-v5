@@ -2599,7 +2599,6 @@ import {
   Save,
   Loader2,
   ExternalLink,
-  
   Upload,
   Trash2,
   Building,
@@ -2647,6 +2646,28 @@ interface StorefrontSettings {
     contactPhone?: string;
     // Optional persisted layout/content overrides for ThemeRenderer
     sections?: ThemeSection[];
+    aiWizardDraft?: {
+      primaryColor?: string;
+      secondaryColor?: string;
+      accentColor?: string;
+      showLocation?: boolean;
+      showTeam?: boolean;
+      showTestimonials?: boolean;
+      includeProducts?: boolean;
+      includeServices?: boolean;
+      includePosts?: boolean;
+      includeStats?: boolean;
+      includeFaq?: boolean;
+      includeCta?: boolean;
+      includeContact?: boolean;
+      heroLayout?: "left" | "center";
+      heroSize?: "inherit" | "compact" | "full";
+      goal?: "sell-products" | "sell-services" | "lead-gen" | "bookings";
+      tone?: "playful" | "serious" | "luxury" | "minimal";
+      prompt?: string;
+      refineNotes?: string;
+      emphasis?: "balanced" | "products" | "services" | "testimonials";
+    } | null;
   } | null;
   storeBlogEnabled?: boolean;
 }
@@ -2721,6 +2742,13 @@ export default function StorefrontPage() {
   const [aiShowLocation, setAiShowLocation] = useState(true);
   const [aiShowTeam, setAiShowTeam] = useState(true);
   const [aiShowTestimonials, setAiShowTestimonials] = useState(true);
+  const [aiIncludePosts, setAiIncludePosts] = useState(true);
+  const [aiIncludeProducts, setAiIncludeProducts] = useState(true);
+  const [aiIncludeServices, setAiIncludeServices] = useState(true);
+  const [aiIncludeStats, setAiIncludeStats] = useState(true);
+  const [aiIncludeFaq, setAiIncludeFaq] = useState(true);
+  const [aiIncludeCta, setAiIncludeCta] = useState(true);
+  const [aiIncludeContact, setAiIncludeContact] = useState(true);
   const [aiRefineNotes, setAiRefineNotes] = useState("");
   const [aiHeroLayout, setAiHeroLayout] = useState<"left" | "center">("left");
 
@@ -2736,6 +2764,7 @@ export default function StorefrontPage() {
     unknown[] | null
   >(null);
   const [aiPreviewTeam, setAiPreviewTeam] = useState<unknown[] | null>(null);
+  const [aiPreviewFaqs, setAiPreviewFaqs] = useState<unknown[] | null>(null);
   const [aiPreviewContactEmail, setAiPreviewContactEmail] = useState<
     string | null
   >(null);
@@ -2794,10 +2823,22 @@ export default function StorefrontPage() {
 
   const mapAiSpecToThemeSections = (
     spec: AiFrontstoreSpec,
-    themeId: string
+    themeId: string,
+    companyName?: string,
+    previewTeam?: FeaturedTeamMember[] | null,
+    previewFaqs?: unknown[] | null
   ): ThemeSection[] | null => {
-    const theme = defaultThemes.find((t) => t.id === themeId);
-    if (!theme) return null;
+    let theme = defaultThemes.find((t) => t.id === themeId);
+    if (!theme) {
+      // If the saved theme id doesn't exist (custom theme or mismatch), fall
+      // back to the first default theme instead of failing the export – this
+      // lets Content Wizard still receive a usable set of sections.
+      console.warn(
+        `mapAiSpecToThemeSections: theme "${themeId}" not found, falling back to defaultThemes[0]`
+      );
+      theme = defaultThemes[0];
+      if (!theme) return null;
+    }
 
     const cloneSections: ThemeSection[] = theme.sections.map((section) => ({
       ...section,
@@ -2812,6 +2853,62 @@ export default function StorefrontPage() {
       const heroThemeSection = cloneSections.find((s) => s.type === "hero");
       if (heroThemeSection) {
         const heroContent = aiHero.content as Record<string, unknown>;
+        // Map styling/background image + overlay/animations when present
+        const aiHeroStyling = (aiHero as AiFrontstoreSection).styling as
+          | Record<string, any>
+          | undefined;
+        heroThemeSection.styling = {
+          ...(heroThemeSection.styling || {}),
+          ...(aiHeroStyling?.backgroundImage?.url
+            ? { backgroundImage: aiHeroStyling.backgroundImage.url }
+            : {}),
+        };
+        // If no section-level background found, consider top-level meta background
+        if (
+          !heroThemeSection.styling?.backgroundImage &&
+          spec.meta?.backgroundImage?.url
+        ) {
+          heroThemeSection.styling = {
+            ...(heroThemeSection.styling || {}),
+            backgroundImage: spec.meta.backgroundImage.url,
+          };
+        }
+        // Overlay color + opacity -> map into theme styling.overlay (rgba string)
+        const overlayColor =
+          aiHeroStyling?.overlayColor ?? spec.meta?.overlayColor;
+        const overlayOpacity =
+          typeof aiHeroStyling?.overlayOpacity === "number"
+            ? aiHeroStyling.overlayOpacity
+            : spec.meta?.overlayOpacity;
+        if (overlayColor) {
+          const rgba = (hex?: string | null, alpha?: number | null) => {
+            if (!hex) return undefined;
+            const h = hex.replace("#", "");
+            if (h.length !== 6) return hex; // fallback
+            const r = parseInt(h.slice(0, 2), 16);
+            const g = parseInt(h.slice(2, 4), 16);
+            const b = parseInt(h.slice(4, 6), 16);
+            const a = typeof alpha === "number" ? alpha : 1;
+            return `rgba(${r}, ${g}, ${b}, ${a})`;
+          };
+          const overlayVal = rgba(
+            overlayColor as string,
+            overlayOpacity as number | undefined
+          );
+          if (overlayVal)
+            heroThemeSection.styling = {
+              ...(heroThemeSection.styling || {}),
+              overlay: overlayVal,
+            };
+        }
+        // Pass animation hints via content.animations so Content Wizard UI can expose them
+        const animations = aiHeroStyling?.animations ?? spec.meta?.animations;
+        if (Array.isArray(animations) && animations.length > 0) {
+          heroThemeSection.content = {
+            ...(heroThemeSection.content || {}),
+            animations,
+          };
+        }
         heroThemeSection.content = {
           ...heroThemeSection.content,
           heading:
@@ -2849,6 +2946,26 @@ export default function StorefrontPage() {
             (productContent.subheading as string) ||
             (productsThemeSection.content.description as string),
         };
+
+        // Map optional section styling and animations
+        const aiStyling = (aiProducts as AiFrontstoreSection).styling as
+          | Record<string, any>
+          | undefined;
+        if (aiStyling?.backgroundImage?.url) {
+          productsThemeSection.styling = {
+            ...(productsThemeSection.styling || {}),
+            backgroundImage: aiStyling.backgroundImage.url,
+          };
+        }
+        if (
+          Array.isArray(aiStyling?.animations) &&
+          aiStyling.animations.length
+        ) {
+          productsThemeSection.content = {
+            ...(productsThemeSection.content || {}),
+            animations: aiStyling.animations,
+          };
+        }
       }
     }
 
@@ -2889,6 +3006,103 @@ export default function StorefrontPage() {
           description:
             (testimonialContent.subheading as string) ||
             (socialProofSection.content.description as string),
+          // Map AI CTA into the theme so Content Wizard can edit button text
+          ctaText:
+            (testimonialContent.ctaLabel as string) ||
+            (socialProofSection.content.ctaText as string),
+          ctaLink:
+            (testimonialContent.ctaHref as string) ||
+            (socialProofSection.content.ctaLink as string),
+        };
+      }
+    }
+
+    // Map stats -> stats theme section
+    const aiStats = findAiSection("stats");
+    if (aiStats) {
+      const statsThemeSection = cloneSections.find((s) => s.type === "stats");
+      if (statsThemeSection) {
+        const statsContent = aiStats.content as Record<string, unknown>;
+        const rawItems = (statsContent.items ?? statsContent.stats) as
+          | Array<Record<string, unknown>>
+          | undefined;
+
+        statsThemeSection.content = {
+          ...statsThemeSection.content,
+          title:
+            (statsContent.heading as string) ||
+            (statsContent.title as string) ||
+            (statsThemeSection.content.title as string),
+          description:
+            (statsContent.subheading as string) ||
+            (statsContent.description as string) ||
+            (statsThemeSection.content.description as string),
+          stats: (Array.isArray(rawItems) && rawItems.length > 0
+            ? (rawItems
+                .map((it) => {
+                  if (!it || typeof it !== "object") return null;
+                  const label =
+                    typeof it.label === "string" ? it.label : undefined;
+                  const valueRaw = it.value;
+                  const value =
+                    typeof valueRaw === "number"
+                      ? String(valueRaw)
+                      : typeof valueRaw === "string"
+                      ? valueRaw
+                      : undefined;
+                  const icon =
+                    typeof it.icon === "string" ? it.icon : undefined;
+                  if (!label || !value) return null;
+                  return { value, label, icon } as Record<string, unknown>;
+                })
+                .filter(Boolean) as Record<string, unknown>[])
+            : statsThemeSection.content.stats) as any,
+        };
+      }
+    }
+
+    // Map team / featured team members - prefer AI content if present, otherwise
+    // use previewTeam (from preview fetch) to populate the theme's team section
+    const aiTeam = findAiSection("highlights") || findAiSection("hero");
+    // AI spec doesn't have an explicit 'team' type; often team info is provided
+    // via the preview featuredTeamMembers array (aiPreviewTeam). Use previewTeam
+    // to populate the theme 'team' section so exported Content Wizard matches
+    // the live storefront.
+    const teamThemeSection = cloneSections.find((s) => s.type === "team");
+    if (teamThemeSection) {
+      const teamContent = (aiTeam?.content as Record<string, unknown>) || {};
+
+      // If AI provided a team-like heading/subheading, use it; otherwise derive
+      // a sensible default using companyName if available.
+      teamThemeSection.content = {
+        ...teamThemeSection.content,
+        heading:
+          (teamContent.heading as string) ||
+          (teamContent.title as string) ||
+          teamThemeSection.content.heading ||
+          "Meet the Team",
+        description:
+          (teamContent.subheading as string) ||
+          (teamContent.description as string) ||
+          teamThemeSection.content.description ||
+          (companyName ? `The people behind ${companyName}` : ""),
+      };
+
+      // If a previewTeam was provided, map the individuals into the section so
+      // Content Wizard shows the same team roster as the front store.
+      if (Array.isArray(previewTeam) && previewTeam.length > 0) {
+        const mapped = previewTeam.map((m) => ({
+          id: m.id,
+          name: m.name,
+          role: (m.role as string) || undefined,
+          jobTitle: (m.jobTitle as string) || undefined,
+          image: (m.image as string) || undefined,
+          bio: (m.bio as string) || undefined,
+        }));
+
+        teamThemeSection.content = {
+          ...teamThemeSection.content,
+          members: mapped,
         };
       }
     }
@@ -2919,6 +3133,68 @@ export default function StorefrontPage() {
           (faqContent.faqItems as unknown)) as
           | Array<Record<string, unknown>>
           | undefined;
+        // Parse AI-provided FAQ items into a canonical shape
+        const parsedAiFaqs: { question: string; answer: string }[] =
+          Array.isArray(faqItemsRaw) && faqItemsRaw.length > 0
+            ? (faqItemsRaw
+                .map((it) => {
+                  if (!it || typeof it !== "object") return null;
+                  const q =
+                    typeof it.question === "string"
+                      ? it.question
+                      : typeof it.q === "string"
+                      ? it.q
+                      : typeof it.label === "string"
+                      ? it.label
+                      : undefined;
+                  const a =
+                    typeof it.answer === "string"
+                      ? it.answer
+                      : typeof it.a === "string"
+                      ? it.a
+                      : typeof it.value === "string"
+                      ? it.value
+                      : undefined;
+                  if (!q || !a) return null;
+                  return { question: q, answer: a };
+                })
+                .filter(Boolean) as { question: string; answer: string }[])
+            : [];
+
+        // Normalize preview (admin) FAQs if provided
+        const parsedPreviewFaqs: { question: string; answer: string }[] =
+          Array.isArray(previewFaqs) && previewFaqs.length > 0
+            ? (previewFaqs
+                .map((p) => {
+                  if (!p || typeof p !== "object") return null;
+                  const title = (p as any).title;
+                  const summary = (p as any).summary;
+                  const content = (p as any).content;
+                  const answerRaw =
+                    typeof summary === "string" && summary.trim()
+                      ? summary
+                      : typeof content === "string"
+                      ? content
+                      : undefined;
+                  if (typeof title !== "string" || !answerRaw) return null;
+                  // strip simple HTML tags from content
+                  const answer = answerRaw.replace(/<[^>]*>/g, "").trim();
+                  return { question: title, answer };
+                })
+                .filter(Boolean) as { question: string; answer: string }[])
+            : [];
+
+        // Combine admin FAQs first then AI FAQs, dedupe by question
+        const merged: { question: string; answer: string }[] = [];
+        const seen = new Set<string>();
+        for (const it of parsedPreviewFaqs.concat(parsedAiFaqs)) {
+          const key = it.question.trim().toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            merged.push(it);
+          }
+        }
+
         aboutSection.content = {
           ...aboutSection.content,
           heading:
@@ -2927,10 +3203,7 @@ export default function StorefrontPage() {
           description:
             (faqContent.subheading as string) ||
             (aboutSection.content.description as string),
-          faqItems:
-            Array.isArray(faqItemsRaw) && faqItemsRaw.length > 0
-              ? faqItemsRaw
-              : aboutSection.content.faqItems,
+          faqItems: merged.length > 0 ? merged : aboutSection.content.faqItems,
         };
       }
     }
@@ -3050,6 +3323,31 @@ export default function StorefrontPage() {
       } else {
         setThemeSections([]);
       }
+
+      // Restore any saved AI wizard draft placeholders (if previously saved)
+      const draft = data.storeMetadata?.aiWizardDraft;
+      if (draft && typeof draft === "object") {
+        setAiPrimaryColor(draft.primaryColor || "");
+        setAiSecondaryColor(draft.secondaryColor || "");
+        setAiAccentColor(draft.accentColor || "");
+        setAiShowLocation(draft.showLocation ?? true);
+        setAiShowTeam(draft.showTeam ?? true);
+        setAiShowTestimonials(draft.showTestimonials ?? true);
+        setAiIncludePosts(draft.includePosts ?? true);
+        setAiIncludeProducts(draft.includeProducts ?? true);
+        setAiIncludeServices(draft.includeServices ?? true);
+        setAiIncludeStats(draft.includeStats ?? true);
+        setAiIncludeFaq(draft.includeFaq ?? true);
+        setAiIncludeCta(draft.includeCta ?? true);
+        setAiIncludeContact(draft.includeContact ?? true);
+        setAiHeroLayout(draft.heroLayout || "left");
+        setAiHeroSize(draft.heroSize || "inherit");
+        setAiGoal(draft.goal || aiGoal);
+        setAiTone(draft.tone || aiTone);
+        setAiPrompt(draft.prompt || "");
+        setAiRefineNotes(draft.refineNotes || "");
+        setAiEmphasis(draft.emphasis || aiEmphasis);
+      }
     } catch (error) {
       console.error("Error fetching storefront settings:", error);
       toast.error("Failed to load storefront settings");
@@ -3086,6 +3384,14 @@ export default function StorefrontPage() {
         } else {
           setAiHeroSize("inherit");
         }
+        // Prefill color inputs from generated spec if they haven't been set yet
+        setAiPrimaryColor(
+          (prev) => prev || (data.spec.meta?.primaryColor ?? "")
+        );
+        setAiSecondaryColor(
+          (prev) => prev || (data.spec.meta?.secondaryColor ?? "")
+        );
+        setAiAccentColor((prev) => prev || (data.spec.meta?.accentColor ?? ""));
       }
       if (data.usage) {
         setAiUsageLimit(data.usage.limit ?? null);
@@ -3119,6 +3425,28 @@ export default function StorefrontPage() {
       setAiPreviewServices(data.featuredServices || null);
       setAiPreviewTestimonials(data.testimonials || null);
       setAiPreviewTeam(data.featuredTeamMembers || null);
+      // Also fetch support articles (FAQ-like items) for preview merging
+      try {
+        const faqRes = await fetch(
+          `/api/support/articles?companyId=${selectedCompanyId}&status=PUBLISHED`
+        );
+        if (faqRes.ok) {
+          const faqJson = await faqRes.json().catch(() => null);
+          const articles = (faqJson?.articles || []).filter((a: any) => {
+            const cat = String(a.category || "").toLowerCase();
+            const tags = Array.isArray(a.tags)
+              ? a.tags.map((t: any) => String(t || "").toLowerCase())
+              : [];
+            return cat === "faq" || tags.includes("faq");
+          });
+          setAiPreviewFaqs(articles.length > 0 ? articles : null);
+        } else {
+          setAiPreviewFaqs(null);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch preview FAQs", err);
+        setAiPreviewFaqs(null);
+      }
       setAiPreviewContactEmail(data.contactEmail ?? null);
       setAiPreviewContactPhone(data.contactPhone ?? null);
     } catch (error) {
@@ -3189,6 +3517,29 @@ export default function StorefrontPage() {
           ...(settings.storeMetadata || {}),
           // Persist the current content wizard sections into storeMetadata
           sections: themeSections,
+          // Persist AI wizard draft values so they survive across visits
+          aiWizardDraft: {
+            primaryColor: aiPrimaryColor || undefined,
+            secondaryColor: aiSecondaryColor || undefined,
+            accentColor: aiAccentColor || undefined,
+            showLocation: aiShowLocation,
+            showTeam: aiShowTeam,
+            showTestimonials: aiShowTestimonials,
+            includePosts: aiIncludePosts,
+            includeProducts: aiIncludeProducts,
+            includeServices: aiIncludeServices,
+            includeStats: aiIncludeStats,
+            includeFaq: aiIncludeFaq,
+            includeCta: aiIncludeCta,
+            includeContact: aiIncludeContact,
+            heroLayout: aiHeroLayout,
+            heroSize: aiHeroSize,
+            goal: aiGoal,
+            tone: aiTone,
+            prompt: aiPrompt || undefined,
+            refineNotes: aiRefineNotes || undefined,
+            emphasis: aiEmphasis,
+          },
         },
       };
 
@@ -4402,6 +4753,58 @@ export default function StorefrontPage() {
                                 onCheckedChange={setAiShowTestimonials}
                               />
                             </div>
+
+                            <div className="flex items-center justify-between rounded border px-3 py-2">
+                              <span>Include blog/posts</span>
+                              <Switch
+                                checked={aiIncludePosts}
+                                onCheckedChange={setAiIncludePosts}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between rounded border px-3 py-2">
+                              <span>Include products</span>
+                              <Switch
+                                checked={aiIncludeProducts}
+                                onCheckedChange={setAiIncludeProducts}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between rounded border px-3 py-2">
+                              <span>Include services</span>
+                              <Switch
+                                checked={aiIncludeServices}
+                                onCheckedChange={setAiIncludeServices}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between rounded border px-3 py-2">
+                              <span>Include stats / counters</span>
+                              <Switch
+                                checked={aiIncludeStats}
+                                onCheckedChange={setAiIncludeStats}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between rounded border px-3 py-2">
+                              <span>Include FAQ</span>
+                              <Switch
+                                checked={aiIncludeFaq}
+                                onCheckedChange={setAiIncludeFaq}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between rounded border px-3 py-2">
+                              <span>Include CTA band</span>
+                              <Switch
+                                checked={aiIncludeCta}
+                                onCheckedChange={setAiIncludeCta}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between rounded border px-3 py-2">
+                              <span>Include contact section</span>
+                              <Switch
+                                checked={aiIncludeContact}
+                                onCheckedChange={setAiIncludeContact}
+                              />
+                            </div>
                           </div>
                           <p className="text-xs text-muted-foreground">
                             These control how the AI copy talks about your
@@ -4735,9 +5138,21 @@ export default function StorefrontPage() {
                                         aiSecondaryColor || undefined,
                                       accentColor: aiAccentColor || undefined,
                                       heroLayout: aiHeroLayout,
+                                      heroSize:
+                                        aiHeroSize === "compact" ||
+                                        aiHeroSize === "full"
+                                          ? aiHeroSize
+                                          : undefined,
                                       showLocation: aiShowLocation,
                                       showTeam: aiShowTeam,
                                       showTestimonials: aiShowTestimonials,
+                                      includePosts: aiIncludePosts,
+                                      includeProducts: aiIncludeProducts,
+                                      includeServices: aiIncludeServices,
+                                      includeStats: aiIncludeStats,
+                                      includeFaq: aiIncludeFaq,
+                                      includeCta: aiIncludeCta,
+                                      includeContact: aiIncludeContact,
                                     }),
                                   }
                                 );
@@ -4793,28 +5208,143 @@ export default function StorefrontPage() {
                               type="button"
                               size="sm"
                               variant="outline"
-                              onClick={() => {
+                              onClick={async () => {
                                 if (!aiSpec) {
                                   toast.error(
                                     "Generate an AI storefront first, then export."
                                   );
                                   return;
                                 }
+
                                 const mapped = mapAiSpecToThemeSections(
                                   aiSpec as AiFrontstoreSpec,
-                                  settings.storeTheme
+                                  settings.storeTheme,
+                                  selectedCompany?.name ?? undefined,
+                                  Array.isArray(aiPreviewTeam)
+                                    ? (aiPreviewTeam as FeaturedTeamMember[])
+                                    : undefined,
+                                  Array.isArray(aiPreviewFaqs)
+                                    ? aiPreviewFaqs
+                                    : undefined
                                 );
+
                                 if (!mapped) {
                                   toast.error(
                                     "Unable to export AI content for this theme."
                                   );
                                   return;
                                 }
+
+                                // Update editor state so Content Wizard will receive the
+                                // exported sections immediately.
                                 setThemeSections(mapped);
                                 setActiveTab("content");
-                                toast.success(
-                                  "AI content exported to Content Wizard. You can now edit it there."
-                                );
+
+                                // If the current store theme wasn't found earlier,
+                                // inform the admin that we're exporting into the
+                                // default theme mapping so they understand the
+                                // exported layout may not exactly match the chosen
+                                // theme.
+                                if (
+                                  !defaultThemes.some(
+                                    (t) => t.id === settings.storeTheme
+                                  )
+                                ) {
+                                  toast.warning(
+                                    "Selected theme not found — exported content will be mapped to a default theme."
+                                  );
+                                }
+
+                                // Persist the exported sections into storeMetadata so
+                                // the export stays available after page reload.
+                                if (!selectedCompanyId) {
+                                  toast.error("Please select a company first");
+                                  return;
+                                }
+
+                                try {
+                                  // If the AI provided SEO metadata, also export it to the
+                                  // Content Wizard storeMetadata so admins can edit it under the
+                                  // SEO & Metadata tab.
+                                  const seo = (aiSpec as AiFrontstoreSpec)?.meta
+                                    ?.seo;
+
+                                  const payload: StorefrontSettings = {
+                                    ...settings,
+                                    storeMetadata: {
+                                      ...(settings.storeMetadata || {}),
+                                      sections: mapped,
+                                      ...(seo
+                                        ? {
+                                            title:
+                                              seo.metaTitle ||
+                                              settings.storeMetadata?.title,
+                                            description:
+                                              seo.metaDescription ||
+                                              settings.storeMetadata
+                                                ?.description,
+                                            keywords:
+                                              seo.keywords ||
+                                              settings.storeMetadata?.keywords,
+                                          }
+                                        : {}),
+                                    },
+                                  };
+
+                                  const res = await fetch(
+                                    `/api/company/storefront?companyId=${selectedCompanyId}`,
+                                    {
+                                      method: "PUT",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify(payload),
+                                    }
+                                  );
+
+                                  const data = await res.json();
+                                  if (!res.ok) {
+                                    toast.error(
+                                      data.error ||
+                                        "Failed to save exported content to Content Wizard"
+                                    );
+                                    return;
+                                  }
+
+                                  // Update local settings so other controls reflect saved data
+                                  setSettings((prev) => ({
+                                    ...prev,
+                                    storeMetadata: {
+                                      ...(prev.storeMetadata || {}),
+                                      sections: mapped,
+                                      ...(seo
+                                        ? {
+                                            title:
+                                              seo.metaTitle ||
+                                              prev.storeMetadata?.title,
+                                            description:
+                                              seo.metaDescription ||
+                                              prev.storeMetadata?.description,
+                                            keywords:
+                                              seo.keywords ||
+                                              prev.storeMetadata?.keywords,
+                                          }
+                                        : {}),
+                                    },
+                                  }));
+
+                                  toast.success(
+                                    "AI content exported to Content Wizard and saved — you can now edit it there."
+                                  );
+                                } catch (err) {
+                                  console.error(
+                                    "Failed to persist exported AI content:",
+                                    err
+                                  );
+                                  toast.error(
+                                    "Exported content applied locally. Failed to save to server."
+                                  );
+                                }
                               }}
                             >
                               Export to Content Wizard
@@ -5142,4 +5672,3 @@ export default function StorefrontPage() {
     </DashboardLayout>
   );
 }
-

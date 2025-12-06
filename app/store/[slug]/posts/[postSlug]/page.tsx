@@ -1,5 +1,11 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import { ShoppingCart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import StorefrontLayout from "@/components/storefront/storefront-layout";
 import { db } from "@/lib/db";
+import { defaultThemes } from "@/lib/storefront-themes";
 
 interface PageProps {
   params: Promise<{
@@ -19,7 +25,17 @@ export default async function StorePostDetailPage({ params }: PageProps) {
     select: {
       id: true,
       name: true,
+      logo: true,
+      logoLight: true,
+      logoDark: true,
+      slug: true,
+      isStoreEnabled: true,
+      storeTheme: true,
       storeBlogEnabled: true,
+      storeBanner: true,
+      storeMetadata: true,
+      aiStorefrontEnabled: true,
+      aiStorefrontSpec: true,
     },
   });
 
@@ -46,22 +62,93 @@ export default async function StorePostDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  return (
-    <main className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-12 max-w-3xl">
-        <article className="space-y-6">
-          <header className="space-y-2">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">
-              {company.name}
-            </p>
-            <h1 className="text-3xl font-bold">{post.title}</h1>
-            {post.publishedAt && (
-              <p className="text-xs text-muted-foreground">
-                {new Date(post.publishedAt).toLocaleDateString()}
-              </p>
-            )}
-          </header>
+  // Determine AI spec or theme meta for styling the header + hero
+  const aiSpecRaw = company.aiStorefrontSpec || null;
+  let aiSpec: any = null;
+  let aiMeta: any = null;
+  if (company.aiStorefrontEnabled && aiSpecRaw) {
+    try {
+      aiSpec =
+        typeof aiSpecRaw === "string" ? JSON.parse(aiSpecRaw) : aiSpecRaw;
+      aiMeta = aiSpec?.meta ?? null;
+    } catch (e) {
+      // swallow parse errors — treat as not present
+      aiSpec = null;
+      aiMeta = null;
+    }
+  }
 
+  // Theme fallback — pick header classes similar to storefront page
+  const themeId = company.storeTheme || "modern-tech";
+  const selectedTheme =
+    defaultThemes.find((t) => t.id === themeId) || defaultThemes[0];
+  const isBlackFriday = selectedTheme.id === "black-friday-mega-sale";
+  const isPrecisionCare = selectedTheme.id === "healthcare-precision-care";
+  const isFitnessBoutique = selectedTheme.id === "fitness-boutique";
+  const isDigitalCampus = selectedTheme.id === "education-digital-campus";
+  const isBoutiqueStay = selectedTheme.id === "hospitality-boutique-stay";
+  const isBuildCraft = selectedTheme.id === "construction-buildcraft";
+  const headerClass = isBlackFriday
+    ? "bg-black/90 text-white border-b border-red-600"
+    : isPrecisionCare
+    ? "bg-white/90 text-gray-900 border-b border-gray-200"
+    : isFitnessBoutique
+    ? "bg-[#f6eee5] text-[#3a2c20] border-b-4 border-[#d36c3b]"
+    : isDigitalCampus
+    ? "bg-[#1d75ff] text-white border-b-4 border-[#ffdd33]"
+    : isBoutiqueStay
+    ? "bg-white/70 text-[#3a2a2a] border-b shadow-sm"
+    : isBuildCraft
+    ? "bg-[#ff6b00] text-black border-b-4 border-black shadow-lg"
+    : "border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60";
+  const linkClass = isBlackFriday
+    ? "text-sm font-medium hover:text-red-500 transition"
+    : isPrecisionCare
+    ? "text-sm font-medium text-gray-800 hover:text-teal-600 transition"
+    : isFitnessBoutique
+    ? "text-sm font-medium text-[#3a2c20] hover:text-[#d36c3b] transition"
+    : isDigitalCampus
+    ? "text-sm font-semibold text-white hover:text-[#ffdd33] transition"
+    : isBoutiqueStay
+    ? "text-sm font-medium text-[#3a2a2a] hover:text-[#dd6fa4] transition"
+    : isBuildCraft
+    ? "text-sm font-semibold text-black hover:text-white transition"
+    : "text-sm font-medium hover:underline";
+
+  const headerLogo: string | null =
+    (company.logo as string | null) ||
+    (company.logoLight as string | null) ||
+    (company.logoDark as string | null) ||
+    null;
+
+  const aiEnabled = company.aiStorefrontEnabled && !!aiMeta;
+
+  return (
+    <StorefrontLayout
+      slug={slug}
+      companyName={company.name}
+      logo={company.logo}
+      logoLight={company.logoLight}
+      logoDark={company.logoDark}
+      storeBanner={company.storeBanner}
+      storeMetadata={company.storeMetadata}
+      aiMeta={aiMeta}
+      isStoreEnabled={company.isStoreEnabled}
+      storeBlogEnabled={company.storeBlogEnabled}
+      renderHero
+      useThemeClass={headerClass}
+      heroProps={{ title: post.title, publishedAt: post.publishedAt }}
+    >
+      {/* Store Disabled Banner (still allowed inside the layout children) */}
+      {!company.isStoreEnabled && (
+        <div className="bg-yellow-500 text-yellow-950 px-4 py-3 text-center font-medium">
+          ⚠️ This store is currently disabled and only visible in preview mode
+        </div>
+      )}
+
+      {/* Content */}
+      <main className="container mx-auto px-4 py-12 max-w-3xl">
+        <article className="space-y-6">
           {post.heroImage && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -72,12 +159,10 @@ export default async function StorePostDetailPage({ params }: PageProps) {
           )}
 
           <div className="prose prose-sm sm:prose lg:prose-lg max-w-none">
-            {/* For now, render content as plain text/HTML. If storing markdown, you can add a markdown renderer later. */}
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
         </article>
-      </div>
-    </main>
+      </main>
+    </StorefrontLayout>
   );
 }
-
