@@ -162,7 +162,11 @@ export default function CraftAndBuildOrangeBlack() {
               key={i}
               className="bg-black rounded-xl shadow-xl overflow-hidden border-4 border-[#ff6b00]"
             >
-              <img src={p.img} alt={p.title || "project image"} className="h-64 w-full object-cover" />
+              <img
+                src={p.img}
+                alt={p.title || "project image"}
+                className="h-64 w-full object-cover"
+              />
               <div className="p-6">
                 <h4 className="text-xl font-extrabold text-[#ff6b00]">
                   {p.title}
