@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { Company } from "@prisma/client";
 
 interface RouteContext {
   params: Promise<{
@@ -59,9 +58,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     // Check access
     const hasAccess =
-      user.ownedCompanies.some(
-        (c: Company) => c.id === testimonial.companyId
-      ) ||
+      user.ownedCompanies.some((c) => c.id === testimonial.companyId) ||
       user.companyMemberships.some(
         (m) => m.companyId === testimonial.companyId
       );
@@ -159,9 +156,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     // Check access
     const hasAccess =
-      user.ownedCompanies.some(
-        (c: Company) => c.id === testimonial.companyId
-      ) ||
+      user.ownedCompanies.some((c) => c.id === testimonial.companyId) ||
       user.companyMemberships.some(
         (m) => m.companyId === testimonial.companyId
       );

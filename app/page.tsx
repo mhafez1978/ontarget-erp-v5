@@ -1952,20 +1952,21 @@ export default async function HomePage() {
                           }}
                         >
                           {rows.map((col, i) => {
-                            // Logic: Even columns (0, 2, 4...) go UP (normal)
-                            // Odd columns (1, 3, 5...) go DOWN (reverse)
-                            const isEven = i % 2 === 0;
+                            // Pattern: up, down, down, up, up, down, down, up...
+                            // Position in 4-column cycle: i % 4
+                            // 0 -> up (normal), 1 -> down, 2 -> down, 3 -> up
+                            const posInCycle = i % 4;
+                            const shouldRotate =
+                              posInCycle === 1 || posInCycle === 2;
 
                             return (
                               <Marquee
                                 key={`col-${i}`}
                                 pauseOnHover
                                 vertical
-                                // We use a CSS trick here:
-                                // If we want it to go DOWN (odd columns), we rotate the entire track 180deg.
-                                // This forces the direction to flip regardless of the component's 'reverse' prop support.
+                                // If shouldRotate, rotate the entire track 180deg to flip direction
                                 className={`[--duration:45s] [--gap:1.5rem] flex-none ${
-                                  !isEven ? "rotate-180" : ""
+                                  shouldRotate ? "rotate-180" : ""
                                 }`}
                                 style={{
                                   height: `${trackHeight}px`,
@@ -1975,10 +1976,9 @@ export default async function HomePage() {
                                 {col.map((t) => (
                                   <div
                                     key={t.id}
-                                    // Since the track is rotated 180deg for odd columns, the content is upside down.
-                                    // We must rotate the content card 180deg to make it right-side up again.
+                                    // When track is rotated, also rotate the content to make it right-side up
                                     className={`w-full h-48 md:h-48 flex flex-col justify-center items-start px-6 py-4 bg-card border rounded-md shadow-md ${
-                                      !isEven ? "rotate-180" : ""
+                                      shouldRotate ? "rotate-180" : ""
                                     }`}
                                   >
                                     <div className="flex items-center gap-3 w-full">
