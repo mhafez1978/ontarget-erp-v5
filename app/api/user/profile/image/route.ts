@@ -33,6 +33,71 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
+    const contentType = request.headers.get("content-type") || "";
+
+    // Allow two modes:
+    // 1) multipart/form-data upload with `image` (and optional `userId` to target another user)
+    // 2) application/json body with { userId?, imageUrl } used by clients that assign an image URL to a user
+    if (contentType.includes("application/json")) {
+      const body = (await request.json()) as {
+        userId?: string | null;
+        imageUrl?: string | null;
+      };
+
+      if (!body.imageUrl) {
+        const response = NextResponse.json(
+          { error: "imageUrl is required for JSON assignments" },
+          { status: 400 }
+        );
+        response.headers.set("Cache-Control", "no-store, max-age=0");
+        return response;
+      }
+
+      const targetUserId = body.userId || validation.user.id;
+
+      // only allow assigning to other users if the current user has an admin role
+      if (targetUserId !== validation.user.id) {
+        const allowedRoles = ["SUPER_ADMIN", "ADMIN"];
+        if (!allowedRoles.includes(validation.user.role)) {
+          const response = NextResponse.json(
+            {
+              error:
+                "Forbidden - insufficient permissions to assign images to other users",
+            },
+            { status: 403 }
+          );
+          response.headers.set("Cache-Control", "no-store, max-age=0");
+          return response;
+        }
+      }
+
+      const imageUrl = body.imageUrl;
+
+      await db.user.update({
+        where: { id: targetUserId },
+        data: { image: imageUrl },
+      });
+
+      await createAuditLog({
+        userId: validation.user.id,
+        action: "PROFILE_IMAGE_ASSIGNED",
+        entityType: "USER",
+        entityId: targetUserId,
+        metadata: { imageUrl },
+      });
+
+      const origin = getRequestOrigin(request);
+      const absoluteImageUrl = new URL(imageUrl, origin).toString();
+
+      const response = NextResponse.json({
+        success: true,
+        imageUrl: absoluteImageUrl,
+        message: "Profile image assigned successfully",
+      });
+      response.headers.set("Cache-Control", "no-store, max-age=0");
+      return response;
+    }
+
     const formData = await request.formData();
     const file = formData.get("image") as File | null;
 
@@ -70,10 +135,34 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Check for optional target user in form data (admins may upload for other users)
+    const targetUserIdFromForm =
+      (formData.get("userId") as string | null) || null;
+    const effectiveUserId =
+      targetUserIdFromForm && targetUserIdFromForm !== ""
+        ? targetUserIdFromForm
+        : userId;
+
+    // only allow assigning uploads to other users if the current user has an admin role
+    if (effectiveUserId !== userId) {
+      const allowedRoles = ["SUPER_ADMIN", "ADMIN"];
+      if (!allowedRoles.includes(validation.user.role)) {
+        const response = NextResponse.json(
+          {
+            error:
+              "Forbidden - insufficient permissions to upload images for other users",
+          },
+          { status: 403 }
+        );
+        response.headers.set("Cache-Control", "no-store, max-age=0");
+        return response;
+      }
+    }
+
     // Generate unique filename
     const timestamp = Date.now();
     const fileExtension = file.name.split(".").pop();
-    const filename = `${userId}-${timestamp}.${fileExtension}`;
+    const filename = `${effectiveUserId}-${timestamp}.${fileExtension}`;
 
     // Save to public/uploads directory
     const uploadDir = join(process.cwd(), "public", "uploads", "profiles");
@@ -90,16 +179,19 @@ export async function POST(request: NextRequest) {
     // Update user's image URL in database
     const imageUrl = `/uploads/profiles/${filename}`;
     await db.user.update({
-      where: { id: userId },
+      where: { id: effectiveUserId },
       data: { image: imageUrl },
     });
 
     // Log the audit action
     await createAuditLog({
       userId: user.id,
-      action: "PROFILE_IMAGE_UPDATED",
+      action:
+        effectiveUserId === userId
+          ? "PROFILE_IMAGE_UPDATED"
+          : "PROFILE_IMAGE_ASSIGNED",
       entityType: "USER",
-      entityId: userId,
+      entityId: effectiveUserId,
       metadata: {
         imageUrl,
         fileName: filename,
