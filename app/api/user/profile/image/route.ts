@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { writeFile } from "fs/promises";
-import { join } from "path";
+import sharp from "sharp";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { getRequestOrigin } from "@/lib/request-origin";
@@ -173,48 +172,41 @@ export async function POST(request: NextRequest) {
         .replace(/[^a-z0-9-_]/g, "")
         .slice(0, 60) || effectiveUserId;
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExtension = file.name.split(".").pop();
-    const filename = `${timestamp}.${fileExtension}`;
-
-    // Save to public/uploads/<sanitized-username>/image directory
-    const uploadDir = join(
-      process.cwd(),
-      "public",
-      "uploads",
-      sanitized,
-      "image"
-    );
-    const filePath = join(uploadDir, filename);
-
-    // Ensure directory exists
-    const fs = await import("fs");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    await writeFile(filePath, buffer);
-
-    // Verify the file exists after writing (helps catch ephemeral FS / permission issues)
-    if (!fs.existsSync(filePath)) {
-      console.error(
-        `UPLOAD_VERIFICATION_FAILED: file does not exist after write: ${filePath}`
-      );
-
+    // Process and compress image into a small webp data URL and store in DB
+    let processedBuffer: Buffer;
+    try {
+      processedBuffer = await sharp(buffer)
+        .resize(200, 200, { fit: "cover", position: "center" })
+        .webp({ quality: 80 })
+        .toBuffer();
+    } catch (err) {
+      console.error("Image processing error:", err);
       const response = NextResponse.json(
-        { error: "Failed to persist uploaded file to disk" },
+        { error: "Failed to process image" },
         { status: 500 }
       );
       response.headers.set("Cache-Control", "no-store, max-age=0");
       return response;
     }
 
-    // Update user's image URL in database (public path)
-    const imageUrl = `/uploads/${sanitized}/image/${filename}`;
+    // Convert processed image to base64 data URL
+    const base64Image = processedBuffer.toString("base64");
+    const imageDataUrl = `data:image/webp;base64,${base64Image}`;
+
+    // Limit the size of stored base64 string to avoid huge DB payload
+    if (imageDataUrl.length > 500000) {
+      const response = NextResponse.json(
+        { error: "Processed image is too large. Please use a smaller image." },
+        { status: 400 }
+      );
+      response.headers.set("Cache-Control", "no-store, max-age=0");
+      return response;
+    }
+
+    // Persist the data URL to the user's image column (safe for runtime/static concerns)
     await db.user.update({
       where: { id: effectiveUserId },
-      data: { image: imageUrl },
+      data: { image: imageDataUrl },
     });
 
     // Log the audit action
@@ -227,14 +219,17 @@ export async function POST(request: NextRequest) {
       entityType: "USER",
       entityId: effectiveUserId,
       metadata: {
-        imageUrl,
-        fileName: filename,
+        storage: "DB_BASE64",
+        fileName: file.name,
         fileSize: file.size,
       },
     });
 
     const origin = getRequestOrigin(request);
-    const absoluteImageUrl = new URL(imageUrl, origin).toString();
+    // For base64 stored avatars we'll return the data URL directly
+    const absoluteImageUrl = imageDataUrl?.startsWith("data:")
+      ? imageDataUrl
+      : new URL(imageDataUrl || "", origin).toString();
 
     const response = NextResponse.json({
       success: true,
