@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -64,6 +64,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageVersion, setImageVersion] = useState<number>(() => Date.now());
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -114,53 +118,54 @@ export default function ProfilePage() {
 
   const progress = calculateProgress();
 
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await fetch("/api/user/profile", {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push("/login");
+          return;
+        }
+        throw new Error("Failed to fetch profile");
+      }
+
+      const data = await response.json();
+      console.log("🔍 Initial profile data loaded:", data);
+      console.log("🖼️ User image from API:", data.image);
+      setUser(data);
+      setImageVersion(Date.now());
+
+      const profileData = {
+        name: data.name || "",
+        email: data.email || "",
+        addressLine1: data.addressLine1 || "",
+        addressLine2: data.addressLine2 || "",
+        city: data.city || "",
+        state: data.state || "",
+        country: data.country || "",
+        countryCode: data.countryCode || "",
+        postalCode: data.postalCode || "",
+        latitude: data.latitude,
+        longitude: data.longitude,
+      };
+
+      setFormData(profileData);
+      setOriginalData(profileData);
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+      toast.error("Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
   // Fetch user profile
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch("/api/user/profile", {
-          cache: "no-store",
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            router.push("/login");
-            return;
-          }
-          throw new Error("Failed to fetch profile");
-        }
-
-        const data = await response.json();
-        console.log("🔍 Initial profile data loaded:", data);
-        console.log("🖼️ User image from API:", data.image);
-        setUser(data);
-
-        const profileData = {
-          name: data.name || "",
-          email: data.email || "",
-          addressLine1: data.addressLine1 || "",
-          addressLine2: data.addressLine2 || "",
-          city: data.city || "",
-          state: data.state || "",
-          country: data.country || "",
-          countryCode: data.countryCode || "",
-          postalCode: data.postalCode || "",
-          latitude: data.latitude,
-          longitude: data.longitude,
-        };
-
-        setFormData(profileData);
-        setOriginalData(profileData);
-      } catch (error) {
-        console.error("Failed to fetch profile:", error);
-        toast.error("Failed to load profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
-  }, [router]);
+  }, [fetchProfile]);
 
   // Debug: Track user.image changes
   useEffect(() => {
@@ -185,27 +190,47 @@ export default function ProfilePage() {
     return () => clearInterval(interval);
   }, [isDirty]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const clearSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
+      clearSelectedImage();
       return;
     }
 
-    // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image size must be less than 5MB");
+      clearSelectedImage();
       return;
     }
+
+    setSelectedImage(file);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadSelectedAvatar = async () => {
+    if (!selectedImage) return;
 
     setUploadingImage(true);
 
     try {
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("image", selectedImage);
 
       const response = await fetch("/api/user/profile/image", {
         method: "POST",
@@ -218,23 +243,22 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to upload image");
       }
 
-      console.log("✅ Image uploaded successfully:", data.imageUrl);
+      const cacheBustedUrl = `${data.imageUrl}?t=${Date.now()}`;
+      setImageVersion(Date.now());
 
-      // Use the imageUrl directly from upload response with cache busting
-      const imageUrlWithCache = `${data.imageUrl}?t=${Date.now()}`;
-      console.log("📤 Updating user with fresh image:", imageUrlWithCache);
+      setUser((prev) =>
+        prev ? { ...prev, image: data.imageUrl || prev.image } : prev
+      );
 
-      // Update local state immediately
-      setUser((prev) => (prev ? { ...prev, image: imageUrlWithCache } : null));
-
-      // Dispatch event to notify dashboard layout
       window.dispatchEvent(
         new CustomEvent("profile-updated", {
-          detail: { imageUrl: imageUrlWithCache },
+          detail: { imageUrl: cacheBustedUrl },
         })
       );
 
       toast.success("Profile image updated successfully!");
+      clearSelectedImage();
+      await fetchProfile();
     } catch (error) {
       console.error("Image upload error:", error);
       toast.error(
@@ -306,6 +330,15 @@ export default function ProfilePage() {
     }
   };
 
+  const currentAvatarSrc = imagePreview
+    ? imagePreview
+    : user?.image
+    ? `${user.image}${user.image.includes("?") ? "&" : "?"}v=${imageVersion}`
+    : "";
+
+  const avatarKey =
+    imagePreview || (user?.image ? `${user.image}-${imageVersion}` : "no-profile-image");
+
   if (loading) {
     return (
       <DashboardLayout
@@ -361,51 +394,69 @@ export default function ProfilePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-6">
-                  <Avatar
-                    className="h-24 w-24"
-                    key={user.image || "no-profile-image"}
-                  >
-                    <AvatarImage
-                      src={user.image || ""}
-                      alt={user.name || "User"}
-                    />
+                <div className="flex items-center gap-6 flex-wrap">
+                  <Avatar className="h-24 w-24" key={avatarKey}>
+                    {currentAvatarSrc ? (
+                      <AvatarImage
+                        src={currentAvatarSrc}
+                        alt={user.name || "User"}
+                      />
+                    ) : null}
                     <AvatarFallback className="text-2xl">
                       {user.name?.charAt(0).toUpperCase() || <User />}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
+                  <div className="space-y-2">
                     <input
+                      ref={fileInputRef}
                       type="file"
                       id="profile-image"
                       accept="image/*"
                       className="hidden"
-                      onChange={handleImageUpload}
-                      disabled={uploadingImage}
+                      onChange={handleAvatarSelect}
                     />
-                    <label htmlFor="profile-image">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={uploadingImage}
-                        onClick={() =>
-                          document.getElementById("profile-image")?.click()
-                        }
-                      >
-                        {uploadingImage ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Image
-                          </>
-                        )}
-                      </Button>
-                    </label>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedImage ? (
+                        <>
+                          <Button
+                            type="button"
+                            onClick={handleUploadSelectedAvatar}
+                            disabled={uploadingImage}
+                          >
+                            {uploadingImage ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload Photo
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={clearSelectedImage}
+                            disabled={uploadingImage}
+                          >
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingImage}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Choose Photo
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
                       JPG, PNG or GIF. Max 5MB.
                     </p>
                   </div>
