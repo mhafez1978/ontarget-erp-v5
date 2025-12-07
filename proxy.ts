@@ -25,6 +25,7 @@ export async function proxy(request: NextRequest) {
     const response = await fetch(setupUrl, {
       method: "GET",
       headers: setupHeaders,
+      cache: "no-store",
     });
 
     if (response.ok) {
@@ -97,3 +98,5 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };
+
+export default proxy;

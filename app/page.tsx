@@ -1666,6 +1666,18 @@ export default async function HomePage() {
       })
     : [];
 
+  const testimonialFormProps = rootCompany
+    ? {
+        slug: rootCompany.slug ?? undefined,
+        apiPath: rootCompany.slug
+          ? undefined
+          : `/api/storefront/by-id/${rootCompany.id}/testimonials`,
+      }
+    : null;
+
+  const showStandaloneTestimonialSection =
+    !!testimonialFormProps && approvedTestimonials.length > 0;
+
   if (aiEnabled && rootCompany?.aiStorefrontSpec) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -1909,8 +1921,8 @@ export default async function HomePage() {
       </section>
 
       {/* Testimonials Section (global OnTarget homepage) */}
-      {approvedTestimonials && approvedTestimonials.length > 0 && (
-        <section id="testimonials" className="py-20 skew-3 mt-20">
+      <section id="testimonials" className="py-20 skew-3 mt-20">
+        {approvedTestimonials.length > 0 ? (
           <div className="w-screen flex flex-col items-center justify-center">
             <h3 className="text-3xl font-bold text-center text-black mb-14 -skew-3">
               <span className="italic text-amber-500">What</span> our customers
@@ -2027,24 +2039,37 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="w-screen flex flex-col items-center justify-center text-center gap-6">
+            <h3 className="text-3xl font-bold text-black -skew-3">
+              Be the first to share your experience.
+            </h3>
+            <p className="text-lg text-muted-foreground max-w-2xl">
+              We just launched this edition of OnTarget ERP. Your voice helps
+              other founders understand how the platform performs in the real
+              world.
+            </p>
+            {testimonialFormProps && (
+              <div className="mt-4">
+                <TestimonialForm
+                  slug={testimonialFormProps.slug}
+                  apiPath={testimonialFormProps.apiPath}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
-      {rootCompany && (
+      {showStandaloneTestimonialSection && testimonialFormProps && (
         <section id="submit-testimonial" className="py-12 skew-3 mt-10">
           <div className="w-screen flex flex-col items-center justify-center">
             <div className="pb-4 px-4 -skew-3">
               <div className="container mx-auto text-center">
                 <div className="max-w-2xl mx-auto">
                   <TestimonialForm
-                    // If the root company has a slug use the normal storefront route
-                    // otherwise use the new by-id API endpoint so the homepage can accept guest testimonials
-                    slug={rootCompany.slug ?? undefined}
-                    apiPath={
-                      rootCompany.slug
-                        ? undefined
-                        : `/api/storefront/by-id/${rootCompany.id}/testimonials`
-                    }
+                    slug={testimonialFormProps.slug}
+                    apiPath={testimonialFormProps.apiPath}
                   />
                 </div>
               </div>

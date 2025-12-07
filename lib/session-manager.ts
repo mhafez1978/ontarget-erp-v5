@@ -58,19 +58,34 @@ export interface CreateSessionOptions {
   request?: NextRequest;
 }
 
+type HeaderLike = { get(name: string): string | null };
+
+function isPromise<T>(value: unknown): value is Promise<T> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "then" in (value as Record<string, unknown>)
+  );
+}
+
 async function fetchServerGeoLocation(
   req?: NextRequest
 ): Promise<GeoLocation | null> {
   try {
-    const headerStore = req?.headers
-      ? req.headers
-      : (() => {
-          try {
-            return headers();
-          } catch {
-            return null;
-          }
-        })();
+    let headerStore: (Headers & HeaderLike) | HeaderLike | null = null;
+
+    if (req?.headers) {
+      headerStore = req.headers;
+    } else {
+      try {
+        const maybeHeaders = headers();
+        headerStore = isPromise<HeaderLike>(maybeHeaders)
+          ? await maybeHeaders
+          : (maybeHeaders as HeaderLike);
+      } catch {
+        headerStore = null;
+      }
+    }
 
     if (!headerStore && !req) {
       return null;
@@ -141,11 +156,12 @@ export async function createSession(
 
   let sessionGeo = options.geoLocation;
   if (!sessionGeo) {
-    sessionGeo = await fetchServerGeoLocation(options.request);
+    sessionGeo =
+      (await fetchServerGeoLocation(options.request)) ?? undefined;
   }
 
   if (!sessionGeo && options.request) {
-    sessionGeo = await fetchServerGeoLocation();
+    sessionGeo = (await fetchServerGeoLocation()) ?? undefined;
   }
 
   // Generate random session token

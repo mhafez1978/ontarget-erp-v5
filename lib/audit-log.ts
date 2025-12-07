@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { countryCodeToFlag, lookupGeoByIp } from "@/lib/ip-lookup";
 
 export interface CreateAuditLogParams {
   action: string;
@@ -31,10 +32,7 @@ export async function createAuditLog(params: CreateAuditLogParams) {
     let countryFlag = params.countryFlag ?? null;
 
     // If geo information wasn't provided but we have a user, fall back to their most recent session
-    if (
-      params.userId &&
-      (!ipAddress || (!city && !country))
-    ) {
+    if (params.userId && (!ipAddress || (!city && !country))) {
       try {
         const latestSession = await db.session.findFirst({
           where: { userId: params.userId },
@@ -52,6 +50,19 @@ export async function createAuditLog(params: CreateAuditLogParams) {
         }
       } catch (sessionError) {
         console.error("Failed to load session geo for audit log:", sessionError);
+      }
+    }
+
+    if (!city && !country) {
+      const lookupIp = ipv4 || ipv6 || ipAddress || null;
+      const geo = await lookupGeoByIp(lookupIp);
+      if (geo) {
+        ipAddress = ipAddress ?? geo.ip ?? null;
+        city = city ?? geo.city ?? null;
+        state = state ?? geo.region ?? null;
+        country = country ?? geo.country ?? null;
+        countryFlag =
+          countryFlag ?? countryCodeToFlag(geo.countryCode) ?? countryFlag;
       }
     }
 

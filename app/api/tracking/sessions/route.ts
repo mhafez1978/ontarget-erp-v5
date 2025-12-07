@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { countryCodeToFlag, lookupGeoByIp } from "@/lib/ip-lookup";
 
 export async function GET() {
   try {
@@ -32,20 +33,57 @@ export async function GET() {
       },
     });
 
-    const formattedSessions = sessions.map((session) => ({
-      id: session.id,
-      userName: session.user?.name || null,
-      userEmail: session.user?.email || null,
-      companyName: session.user?.companyMemberships[0]?.company?.name || null,
-      role: session.user?.role || "GUEST",
-      sessionCity: session.sessionCity,
-      sessionState: session.sessionState,
-      sessionCountry: session.sessionCountry,
-      sessionCountryFlag: session.sessionCountryFlag,
-      sessionIpAddress: session.sessionIpAddress,
-      sessionIpv4: session.sessionIpv4,
-      sessionIpv6: session.sessionIpv6,
-    }));
+    const formattedSessions = await Promise.all(
+      sessions.map(async (session) => {
+        let sessionCity = session.sessionCity;
+        let sessionState = session.sessionState;
+        let sessionCountry = session.sessionCountry;
+        let sessionCountryFlag = session.sessionCountryFlag;
+
+        if (
+          !sessionCity &&
+          !sessionCountry &&
+          (session.sessionIpv4 || session.sessionIpv6 || session.sessionIpAddress)
+        ) {
+          const ipForLookup =
+            session.sessionIpv4 ||
+            session.sessionIpv6 ||
+            session.sessionIpAddress;
+          try {
+            const geo = await lookupGeoByIp(ipForLookup);
+            if (geo) {
+              sessionCity = geo.city || sessionCity;
+              sessionState = geo.region || sessionState;
+              sessionCountry = geo.country || sessionCountry;
+              sessionCountryFlag =
+                sessionCountryFlag || countryCodeToFlag(geo.countryCode) || null;
+            }
+          } catch (error) {
+            console.error(
+              "Geo lookup failed for active session:",
+              ipForLookup,
+              error
+            );
+          }
+        }
+
+        return {
+          id: session.id,
+          userName: session.user?.name || null,
+          userEmail: session.user?.email || null,
+          companyName:
+            session.user?.companyMemberships[0]?.company?.name || null,
+          role: session.user?.role || "GUEST",
+          sessionCity,
+          sessionState,
+          sessionCountry,
+          sessionCountryFlag,
+          sessionIpAddress: session.sessionIpAddress,
+          sessionIpv4: session.sessionIpv4,
+          sessionIpv6: session.sessionIpv6,
+        };
+      })
+    );
 
     return NextResponse.json({ sessions: formattedSessions });
   } catch (error) {
