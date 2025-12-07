@@ -21,6 +21,7 @@
 
 import { db } from "@/lib/db";
 import crypto from "crypto";
+import { headers } from "next/headers";
 
 export interface GeoLocation {
   ip?: string;
@@ -55,6 +56,56 @@ export interface CreateSessionOptions {
   expiresInDays?: number; // Default: 7 days
 }
 
+async function fetchServerGeoLocation(): Promise<GeoLocation | null> {
+  try {
+    const headerStore = (() => {
+      try {
+        return headers();
+      } catch {
+        return null;
+      }
+    })();
+
+    const forwardedFor = headerStore?.get("x-forwarded-for") || "";
+    const realIp = headerStore?.get("x-real-ip") || "";
+
+    const appUrl =
+      process.env.INTERNAL_APP_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+      "http://localhost:3000";
+
+    const response = await fetch(new URL("/api/get-location", appUrl), {
+      method: "GET",
+      headers: {
+        "x-forwarded-for": forwardedFor,
+        "x-real-ip": realIp,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return {
+      ip: data.ip,
+      ipv4: data.ipv4,
+      ipv6: data.ipv6,
+      city: data.city,
+      region: data.region,
+      country: data.country_name || data.country,
+      country_name: data.country_name,
+      country_code: data.country_code,
+      flag: data.flag,
+    };
+  } catch (error) {
+    console.error("[Session] Failed to fetch geo location:", error);
+    return null;
+  }
+}
+
 export interface ValidateSessionResult {
   valid: boolean;
   session?: SessionData;
@@ -75,7 +126,12 @@ export interface ValidateSessionResult {
 export async function createSession(
   options: CreateSessionOptions
 ): Promise<SessionData> {
-  const { userId, geoLocation, userAgent, expiresInDays = 7 } = options;
+  const { userId, userAgent, expiresInDays = 7 } = options;
+
+  let sessionGeo = options.geoLocation;
+  if (!sessionGeo) {
+    sessionGeo = await fetchServerGeoLocation();
+  }
 
   // Generate random session token
   const sessionToken = crypto.randomUUID();
@@ -90,13 +146,14 @@ export async function createSession(
       sessionToken,
       userId,
       expires,
-      sessionIpAddress: geoLocation?.ip || null,
-      sessionIpv4: geoLocation?.ipv4 || null,
-      sessionIpv6: geoLocation?.ipv6 || null,
-      sessionCity: geoLocation?.city || null,
-      sessionState: geoLocation?.region || null,
-      sessionCountry: geoLocation?.country_name || geoLocation?.country || null,
-      sessionCountryFlag: geoLocation?.flag || null,
+      sessionIpAddress: sessionGeo?.ip || null,
+      sessionIpv4: sessionGeo?.ipv4 || null,
+      sessionIpv6: sessionGeo?.ipv6 || null,
+      sessionCity: sessionGeo?.city || null,
+      sessionState: sessionGeo?.region || null,
+      sessionCountry:
+        sessionGeo?.country_name || sessionGeo?.country || null,
+      sessionCountryFlag: sessionGeo?.flag || null,
       sessionUserAgent: userAgent || null,
     },
   });
