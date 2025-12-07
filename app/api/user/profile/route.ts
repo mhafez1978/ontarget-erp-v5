@@ -3,6 +3,10 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export async function GET(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
@@ -35,16 +39,32 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      const response = NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+      response.headers.set("Cache-Control", "no-store, max-age=0");
+      return response;
     }
 
-    return NextResponse.json(user);
+    const response = NextResponse.json({
+      ...user,
+      image: user.image
+        ? user.image.startsWith("http")
+          ? user.image
+          : new URL(user.image, request.nextUrl.origin).toString()
+        : null,
+    });
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
   } catch (error) {
     console.error("Profile fetch error:", error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Failed to fetch profile" },
       { status: 500 }
     );
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
   }
 }
 
@@ -105,10 +125,12 @@ export async function PATCH(request: NextRequest) {
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(newEmail)) {
-        return NextResponse.json(
+        const response = NextResponse.json(
           { error: "Invalid email format" },
           { status: 400 }
         );
+        response.headers.set("Cache-Control", "no-store, max-age=0");
+        return response;
       }
 
       // Check if email already exists
@@ -117,10 +139,12 @@ export async function PATCH(request: NextRequest) {
       });
 
       if (existingUser) {
-        return NextResponse.json(
+        const response = NextResponse.json(
           { error: "Email already in use" },
           { status: 400 }
         );
+        response.headers.set("Cache-Control", "no-store, max-age=0");
+        return response;
       }
 
       updateData.email = newEmail;
@@ -175,16 +199,29 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
+    const normalizedUser = {
+      ...updatedUser,
+      image: updatedUser.image
+        ? updatedUser.image.startsWith("http")
+          ? updatedUser.image
+          : new URL(updatedUser.image, request.nextUrl.origin).toString()
+        : null,
+    };
+
+    const response = NextResponse.json({
       success: true,
-      user: updatedUser,
+      user: normalizedUser,
       message: "Profile updated successfully",
     });
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
   } catch (error) {
     console.error("Profile update error:", error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Failed to update profile" },
       { status: 500 }
     );
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
   }
 }

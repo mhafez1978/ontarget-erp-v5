@@ -5,6 +5,10 @@ import { join } from "path";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
@@ -20,34 +24,45 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      const response = NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+      response.headers.set("Cache-Control", "no-store, max-age=0");
+      return response;
     }
 
     const formData = await request.formData();
     const file = formData.get("image") as File | null;
 
     if (!file) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "No image file provided" },
         { status: 400 }
       );
+      response.headers.set("Cache-Control", "no-store, max-age=0");
+      return response;
     }
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "File must be an image" },
         { status: 400 }
       );
+      response.headers.set("Cache-Control", "no-store, max-age=0");
+      return response;
     }
 
     // Validate file size (5MB max)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Image size must be less than 5MB" },
         { status: 400 }
       );
+      response.headers.set("Cache-Control", "no-store, max-age=0");
+      return response;
     }
 
     // Convert file to buffer
@@ -91,16 +106,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
+    const absoluteImageUrl = new URL(imageUrl, request.nextUrl.origin).toString();
+
+    const response = NextResponse.json({
       success: true,
-      imageUrl,
+      imageUrl: absoluteImageUrl,
       message: "Profile image uploaded successfully",
     });
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
   } catch (error) {
     console.error("Image upload error:", error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Failed to upload image" },
       { status: 500 }
     );
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
   }
 }

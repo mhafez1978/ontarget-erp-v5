@@ -118,7 +118,9 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch("/api/user/profile");
+        const response = await fetch("/api/user/profile", {
+          cache: "no-store",
+        });
 
         if (!response.ok) {
           if (response.status === 401) {
