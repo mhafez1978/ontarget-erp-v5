@@ -159,13 +159,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Build sanitized username to store under per-user folder (fallback to id)
+    const rawName = (await db.user.findUnique({
+      where: { id: effectiveUserId },
+      select: { name: true, email: true },
+    })) || { name: user.name, email: user.email };
+    const nameSource = rawName?.name || rawName?.email || effectiveUserId;
+    // sanitize: lowercase, replace spaces with '-', allow alphanum, dash and underscore
+    const sanitized =
+      String(nameSource)
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-_]/g, "")
+        .slice(0, 60) || effectiveUserId;
+
     // Generate unique filename
     const timestamp = Date.now();
     const fileExtension = file.name.split(".").pop();
-    const filename = `${effectiveUserId}-${timestamp}.${fileExtension}`;
+    const filename = `${timestamp}.${fileExtension}`;
 
-    // Save to public/uploads directory
-    const uploadDir = join(process.cwd(), "public", "uploads", "profiles");
+    // Save to public/uploads/<sanitized-username>/image directory
+    const uploadDir = join(
+      process.cwd(),
+      "public",
+      "uploads",
+      sanitized,
+      "image"
+    );
     const filePath = join(uploadDir, filename);
 
     // Ensure directory exists
@@ -190,8 +210,8 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // Update user's image URL in database
-    const imageUrl = `/uploads/profiles/${filename}`;
+    // Update user's image URL in database (public path)
+    const imageUrl = `/uploads/${sanitized}/image/${filename}`;
     await db.user.update({
       where: { id: effectiveUserId },
       data: { image: imageUrl },

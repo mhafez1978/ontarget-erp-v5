@@ -177,8 +177,8 @@ export async function GET(request: NextRequest) {
 
       // Update their profile picture only if they don't already have a custom upload
       const hasCustomProfileImage =
-        user.image?.startsWith("/uploads/profiles/") ||
-        user.image?.includes("/uploads/profiles/");
+        user.image?.startsWith("/uploads/") ||
+        user.image?.includes("/uploads/");
 
       if (avatar_url && avatar_url !== user.image && !hasCustomProfileImage) {
         await db.user.update({
