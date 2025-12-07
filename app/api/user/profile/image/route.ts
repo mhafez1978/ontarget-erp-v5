@@ -189,30 +189,31 @@ export async function POST(request: NextRequest) {
         .slice(0, 60) || effectiveUserId;
 
     // Process and compress image into a small webp data URL and store in DB
+    // Try to process the image with sharp; if sharp fails (native binary missing etc.)
+    // fall back to storing the original uploaded file as base64 so we don't return 500.
     let processedBuffer: Buffer;
+    let imageMime = "image/webp"; // default mime for processed buffer
     try {
       processedBuffer = await sharp(buffer)
         .resize(200, 200, { fit: "cover", position: "center" })
         .webp({ quality: 80 })
         .toBuffer();
+      imageMime = "image/webp";
     } catch (err) {
-      // Log stack for diagnosis
-      console.error(
-        "Image processing error:",
-        err?.message || err,
-        err?.stack || "no-stack"
+      // Log stack for diagnosis and attempt a graceful fallback
+      console.warn(
+        "Sharp processing failed — falling back to original buffer. Error:",
+        err?.message || err
       );
-      const response = NextResponse.json(
-        { error: "Failed to process image" },
-        { status: 500 }
-      );
-      response.headers.set("Cache-Control", "no-store, max-age=0");
-      return response;
+
+      // Fallback: use the original uploaded buffer and keep its mime type
+      processedBuffer = buffer;
+      imageMime = file.type || "application/octet-stream";
     }
 
     // Convert processed image to base64 data URL
     const base64Image = processedBuffer.toString("base64");
-    const imageDataUrl = `data:image/webp;base64,${base64Image}`;
+    const imageDataUrl = `data:${imageMime};base64,${base64Image}`;
 
     // Limit the size of stored base64 string to avoid huge DB payload
     if (imageDataUrl.length > 500000) {
