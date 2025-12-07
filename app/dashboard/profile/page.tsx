@@ -243,11 +243,12 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to upload image");
       }
 
-      const cacheBustedUrl = `${data.imageUrl}?t=${Date.now()}`;
-      setImageVersion(Date.now());
+      const timestamp = Date.now();
+      const cacheBustedUrl = `${data.imageUrl}?t=${timestamp}`;
+      setImageVersion(timestamp);
 
       setUser((prev) =>
-        prev ? { ...prev, image: data.imageUrl || prev.image } : prev
+        prev ? { ...prev, image: cacheBustedUrl || prev.image } : prev
       );
 
       window.dispatchEvent(
@@ -330,14 +331,25 @@ export default function ProfilePage() {
     }
   };
 
-  const currentAvatarSrc = imagePreview
-    ? imagePreview
-    : user?.image
-    ? `${user.image}${user.image.includes("?") ? "&" : "?"}v=${imageVersion}`
-    : "";
+  const versionedImageSrc =
+    user?.image && user.image.length > 0
+      ? `${user.image}${user.image.includes("?") ? "&" : "?"}v=${imageVersion}`
+      : "";
 
-  const avatarKey =
-    imagePreview || (user?.image ? `${user.image}-${imageVersion}` : "no-profile-image");
+  const currentAvatarSrc = imagePreview ? imagePreview : versionedImageSrc;
+
+  const avatarKey = imagePreview
+    ? `preview-${imagePreview}`
+    : versionedImageSrc
+    ? `${versionedImageSrc}-${imageVersion}`
+    : "no-profile-image";
+
+  const layoutUser = user
+    ? {
+        ...user,
+        image: versionedImageSrc || user.image,
+      }
+    : user;
 
   if (loading) {
     return (
@@ -356,7 +368,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <DashboardLayout user={user}>
+    <DashboardLayout user={layoutUser}>
       <div className="p-6 max-w-6xl">
         <Tabs defaultValue="profile">
           <TabsList>
