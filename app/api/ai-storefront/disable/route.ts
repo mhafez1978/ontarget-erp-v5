@@ -69,7 +69,8 @@ export async function POST(request: NextRequest) {
     const isOwner = user.ownedCompanies.length > 0;
     const isMember = user.companyMemberships.length > 0;
     const isAdminOrManager = user.companyMemberships.some(
-      (m) => m.role === "ADMIN" || m.role === "MANAGER"
+      (m: { role?: string | null }) =>
+        m.role === "ADMIN" || m.role === "MANAGER"
     );
 
     const hasAccess =
