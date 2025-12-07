@@ -58,6 +58,18 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    domains: [
+      "lh3.googleusercontent.com",
+      "avatars.githubusercontent.com",
+      "graph.microsoft.com",
+      "platform-lookaside.fbsbx.com",
+      "graph.facebook.com",
+      "media.licdn.com",
+      "images.unsplash.com",
+      "avatar.vercel.sh",
+      "encrypted-tbn0.gstatic.com",
+      "via.placeholder.com",
+    ],
   },
   typescript: {
     // allow production builds even with TS type errors (use with caution)

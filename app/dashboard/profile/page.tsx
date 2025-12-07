@@ -134,9 +134,15 @@ export default function ProfilePage() {
       const data = await response.json();
       console.log("🔍 Initial profile data loaded:", data);
       console.log("🖼️ User image from API:", data.image);
-      const imageWithCache = data.image
-        ? `${data.image}${data.image.includes("?") ? "&" : "?"}t=${Date.now()}`
-        : data.image;
+      // If image is a data URL (base64) don't append cache buster - browsers can't load data URIs with query params
+      const isDataUrl =
+        typeof data.image === "string" && data.image.startsWith("data:");
+      const imageWithCache =
+        data.image && !isDataUrl
+          ? `${data.image}${
+              data.image.includes("?") ? "&" : "?"
+            }t=${Date.now()}`
+          : data.image;
       setUser({ ...data, image: imageWithCache });
 
       const profileData = {
@@ -244,16 +250,15 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to upload image");
       }
 
-      const timestamp = Date.now();
-      const cacheBustedUrl = `${data.imageUrl}?t=${timestamp}`;
+      const newImageUrl = data.imageUrl;
 
       setUser((prev) =>
-        prev ? { ...prev, image: cacheBustedUrl || prev.image } : prev
+        prev ? { ...prev, image: newImageUrl || prev.image } : prev
       );
 
       window.dispatchEvent(
         new CustomEvent("profile-updated", {
-          detail: { imageUrl: cacheBustedUrl },
+          detail: { imageUrl: newImageUrl },
         })
       );
 
@@ -320,11 +325,12 @@ export default function ProfilePage() {
       const updatedUser = data.user
         ? {
             ...data.user,
-            image: data.user.image
-              ? `${data.user.image}${
-                  data.user.image.includes("?") ? "&" : "?"
-                }t=${Date.now()}`
-              : data.user.image,
+            image:
+              data.user.image && !data.user.image.startsWith("data:")
+                ? `${data.user.image}${
+                    data.user.image.includes("?") ? "&" : "?"
+                  }t=${Date.now()}`
+                : data.user.image,
           }
         : null;
       setUser(updatedUser);

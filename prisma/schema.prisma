@@ -81,7 +81,7 @@ model User {
   name                  String?
   email                 String?          @unique
   emailVerified         DateTime?
-  image                 String?
+  image                 String?          @db.LongText
   password              String? // For credentials login
   authMethod            String           @default("credentials") // 'credentials', 'oauth', 'both' - tracks how user can authenticate
   role                  UserRole         @default(ERP_CUSTOMER) // Default to ERP_CUSTOMER for new signups

@@ -109,8 +109,16 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
+    // Validate file type (tighten to common allowed types)
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/avif",
+    ];
+
+    if (!file.type || !allowedTypes.includes(file.type)) {
       const response = NextResponse.json(
         { error: "File must be an image" },
         { status: 400 }
@@ -130,9 +138,17 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // Convert file to buffer
+    // Convert file to buffer and log details for diagnosis
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    console.log(
+      "Profile image upload: file name=",
+      file.name,
+      "size=",
+      file.size,
+      "type=",
+      file.type
+    );
 
     // Check for optional target user in form data (admins may upload for other users)
     const targetUserIdFromForm =
@@ -180,7 +196,12 @@ export async function POST(request: NextRequest) {
         .webp({ quality: 80 })
         .toBuffer();
     } catch (err) {
-      console.error("Image processing error:", err);
+      // Log stack for diagnosis
+      console.error(
+        "Image processing error:",
+        err?.message || err,
+        err?.stack || "no-stack"
+      );
       const response = NextResponse.json(
         { error: "Failed to process image" },
         { status: 500 }
