@@ -6,7 +6,10 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "prisma/seed.mjs",
+    // NOTE: automatic seeding disabled by default. We previously pointed this
+    // to `prisma/seed.mjs` which caused `prisma migrate reset` to attempt to
+    // run a missing script in some environments (spawn ENOENT). Keep seeding
+    // as a manual operation — see `package.json` scripts or `prisma/seed.*`.
   },
   datasource: {
     url: env("DATABASE_URL"),

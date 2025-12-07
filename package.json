@@ -15,9 +15,6 @@
     "seed:ts": "ts-node prisma/seed.ts",
     "seed:check": "node prisma/seed.mjs --check"
   },
-  "prisma": {
-    "seed": "node prisma/seed.mjs"
-  },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@dnd-kit/core": "^6.3.1",

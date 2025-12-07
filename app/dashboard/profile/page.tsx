@@ -598,9 +598,9 @@ export default function ProfilePage() {
                   </p>
 
                   {formData.addressLine1 && (
-                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                    <div className="mt-4 p-4 bg-emerald-300/80 text-black rounded-lg">
                       <p className="text-sm font-medium mb-2">
-                        Current Address:
+                        Current Stored Address:
                       </p>
                       <p className="text-sm">{formData.addressLine1}</p>
                       {formData.addressLine2 && (
