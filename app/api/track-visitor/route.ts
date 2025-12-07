@@ -45,7 +45,26 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // console.log("Visitor tracked successfully:", visitor.id);
+    // If the visitor is an authenticated user, update their active session geo
+    const sessionToken = request.cookies.get("sessionToken")?.value;
+    if (sessionToken) {
+      try {
+        await db.session.update({
+          where: { sessionToken },
+          data: {
+            sessionIpAddress: ipAddress || ipv4 || ipv6 || null,
+            sessionIpv4: ipv4 || null,
+            sessionIpv6: ipv6 || null,
+            sessionCity: city || null,
+            sessionState: state || null,
+            sessionCountry: country || null,
+            sessionCountryFlag: countryFlag || null,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to update session geo info from visitor tracking:", error);
+      }
+    }
 
     return NextResponse.json({ success: true, visitor });
   } catch (error) {

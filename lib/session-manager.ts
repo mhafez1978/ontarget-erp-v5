@@ -144,6 +144,10 @@ export async function createSession(
     sessionGeo = await fetchServerGeoLocation(options.request);
   }
 
+  if (!sessionGeo && options.request) {
+    sessionGeo = await fetchServerGeoLocation();
+  }
+
   // Generate random session token
   const sessionToken = crypto.randomUUID();
 

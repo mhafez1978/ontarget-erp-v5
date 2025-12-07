@@ -14,6 +14,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { getRoleMenuItems } from "@/components/dashboard-menus/main-dashboard-menu";
 import { getProxiedImageUrl } from "@/lib/image-proxy";
+import { VisitorTracker } from "@/components/visitor-tracker";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -387,6 +388,7 @@ export function DashboardLayout({
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
+        <VisitorTracker />
         <div className={cn("container p-6", containerClassName)}>
           {children}
         </div>

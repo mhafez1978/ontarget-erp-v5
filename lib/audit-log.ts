@@ -22,6 +22,39 @@ export interface CreateAuditLogParams {
  */
 export async function createAuditLog(params: CreateAuditLogParams) {
   try {
+    let ipAddress = params.ipAddress ?? null;
+    let ipv4 = params.ipv4 ?? null;
+    let ipv6 = params.ipv6 ?? null;
+    let city = params.city ?? null;
+    let state = params.state ?? null;
+    let country = params.country ?? null;
+    let countryFlag = params.countryFlag ?? null;
+
+    // If geo information wasn't provided but we have a user, fall back to their most recent session
+    if (
+      params.userId &&
+      (!ipAddress || (!city && !country))
+    ) {
+      try {
+        const latestSession = await db.session.findFirst({
+          where: { userId: params.userId },
+          orderBy: { expires: "desc" },
+        });
+
+        if (latestSession) {
+          ipAddress = ipAddress ?? latestSession.sessionIpAddress ?? null;
+          ipv4 = ipv4 ?? latestSession.sessionIpv4 ?? null;
+          ipv6 = ipv6 ?? latestSession.sessionIpv6 ?? null;
+          city = city ?? latestSession.sessionCity ?? null;
+          state = state ?? latestSession.sessionState ?? null;
+          country = country ?? latestSession.sessionCountry ?? null;
+          countryFlag = countryFlag ?? latestSession.sessionCountryFlag ?? null;
+        }
+      } catch (sessionError) {
+        console.error("Failed to load session geo for audit log:", sessionError);
+      }
+    }
+
     const auditLog = await db.auditLog.create({
       data: {
         action: params.action,
@@ -31,13 +64,13 @@ export async function createAuditLog(params: CreateAuditLogParams) {
         entityId: params.entityId,
         description: params.description,
         metadata: params.metadata ? JSON.stringify(params.metadata) : null,
-        ipAddress: params.ipAddress,
-        ipv4: params.ipv4,
-        ipv6: params.ipv6,
-        city: params.city,
-        state: params.state,
-        country: params.country,
-        countryFlag: params.countryFlag,
+        ipAddress,
+        ipv4,
+        ipv6,
+        city,
+        state,
+        country,
+        countryFlag,
       },
     });
 
