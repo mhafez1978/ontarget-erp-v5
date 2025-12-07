@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -65,18 +65,23 @@ export function GeoTrackingDisplay() {
     fetchUserRole();
   }, []);
 
-  const fetchTrackingData = async () => {
+  const fetchTrackingData = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setIsLoading(true);
+    }
     try {
       // Check geo-tracking settings
-      const settingsRes = await fetch("/api/settings/geo-tracking");
+      const settingsRes = await fetch("/api/settings/geo-tracking", {
+        cache: "no-store",
+      });
       if (settingsRes.ok) {
         const settingsData = await settingsRes.json();
         setGeoTrackingEnabled(settingsData.enabled || false);
       }
 
       const [visitorsRes, sessionsRes] = await Promise.all([
-        fetch("/api/tracking/visitors"),
-        fetch("/api/tracking/sessions"),
+        fetch("/api/tracking/visitors", { cache: "no-store" }),
+        fetch("/api/tracking/sessions", { cache: "no-store" }),
       ]);
 
       if (visitorsRes.ok) {
@@ -91,16 +96,18 @@ export function GeoTrackingDisplay() {
     } catch (error) {
       console.error("Failed to fetch tracking data:", error);
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTrackingData();
     // Refresh every 30 seconds
-    const interval = setInterval(fetchTrackingData, 30000);
+    const interval = setInterval(() => fetchTrackingData(false), 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchTrackingData]);
 
   if (isLoading) {
     return (
@@ -158,7 +165,11 @@ export function GeoTrackingDisplay() {
                 Users currently logged in with live location data
               </CardDescription>
             </div>
-            <Button size="sm" variant="outline" onClick={fetchTrackingData}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => fetchTrackingData()}
+            >
               Refresh
             </Button>
           </div>
@@ -241,7 +252,11 @@ export function GeoTrackingDisplay() {
                 Non-logged-in visitors from the last 24 hours
               </CardDescription>
             </div>
-            <Button size="sm" variant="outline" onClick={fetchTrackingData}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => fetchTrackingData()}
+            >
               Refresh
             </Button>
           </div>

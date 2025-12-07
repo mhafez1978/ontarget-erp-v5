@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
   try {
     // Get geo-location data first
     let geoData = null;
-    let ipAddress = "127.0.0.1";
+    let ipAddress =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "127.0.0.1";
 
     try {
       const geoResponse = await fetch(
@@ -35,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
       if (geoResponse.ok) {
         geoData = await geoResponse.json();
-        ipAddress = geoData?.ip || "127.0.0.1";
+        ipAddress = geoData?.ip || ipAddress;
       }
     } catch (error) {
       console.error("[LOGIN] Error fetching geolocation:", error);
@@ -264,9 +267,11 @@ export async function POST(request: NextRequest) {
           sessionToken,
           userId: user.id,
           expires: expiresAt,
-          sessionIpAddress: geoData?.ip || null,
-          sessionIpv4: geoData?.ipv4 || null,
-          sessionIpv6: geoData?.ipv6 || null,
+          sessionIpAddress: geoData?.ip || ipAddress || null,
+          sessionIpv4:
+            geoData?.ipv4 || (!ipAddress.includes(":") ? ipAddress : null),
+          sessionIpv6:
+            geoData?.ipv6 || (ipAddress.includes(":") ? ipAddress : null),
           sessionCity: geoData?.city || null,
           sessionState: geoData?.region || null,
           sessionCountry: geoData?.country_name || null,
@@ -287,7 +292,7 @@ export async function POST(request: NextRequest) {
         where: { id: user.id },
         data: {
           lastLoginAt: new Date(),
-          lastLoginIpAddress: geoData?.ip || null,
+          lastLoginIpAddress: geoData?.ip || ipAddress || null,
           lastLoginCity: geoData?.city || null,
           lastLoginState: geoData?.region || null,
           lastLoginCountry: geoData?.country || null,
