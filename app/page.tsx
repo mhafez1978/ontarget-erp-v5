@@ -1675,9 +1675,6 @@ export default async function HomePage() {
       }
     : null;
 
-  const showStandaloneTestimonialSection =
-    !!testimonialFormProps && approvedTestimonials.length > 0;
-
   if (aiEnabled && rootCompany?.aiStorefrontSpec) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -1921,8 +1918,8 @@ export default async function HomePage() {
       </section>
 
       {/* Testimonials Section (global OnTarget homepage) */}
-      <section id="testimonials" className="py-20 skew-3 mt-20">
-        {approvedTestimonials.length > 0 ? (
+      {approvedTestimonials.length > 0 && (
+        <section id="testimonials" className="py-20 skew-3 mt-20">
           <div className="w-screen flex flex-col items-center justify-center">
             <h3 className="text-3xl font-bold text-center text-black mb-14 -skew-3">
               <span className="italic text-amber-500">What</span> our customers
@@ -2039,29 +2036,10 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-        ) : (
-          <div className="w-screen flex flex-col items-center justify-center text-center gap-6">
-            <h3 className="text-3xl font-bold text-black -skew-3">
-              Be the first to share your experience.
-            </h3>
-            <p className="text-lg text-muted-foreground max-w-2xl">
-              We just launched this edition of OnTarget ERP. Your voice helps
-              other founders understand how the platform performs in the real
-              world.
-            </p>
-            {testimonialFormProps && (
-              <div className="mt-4">
-                <TestimonialForm
-                  slug={testimonialFormProps.slug}
-                  apiPath={testimonialFormProps.apiPath}
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {showStandaloneTestimonialSection && testimonialFormProps && (
+      {testimonialFormProps && (
         <section id="submit-testimonial" className="py-12 skew-3 mt-10">
           <div className="w-screen flex flex-col items-center justify-center">
             <div className="pb-4 px-4 -skew-3">
