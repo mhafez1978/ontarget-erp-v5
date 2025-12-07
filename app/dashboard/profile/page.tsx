@@ -64,7 +64,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [imageVersion, setImageVersion] = useState<number>(() => Date.now());
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -135,8 +134,10 @@ export default function ProfilePage() {
       const data = await response.json();
       console.log("🔍 Initial profile data loaded:", data);
       console.log("🖼️ User image from API:", data.image);
-      setUser(data);
-      setImageVersion(Date.now());
+      const imageWithCache = data.image
+        ? `${data.image}${data.image.includes("?") ? "&" : "?"}t=${Date.now()}`
+        : data.image;
+      setUser({ ...data, image: imageWithCache });
 
       const profileData = {
         name: data.name || "",
@@ -245,7 +246,6 @@ export default function ProfilePage() {
 
       const timestamp = Date.now();
       const cacheBustedUrl = `${data.imageUrl}?t=${timestamp}`;
-      setImageVersion(timestamp);
 
       setUser((prev) =>
         prev ? { ...prev, image: cacheBustedUrl || prev.image } : prev
@@ -259,7 +259,6 @@ export default function ProfilePage() {
 
       toast.success("Profile image updated successfully!");
       clearSelectedImage();
-      await fetchProfile();
     } catch (error) {
       console.error("Image upload error:", error);
       toast.error(
@@ -318,7 +317,17 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to update profile");
       }
 
-      setUser(data.user);
+      const updatedUser = data.user
+        ? {
+            ...data.user,
+            image: data.user.image
+              ? `${data.user.image}${
+                  data.user.image.includes("?") ? "&" : "?"
+                }t=${Date.now()}`
+              : data.user.image,
+          }
+        : null;
+      setUser(updatedUser);
       setOriginalData(formData);
       toast.success("Profile updated successfully!");
     } catch (error) {
@@ -331,25 +340,15 @@ export default function ProfilePage() {
     }
   };
 
-  const versionedImageSrc =
-    user?.image && user.image.length > 0
-      ? `${user.image}${user.image.includes("?") ? "&" : "?"}v=${imageVersion}`
-      : "";
-
-  const currentAvatarSrc = imagePreview ? imagePreview : versionedImageSrc;
+  const currentAvatarSrc = imagePreview
+    ? imagePreview
+    : user?.image
+    ? `${user.image}`
+    : "";
 
   const avatarKey = imagePreview
     ? `preview-${imagePreview}`
-    : versionedImageSrc
-    ? `${versionedImageSrc}-${imageVersion}`
-    : "no-profile-image";
-
-  const layoutUser = user
-    ? {
-        ...user,
-        image: versionedImageSrc || user.image,
-      }
-    : user;
+    : user?.image || "no-profile-image";
 
   if (loading) {
     return (
@@ -368,7 +367,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <DashboardLayout user={layoutUser}>
+    <DashboardLayout user={user}>
       <div className="p-6 max-w-6xl">
         <Tabs defaultValue="profile">
           <TabsList>
