@@ -176,6 +176,20 @@ export async function POST(request: NextRequest) {
 
     await writeFile(filePath, buffer);
 
+    // Verify the file exists after writing (helps catch ephemeral FS / permission issues)
+    if (!fs.existsSync(filePath)) {
+      console.error(
+        `UPLOAD_VERIFICATION_FAILED: file does not exist after write: ${filePath}`
+      );
+
+      const response = NextResponse.json(
+        { error: "Failed to persist uploaded file to disk" },
+        { status: 500 }
+      );
+      response.headers.set("Cache-Control", "no-store, max-age=0");
+      return response;
+    }
+
     // Update user's image URL in database
     const imageUrl = `/uploads/profiles/${filename}`;
     await db.user.update({
