@@ -1921,7 +1921,7 @@ export default async function HomePage() {
       {approvedTestimonials.length > 0 && (
         <section id="testimonials" className="py-20 skew-3 mt-20">
           <div className="w-screen flex flex-col items-center justify-center">
-            <h3 className="text-3xl font-bold text-center text-black mb-14 -skew-3">
+            <h3 className="text-3xl font-bold text-center text-black mb-14 -skew-3 dark:text-white">
               <span className="italic text-amber-500">What</span> our customers
               say about our platform.
             </h3>
