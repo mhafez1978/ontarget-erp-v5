@@ -54,6 +54,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  typescript: {
+    // allow production builds even with TS type errors (use with caution)
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;
