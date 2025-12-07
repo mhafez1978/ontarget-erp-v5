@@ -228,7 +228,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Create session using session manager
-    const session = await createSession({ userId: user.id });
+    const session = await createSession({ userId: user.id, request });
 
     // Determine redirect URL
     const redirectUrl =

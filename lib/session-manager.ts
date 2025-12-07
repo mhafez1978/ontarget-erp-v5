@@ -22,6 +22,7 @@
 import { db } from "@/lib/db";
 import crypto from "crypto";
 import { headers } from "next/headers";
+import type { NextRequest } from "next/server";
 
 export interface GeoLocation {
   ip?: string;
@@ -54,22 +55,32 @@ export interface CreateSessionOptions {
   geoLocation?: GeoLocation;
   userAgent?: string;
   expiresInDays?: number; // Default: 7 days
+  request?: NextRequest;
 }
 
-async function fetchServerGeoLocation(): Promise<GeoLocation | null> {
+async function fetchServerGeoLocation(
+  req?: NextRequest
+): Promise<GeoLocation | null> {
   try {
-    const headerStore = (() => {
-      try {
-        return headers();
-      } catch {
-        return null;
-      }
-    })();
+    const headerStore = req?.headers
+      ? req.headers
+      : (() => {
+          try {
+            return headers();
+          } catch {
+            return null;
+          }
+        })();
+
+    if (!headerStore && !req) {
+      return null;
+    }
 
     const forwardedFor = headerStore?.get("x-forwarded-for") || "";
     const realIp = headerStore?.get("x-real-ip") || "";
 
     const appUrl =
+      req?.nextUrl?.origin ||
       process.env.INTERNAL_APP_URL ||
       process.env.NEXT_PUBLIC_APP_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
@@ -130,7 +141,7 @@ export async function createSession(
 
   let sessionGeo = options.geoLocation;
   if (!sessionGeo) {
-    sessionGeo = await fetchServerGeoLocation();
+    sessionGeo = await fetchServerGeoLocation(options.request);
   }
 
   // Generate random session token

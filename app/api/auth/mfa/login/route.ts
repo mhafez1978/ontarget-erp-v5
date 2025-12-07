@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
     const session = await createSession({
       userId: user.id,
       userAgent: request.headers.get("user-agent") || undefined,
+      request,
     });
 
     const response = NextResponse.json({

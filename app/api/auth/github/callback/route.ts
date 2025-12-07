@@ -310,6 +310,7 @@ export async function GET(request: NextRequest) {
     const session = await createSession({
       userId: user.id,
       userAgent: request.headers.get("user-agent") || undefined,
+      request,
     });
 
     // Determine redirect URL
