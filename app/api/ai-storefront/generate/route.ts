@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { SubscriptionPlan } from "@/lib/types/subscription";
 import {
   generateAiStorefront,
   type AiStorefrontInput,
@@ -14,7 +15,6 @@ import type {
   ChatMessage,
 } from "@/lib/ai/model-client";
 import { Prisma } from "@prisma/client";
-import type { SubscriptionPlan } from "@/lib/types/subscription";
 import { decrypt } from "@/lib/crypto";
 import type {
   ProductSummary,
