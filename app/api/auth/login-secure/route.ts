@@ -4,10 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { z } from "zod";
 import { createAuditLog } from "@/lib/audit-log";
-import {
-  createPendingMfaToken,
-  PENDING_COOKIE,
-} from "@/lib/mfa-pending";
+import { createPendingMfaToken, PENDING_COOKIE } from "@/lib/mfa-pending";
 
 // Zod schema for login validation
 const loginSchema = z.object({
@@ -41,34 +38,40 @@ export async function POST(request: NextRequest) {
         ipAddress = geoData?.ip || "127.0.0.1";
       }
     } catch (error) {
-      console.error("Error fetching geolocation:", error);
+      console.error("[LOGIN] Error fetching geolocation:", error);
+      // Continue without geo data
     }
 
     // STEP 1: Check if IP is blacklisted
-    const blacklistCheck = await fetch(
-      `${request.nextUrl.origin}/api/security/check-ip?ip=${ipAddress}`,
-      { cache: "no-store" }
-    );
+    try {
+      const blacklistCheck = await fetch(
+        `${request.nextUrl.origin}/api/security/check-ip?ip=${ipAddress}`,
+        { cache: "no-store" }
+      );
 
-    if (blacklistCheck.ok) {
-      const blacklistData = await blacklistCheck.json();
+      if (blacklistCheck.ok) {
+        const blacklistData = await blacklistCheck.json();
 
-      if (blacklistData.blocked) {
-        // IP is blocked - deny access immediately
-        return NextResponse.json(
-          {
-            error: blacklistData.isPermanent
-              ? "Your IP has been permanently blocked due to security concerns. Please contact support."
-              : `Your IP has been temporarily blocked due to multiple failed login attempts. Please try again after ${new Date(
-                  blacklistData.blockedUntil
-                ).toLocaleString()}.`,
-            blocked: true,
-            blockedUntil: blacklistData.blockedUntil,
-            isPermanent: blacklistData.isPermanent,
-          },
-          { status: 403 }
-        );
+        if (blacklistData.blocked) {
+          // IP is blocked - deny access immediately
+          return NextResponse.json(
+            {
+              error: blacklistData.isPermanent
+                ? "Your IP has been permanently blocked due to security concerns. Please contact support."
+                : `Your IP has been temporarily blocked due to multiple failed login attempts. Please try again after ${new Date(
+                    blacklistData.blockedUntil
+                  ).toLocaleString()}.`,
+              blocked: true,
+              blockedUntil: blacklistData.blockedUntil,
+              isPermanent: blacklistData.isPermanent,
+            },
+            { status: 403 }
+          );
+        }
       }
+    } catch (error) {
+      console.error("[LOGIN] Error checking IP blacklist:", error);
+      // Continue login attempt if blacklist check fails
     }
 
     const body = await request.json();
@@ -91,34 +94,47 @@ export async function POST(request: NextRequest) {
     const { email, password } = validationResult.data;
 
     // STEP 3: Find user
-    const user = await db.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        password: true,
-        role: true,
-        emailVerified: true,
-        mfaEnabled: true,
-        mfaSecret: true,
-        authMethod: true,
-        isActive: true,
-      },
-    });
+    let user;
+    try {
+      user = await db.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          password: true,
+          role: true,
+          emailVerified: true,
+          mfaEnabled: true,
+          mfaSecret: true,
+          authMethod: true,
+          isActive: true,
+        },
+      });
+    } catch (error) {
+      console.error("[LOGIN] Database error finding user:", error);
+      return NextResponse.json(
+        { error: "Database connection failed. Please try again." },
+        { status: 500 }
+      );
+    }
 
     if (!user || !user.password) {
       // STEP 4a: Log failed attempt (user doesn't exist)
-      await fetch(`${request.nextUrl.origin}/api/security/failed-attempts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          ipAddress,
-          geoData,
-          userAgent: request.headers.get("user-agent"),
-        }),
-      });
+      try {
+        await fetch(`${request.nextUrl.origin}/api/security/failed-attempts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            ipAddress,
+            geoData,
+            userAgent: request.headers.get("user-agent"),
+          }),
+        });
+      } catch (error) {
+        console.error("[LOGIN] Error logging failed attempt:", error);
+      }
 
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -149,20 +165,33 @@ export async function POST(request: NextRequest) {
     }
 
     // STEP 4: Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    let isValidPassword;
+    try {
+      isValidPassword = await bcrypt.compare(password, user.password);
+    } catch (error) {
+      console.error("[LOGIN] Password comparison error:", error);
+      return NextResponse.json(
+        { error: "Authentication failed. Please try again." },
+        { status: 500 }
+      );
+    }
 
     if (!isValidPassword) {
       // STEP 4b: Log failed attempt (wrong password)
-      await fetch(`${request.nextUrl.origin}/api/security/failed-attempts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          ipAddress,
-          geoData,
-          userAgent: request.headers.get("user-agent"),
-        }),
-      });
+      try {
+        await fetch(`${request.nextUrl.origin}/api/security/failed-attempts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            ipAddress,
+            geoData,
+            userAgent: request.headers.get("user-agent"),
+          }),
+        });
+      } catch (error) {
+        console.error("[LOGIN] Error logging failed attempt:", error);
+      }
 
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -184,16 +213,21 @@ export async function POST(request: NextRequest) {
     }
 
     // STEP 5: Success! Clear any recent failed attempts for this IP/email
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    await db.failedLoginAttempt.deleteMany({
-      where: {
-        email,
-        ipAddress,
-        attemptedAt: {
-          gte: oneHourAgo,
+    try {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      await db.failedLoginAttempt.deleteMany({
+        where: {
+          email,
+          ipAddress,
+          attemptedAt: {
+            gte: oneHourAgo,
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error("[LOGIN] Error clearing failed attempts:", error);
+      // Continue with login even if this fails
+    }
 
     // STEP 6: If MFA is enabled, issue pending token and require MFA before session
     if (user.mfaEnabled && user.mfaSecret) {
@@ -224,52 +258,70 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
 
-    await db.session.create({
-      data: {
-        sessionToken,
-        userId: user.id,
-        expires: expiresAt,
-        sessionIpAddress: geoData?.ip || null,
-        sessionIpv4: geoData?.ipv4 || null,
-        sessionIpv6: geoData?.ipv6 || null,
-        sessionCity: geoData?.city || null,
-        sessionState: geoData?.region || null,
-        sessionCountry: geoData?.country_name || null,
-        sessionCountryFlag: geoData?.flag || null,
-      },
-    });
+    try {
+      await db.session.create({
+        data: {
+          sessionToken,
+          userId: user.id,
+          expires: expiresAt,
+          sessionIpAddress: geoData?.ip || null,
+          sessionIpv4: geoData?.ipv4 || null,
+          sessionIpv6: geoData?.ipv6 || null,
+          sessionCity: geoData?.city || null,
+          sessionState: geoData?.region || null,
+          sessionCountry: geoData?.country_name || null,
+          sessionCountryFlag: geoData?.flag || null,
+        },
+      });
+    } catch (error) {
+      console.error("[LOGIN] Error creating session:", error);
+      return NextResponse.json(
+        { error: "Failed to create session. Please try again." },
+        { status: 500 }
+      );
+    }
 
     // STEP 8: Update user's last login info
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        lastLoginAt: new Date(),
-        lastLoginIpAddress: geoData?.ip || null,
-        lastLoginCity: geoData?.city || null,
-        lastLoginState: geoData?.region || null,
-        lastLoginCountry: geoData?.country || null,
-        lastLoginCountryFlag: geoData?.flag || null,
-      },
-    });
+    try {
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          lastLoginAt: new Date(),
+          lastLoginIpAddress: geoData?.ip || null,
+          lastLoginCity: geoData?.city || null,
+          lastLoginState: geoData?.region || null,
+          lastLoginCountry: geoData?.country || null,
+          lastLoginCountryFlag: geoData?.flag || null,
+        },
+      });
+    } catch (error) {
+      console.error("[LOGIN] Error updating last login info:", error);
+      // Continue - non-critical
+    }
 
     // STEP 9: Log successful login to audit
-    await createAuditLog({
-      userId: user.id,
-      action: "USER_LOGIN_SUCCESS",
-      description: `User ${user.email} logged in successfully`,
-      ipAddress: geoData?.ip || null,
-      city: geoData?.city || null,
-      state: geoData?.region || null,
-      country: geoData?.country_name || null,
-      countryFlag: geoData?.flag || null,
-      metadata: {
-        email: user.email,
-        role: user.role,
-        location: geoData
-          ? `${geoData.city}, ${geoData.region}, ${geoData.country_name}`
-          : "Unknown",
-      },
-    });
+    try {
+      await createAuditLog({
+        userId: user.id,
+        action: "USER_LOGIN_SUCCESS",
+        description: `User ${user.email} logged in successfully`,
+        ipAddress: geoData?.ip || null,
+        city: geoData?.city || null,
+        state: geoData?.region || null,
+        country: geoData?.country_name || null,
+        countryFlag: geoData?.flag || null,
+        metadata: {
+          email: user.email,
+          role: user.role,
+          location: geoData
+            ? `${geoData.city}, ${geoData.region}, ${geoData.country_name}`
+            : "Unknown",
+        },
+      });
+    } catch (error) {
+      console.error("[LOGIN] Error creating audit log:", error);
+      // Continue - non-critical
+    }
 
     // Remove password from response
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -292,7 +344,19 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Secure login error:", error);
+    console.error("[LOGIN] Secure login error:", error);
+
+    // Provide more specific error information in development
+    if (process.env.NODE_ENV === "development") {
+      return NextResponse.json(
+        {
+          error: "Failed to login",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ error: "Failed to login" }, { status: 500 });
   }
 }

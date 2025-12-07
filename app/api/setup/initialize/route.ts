@@ -7,11 +7,30 @@ import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, systemName, companyName, companySlogan } =
-      body;
+    const {
+      name,
+      email,
+      password,
+      systemName,
+      companyName,
+      companySlogan,
+    } = body;
+
+    const trimmedName = typeof name === "string" ? name.trim() : "";
+    const normalizedEmail =
+      typeof email === "string" ? email.trim().toLowerCase() : "";
+    const sanitizedPassword = typeof password === "string" ? password : "";
+    const trimmedCompanyName =
+      typeof companyName === "string" ? companyName.trim() : "";
+    const sanitizedSystemName =
+      typeof systemName === "string" && systemName.trim().length > 0
+        ? systemName.trim()
+        : "OnTarget ERP";
+    const sanitizedCompanySlogan =
+      typeof companySlogan === "string" ? companySlogan.trim() : "";
 
     // Validate required fields
-    if (!name || !email || !password || !companyName) {
+    if (!trimmedName || !normalizedEmail || !sanitizedPassword || !trimmedCompanyName) {
       return NextResponse.json(
         { error: "All required fields must be provided" },
         { status: 400 }
@@ -34,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Check if email already exists
     const existingUser = await db.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -45,15 +64,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(sanitizedPassword, 10);
 
     // Create SUPER_ADMIN user and root company in a transaction
     const result = await db.$transaction(async (tx) => {
       // Create the SUPER_ADMIN user
       const user = await tx.user.create({
         data: {
-          name,
-          email,
+          name: trimmedName,
+          email: normalizedEmail,
           password: hashedPassword,
           role: "SUPER_ADMIN",
           plan: "SUPER_USER", // Super admins get free unlimited SUPER_USER plan
@@ -64,9 +83,9 @@ export async function POST(request: NextRequest) {
       // Create the root company (OnTarget ERP - the SaaS provider)
       const company = await tx.company.create({
         data: {
-          name: companyName,
-          slogan: companySlogan || "People Driven & AI Insight",
-          description: `Welcome to ${companyName}`,
+          name: trimmedCompanyName,
+          slogan: sanitizedCompanySlogan || "People Driven & AI Insight",
+          description: `Welcome to ${trimmedCompanyName}`,
           ownerId: user.id,
           isRoot: true, // Mark as root company
         },
@@ -162,7 +181,7 @@ export async function POST(request: NextRequest) {
         action: "SYSTEM_SETUP_COMPLETED",
         userId: result.user.id,
         companyId: result.company.id,
-        description: `${systemName} is now live!`,
+        description: `${sanitizedSystemName} is now live!`,
         ipAddress: geoData?.ip || null,
         ipv4: geoData?.ipv4 || null,
         ipv6: geoData?.ipv6 || null,
@@ -180,8 +199,8 @@ export async function POST(request: NextRequest) {
         description: "SUPER_ADMIN account was created",
         metadata: {
           userRole: "SUPER_ADMIN",
-          userName: name,
-          userEmail: email,
+          userName: trimmedName,
+          userEmail: normalizedEmail,
         },
         ipAddress: geoData?.ip || null,
         ipv4: geoData?.ipv4 || null,

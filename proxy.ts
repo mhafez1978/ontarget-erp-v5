@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { db } from "@/lib/db";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,12 +17,14 @@ export async function proxy(request: NextRequest) {
 
   try {
     // Check if setup is needed
-    const baseUrl = request.nextUrl.origin;
-    const response = await fetch(`${baseUrl}/api/setup/check`, {
+    const setupUrl = new URL("/api/setup/check", request.url);
+    const setupHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      cookie: request.headers.get("cookie") || "",
+    };
+    const response = await fetch(setupUrl, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: setupHeaders,
     });
 
     if (response.ok) {
@@ -42,42 +43,39 @@ export async function proxy(request: NextRequest) {
 
     // Check onboarding status if accessing dashboard
     if (pathname.startsWith("/dashboard")) {
-      const userId = request.cookies.get("userId")?.value;
-
-      if (userId) {
-        try {
-          // Check if user is a CompanyStaff member
-          const staff = await db.companyStaff.findFirst({
-            where: {
-              userId: userId,
-            },
-            include: {
-              onboardingToken: true,
-            },
-          });
-
-          // If user is staff and onboarding incomplete, block dashboard access
-          // We enforce a hard-block: users must complete onboarding before accessing /dashboard
-          if (staff && !staff.onboardingComplete) {
-            // Prefer to redirect to the token-based onboarding page when we have a token
-            // (the /onboarding/[token] page already handles expired/used tokens and will show
-            // a helpful message). If no token exists or onboarding is otherwise unusable,
-            // redirect to a generic /onboarding/unavailable page that instructs the user
-            // to contact their administrator. This ensures users cannot access the dashboard
-            // while onboarding is incomplete.
-            if (staff.onboardingToken && !staff.onboardingToken.isUsed) {
-              return NextResponse.redirect(
-                new URL(`/onboarding/${staff.onboardingToken.token}`, request.url)
-              );
-            }
-
-            // Token missing or already marked used but onboarding still incomplete — block
-            return NextResponse.redirect(new URL(`/onboarding/unavailable`, request.url));
-          }
-        } catch (error) {
-          console.error("Middleware onboarding check failed:", error);
-          // Don't block access on error, just log it
+      try {
+        const onboardingUrl = new URL("/api/onboarding/check", request.url);
+        const onboardingHeaders: Record<string, string> = {
+          "Content-Type": "application/json",
+          cookie: request.headers.get("cookie") || "",
+        };
+        const forwardedFor = request.headers.get("x-forwarded-for");
+        const realIp = request.headers.get("x-real-ip");
+        if (forwardedFor) {
+          onboardingHeaders["x-forwarded-for"] = forwardedFor;
         }
+        if (realIp) {
+          onboardingHeaders["x-real-ip"] = realIp;
+        }
+
+        const onboardingResponse = await fetch(onboardingUrl, {
+          method: "GET",
+          headers: onboardingHeaders,
+          cache: "no-store",
+        });
+
+        if (onboardingResponse.ok) {
+          const onboardingData = await onboardingResponse.json();
+
+          if (onboardingData.needsOnboarding && onboardingData.onboardingUrl) {
+            return NextResponse.redirect(
+              new URL(onboardingData.onboardingUrl, request.url)
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Proxy onboarding check failed:", error);
+        // Don't block dashboard access if onboarding lookup fails
       }
     }
   } catch (error) {

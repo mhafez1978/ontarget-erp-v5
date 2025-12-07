@@ -2026,24 +2026,29 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
-            {rootCompany && (
-              <div id="submit-testimonial" className="pb-4 px-4 mt-14 -skew-3">
-                <div className="container mx-auto text-center">
-                  <div className="max-w-2xl mx-auto">
-                    <TestimonialForm
-                      // If the root company has a slug use the normal storefront route
-                      // otherwise use the new by-id API endpoint so the homepage can accept guest testimonials
-                      slug={rootCompany.slug ?? undefined}
-                      apiPath={
-                        rootCompany.slug
-                          ? undefined
-                          : `/api/storefront/by-id/${rootCompany.id}/testimonials`
-                      }
-                    />
-                  </div>
+          </div>
+        </section>
+      )}
+
+      {rootCompany && (
+        <section id="submit-testimonial" className="py-12 skew-3 mt-10">
+          <div className="w-screen flex flex-col items-center justify-center">
+            <div className="pb-4 px-4 -skew-3">
+              <div className="container mx-auto text-center">
+                <div className="max-w-2xl mx-auto">
+                  <TestimonialForm
+                    // If the root company has a slug use the normal storefront route
+                    // otherwise use the new by-id API endpoint so the homepage can accept guest testimonials
+                    slug={rootCompany.slug ?? undefined}
+                    apiPath={
+                      rootCompany.slug
+                        ? undefined
+                        : `/api/storefront/by-id/${rootCompany.id}/testimonials`
+                    }
+                  />
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </section>
       )}
