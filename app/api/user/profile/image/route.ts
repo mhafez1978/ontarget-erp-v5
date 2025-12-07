@@ -4,6 +4,7 @@ import { writeFile } from "fs/promises";
 import { join } from "path";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { getRequestOrigin } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -106,7 +107,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const absoluteImageUrl = new URL(imageUrl, request.nextUrl.origin).toString();
+    const origin = getRequestOrigin(request);
+    const absoluteImageUrl = new URL(imageUrl, origin).toString();
 
     const response = NextResponse.json({
       success: true,

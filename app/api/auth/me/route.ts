@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
+import { getRequestOrigin } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -60,13 +61,15 @@ export async function GET(request: NextRequest) {
       companyId = ownedCompany?.id || null;
     }
 
+    const origin = getRequestOrigin(request);
+
     const response = NextResponse.json({
       user: {
         ...user,
         image: user.image
           ? user.image.startsWith("http")
             ? user.image
-            : new URL(user.image, request.nextUrl.origin).toString()
+            : new URL(user.image, origin).toString()
           : null,
         companyId,
       },

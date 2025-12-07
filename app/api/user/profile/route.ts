@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
+import { getRequestOrigin } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -47,12 +48,14 @@ export async function GET(request: NextRequest) {
       return response;
     }
 
+    const origin = getRequestOrigin(request);
+
     const response = NextResponse.json({
       ...user,
       image: user.image
         ? user.image.startsWith("http")
           ? user.image
-          : new URL(user.image, request.nextUrl.origin).toString()
+          : new URL(user.image, origin).toString()
         : null,
     });
     response.headers.set("Cache-Control", "no-store, max-age=0");
@@ -199,12 +202,14 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
+    const origin = getRequestOrigin(request);
+
     const normalizedUser = {
       ...updatedUser,
       image: updatedUser.image
         ? updatedUser.image.startsWith("http")
           ? updatedUser.image
-          : new URL(updatedUser.image, request.nextUrl.origin).toString()
+          : new URL(updatedUser.image, origin).toString()
         : null,
     };
 
