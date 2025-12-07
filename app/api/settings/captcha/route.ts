@@ -119,33 +119,36 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-      const existing = hasModel
-        ? await captchaProvider!.findFirst({
-            where: { scope: "GLOBAL" },
-          })
-        : null;
+      const existing =
+        hasModel && typeof captchaProvider.findFirst === "function"
+          ? await captchaProvider.findFirst({ where: { scope: "GLOBAL" } })
+          : null;
       if (existing) {
-        await captchaProvider!.update({
-          where: { id: existing.id },
-          data: {
-            provider: "GOOGLE_RECAPTCHA",
-            siteKey,
-            secretKey: encrypt(secretKey),
-            isActive: isActive ?? true,
-            updatedAt: new Date(),
-          },
-        });
+        if (typeof captchaProvider.update === "function") {
+          await captchaProvider.update({
+            where: { id: existing.id },
+            data: {
+              provider: "GOOGLE_RECAPTCHA",
+              siteKey,
+              secretKey: encrypt(secretKey),
+              isActive: isActive ?? true,
+              updatedAt: new Date(),
+            },
+          });
+        }
       } else {
-        await captchaProvider!.create({
-          data: {
-            provider: "GOOGLE_RECAPTCHA",
-            siteKey,
-            secretKey: encrypt(secretKey),
-            isActive: isActive ?? true,
-            scope: "GLOBAL",
-            createdById: user.id,
-          },
-        });
+        if (typeof captchaProvider.create === "function") {
+          await captchaProvider.create({
+            data: {
+              provider: "GOOGLE_RECAPTCHA",
+              siteKey,
+              secretKey: encrypt(secretKey),
+              isActive: isActive ?? true,
+              scope: "GLOBAL",
+              createdById: user.id,
+            },
+          });
+        }
       }
       return NextResponse.json({ success: true });
     }
@@ -169,34 +172,37 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-      const existing = hasModel
-        ? await captchaProvider!.findFirst({
-            where: { scope: company.id },
-          })
-        : null;
+      const existing =
+        hasModel && typeof captchaProvider.findFirst === "function"
+          ? await captchaProvider.findFirst({ where: { scope: company.id } })
+          : null;
       if (existing) {
-        await captchaProvider!.update({
-          where: { id: existing.id },
-          data: {
-            provider: "GOOGLE_RECAPTCHA",
-            siteKey,
-            secretKey: encrypt(secretKey),
-            isActive: isActive ?? true,
-            updatedAt: new Date(),
-          },
-        });
+        if (typeof captchaProvider.update === "function") {
+          await captchaProvider.update({
+            where: { id: existing.id },
+            data: {
+              provider: "GOOGLE_RECAPTCHA",
+              siteKey,
+              secretKey: encrypt(secretKey),
+              isActive: isActive ?? true,
+              updatedAt: new Date(),
+            },
+          });
+        }
       } else {
-        await captchaProvider!.create({
-          data: {
-            provider: "GOOGLE_RECAPTCHA",
-            siteKey,
-            secretKey: encrypt(secretKey),
-            isActive: isActive ?? true,
-            scope: company.id,
-            companyId: company.id,
-            createdById: user.id,
-          },
-        });
+        if (typeof captchaProvider.create === "function") {
+          await captchaProvider.create({
+            data: {
+              provider: "GOOGLE_RECAPTCHA",
+              siteKey,
+              secretKey: encrypt(secretKey),
+              isActive: isActive ?? true,
+              scope: company.id,
+              companyId: company.id,
+              createdById: user.id,
+            },
+          });
+        }
       }
       return NextResponse.json({ success: true });
     }

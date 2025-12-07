@@ -4,6 +4,14 @@ import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { encrypt, decrypt, isEncrypted } from "@/lib/crypto";
 
+// Defensive guard shape for Prisma client delegate when client generation is missing
+// Keep the shape intentionally loose so runtime checks guard older deployments.
+type AiProviderDelegate = {
+  findFirst?: (opts?: unknown) => Promise<Record<string, unknown> | null>;
+  update?: (opts?: unknown) => Promise<Record<string, unknown> | null>;
+  create?: (opts?: unknown) => Promise<Record<string, unknown>>;
+};
+
 const aiProviderSchema = z.object({
   scope: z.literal("GLOBAL"),
   provider: z.string().default("openai"),
@@ -40,12 +48,6 @@ export async function GET(req: NextRequest) {
     }
 
     // Defensive guard in case Prisma Client was not regenerated after adding AiProviderSetting
-    type AiProviderDelegate = {
-      findFirst?: (opts?: unknown) => Promise<Record<string, unknown> | null>;
-      update?: (opts?: unknown) => Promise<Record<string, unknown> | null>;
-      create?: (opts?: unknown) => Promise<Record<string, unknown>>;
-    };
-
     const aiProviderClient = (db as unknown as Record<string, unknown>)[
       "aiProviderSetting"
     ] as AiProviderDelegate | undefined;
@@ -138,37 +140,42 @@ export async function POST(req: NextRequest) {
       where: { scope: "GLOBAL" },
     });
 
-    let encryptedApiKey: string | undefined = existing?.apiKey;
+    let encryptedApiKey: string | undefined = undefined;
+    if (existing && typeof existing.apiKey === "string") {
+      encryptedApiKey = existing.apiKey;
+    }
 
     if (data.apiKey && data.apiKey.trim().length > 0) {
       encryptedApiKey = encrypt(data.apiKey.trim());
     }
 
     const provider =
-      existing &&
-      (await aiProviderClient.update({
-        where: { id: existing.id },
-        data: {
-          provider: data.provider,
-          isActive: data.isActive,
-          apiKey: encryptedApiKey ?? existing.apiKey,
-          model: data.model || existing.model,
-          apiBase: data.apiBase || existing.apiBase,
-        },
-      }));
+      existing && typeof aiProviderClient.update === "function"
+        ? await aiProviderClient.update({
+            where: { id: existing.id },
+            data: {
+              provider: data.provider,
+              isActive: data.isActive,
+              apiKey: encryptedApiKey ?? existing.apiKey,
+              model: data.model || existing.model,
+              apiBase: data.apiBase || existing.apiBase,
+            },
+          })
+        : undefined;
 
     const created =
-      !existing &&
-      (await aiProviderClient.create({
-        data: {
-          provider: data.provider,
-          scope: "GLOBAL",
-          isActive: data.isActive,
-          apiKey: encryptedApiKey || "",
-          model: data.model,
-          apiBase: data.apiBase,
-        },
-      }));
+      !existing && typeof aiProviderClient.create === "function"
+        ? await aiProviderClient.create({
+            data: {
+              provider: data.provider,
+              scope: "GLOBAL",
+              isActive: data.isActive,
+              apiKey: encryptedApiKey || "",
+              model: data.model,
+              apiBase: data.apiBase,
+            },
+          })
+        : undefined;
 
     return NextResponse.json({
       provider: {
