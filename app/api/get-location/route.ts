@@ -2,15 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Small in-memory TTL cache for recent lookups to reduce provider calls.
 // Use globalThis to survive hot module reloads in development.
-type CacheItem = { payload: any; expiresAt: number };
+type CacheItem = { payload: unknown; expiresAt: number };
 const CACHE_TTL_MS =
   Number(process.env.GET_LOCATION_CACHE_TTL_MS) || 5 * 60 * 1000; // 5m default
 
 const CACHE_KEY = "__get_location_cache_v1" as const;
-if (!(globalThis as any)[CACHE_KEY]) {
-  (globalThis as any)[CACHE_KEY] = new Map<string, CacheItem>();
+if (!(globalThis as unknown as Record<string, unknown>)[CACHE_KEY]) {
+  (globalThis as unknown as Record<string, unknown>)[CACHE_KEY] = new Map<
+    string,
+    CacheItem
+  >();
 }
-const globalCache: Map<string, CacheItem> = (globalThis as any)[CACHE_KEY];
+const globalCache: Map<string, CacheItem> = (
+  globalThis as unknown as Record<string, unknown>
+)[CACHE_KEY] as Map<string, CacheItem>;
 
 function getCached(ipKey: string) {
   const entry = globalCache.get(ipKey);
@@ -22,7 +27,7 @@ function getCached(ipKey: string) {
   return entry.payload;
 }
 
-function setCached(ipKey: string, payload: any) {
+function setCached(ipKey: string, payload: unknown) {
   globalCache.set(ipKey, { payload, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
@@ -154,7 +159,7 @@ export async function GET(request: NextRequest) {
     // If ipapi returned minimal data (no city/country), try a lightweight fallback
     // provider to improve location accuracy (e.g. ipwho.is). Keep this tolerant
     // — don't fail if the secondary provider is down.
-    let fallbackData: any = null;
+    // variable previously used for debugging; no longer required
     if ((!data.city || !data.country_name) && data.ip) {
       try {
         const altResp = await fetch(`https://ipwho.is/${data.ip}`, {
@@ -166,7 +171,6 @@ export async function GET(request: NextRequest) {
           const altJson = await altResp.json();
           // ipwho.is uses different field names but provides city/region/country
           if (altJson && altJson.success !== false) {
-            fallbackData = altJson;
             // normalize fields onto `data` so later code can use them uniformly
             data.city = data.city || altJson.city || null;
             data.region = data.region || altJson.region || null;

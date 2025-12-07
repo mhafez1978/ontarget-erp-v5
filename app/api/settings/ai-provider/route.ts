@@ -40,7 +40,16 @@ export async function GET(req: NextRequest) {
     }
 
     // Defensive guard in case Prisma Client was not regenerated after adding AiProviderSetting
-    const aiProviderClient: any = (db as any).aiProviderSetting;
+    type AiProviderDelegate = {
+      findFirst?: (opts?: unknown) => Promise<Record<string, unknown> | null>;
+      update?: (opts?: unknown) => Promise<Record<string, unknown> | null>;
+      create?: (opts?: unknown) => Promise<Record<string, unknown>>;
+    };
+
+    const aiProviderClient = (db as unknown as Record<string, unknown>)[
+      "aiProviderSetting"
+    ] as AiProviderDelegate | undefined;
+
     if (!aiProviderClient || typeof aiProviderClient.findFirst !== "function") {
       console.error(
         "[AI Provider] Prisma client is missing AiProviderSetting model. Run `npx prisma generate` and restart the dev server."
@@ -109,7 +118,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Defensive guard in case Prisma Client was not regenerated after adding AiProviderSetting
-    const aiProviderClient: any = (db as any).aiProviderSetting;
+    const aiProviderClient = (db as unknown as Record<string, unknown>)[
+      "aiProviderSetting"
+    ] as AiProviderDelegate | undefined;
     if (!aiProviderClient || typeof aiProviderClient.findFirst !== "function") {
       console.error(
         "[AI Provider] Prisma client is missing AiProviderSetting model. Run `npx prisma generate` and restart the dev server."

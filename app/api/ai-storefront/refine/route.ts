@@ -336,21 +336,22 @@ export async function POST(request: NextRequest) {
           // Try to find a candidate spec inside the model output
           const candidate = (() => {
             if (raw && typeof raw === "object") {
-                // Narrow to a record for safe property access
-                const rawObj = raw as Record<string, unknown>;
-                if (Array.isArray(raw)) return raw[0];
-                // Common wrapper keys
-                for (const key of [
-                  "spec",
-                  "aiStorefrontSpec",
-                  "storefrontSpec",
-                  "result",
-                ]) {
-                  const candidateItem = rawObj[key];
-                  if (candidateItem && typeof candidateItem === "object") return candidateItem;
-                }
-                return rawObj;
+              // Narrow to a record for safe property access
+              const rawObj = raw as Record<string, unknown>;
+              if (Array.isArray(raw)) return raw[0];
+              // Common wrapper keys
+              for (const key of [
+                "spec",
+                "aiStorefrontSpec",
+                "storefrontSpec",
+                "result",
+              ]) {
+                const candidateItem = rawObj[key];
+                if (candidateItem && typeof candidateItem === "object")
+                  return candidateItem;
               }
+              return rawObj;
+            }
             return null;
           })();
 

@@ -51,13 +51,18 @@ export async function GET(
     // Extract a lightweight AI meta object (colors, layout) if AI storefront is enabled
     let aiStorefrontMeta: Record<string, unknown> | null = null;
     if (company.aiStorefrontEnabled && company.aiStorefrontSpec) {
-      const spec = company.aiStorefrontSpec as any;
-      if (spec && typeof spec === "object" && spec.meta) {
-        aiStorefrontMeta = spec.meta as Record<string, unknown>;
+      const spec = company.aiStorefrontSpec as unknown;
+      if (spec && typeof spec === "object") {
+        const specObj = spec as Record<string, unknown>;
+        if (specObj.meta && typeof specObj.meta === "object") {
+          aiStorefrontMeta = specObj.meta as Record<string, unknown>;
+        }
       }
     }
 
-    const { aiStorefrontSpec, ...rest } = company as any;
+    const rest = { ...(company as Record<string, unknown>) };
+    // remove heavy spec payload from the response
+    delete (rest as Record<string, unknown>).aiStorefrontSpec;
 
     return NextResponse.json({
       success: true,

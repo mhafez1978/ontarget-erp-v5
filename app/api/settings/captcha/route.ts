@@ -10,7 +10,19 @@ export async function GET(request: NextRequest) {
     if (!validation.valid) return validation.response;
     const user = validation.user;
 
-    const hasModel = !!(db as any)?.captchaProvider?.findFirst;
+    type CaptchaDelegate = {
+      findFirst?: (opts?: unknown) => Promise<Record<string, unknown> | null>;
+      create?: (opts?: unknown) => Promise<Record<string, unknown>>;
+      update?: (opts?: unknown) => Promise<Record<string, unknown>>;
+    };
+
+    const captchaProvider = (db as unknown as Record<string, unknown>)[
+      "captchaProvider"
+    ] as CaptchaDelegate | undefined;
+
+    const hasModel = !!(
+      captchaProvider && typeof captchaProvider.findFirst === "function"
+    );
 
     // SUPER_ADMIN sees GLOBAL; ADMIN sees company override and global
     if (user.role === "SUPER_ADMIN") {
@@ -68,10 +80,19 @@ export async function POST(request: NextRequest) {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) return validation.response;
     const user = validation.user;
-    const hasModel =
-      (db as unknown as { captchaProvider?: { findFirst: Function } })
-        .captchaProvider &&
-      typeof (db as any).captchaProvider.findFirst === "function";
+    type CaptchaDelegate = {
+      findFirst?: (opts?: unknown) => Promise<Record<string, unknown> | null>;
+      create?: (opts?: unknown) => Promise<Record<string, unknown>>;
+      update?: (opts?: unknown) => Promise<Record<string, unknown>>;
+    };
+
+    const captchaProvider = (db as unknown as Record<string, unknown>)[
+      "captchaProvider"
+    ] as CaptchaDelegate | undefined;
+
+    const hasModel = !!(
+      captchaProvider && typeof captchaProvider.findFirst === "function"
+    );
 
     const body = await request.json();
     const { provider, siteKey, secretKey, isActive } = body as {
@@ -99,12 +120,12 @@ export async function POST(request: NextRequest) {
         );
       }
       const existing = hasModel
-        ? await (db as any).captchaProvider.findFirst({
+        ? await captchaProvider!.findFirst({
             where: { scope: "GLOBAL" },
           })
         : null;
       if (existing) {
-        await (db as any).captchaProvider.update({
+        await captchaProvider!.update({
           where: { id: existing.id },
           data: {
             provider: "GOOGLE_RECAPTCHA",
@@ -115,7 +136,7 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        await (db as any).captchaProvider.create({
+        await captchaProvider!.create({
           data: {
             provider: "GOOGLE_RECAPTCHA",
             siteKey,
@@ -149,12 +170,12 @@ export async function POST(request: NextRequest) {
         );
       }
       const existing = hasModel
-        ? await (db as any).captchaProvider.findFirst({
+        ? await captchaProvider!.findFirst({
             where: { scope: company.id },
           })
         : null;
       if (existing) {
-        await (db as any).captchaProvider.update({
+        await captchaProvider!.update({
           where: { id: existing.id },
           data: {
             provider: "GOOGLE_RECAPTCHA",
@@ -165,7 +186,7 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        await (db as any).captchaProvider.create({
+        await captchaProvider!.create({
           data: {
             provider: "GOOGLE_RECAPTCHA",
             siteKey,

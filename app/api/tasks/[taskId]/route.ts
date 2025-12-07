@@ -346,7 +346,7 @@ export async function PATCH(
     const auditLogs: Array<{
       action: string;
       description: string;
-      metadata: any;
+      metadata: Record<string, unknown>;
     }> = [];
 
     // Track status changes
@@ -408,7 +408,7 @@ export async function PATCH(
     }
 
     // Create a general update log for other changes
-    const otherChanges: Record<string, any> = {};
+    const otherChanges: Record<string, unknown> = {};
     if (title && title !== task.title) {
       otherChanges.title = { old: task.title, new: title };
     }

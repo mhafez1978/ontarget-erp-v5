@@ -526,7 +526,7 @@ export async function PATCH(
     const auditLogs: Array<{
       action: string;
       description: string;
-      metadata: any;
+      metadata: Record<string, unknown>;
     }> = [];
 
     // Track status changes with specific actions
@@ -613,7 +613,7 @@ export async function PATCH(
     }
 
     // Create a general update log if there are other changes
-    const otherChanges: Record<string, any> = {};
+    const otherChanges: Record<string, unknown> = {};
     if (name && name !== existingProject.name) {
       otherChanges.name = { old: existingProject.name, new: name };
     }
