@@ -176,7 +176,10 @@ export async function POST(req: NextRequest) {
 
         if (!resp.ok) {
           // Prefer detailed error message from AAD if present
-          const errMsg = (json && (json.error_description || json.error)) || txt || `status ${resp.status}`;
+          const errMsg =
+            (json && (json.error_description || json.error)) ||
+            txt ||
+            `status ${resp.status}`;
           return `Token acquisition failed: ${errMsg}`;
         }
 
@@ -186,7 +189,9 @@ export async function POST(req: NextRequest) {
 
         return null;
       } catch (err) {
-        return `Token request failed: ${err instanceof Error ? err.message : String(err)}`;
+        return `Token request failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`;
       }
     }
 

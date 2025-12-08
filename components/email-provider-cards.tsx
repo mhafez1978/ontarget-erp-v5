@@ -891,17 +891,54 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
             <Alert className="mb-4 flex flex-row gap-3 bg-emerald-100">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
               <div className="flex-1 text-sm">
-                <strong>Setup Required:</strong> Register an app in{" "}
-                <a
-                  href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline hover:text-primary/80"
-                >
-                  Azure Portal
-                </a>
-                , grant <strong>Mail.Send</strong> permission, and create a
-                client secret.
+                <div className="mb-1 font-semibold">Setup required</div>
+                <ol className="list-decimal list-inside ml-3 space-y-2 text-sm text-muted-foreground">
+                  <li>
+                    Register an app in
+                    <a
+                      href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-1 text-primary underline hover:text-primary/80"
+                    >
+                      Azure Portal
+                    </a>
+                    . Copy the <strong>Application (client) ID</strong> and
+                    <strong className="ml-1">Directory (tenant) ID</strong>.
+                  </li>
+
+                  <li>
+                    Create a <strong>Client secret</strong> (Certificates &amp;
+                    secrets) and save the secret value now — it is shown only
+                    once.
+                  </li>
+
+                  <li>
+                    Add API permissions → Microsoft Graph →{" "}
+                    <strong>Application permissions</strong> → select{" "}
+                    <strong>Mail.Send</strong> and add it.
+                  </li>
+
+                  <li>
+                    <div className="font-medium">
+                      Grant tenant admin consent (required)
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 ml-4">
+                      Open the app → <strong>API permissions</strong> → click
+                      <strong className="mx-1">
+                        Grant admin consent for &lt;your tenant&gt;
+                      </strong>{" "}
+                      and confirm. This must be done by a tenant administrator —
+                      without admin consent app-only sends will fail.
+                    </div>
+                  </li>
+
+                  <li>
+                    Redirect URIs (Reply URLs) and Front-channel logout are only
+                    required for delegated (user) flows; they are NOT required
+                    for server-side app-only (client_credentials) mail sending.
+                  </li>
+                </ol>
               </div>
             </Alert>
             <div className="space-y-4">
