@@ -54,7 +54,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "via.placeholder.com",
+        hostname: "robohash.org",
         pathname: "/**",
       },
     ],
@@ -68,7 +68,7 @@ const nextConfig: NextConfig = {
       "images.unsplash.com",
       "avatar.vercel.sh",
       "encrypted-tbn0.gstatic.com",
-      "via.placeholder.com",
+      "robohash.org",
     ],
   },
   typescript: {
