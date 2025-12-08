@@ -146,6 +146,7 @@ export async function POST(req: NextRequest) {
           break;
 
         case "OFFICE365":
+          // Use Microsoft Graph client_credentials (app-only) to send mail instead of SMTP XOAUTH2
           if (
             !data.office365TenantId ||
             !data.office365ClientId ||
@@ -160,20 +161,93 @@ export async function POST(req: NextRequest) {
               { status: 400 }
             );
           }
-          transporter = nodemailer.createTransport({
-            host: "smtp.office365.com",
-            port: 587,
-            secure: false,
-            auth: {
-              type: "OAuth2",
-              user: data.office365FromEmail,
-              clientId: data.office365ClientId,
-              clientSecret: data.office365ClientSecret,
-              tenantId: data.office365TenantId,
+
+          // Acquire a token using client_credentials scope (app-only)
+          const tokenUrl = `https://login.microsoftonline.com/${encodeURIComponent(
+            data.office365TenantId as string
+          )}/oauth2/v2.0/token`;
+
+          const tokenBody = new URLSearchParams({
+            client_id: data.office365ClientId as string,
+            client_secret: data.office365ClientSecret as string,
+            scope: "https://graph.microsoft.com/.default",
+            grant_type: "client_credentials",
+          });
+
+          const tokenResp = await fetch(tokenUrl, {
+            method: "POST",
+            headers: { "content-type": "application/x-www-form-urlencoded" },
+            body: tokenBody.toString(),
+            // keep a shorter timeout handled by runtimes; explicit timeouts handled upstream
+          });
+
+          if (!tokenResp.ok) {
+            const txt = await tokenResp.text().catch(() => "");
+            console.error(
+              "Office365 token endpoint failed:",
+              tokenResp.status,
+              txt
+            );
+            return NextResponse.json(
+              {
+                error: `Failed to acquire Microsoft Graph token (status: ${tokenResp.status}). Make sure your app has application permissions (Mail.Send) and admin consent.`,
+              },
+              { status: 500 }
+            );
+          }
+
+          const tokenData = await tokenResp.json().catch(() => null);
+          if (!tokenData || !tokenData.access_token) {
+            console.error(
+              "Office365 token response missing access_token:",
+              tokenData
+            );
+            return NextResponse.json(
+              { error: "Failed to acquire access token from Microsoft Graph" },
+              { status: 500 }
+            );
+          }
+
+          // Call Graph sendMail as app (send as userPrincipalName)
+          const accessToken = tokenData.access_token as string;
+          const graphUrl = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(
+            data.office365FromEmail as string
+          )}/sendMail`;
+
+          const html = `<!DOCTYPE html><html><body><div style=\"font-family:Arial,sans-serif\">Test Email from OnTarget ERP (Microsoft Graph)</div></body></html>`;
+
+          const sendResp = await fetch(graphUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
             },
-            connectionTimeout: 10000,
-            socketTimeout: 10000,
-          } as any);
+            body: JSON.stringify({
+              message: {
+                subject: "Test Email - OnTarget ERP",
+                body: { contentType: "HTML", content: html },
+                toRecipients: [{ emailAddress: { address: testEmail } }],
+              },
+              saveToSentItems: false,
+            }),
+          });
+
+          if (!sendResp.ok) {
+            const respText = await sendResp.text().catch(() => "");
+            console.error("Graph sendMail failed:", sendResp.status, respText);
+            return NextResponse.json(
+              {
+                error: `Failed to send test mail with Microsoft Graph (status: ${sendResp.status}). Ensure Mail.Send (Application) permission is granted and admin consent is completed.`,
+              },
+              { status: 500 }
+            );
+          }
+
+          // If Graph returns success (202 or 200) return early with success
+          return NextResponse.json({
+            success: true,
+            message: `Connection successful! Test email sent to ${testEmail}`,
+          });
           break;
 
         case "SENDGRID":

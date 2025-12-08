@@ -598,8 +598,8 @@ export default function ProfilePage() {
                   </p>
 
                   {formData.addressLine1 && (
-                    <div className="mt-4 p-4 bg-emerald-300/80 text-black rounded-lg">
-                      <p className="text-sm font-medium mb-2">
+                    <div className="mt-4 p-4 bg-green-400/80 text-black rounded-lg">
+                      <p className="text-sm font-medium border-b-2 border-black pb-4 mb-4">
                         Current Stored Address:
                       </p>
                       <p className="text-sm">{formData.addressLine1}</p>

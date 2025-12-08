@@ -139,6 +139,62 @@ export async function POST(req: NextRequest) {
     });
     const data = emailProviderSchema.parse(body);
 
+    // Helper: validate Office365 app-only (client_credentials) token acquisition
+    async function validateOffice365ClientCredentials(
+      tenantId?: string | null,
+      clientId?: string | null,
+      clientSecret?: string | null
+    ) {
+      if (!tenantId || !clientId || !clientSecret) return null;
+
+      try {
+        const tokenUrl = `https://login.microsoftonline.com/${encodeURIComponent(
+          tenantId
+        )}/oauth2/v2.0/token`;
+
+        const params = new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          scope: "https://graph.microsoft.com/.default",
+          grant_type: "client_credentials",
+        });
+
+        const resp = await fetch(tokenUrl, {
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
+          body: params.toString(),
+        });
+
+        const txt = await resp.text().catch(() => "");
+        const json = (() => {
+          try {
+            return JSON.parse(txt);
+          } catch (_) {
+            return null;
+          }
+        })();
+
+        if (!resp.ok) {
+          // Prefer detailed error message from AAD if present
+          const errMsg =
+            (json && (json.error_description || json.error)) ||
+            txt ||
+            `status ${resp.status}`;
+          return `Token acquisition failed: ${errMsg}`;
+        }
+
+        if (!json || !json.access_token) {
+          return `Token response missing access_token: ${txt}`;
+        }
+
+        return null;
+      } catch (err) {
+        return `Token request failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`;
+      }
+    }
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -149,6 +205,18 @@ export async function POST(req: NextRequest) {
       const existing = await db.emailProvider.findFirst({
         where: { scope: "GLOBAL" },
       });
+
+      // When configuring Office365 (global), validate client credentials before saving
+      if (data.provider === "OFFICE365") {
+        const credsError = await validateOffice365ClientCredentials(
+          data.office365TenantId,
+          data.office365ClientId,
+          data.office365ClientSecret as string | null
+        );
+        if (credsError) {
+          return NextResponse.json({ error: credsError }, { status: 400 });
+        }
+      }
 
       if (existing) {
         // Update existing
@@ -283,6 +351,18 @@ export async function POST(req: NextRequest) {
       const existing = await db.emailProvider.findFirst({
         where: { scope: data.companyId },
       });
+
+      // For company-level settings, validate Office365 client_credentials before saving
+      if (data.provider === "OFFICE365") {
+        const credsError = await validateOffice365ClientCredentials(
+          data.office365TenantId,
+          data.office365ClientId,
+          data.office365ClientSecret as string | null
+        );
+        if (credsError) {
+          return NextResponse.json({ error: credsError }, { status: 400 });
+        }
+      }
 
       if (existing) {
         // Update existing
