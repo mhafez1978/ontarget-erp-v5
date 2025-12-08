@@ -61,7 +61,10 @@ export function EmailProviderSettings({
     message: string;
   } | null>(null);
   // Raw diagnostics payload returned from the server (full JSON)
-  const [testDiagnostics, setTestDiagnostics] = useState<Record<string, any> | null>(null);
+  const [testDiagnostics, setTestDiagnostics] = useState<Record<
+    string,
+    any
+  > | null>(null);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
 
   // SMTP fields
@@ -458,28 +461,52 @@ export function EmailProviderSettings({
       {/* Admin help / quick setup panel */}
       <Card className="bg-muted/10 border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">Quick Office 365 setup</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Quick Office 365 setup
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm text-muted-foreground">
             <p>
-              Prefer Microsoft Graph (app-only) for server-side email. Follow the steps below once and then paste the Tenant ID, Client ID, and Client Secret here.
+              Recommended: use Microsoft Graph (app-only / client_credentials) for
+              server-sent email. It avoids per-user refresh tokens and is the
+              preferred secure server flow for backend mail delivery.
             </p>
+
             <ol className="list-decimal list-inside space-y-1 pl-1">
               <li>
-                Register a new App in <strong>Azure Active Directory &gt; App registrations</strong>.
+                Register a new App in <strong>Azure Active Directory &gt; App
+                registrations</strong> (example name: <em>OnTarget ERP Mailer</em>).
               </li>
+
               <li>
-                Under <strong>API permissions</strong> add <em>Microsoft Graph → Application permissions → Mail.Send</em> then click <strong>Grant admin consent</strong>.
+                Under <strong>Certificates & secrets</strong> create a new client
+                secret — copy its value now (it is only shown once).
               </li>
+
               <li>
-                Create a <strong>Client secret</strong> under <strong>Certificates & secrets</strong> and copy its value into the <em>Client Secret</em> field below.
+                Under <strong>API permissions</strong>, add
+                <strong> Microsoft Graph → Application permissions → Mail.Send</strong>
+                and then click <strong>Grant admin consent for &lt;your tenant&gt;</strong>.
+                (Admin consent is required for app-only access.)
               </li>
+
               <li>
-                Set <strong>From Email</strong> to the mailbox (userPrincipalName) you want the app to send as (e.g. admin@yourdomain.com).
+                Redirect URIs (Reply URLs) and the Front-channel logout URL are
+                relevant only for delegated/auth-code flows. For server-side
+                client_credentials you DO NOT need Redirect URIs.
               </li>
+
               <li>
-                Save and click <strong>Test</strong> — the server will request a token using client_credentials and call Microsoft Graph to send a test message.
+                Choose a mailbox-enabled From Email (userPrincipalName) that the
+                app will send as (e.g. admin@yourdomain.com).
+              </li>
+
+              <li>
+                Paste Tenant ID, Client ID, Client Secret and From Email into
+                the form below, Save, and click <strong>Test</strong>. The
+                server will obtain a token (client_credentials) and attempt a
+                Graph sendMail as a test.
               </li>
             </ol>
 
@@ -503,11 +530,12 @@ export function EmailProviderSettings({
                 className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-semibold border bg-muted/5 hover:bg-muted/10"
                 onClick={() => {
                   try {
-                    navigator.clipboard.writeText(`Scope required: Mail.Send (Application) — ensure admin consent`);
-                    // eslint-disable-next-line no-alert
-                    alert('Copied required permission note to clipboard — paste into Azure permission notes if needed');
+                    navigator.clipboard.writeText(
+                      "Scope required: Mail.Send (Application) — ensure admin consent"
+                    );
+                    toast.success("Copied required permission note to clipboard");
                   } catch (e) {
-                    // ignore
+                    toast.error("Failed to copy to clipboard");
                   }
                 }}
               >
@@ -783,13 +811,15 @@ export function EmailProviderSettings({
                   Email address that will send emails (must have a mailbox)
                 </p>
               </div>
-                {/* Office365 tips (inline) */}
-                {provider === 'OFFICE365' && (
-                  <div className="rounded-lg border px-4 py-3 text-sm text-muted-foreground mt-3 bg-muted/5">
-                    We recommend using Microsoft Graph (application permissions) for server-sent mail.
-                    Make sure your AAD app has <strong>Mail.Send (Application)</strong> and admin consent. Use the panel above for setup steps.
-                  </div>
-                )}
+              {/* Office365 tips (inline) */}
+              {provider === "OFFICE365" && (
+                <div className="rounded-lg border px-4 py-3 text-sm text-muted-foreground mt-3 bg-muted/5">
+                  We recommend using Microsoft Graph (application permissions)
+                  for server-sent mail. Make sure your AAD app has{" "}
+                  <strong>Mail.Send (Application)</strong> and admin consent.
+                  Use the panel above for setup steps.
+                </div>
+              )}
             </TabsContent>
 
             {/* SendGrid Configuration */}
@@ -1008,49 +1038,63 @@ export function EmailProviderSettings({
           </div>
 
           {/* Diagnostics panel for admins */}
-          {testDiagnostics && (userRole === "ADMIN" || userRole === "SUPER_ADMIN") && (
-            <div className="mt-3 rounded-lg border bg-muted/5 p-3 text-sm">
-              <div className="flex items-center justify-between mb-2">
-                <div className="font-semibold">Diagnostics</div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="inline-flex items-center px-2 py-1 text-xs border rounded hover:bg-muted/10"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(JSON.stringify(testDiagnostics, null, 2));
-                        toast.success("Diagnostics copied to clipboard");
-                      } catch (e) {
-                        toast.error("Failed to copy diagnostics");
-                      }
-                    }}
-                  >
-                    Copy
-                  </button>
+          {testDiagnostics &&
+            (userRole === "ADMIN" || userRole === "SUPER_ADMIN") && (
+              <div className="mt-3 rounded-lg border bg-muted/5 p-3 text-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="font-semibold">Diagnostics</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="inline-flex items-center px-2 py-1 text-xs border rounded hover:bg-muted/10"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            JSON.stringify(testDiagnostics, null, 2)
+                          );
+                          toast.success("Diagnostics copied to clipboard");
+                        } catch (e) {
+                          toast.error("Failed to copy diagnostics");
+                        }
+                      }}
+                    >
+                      Copy
+                    </button>
 
-                  <button
-                    type="button"
-                    className="inline-flex items-center px-2 py-1 text-xs border rounded hover:bg-muted/10"
-                    onClick={() => setIsDiagnosticsOpen((s) => !s)}
-                  >
-                    {isDiagnosticsOpen ? "Hide details" : "Show details"}
-                  </button>
+                    <button
+                      type="button"
+                      className="inline-flex items-center px-2 py-1 text-xs border rounded hover:bg-muted/10"
+                      onClick={() => setIsDiagnosticsOpen((s) => !s)}
+                    >
+                      {isDiagnosticsOpen ? "Hide details" : "Show details"}
+                    </button>
+                  </div>
+
+                  {/* Quick verify — token + send examples for admins */}
+                  <div className="mt-4 rounded border bg-background p-3 text-xs text-muted-foreground">
+                    <div className="font-semibold mb-2">Quick verification (advanced)</div>
+                    <div className="mb-2">Run these commands from a shell to check token acquisition and a test send. Replace placeholders.</div>
+                    <pre className="text-xs bg-muted/5 p-2 rounded overflow-auto">{`curl -s -X POST "https://login.microsoftonline.com/<TENANT_ID>/oauth2/v2.0/token" -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=<CLIENT_ID>&client_secret=<CLIENT_SECRET>&scope=https://graph.microsoft.com/.default&grant_type=client_credentials"`}</pre>
+                    <pre className="text-xs bg-muted/5 p-2 rounded overflow-auto mt-2">{`curl -s -X POST "https://graph.microsoft.com/v1.0/users/<FROM_EMAIL>/sendMail" -H "Authorization: Bearer <ACCESS_TOKEN>" -H "Content-Type: application/json" -d '{"message":{"subject":"Test Email","body":{"contentType":"HTML","content":"Test message"},"toRecipients":[{"emailAddress":{"address":"<RECIPIENT>"}}]}}'`}</pre>
+                    <div className="text-[11px] text-muted-foreground mt-2">If token command returns error JSON (AADSTS...), share it here and I’ll decode it. If send returns AccessDenied, make sure Mail.Send (Application) permission has admin consent and the mailbox exists.</div>
+                  </div>
                 </div>
+
+                {!isDiagnosticsOpen ? (
+                  <div className="text-xs text-muted-foreground">
+                    {testDiagnostics.success
+                      ? `Last test: success — ${testDiagnostics.message ?? ""}`
+                      : `Last test: failed — ${
+                          testDiagnostics.error ?? testDiagnostics.message ?? ""
+                        }`}
+                  </div>
+                ) : (
+                  <pre className="mt-2 max-h-72 overflow-auto rounded bg-background p-3 text-xs">
+                    {JSON.stringify(testDiagnostics, null, 2)}
+                  </pre>
+                )}
               </div>
-
-              {!isDiagnosticsOpen ? (
-                <div className="text-xs text-muted-foreground">
-                  {testDiagnostics.success
-                    ? `Last test: success — ${testDiagnostics.message ?? ""}`
-                    : `Last test: failed — ${testDiagnostics.error ?? testDiagnostics.message ?? ""}`}
-                </div>
-              ) : (
-                <pre className="mt-2 max-h-72 overflow-auto rounded bg-background p-3 text-xs">
-                  {JSON.stringify(testDiagnostics, null, 2)}
-                </pre>
-              )}
-            </div>
-          )}
+            )}
         </CardContent>
       </Card>
     </div>
