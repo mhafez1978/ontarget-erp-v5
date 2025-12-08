@@ -156,8 +156,7 @@ export async function createSession(
 
   let sessionGeo = options.geoLocation;
   if (!sessionGeo) {
-    sessionGeo =
-      (await fetchServerGeoLocation(options.request)) ?? undefined;
+    sessionGeo = (await fetchServerGeoLocation(options.request)) ?? undefined;
   }
 
   if (!sessionGeo && options.request) {
@@ -182,8 +181,7 @@ export async function createSession(
       sessionIpv6: sessionGeo?.ipv6 || null,
       sessionCity: sessionGeo?.city || null,
       sessionState: sessionGeo?.region || null,
-      sessionCountry:
-        sessionGeo?.country_name || sessionGeo?.country || null,
+      sessionCountry: sessionGeo?.country_name || sessionGeo?.country || null,
       sessionCountryFlag: sessionGeo?.flag || null,
       sessionUserAgent: userAgent || null,
     },
@@ -283,12 +281,15 @@ export async function refreshSession(
     const newExpires = new Date();
     newExpires.setDate(newExpires.getDate() + expiresInDays);
 
-    await db.session.update({
+    // Use updateMany so we don't get a P2025 when the session is missing
+    // (e.g. expired/removed but token still in client cookie). updateMany
+    // will return a count and won't throw if nothing was updated.
+    const result = await db.session.updateMany({
       where: { sessionToken },
       data: { expires: newExpires },
     });
 
-    return true;
+    return result.count > 0;
   } catch (error) {
     console.error("[Session Refresh Error]:", error);
     return false;
@@ -300,10 +301,9 @@ export async function refreshSession(
  */
 export async function revokeSession(sessionToken: string): Promise<boolean> {
   try {
-    await db.session.delete({
-      where: { sessionToken },
-    });
-    return true;
+    // deleteMany avoids throwing if the session record doesn't exist.
+    const result = await db.session.deleteMany({ where: { sessionToken } });
+    return result.count > 0;
   } catch (error) {
     console.error("[Session Revoke Error]:", error);
     return false;
@@ -315,10 +315,10 @@ export async function revokeSession(sessionToken: string): Promise<boolean> {
  */
 export async function revokeSessionById(sessionId: string): Promise<boolean> {
   try {
-    await db.session.delete({
-      where: { id: sessionId },
-    });
-    return true;
+    // delete by id is expected, but use deleteMany for safety to avoid
+    // Prisma errors if the record is missing.
+    const result = await db.session.deleteMany({ where: { id: sessionId } });
+    return result.count > 0;
   } catch (error) {
     console.error("[Session Revoke Error]:", error);
     return false;

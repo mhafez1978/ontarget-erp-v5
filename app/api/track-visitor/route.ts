@@ -49,7 +49,11 @@ export async function POST(request: NextRequest) {
     const sessionToken = request.cookies.get("sessionToken")?.value;
     if (sessionToken) {
       try {
-        await db.session.update({
+        // Use updateMany instead of update so we don't get a P2025 error when
+        // the session does not exist. updateMany returns { count } and will
+        // simply update 0 rows if no match is found — we can log that fact for
+        // debugging without causing an exception.
+        const result = await db.session.updateMany({
           where: { sessionToken },
           data: {
             sessionIpAddress: ipAddress || ipv4 || ipv6 || null,
@@ -61,8 +65,20 @@ export async function POST(request: NextRequest) {
             sessionCountryFlag: countryFlag || null,
           },
         });
+
+        if (result.count === 0) {
+          // Not an error — it's expected in some flows: the cookie existed but
+          // the DB session row was already removed/expired. Keep this at debug
+          // level to avoid alarm while still giving developers visibility.
+          console.debug(
+            "No session row found for token when updating geo (sessionToken)"
+          );
+        }
       } catch (error) {
-        console.error("Failed to update session geo info from visitor tracking:", error);
+        console.error(
+          "Failed to update session geo info from visitor tracking:",
+          error
+        );
       }
     }
 
