@@ -59,6 +59,9 @@ export function EmailProviderSettings({
     success: boolean;
     message: string;
   } | null>(null);
+  // Raw diagnostics payload returned from the server (full JSON)
+  const [testDiagnostics, setTestDiagnostics] = useState<Record<string, any> | null>(null);
+  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
 
   // SMTP fields
   const [smtpHost, setSmtpHost] = useState("");
@@ -301,6 +304,8 @@ export function EmailProviderSettings({
       });
 
       const data = await response.json();
+      // Save raw diagnostics (helps admins debug token/grant/network issues)
+      setTestDiagnostics(data || null);
 
       if (response.ok) {
         setTestResult({ success: true, message: "Connection successful!" });
@@ -995,6 +1000,51 @@ export function EmailProviderSettings({
               </span>
             )}
           </div>
+
+          {/* Diagnostics panel for admins */}
+          {testDiagnostics && (userRole === "ADMIN" || userRole === "SUPER_ADMIN") && (
+            <div className="mt-3 rounded-lg border bg-muted/5 p-3 text-sm">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold">Diagnostics</div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex items-center px-2 py-1 text-xs border rounded hover:bg-muted/10"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(JSON.stringify(testDiagnostics, null, 2));
+                        toast.success("Diagnostics copied to clipboard");
+                      } catch (e) {
+                        toast.error("Failed to copy diagnostics");
+                      }
+                    }}
+                  >
+                    Copy
+                  </button>
+
+                  <button
+                    type="button"
+                    className="inline-flex items-center px-2 py-1 text-xs border rounded hover:bg-muted/10"
+                    onClick={() => setIsDiagnosticsOpen((s) => !s)}
+                  >
+                    {isDiagnosticsOpen ? "Hide details" : "Show details"}
+                  </button>
+                </div>
+              </div>
+
+              {!isDiagnosticsOpen ? (
+                <div className="text-xs text-muted-foreground">
+                  {testDiagnostics.success
+                    ? `Last test: success — ${testDiagnostics.message ?? ""}`
+                    : `Last test: failed — ${testDiagnostics.error ?? testDiagnostics.message ?? ""}`}
+                </div>
+              ) : (
+                <pre className="mt-2 max-h-72 overflow-auto rounded bg-background p-3 text-xs">
+                  {JSON.stringify(testDiagnostics, null, 2)}
+                </pre>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
