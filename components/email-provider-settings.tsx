@@ -25,6 +25,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
+import EmailProviderWizard from "./email-provider-wizard";
 
 interface Company {
   id: string;
@@ -482,7 +483,7 @@ export function EmailProviderSettings({
               </li>
             </ol>
 
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mt-2 items-center">
               <a
                 className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-semibold bg-primary/10 border border-primary/20 hover:bg-primary/20"
                 href="https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps"
@@ -491,6 +492,11 @@ export function EmailProviderSettings({
               >
                 Open Azure App registrations
               </a>
+
+              {/* Wizard trigger */}
+              <div>
+                <EmailProviderWizard />
+              </div>
 
               <button
                 type="button"
