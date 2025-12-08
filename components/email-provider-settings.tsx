@@ -449,6 +449,63 @@ export function EmailProviderSettings({
 
   return (
     <div className="space-y-6">
+      {/* Admin help / quick setup panel */}
+      <Card className="bg-muted/10 border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">Quick Office 365 setup</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              Prefer Microsoft Graph (app-only) for server-side email. Follow the steps below once and then paste the Tenant ID, Client ID, and Client Secret here.
+            </p>
+            <ol className="list-decimal list-inside space-y-1 pl-1">
+              <li>
+                Register a new App in <strong>Azure Active Directory &gt; App registrations</strong>.
+              </li>
+              <li>
+                Under <strong>API permissions</strong> add <em>Microsoft Graph → Application permissions → Mail.Send</em> then click <strong>Grant admin consent</strong>.
+              </li>
+              <li>
+                Create a <strong>Client secret</strong> under <strong>Certificates & secrets</strong> and copy its value into the <em>Client Secret</em> field below.
+              </li>
+              <li>
+                Set <strong>From Email</strong> to the mailbox (userPrincipalName) you want the app to send as (e.g. admin@yourdomain.com).
+              </li>
+              <li>
+                Save and click <strong>Test</strong> — the server will request a token using client_credentials and call Microsoft Graph to send a test message.
+              </li>
+            </ol>
+
+            <div className="flex flex-wrap gap-2 mt-2">
+              <a
+                className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-semibold bg-primary/10 border border-primary/20 hover:bg-primary/20"
+                href="https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                Open Azure App registrations
+              </a>
+
+              <button
+                type="button"
+                className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-semibold border bg-muted/5 hover:bg-muted/10"
+                onClick={() => {
+                  try {
+                    navigator.clipboard.writeText(`Scope required: Mail.Send (Application) — ensure admin consent`);
+                    // eslint-disable-next-line no-alert
+                    alert('Copied required permission note to clipboard — paste into Azure permission notes if needed');
+                  } catch (e) {
+                    // ignore
+                  }
+                }}
+              >
+                Copy quick note
+              </button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       {/* Company Selector for ADMIN */}
       {userRole === "ADMIN" && (
         <Card>
@@ -715,6 +772,13 @@ export function EmailProviderSettings({
                   Email address that will send emails (must have a mailbox)
                 </p>
               </div>
+                {/* Office365 tips (inline) */}
+                {provider === 'OFFICE365' && (
+                  <div className="rounded-lg border px-4 py-3 text-sm text-muted-foreground mt-3 bg-muted/5">
+                    We recommend using Microsoft Graph (application permissions) for server-sent mail.
+                    Make sure your AAD app has <strong>Mail.Send (Application)</strong> and admin consent. Use the panel above for setup steps.
+                  </div>
+                )}
             </TabsContent>
 
             {/* SendGrid Configuration */}
