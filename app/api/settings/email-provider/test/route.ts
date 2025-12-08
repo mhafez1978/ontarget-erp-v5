@@ -243,8 +243,11 @@ export async function POST(req: NextRequest) {
             );
           }
 
-          // If Graph returns success (202 or 200), fall through to return success message below
-          break;
+          // If Graph returns success (202 or 200) return early with success
+          return NextResponse.json({
+            success: true,
+            message: `Connection successful! Test email sent to ${testEmail}`,
+          });
           break;
 
         case "SENDGRID":
