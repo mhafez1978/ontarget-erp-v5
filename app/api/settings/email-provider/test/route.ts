@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { validateSessionForAPI } from "@/lib/validate-session";
-import { db } from "@/lib/db";
 import nodemailer from "nodemailer";
-import { encrypt, decrypt } from "@/lib/crypto";
-import { validateSession } from "@/lib/session-manager";
+import { Client } from "@microsoft/microsoft-graph-client";
+import { ClientSecretCredential } from "@azure/identity";
+import { validateSessionForAPI } from "@/lib/validate-session";
+import { decrypt } from "@/lib/encryption";
 
 const testSchema = z.object({
   provider: z.enum([
@@ -43,18 +43,9 @@ const testSchema = z.object({
 // POST - Test email provider connection
 export async function POST(req: NextRequest) {
   try {
-    const sessionToken = req.cookies.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(req);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const body = await req.json();
@@ -62,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     // Create test transporter based on provider type
     let transporter;
-    let testEmail = validation.user.email || "test@example.com";
+    const testEmail = validation.user.email || "test@example.com";
 
     try {
       switch (data.provider) {
@@ -146,7 +137,7 @@ export async function POST(req: NextRequest) {
           break;
 
         case "OFFICE365":
-          // Use Microsoft Graph client_credentials (app-only) to send mail instead of SMTP XOAUTH2
+          // Use Microsoft Graph with client credentials (app-only) to send mail
           if (
             !data.office365TenantId ||
             !data.office365ClientId ||
@@ -162,92 +153,148 @@ export async function POST(req: NextRequest) {
             );
           }
 
-          // Acquire a token using client_credentials scope (app-only)
-          const tokenUrl = `https://login.microsoftonline.com/${encodeURIComponent(
-            data.office365TenantId as string
-          )}/oauth2/v2.0/token`;
-
-          const tokenBody = new URLSearchParams({
-            client_id: data.office365ClientId as string,
-            client_secret: data.office365ClientSecret as string,
-            scope: "https://graph.microsoft.com/.default",
-            grant_type: "client_credentials",
-          });
-
-          const tokenResp = await fetch(tokenUrl, {
-            method: "POST",
-            headers: { "content-type": "application/x-www-form-urlencoded" },
-            body: tokenBody.toString(),
-            // keep a shorter timeout handled by runtimes; explicit timeouts handled upstream
-          });
-
-          if (!tokenResp.ok) {
-            const txt = await tokenResp.text().catch(() => "");
-            console.error(
-              "Office365 token endpoint failed:",
-              tokenResp.status,
-              txt
+          // Create a client credential and Graph client for app-only send
+          try {
+            // Decrypt the client secret (it's encrypted in the database)
+            const decryptedSecret = data.office365ClientSecret 
+              ? decrypt(String(data.office365ClientSecret))
+              : "";
+            
+            // Trim whitespace to reduce paste errors
+            const credential = new ClientSecretCredential(
+              data.office365TenantId?.trim(),
+              data.office365ClientId?.trim(),
+              decryptedSecret.trim()
             );
-            return NextResponse.json(
-              {
-                error: `Failed to acquire Microsoft Graph token (status: ${tokenResp.status}). Make sure your app has application permissions (Mail.Send) and admin consent.`,
+
+            const graphClient = Client.initWithMiddleware({
+              authProvider: {
+                getAccessToken: async () => {
+                  const token = await credential.getToken(
+                    "https://graph.microsoft.com/.default"
+                  );
+                  return token?.token || "";
+                },
               },
-              { status: 500 }
-            );
-          }
+            });
 
-          const tokenData = await tokenResp.json().catch(() => null);
-          if (!tokenData || !tokenData.access_token) {
-            console.error(
-              "Office365 token response missing access_token:",
-              tokenData
-            );
-            return NextResponse.json(
-              { error: "Failed to acquire access token from Microsoft Graph" },
-              { status: 500 }
-            );
-          }
-
-          // Call Graph sendMail as app (send as userPrincipalName)
-          const accessToken = tokenData.access_token as string;
-          const graphUrl = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(
-            data.office365FromEmail as string
-          )}/sendMail`;
-
-          const html = `<!DOCTYPE html><html><body><div style=\"font-family:Arial,sans-serif\">Test Email from OnTarget ERP (Microsoft Graph)</div></body></html>`;
-
-          const sendResp = await fetch(graphUrl, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+            // Prepare Graph message payload
+            const graphMessage = {
               message: {
                 subject: "Test Email - OnTarget ERP",
-                body: { contentType: "HTML", content: html },
-                toRecipients: [{ emailAddress: { address: testEmail } }],
+                body: {
+                  contentType: "HTML",
+                  content: `<div>Test message from OnTarget ERP using Microsoft Graph at ${new Date().toLocaleString()}</div>`,
+                },
+                toRecipients: [
+                  {
+                    emailAddress: { address: testEmail },
+                  },
+                ],
+                from: {
+                  emailAddress: { address: data.office365FromEmail },
+                },
               },
-              saveToSentItems: false,
-            }),
-          });
+            };
 
-          if (!sendResp.ok) {
-            const respText = await sendResp.text().catch(() => "");
-            console.error("Graph sendMail failed:", sendResp.status, respText);
+            // Send mail as the mailbox specified
+            await graphClient
+              .api(`/users/${data.office365FromEmail}/sendMail`)
+              .post(graphMessage);
+
+            // Respond success early and skip nodemailer verification
+            return NextResponse.json({
+              success: true,
+              message: `Connection successful! Test email sent to ${testEmail} using Microsoft Graph`,
+            });
+          } catch (graphErr) {
+            // Provide a clearer error message for common Azure AD client secret mistakes
+            console.error("Office365 Graph send failed:", graphErr);
+
+            // Extract error details from Graph API response
+            const errorObj = graphErr as {
+              statusCode?: number;
+              code?: string;
+              body?: string;
+              message?: string;
+            };
+
+            const messageBody = errorObj?.body || errorObj?.message || String(graphErr);
+            const statusCode = errorObj?.statusCode;
+            const errorCode = errorObj?.code;
+
+            // Handle specific error cases
+            if (typeof messageBody === "string") {
+              // AADSTS7000215 -> Invalid client secret
+              if (messageBody.includes("7000215")) {
+                return NextResponse.json(
+                  {
+                    error:
+                      "Invalid client secret. Ensure you've pasted the client secret VALUE (not the secret ID) and that the secret is active/valid in Azure AD.",
+                    details: messageBody,
+                  },
+                  { status: 400 }
+                );
+              }
+
+              // 403 Forbidden - most common causes
+              if (statusCode === 403 || messageBody.includes("403") || errorCode === "Forbidden") {
+                return NextResponse.json(
+                  {
+                    error: "Permission denied (403). Common causes:",
+                    causes: [
+                      "1. The app lacks 'Mail.Send' application permission (not delegated)",
+                      "2. Admin consent hasn't been granted for the app",
+                      "3. The sender email doesn't exist or isn't a valid mailbox",
+                      "4. Application permissions require the mailbox to be a shared mailbox or the app needs 'Mail.Send' on that specific mailbox",
+                    ],
+                    suggestion: "Verify in Azure Portal: App Registration > API Permissions > Ensure 'Mail.Send' (Application) is present and shows 'Granted for [tenant]'",
+                    details: messageBody,
+                  },
+                  { status: 403 }
+                );
+              }
+
+              // 401 Unauthorized - authentication issue
+              if (statusCode === 401 || messageBody.includes("401") || errorCode === "Unauthorized") {
+                return NextResponse.json(
+                  {
+                    error: "Authentication failed (401). Check:",
+                    causes: [
+                      "1. Tenant ID, Client ID, or Client Secret is incorrect",
+                      "2. Client secret has expired",
+                      "3. App registration has been deleted or disabled",
+                    ],
+                    details: messageBody,
+                  },
+                  { status: 401 }
+                );
+              }
+
+              // 404 Not Found - mailbox doesn't exist
+              if (statusCode === 404 || messageBody.includes("404") || errorCode === "ResourceNotFound") {
+                return NextResponse.json(
+                  {
+                    error: `Mailbox not found (404). The email '${data.office365FromEmail}' doesn't exist or isn't accessible.`,
+                    suggestion: "Verify the email address is correct and is a licensed Microsoft 365 mailbox.",
+                    details: messageBody,
+                  },
+                  { status: 404 }
+                );
+              }
+            }
+
+            // Fall-through — return Graph error details for debugging
             return NextResponse.json(
               {
-                error: `Failed to send test mail with Microsoft Graph (status: ${sendResp.status}). Ensure Mail.Send (Application) permission is granted and admin consent is completed.`,
+                error: "Office365 Graph send failed",
+                statusCode,
+                errorCode,
+                details: messageBody,
               },
               { status: 500 }
             );
           }
-
-          // If Graph returns success (202 or 200) return early with success
-          return NextResponse.json({
-            success: true,
-            message: `Connection successful! Test email sent to ${testEmail}`,
-          });
           break;
 
         case "SENDGRID":

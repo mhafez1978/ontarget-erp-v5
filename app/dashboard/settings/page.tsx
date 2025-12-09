@@ -233,8 +233,7 @@ export default function SettingsPage() {
           const oauthData = await oauthResponse.json();
           providers = oauthData.providers || [];
 
-          // Set scope and customization permission
-          setOauthScope(oauthData.scope || "COMPANY");
+          // Set customization permission
           setCanCustomizeOAuth(oauthData.canCustomize || false);
         }
 

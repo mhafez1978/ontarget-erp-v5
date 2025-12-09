@@ -152,6 +152,14 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
   const [office365ClientId, setOffice365ClientId] = useState("");
   const [office365ClientSecret, setOffice365ClientSecret] = useState("");
   const [office365FromEmail, setOffice365FromEmail] = useState("");
+  const [office365SecretDirty, setOffice365SecretDirty] = useState(false);
+  const [office365SecretError, setOffice365SecretError] = useState<
+    string | null
+  >(null);
+  const [originalOffice365TenantId, setOriginalOffice365TenantId] =
+    useState("");
+  const [originalOffice365ClientId, setOriginalOffice365ClientId] =
+    useState("");
 
   // SendGrid fields
   const [sendgridApiKey, setSendgridApiKey] = useState("");
@@ -286,8 +294,13 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
         setGoogleRefreshToken("");
         setOffice365TenantId(p.office365TenantId || "");
         setOffice365ClientId(p.office365ClientId || "");
+        // track original values so we can detect tenant/client changes
+        setOriginalOffice365TenantId(p.office365TenantId || "");
+        setOriginalOffice365ClientId(p.office365ClientId || "");
         // Don't load encrypted secrets - keep field empty
         setOffice365ClientSecret("");
+        setOffice365SecretDirty(false);
+        setOffice365SecretError(null);
         setOffice365FromEmail(p.office365FromEmail || "");
         setSendgridApiKey("");
         setMailgunApiKey("");
@@ -328,7 +341,11 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
     setGoogleRefreshToken("");
     setOffice365TenantId("");
     setOffice365ClientId("");
+    setOriginalOffice365TenantId("");
+    setOriginalOffice365ClientId("");
     setOffice365ClientSecret("");
+    setOffice365SecretDirty(false);
+    setOffice365SecretError(null);
     setOffice365FromEmail("");
     setSendgridApiKey("");
     setMailgunApiKey("");
@@ -390,6 +407,35 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
 
   const handleSave = async () => {
     if (!selectedProvider) return;
+
+    // Office365-specific guard: if tenant/client changed and no secret provided, block save
+    if (selectedProvider.type === "OFFICE365") {
+      const tenantChanged =
+        office365TenantId.trim() !== originalOffice365TenantId;
+      const clientChanged =
+        office365ClientId.trim() !== originalOffice365ClientId;
+      const secretProvided = String(office365ClientSecret || "").trim() !== "";
+
+      if ((tenantChanged || clientChanged) && !secretProvided) {
+        setOffice365SecretError(
+          "You changed the Tenant or Client ID but did not provide the client secret. Paste the new client secret value and test the connection before saving."
+        );
+        toast.error(
+          "Provide the new Office 365 client secret and test connection before saving."
+        );
+        return;
+      }
+
+      if (office365SecretDirty && !testSuccess) {
+        setOffice365SecretError(
+          "The client secret was changed but hasn't been verified. Run 'Test Connection' and wait for success before saving."
+        );
+        toast.error(
+          "New client secret must be tested successfully before saving."
+        );
+        return;
+      }
+    }
 
     if (!testSuccess) {
       toast.error("Please test the connection successfully before saving");
@@ -888,57 +934,94 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
       case "OFFICE365":
         return (
           <>
-            <Alert className="mb-4 flex flex-row gap-3 bg-emerald-100">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-              <div className="flex-1 text-sm">
-                <div className="mb-1 font-semibold">Setup required</div>
-                <ol className="list-decimal list-inside ml-3 space-y-2 text-sm text-muted-foreground">
+            <Alert className="mb-4 flex flex-col gap-3 bg-emerald-100">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <div className="flex-1 text-sm">
+                  <strong>
+                    Office 365 setup (Microsoft Graph — OAuth 2.0)
+                  </strong>
+                </div>
+              </div>
+
+              <div className="ml-7 text-xs text-emerald-900">
+                <ol className="list-decimal list-inside space-y-1">
                   <li>
-                    Register an app in
+                    Register a new app in the{" "}
                     <a
                       href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-1 text-primary underline hover:text-primary/80"
+                      className="text-primary underline hover:text-primary/80"
                     >
                       Azure Portal
                     </a>
-                    . Copy the <strong>Application (client) ID</strong> and
-                    <strong className="ml-1">Directory (tenant) ID</strong>.
+                    .
                   </li>
-
                   <li>
-                    Create a <strong>Client secret</strong> (Certificates &amp;
-                    secrets) and save the secret value now — it is shown only
-                    once.
+                    Create a Client Secret (Certificates & secrets) and copy the
+                    value — you can only see it once.
                   </li>
-
                   <li>
-                    Add API permissions → Microsoft Graph →{" "}
-                    <strong>Application permissions</strong> → select{" "}
-                    <strong>Mail.Send</strong> and add it.
+                    Under <strong>API permissions</strong> → Microsoft Graph →
+                    <strong> Application permissions</strong>, add
+                    <code className="mx-1 px-1 bg-muted/10 rounded">
+                      Mail.Send
+                    </code>
+                    and then click <strong>Grant admin consent</strong>.
                   </li>
-
                   <li>
-                    <div className="font-medium">
-                      Grant tenant admin consent (required)
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1 ml-4">
-                      Open the app → <strong>API permissions</strong> → click
-                      <strong className="mx-1">
-                        Grant admin consent for &lt;your tenant&gt;
-                      </strong>{" "}
-                      and confirm. This must be done by a tenant administrator —
-                      without admin consent app-only sends will fail.
-                    </div>
-                  </li>
-
-                  <li>
-                    Redirect URIs (Reply URLs) and Front-channel logout are only
-                    required for delegated (user) flows; they are NOT required
-                    for server-side app-only (client_credentials) mail sending.
+                    For daemon/app-only authentication (recommended for the ERP
+                    email service) you do not need a Redirect URI — use the
+                    Tenant ID, Client ID and Client Secret below.
                   </li>
                 </ol>
+
+                <div className="mt-2">
+                  <strong>Example URIs</strong>
+                  <div className="mt-1 ml-4 text-[11px] leading-tight">
+                    <div>
+                      <code className="rounded px-1 bg-muted/10">
+                        Redirect URI (user OAuth)
+                      </code>
+                      :
+                      <div className="mt-1 ml-3">
+                        <div className="font-mono">
+                          http://localhost:3000/api/auth/microsoft/callback
+                        </div>
+                        <div className="mt-1 font-mono">
+                          https://your-app.example.com/api/auth/microsoft/callback
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          (This app uses <code>NEXT_PUBLIC_APP_URL</code> to
+                          build the redirect URI on the server — set it to your
+                          app URL.)
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-1">
+                      <code className="rounded px-1 bg-muted/10">
+                        Logout / Post-logout redirect
+                      </code>
+                      :
+                      <div className="mt-1 ml-3 font-mono">
+                        http://localhost:3000/
+                      </div>
+                      <div className="mt-1 ml-3 font-mono">
+                        https://your-app.example.com/
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        (Azure will perform a GET redirect after sign-out;
+                        choose your public landing page such as &apos;/&apos; or
+                        a dedicated &apos;/logout&apos; page.)
+                      </div>
+                    </div>
+                    <div className="mt-1 italic">
+                      Daemon / app-only (no redirect): use Tenant ID, Client ID
+                      and Client Secret in the ERP settings.
+                    </div>
+                  </div>
+                </div>
               </div>
             </Alert>
             <div className="space-y-4">
@@ -946,7 +1029,12 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                 <Label>Tenant ID</Label>
                 <Input
                   value={office365TenantId}
-                  onChange={(e) => setOffice365TenantId(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    setOffice365TenantId(v);
+                    setTestSuccess(false);
+                    setOffice365SecretError(null);
+                  }}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -957,7 +1045,12 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                 <Label>Client ID (Application ID)</Label>
                 <Input
                   value={office365ClientId}
-                  onChange={(e) => setOffice365ClientId(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    setOffice365ClientId(v);
+                    setTestSuccess(false);
+                    setOffice365SecretError(null);
+                  }}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -970,7 +1063,13 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   <Input
                     type={showOffice365Secret ? "text" : "password"}
                     value={office365ClientSecret}
-                    onChange={(e) => setOffice365ClientSecret(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value.trim();
+                      setOffice365ClientSecret(v);
+                      setOffice365SecretDirty(Boolean(v));
+                      setOffice365SecretError(null);
+                      setTestSuccess(false);
+                    }}
                     placeholder="Leave empty to keep existing"
                     className="pr-10"
                   />
@@ -988,8 +1087,15 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     )}
                   </Button>
                 </div>
+                {office365SecretError && (
+                  <div className="text-xs text-destructive mb-1">
+                    {office365SecretError}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  Client secret value from Azure app registration
+                  Paste the client secret <strong>value</strong> from Azure (the
+                  value shown once after creation). Do not paste the secret{" "}
+                  <em>ID</em> and avoid surrounding whitespace.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1772,7 +1878,22 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  disabled={isTesting || isSaving || !testSuccess}
+                  disabled={(() => {
+                    if (isTesting || isSaving) return true;
+                    if (!testSuccess) return true;
+                    if (selectedProvider.type === "OFFICE365") {
+                      const tenantChanged =
+                        office365TenantId.trim() !== originalOffice365TenantId;
+                      const clientChanged =
+                        office365ClientId.trim() !== originalOffice365ClientId;
+                      const missingSecret =
+                        (tenantChanged || clientChanged) &&
+                        String(office365ClientSecret || "").trim() === "";
+                      if (missingSecret) return true;
+                      if (office365SecretDirty && !testSuccess) return true;
+                    }
+                    return false;
+                  })()}
                   className="flex-1"
                 >
                   {isSaving && (
