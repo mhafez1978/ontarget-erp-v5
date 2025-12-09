@@ -201,6 +201,7 @@ model Company {
   logo         String? @db.LongText // Can store file path or base64 data URL
   logoLight    String? @db.LongText // Logo for light theme (path or base64)
   logoDark     String? @db.LongText // Logo for dark theme (path or base64)
+  uploadedLogos Json?   @db.Json // Temporary storage for uploaded base64 logos before assignment
   website      String?
   phone        String?
   email        String?

@@ -105,6 +105,25 @@ export async function PATCH(
       logoDark,
     } = body;
 
+    // If logos are being assigned, remove them from uploadedLogos JSON field
+    const currentCompany = await db.company.findUnique({
+      where: { id: companyId },
+      select: { uploadedLogos: true },
+    });
+
+    let cleanedUploadedLogos = currentCompany?.uploadedLogos as
+      | { url: string; filename: string }[]
+      | null;
+
+    if (cleanedUploadedLogos && Array.isArray(cleanedUploadedLogos)) {
+      const urlsToRemove = [logo, logoLight, logoDark].filter(Boolean);
+      if (urlsToRemove.length > 0) {
+        cleanedUploadedLogos = cleanedUploadedLogos.filter(
+          (uploadedLogo) => !urlsToRemove.includes(uploadedLogo.url)
+        );
+      }
+    }
+
     const updatedCompany = await db.company.update({
       where: { id: companyId },
       data: {
@@ -119,6 +138,9 @@ export async function PATCH(
         ...(logo !== undefined && { logo }),
         ...(logoLight !== undefined && { logoLight }),
         ...(logoDark !== undefined && { logoDark }),
+        ...(cleanedUploadedLogos !== null && {
+          uploadedLogos: cleanedUploadedLogos,
+        }),
         addressLine1: address?.addressLine1,
         addressLine2: address?.addressLine2,
         city: address?.city,

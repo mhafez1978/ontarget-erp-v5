@@ -136,6 +136,25 @@ export async function POST(
       uploadedLogos.push({ url: logoUrl, filename });
     }
 
+    // If using base64 storage, save to uploadedLogos JSON field for preview
+    if (!storageConfigured && uploadedLogos.length > 0) {
+      const company = await db.company.findUnique({
+        where: { id },
+        select: { uploadedLogos: true },
+      });
+
+      const existingLogos =
+        (company?.uploadedLogos as { url: string; filename: string }[]) || [];
+      const updatedLogos = [...existingLogos, ...uploadedLogos];
+
+      await db.company.update({
+        where: { id },
+        data: {
+          uploadedLogos: updatedLogos,
+        },
+      });
+    }
+
     // Create audit log
     await createAuditLog({
       userId,
@@ -234,27 +253,43 @@ export async function GET(
           logo: true,
           logoLight: true,
           logoDark: true,
+          uploadedLogos: true,
         },
       });
 
       if (company) {
-        // Extract base64 logos that are already assigned
-        const extractedLogos: { url: string; filename: string }[] = [];
+        // Start with uploaded logos from JSON field
+        const uploadedFromJson =
+          (company.uploadedLogos as { url: string; filename: string }[]) || [];
+        logos = [...uploadedFromJson];
 
-        if (company.logo && company.logo.startsWith("data:")) {
-          extractedLogos.push({ url: company.logo, filename: "logo" });
-        }
-        if (company.logoLight && company.logoLight.startsWith("data:")) {
-          extractedLogos.push({
+        // Also add assigned logos that aren't already in the list
+        const assignedUrls = logos.map((l) => l.url);
+
+        if (
+          company.logoLight &&
+          company.logoLight.startsWith("data:") &&
+          !assignedUrls.includes(company.logoLight)
+        ) {
+          logos.push({
             url: company.logoLight,
             filename: "logo-light",
           });
         }
-        if (company.logoDark && company.logoDark.startsWith("data:")) {
-          extractedLogos.push({ url: company.logoDark, filename: "logo-dark" });
+        if (
+          company.logoDark &&
+          company.logoDark.startsWith("data:") &&
+          !assignedUrls.includes(company.logoDark)
+        ) {
+          logos.push({ url: company.logoDark, filename: "logo-dark" });
         }
-
-        logos = extractedLogos;
+        if (
+          company.logo &&
+          company.logo.startsWith("data:") &&
+          !assignedUrls.includes(company.logo)
+        ) {
+          logos.push({ url: company.logo, filename: "logo" });
+        }
       }
     }
 
@@ -364,13 +399,40 @@ export async function DELETE(
       where: {
         OR: [{ logoLight: logoUrl }, { logoDark: logoUrl }, { logo: logoUrl }],
       },
+      select: {
+        id: true,
+        logo: true,
+        logoLight: true,
+        logoDark: true,
+        uploadedLogos: true,
+      },
     });
 
     for (const company of companies) {
-      const updateData: { logoLight?: null; logoDark?: null; logo?: null } = {};
+      const updateData: {
+        logoLight?: null;
+        logoDark?: null;
+        logo?: null;
+        uploadedLogos?: { url: string; filename: string }[];
+      } = {};
+
       if (company.logoLight === logoUrl) updateData.logoLight = null;
       if (company.logoDark === logoUrl) updateData.logoDark = null;
       if (company.logo === logoUrl) updateData.logo = null;
+
+      // Also remove from uploadedLogos JSON field if it's there
+      if (company.uploadedLogos) {
+        const uploadedLogos = company.uploadedLogos as {
+          url: string;
+          filename: string;
+        }[];
+        const filteredLogos = uploadedLogos.filter(
+          (logo) => logo.url !== logoUrl
+        );
+        if (filteredLogos.length !== uploadedLogos.length) {
+          updateData.uploadedLogos = filteredLogos;
+        }
+      }
 
       await db.company.update({
         where: { id: company.id },
