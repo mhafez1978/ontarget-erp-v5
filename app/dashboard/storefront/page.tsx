@@ -2855,7 +2855,7 @@ export default function StorefrontPage() {
         const heroContent = aiHero.content as Record<string, unknown>;
         // Map styling/background image + overlay/animations when present
         const aiHeroStyling = (aiHero as AiFrontstoreSection).styling as
-          | Record<string, any>
+          | Record<string, unknown>
           | undefined;
         heroThemeSection.styling = {
           ...(heroThemeSection.styling || {}),
@@ -2949,7 +2949,7 @@ export default function StorefrontPage() {
 
         // Map optional section styling and animations
         const aiStyling = (aiProducts as AiFrontstoreSection).styling as
-          | Record<string, any>
+          | Record<string, unknown>
           | undefined;
         if (aiStyling?.backgroundImage?.url) {
           productsThemeSection.styling = {
@@ -3056,7 +3056,7 @@ export default function StorefrontPage() {
                   return { value, label, icon } as Record<string, unknown>;
                 })
                 .filter(Boolean) as Record<string, unknown>[])
-            : statsThemeSection.content.stats) as any,
+            : statsThemeSection.content.stats) as Record<string, unknown>[],
         };
       }
     }
@@ -3167,9 +3167,9 @@ export default function StorefrontPage() {
             ? (previewFaqs
                 .map((p) => {
                   if (!p || typeof p !== "object") return null;
-                  const title = (p as any).title;
-                  const summary = (p as any).summary;
-                  const content = (p as any).content;
+                  const title = (p as Record<string, unknown>).title;
+                  const summary = (p as Record<string, unknown>).summary;
+                  const content = (p as Record<string, unknown>).content;
                   const answerRaw =
                     typeof summary === "string" && summary.trim()
                       ? summary
@@ -3354,7 +3354,7 @@ export default function StorefrontPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCompanyId]);
+  }, [selectedCompanyId, aiEmphasis, aiGoal, aiTone]);
 
   // 4. Define fetchAiConfig
   const fetchAiConfig = useCallback(async () => {
@@ -3432,13 +3432,15 @@ export default function StorefrontPage() {
         );
         if (faqRes.ok) {
           const faqJson = await faqRes.json().catch(() => null);
-          const articles = (faqJson?.articles || []).filter((a: any) => {
-            const cat = String(a.category || "").toLowerCase();
-            const tags = Array.isArray(a.tags)
-              ? a.tags.map((t: any) => String(t || "").toLowerCase())
-              : [];
-            return cat === "faq" || tags.includes("faq");
-          });
+          const articles = (faqJson?.articles || []).filter(
+            (a: Record<string, unknown>) => {
+              const cat = String(a.category || "").toLowerCase();
+              const tags = Array.isArray(a.tags)
+                ? a.tags.map((t: unknown) => String(t || "").toLowerCase())
+                : [];
+              return cat === "faq" || tags.includes("faq");
+            }
+          );
           setAiPreviewFaqs(articles.length > 0 ? articles : null);
         } else {
           setAiPreviewFaqs(null);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -231,9 +232,11 @@ export function TestimonialForm({ slug, apiPath }: TestimonialFormProps) {
 
             {customerPhoto ? (
               <div className="flex items-center gap-3">
-                <img
+                <Image
                   src={customerPhoto}
                   alt="preview"
+                  width={48}
+                  height={48}
                   className="h-12 w-12 rounded-full object-cover"
                 />
                 <button

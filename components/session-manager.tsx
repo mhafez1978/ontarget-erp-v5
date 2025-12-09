@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -58,13 +58,9 @@ interface Session {
 
 interface SessionManagerProps {
   userRole: "SUPER_ADMIN" | "ADMIN" | string;
-  currentUserId?: string;
 }
 
-export function SessionManager({
-  userRole,
-  currentUserId,
-}: SessionManagerProps) {
+export function SessionManager({ userRole }: SessionManagerProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState<string | null>(null);
@@ -76,7 +72,7 @@ export function SessionManager({
   const isSuperAdmin = userRole === "SUPER_ADMIN";
   const isAdmin = userRole === "ADMIN";
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       setLoading(true);
       const endpoint = isSuperAdmin
@@ -98,11 +94,11 @@ export function SessionManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [isSuperAdmin, isAdmin]);
 
   useEffect(() => {
     fetchSessions();
-  }, []);
+  }, [fetchSessions]);
 
   const handleRevokeSession = async (session: Session) => {
     if (session.isCurrent) {

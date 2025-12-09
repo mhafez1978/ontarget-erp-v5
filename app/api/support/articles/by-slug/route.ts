@@ -18,8 +18,6 @@ export async function GET(request: NextRequest) {
       return validation.response;
     }
 
-    const { user } = validation;
-
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get("slug");
 

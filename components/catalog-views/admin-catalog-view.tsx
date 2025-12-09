@@ -461,29 +461,6 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
     });
   };
 
-  const handleDeleteOld = async (id: string, type: "product" | "service") => {
-    try {
-      const endpoint =
-        type === "product"
-          ? `/api/catalog/products/${id}`
-          : `/api/catalog/services/${id}`;
-
-      const response = await fetch(endpoint, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        if (type === "product") {
-          handleProductAdded();
-        } else {
-          handleServiceAdded();
-        }
-      }
-    } catch (error) {
-      console.error("Error deleting:", error);
-    }
-  };
-
   // Filter products based on search term
   const filteredProducts = products.filter((product) => {
     if (!searchTerm) return true;

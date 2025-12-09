@@ -19,8 +19,6 @@ export async function GET(request: NextRequest) {
       return validation.response;
     }
 
-    const { user } = validation;
-
     const userId = validation.user.id;
     const userRole = validation.user.role;
 

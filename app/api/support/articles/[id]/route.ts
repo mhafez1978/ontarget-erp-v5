@@ -415,14 +415,6 @@ export async function GET(
       return validation.response;
     }
 
-    const { user } = validation;
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
-    }
-
     const { id } = await params;
 
     const article = await db.supportArticle.findUnique({

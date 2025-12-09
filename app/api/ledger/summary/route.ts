@@ -9,8 +9,6 @@ export async function GET(req: NextRequest) {
       return validation.response;
     }
 
-    const userId = validation.user.id;
-
     // Get companyId from query params (for SUPER_ADMIN with multiple companies)
     const { searchParams } = new URL(req.url);
     const requestedCompanyId = searchParams.get("companyId");

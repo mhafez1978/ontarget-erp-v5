@@ -351,8 +351,7 @@ export async function uploadDocument(
   companyId: string,
   category: "HR-Docs" | "Invoices" | "Contracts" | "Other",
   fileName: string,
-  fileBuffer: Buffer,
-  mimeType: string
+  fileBuffer: Buffer
 ): Promise<{
   primaryPath: string;
   backupPath?: string;

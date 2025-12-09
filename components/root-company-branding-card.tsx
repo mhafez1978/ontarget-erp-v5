@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, DragEvent } from "react";
+import { useState, useEffect, useCallback, DragEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,11 +60,19 @@ export function RootCompanyBrandingCard() {
     website: "",
   });
 
-  useEffect(() => {
-    fetchRootCompany();
+  const fetchUploadedLogos = useCallback(async (companyId: string) => {
+    try {
+      const response = await fetch(`/api/company/${companyId}/logos`);
+      if (response.ok) {
+        const data = await response.json();
+        setUploadedLogos(data.logos || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch uploaded logos:", error);
+    }
   }, []);
 
-  const fetchRootCompany = async () => {
+  const fetchRootCompany = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/company/root");
@@ -95,19 +103,11 @@ export function RootCompanyBrandingCard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchUploadedLogos]);
 
-  const fetchUploadedLogos = async (companyId: string) => {
-    try {
-      const response = await fetch(`/api/company/${companyId}/logos`);
-      if (response.ok) {
-        const data = await response.json();
-        setUploadedLogos(data.logos || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch uploaded logos:", error);
-    }
-  };
+  useEffect(() => {
+    fetchRootCompany();
+  }, [fetchRootCompany]);
 
   const handleMultipleLogoUpload = async (
     e: React.ChangeEvent<HTMLInputElement>

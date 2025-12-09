@@ -12,15 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Key,
-  Shield,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  TrendingUp,
-  Link as LinkIcon,
-} from "lucide-react";
+import { Key, Shield, Clock, TrendingUp, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface AccountInfo {

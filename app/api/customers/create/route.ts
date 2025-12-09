@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
       return validation.response;
     }
 
-    const userId = validation.user.id;
     const user = validation.user;
 
     // Only certain roles can create customers

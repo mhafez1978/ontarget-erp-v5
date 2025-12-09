@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Defensive guard in case Prisma Client was not regenerated after adding AiProviderSetting
-    const aiProviderClient: any = (db as any).aiProviderSetting;
+    const aiProviderClient = db.aiProviderSetting;
     if (!aiProviderClient || typeof aiProviderClient.findFirst !== "function") {
       console.error(
         "[AI Provider] Prisma client is missing AiProviderSetting model. Run `npx prisma generate` and restart the dev server."

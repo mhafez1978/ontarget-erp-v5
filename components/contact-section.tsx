@@ -69,7 +69,7 @@ export function ContactSection() {
     if (document.getElementById("grecaptcha-script")) {
       try {
         // prefer readiness over script onload
-        // @ts-ignore
+        // @ts-expect-error - grecaptcha types not fully defined
         window.grecaptcha?.ready?.(() => setCaptchaLoaded(true));
       } catch {
         setCaptchaLoaded(true);
@@ -83,7 +83,7 @@ export function ContactSection() {
     script.defer = true;
     script.onload = () => {
       try {
-        // @ts-ignore
+        // @ts-expect-error - grecaptcha types not fully defined
         window.grecaptcha?.ready?.(() => setCaptchaLoaded(true));
       } catch {
         setCaptchaLoaded(true);
@@ -123,7 +123,7 @@ export function ContactSection() {
           // Ensure grecaptcha is fully ready before executing
           await new Promise<void>((resolve) => {
             try {
-              // @ts-ignore — grecaptcha types not fully defined
+              // @ts-expect-error - grecaptcha types not fully defined
               window.grecaptcha.ready(() => resolve());
             } catch {
               resolve();
@@ -162,7 +162,9 @@ export function ContactSection() {
       });
 
       if (!res.ok) {
-        const payload = await res.json().catch(() => ({} as any));
+        const payload = await res
+          .json()
+          .catch(() => ({} as Record<string, unknown>));
         if (payload?.errorCode === "captcha_missing") {
           toast.error(
             "Captcha is enabled but no token was generated. Ensure the reCAPTCHA script loaded (disable ad-blockers) and your domain is allowed in the reCAPTCHA console."

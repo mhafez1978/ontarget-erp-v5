@@ -129,12 +129,19 @@ async function testPayrollSystem() {
 }
 
 async function calculateAndCreatePayroll(
-  staff: any,
-  timeEntry: any,
-  jurisdiction: any,
+  staff: {
+    id: string;
+    companyId: string;
+    payRate: Decimal;
+    currency: string;
+    employmentClassification: string;
+    taxWithholdingConfig: unknown;
+  },
+  timeEntry: { id: string },
+  jurisdiction: { id: string; name: string; code: string; taxConfig: unknown },
   hoursWorked: Decimal,
-  company: any,
-  user: any
+  company: { name: string },
+  user: { name: string }
 ) {
   console.log("💰 Calculating Payroll...\n");
 
@@ -148,11 +155,11 @@ async function calculateAndCreatePayroll(
   console.log(`   Gross: $${grossPay.toFixed(2)}\n`);
 
   // Get tax configuration
-  const taxConfig = jurisdiction.taxConfig as any;
+  const taxConfig = jurisdiction.taxConfig as Record<string, unknown>;
 
   // Calculate taxes using TaxCalculator
   const taxBreakdown = TaxCalculator.calculatePayroll(grossPay, taxConfig, {
-    withholding: staff.taxWithholdingConfig as any,
+    withholding: staff.taxWithholdingConfig as Record<string, unknown>,
     yearToDateGross: 0, // Assuming first paycheck
   });
 
@@ -227,7 +234,7 @@ async function calculateAndCreatePayroll(
       overtimeHours: new Decimal(0),
       grossAmount: grossPay,
       netAmount: new Decimal(taxBreakdown.totals.netPay),
-      taxBreakdown: taxBreakdown as any,
+      taxBreakdown: taxBreakdown as unknown,
       status: "PENDING",
     },
   });

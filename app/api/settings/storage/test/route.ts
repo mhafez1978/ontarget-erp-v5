@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
 // POST - Test storage provider connection

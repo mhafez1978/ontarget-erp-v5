@@ -26,4 +26,5 @@ export function checkSequentialUpload(
   return { ok: missing.length === 0, missingPrereqs: missing };
 }
 
-export default { REQUIRED_ONBOARDING_ORDER, checkSequentialUpload };
+const onboardingConfig = { REQUIRED_ONBOARDING_ORDER, checkSequentialUpload };
+export default onboardingConfig;

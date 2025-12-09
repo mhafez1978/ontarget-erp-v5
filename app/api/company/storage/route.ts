@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
       return validation.response;
     }
 
-    const userId = validation.user.id;
     const user = validation.user;
 
     if (!["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
@@ -102,7 +101,6 @@ export async function POST(request: NextRequest) {
       return validation.response;
     }
 
-    const userId = validation.user.id;
     const user = validation.user;
 
     if (!["ADMIN", "SUPER_ADMIN"].includes(user.role)) {

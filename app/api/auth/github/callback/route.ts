@@ -140,6 +140,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { name, avatar_url } = profile;
+
     const isPlaceholderEmail = email.endsWith("@github.placeholder.local");
 
     // Check if user exists
@@ -245,19 +246,26 @@ export async function GET(request: NextRequest) {
         });
 
         // Send welcome email to new ERP customer only
-        try {
-          const { subject, html } = await getWelcomeCustomerEmail(
-            user.name || email,
-            email
+        // Skip if using placeholder email (can't deliver)
+        if (!isPlaceholderEmail) {
+          try {
+            const { subject, html } = await getWelcomeCustomerEmail(
+              user.name || email,
+              email
+            );
+            await sendEmail({
+              to: email,
+              subject,
+              html,
+            });
+          } catch (emailError) {
+            console.error("Failed to send welcome email:", emailError);
+            // Don't fail OAuth if email fails
+          }
+        } else {
+          console.log(
+            `[GitHub OAuth] Skipping welcome email for placeholder address: ${email}`
           );
-          await sendEmail({
-            to: email,
-            subject,
-            html,
-          });
-        } catch (emailError) {
-          console.error("Failed to send welcome email:", emailError);
-          // Don't fail OAuth if email fails
         }
       }
     }

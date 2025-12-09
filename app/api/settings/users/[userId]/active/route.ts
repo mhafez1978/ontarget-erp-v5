@@ -13,7 +13,6 @@ export async function PATCH(
       return validation.response;
     }
 
-    const currentUserId = validation.user.id;
     const currentUser = validation.user;
 
     if (currentUser.role !== "SUPER_ADMIN") {

@@ -60,7 +60,7 @@ interface Project {
   targetEndDate: string | null;
   companyId: string;
   teamId: string;
-   customerId: string | null;
+  customerId: string | null;
   managerId: string | null;
   leadId: string | null;
   createdAt: string;
@@ -262,6 +262,7 @@ export function SuperAdminProjectsView() {
         try {
           errorData = await response.json();
         } catch (e) {
+          console.log(e);
           errorData = {
             error: `HTTP ${response.status}: ${response.statusText}`,
           };

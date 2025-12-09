@@ -42,11 +42,11 @@ import { FileContextMenu } from "@/components/file-context-menu";
 import { FolderPasswordDialog } from "@/components/folder-password-dialog";
 import {
   getFileIcon,
-  formatFileSize,
   canPreviewImage,
   getAllowedFileTypesDescription,
   getBlockedFileTypesDescription,
 } from "@/lib/file-utils";
+import Image from "next/image";
 
 interface FileItem {
   id: string;
@@ -526,7 +526,9 @@ export function HierarchicalFileExplorer({
                   <div className="flex flex-col items-center text-center space-y-2">
                     {showPreview ? (
                       <div className="w-full h-32 relative rounded overflow-hidden bg-muted">
-                        <img
+                        <Image
+                          width={180}
+                          height={128}
                           src={`/api/files/${file.id}?preview=true`}
                           alt={file.fileName}
                           className="w-full h-full object-cover"

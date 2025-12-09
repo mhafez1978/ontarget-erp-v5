@@ -126,7 +126,6 @@ export async function PUT(request: NextRequest) {
 
     // Verify user has access to modify this company
     const isOwner = user.ownedCompanies.length > 0;
-    const isMember = user.companyMemberships.length > 0;
     const isAdminOrManager = user.companyMemberships.some(
       (m) => m.role === "ADMIN" || m.role === "MANAGER"
     );

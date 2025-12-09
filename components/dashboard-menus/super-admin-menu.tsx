@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   Users,
   Settings,
-  Briefcase,
   MapPin,
   Tags,
   Shield,

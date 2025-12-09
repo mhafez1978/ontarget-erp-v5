@@ -223,7 +223,10 @@ export function AddServiceSheet({
       if (fileImages.length > 0) {
         setIsUploadingFiles(true);
         try {
-          const uploadResults: any[] = [];
+          const uploadResults: Array<{
+            success: boolean;
+            images: Array<{ url: string }>;
+          }> = [];
 
           for (const fimg of fileImages) {
             if (!fimg.file) continue;
@@ -232,37 +235,46 @@ export function AddServiceSheet({
             fd.append("images", fimg.file, fimg.file.name);
 
             const xhrUpload = () =>
-              new Promise<any>((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open("POST", `/api/catalog/services/${service.id}/images`);
+              new Promise<{ success: boolean; images: Array<{ url: string }> }>(
+                (resolve, reject) => {
+                  const xhr = new XMLHttpRequest();
+                  xhr.open(
+                    "POST",
+                    `/api/catalog/services/${service.id}/images`
+                  );
 
-                xhr.upload.onprogress = (event) => {
-                  if (event.lengthComputable) {
-                    const pct = Math.round((event.loaded / event.total) * 100);
-                    setImages((prev) =>
-                      prev.map((p) =>
-                        p.localId === fimg.localId ? { ...p, progress: pct } : p
-                      )
-                    );
-                  }
-                };
-
-                xhr.onload = () => {
-                  if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                      const res = JSON.parse(xhr.responseText);
-                      resolve(res);
-                    } catch (e) {
-                      resolve({ success: true, images: [] });
+                  xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                      const pct = Math.round(
+                        (event.loaded / event.total) * 100
+                      );
+                      setImages((prev) =>
+                        prev.map((p) =>
+                          p.localId === fimg.localId
+                            ? { ...p, progress: pct }
+                            : p
+                        )
+                      );
                     }
-                  } else {
-                    reject(new Error(`Upload failed (${xhr.status})`));
-                  }
-                };
+                  };
 
-                xhr.onerror = () => reject(new Error("Network error"));
-                xhr.send(fd);
-              });
+                  xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                      try {
+                        const res = JSON.parse(xhr.responseText);
+                        resolve(res);
+                      } catch {
+                        resolve({ success: true, images: [] });
+                      }
+                    } else {
+                      reject(new Error(`Upload failed (${xhr.status})`));
+                    }
+                  };
+
+                  xhr.onerror = () => reject(new Error("Network error"));
+                  xhr.send(fd);
+                }
+              );
 
             try {
               const result = await xhrUpload();

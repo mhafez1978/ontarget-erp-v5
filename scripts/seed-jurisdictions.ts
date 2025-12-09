@@ -358,17 +358,33 @@ async function seedJurisdictions() {
       const existing = await db.payrollJurisdiction.findUnique({
         where: { code: jurisdiction.code },
       });
-
       if (existing) {
         console.log(`⚠️  ${jurisdiction.code} already exists, updating...`);
         await db.payrollJurisdiction.update({
           where: { code: jurisdiction.code },
-          data: jurisdiction as any,
+          data: {
+            name: jurisdiction.name,
+            countryCode: jurisdiction.countryCode,
+            regionCode: jurisdiction.regionCode,
+            taxConfig: JSON.parse(JSON.stringify(jurisdiction.taxConfig)),
+            requiredForms: jurisdiction.requiredForms,
+            filingFrequency: jurisdiction.filingFrequency,
+            isActive: jurisdiction.isActive,
+          },
         });
         console.log(`✅ Updated ${jurisdiction.name} (${jurisdiction.code})\n`);
       } else {
         await db.payrollJurisdiction.create({
-          data: jurisdiction as any,
+          data: {
+            code: jurisdiction.code,
+            name: jurisdiction.name,
+            countryCode: jurisdiction.countryCode,
+            regionCode: jurisdiction.regionCode,
+            taxConfig: JSON.parse(JSON.stringify(jurisdiction.taxConfig)),
+            requiredForms: jurisdiction.requiredForms,
+            filingFrequency: jurisdiction.filingFrequency,
+            isActive: jurisdiction.isActive,
+          },
         });
         console.log(`✅ Created ${jurisdiction.name} (${jurisdiction.code})\n`);
       }

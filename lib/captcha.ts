@@ -106,10 +106,10 @@ export async function verifyGoogleCaptchaDetailed(
         body: new URLSearchParams({ secret, response: token }),
       }
     );
-    const data = (await resp.json()) as any;
+    const data = (await resp.json()) as Record<string, unknown>;
     return data ?? { success: false };
   } catch (e) {
     console.error("[captcha] Detailed verification error:", e);
-    return { success: false, "error-codes": ["exception"] } as any;
+    return { success: false, "error-codes": ["exception"] };
   }
 }

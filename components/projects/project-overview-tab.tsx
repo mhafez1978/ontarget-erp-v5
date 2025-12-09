@@ -157,9 +157,6 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
 
   // Calculate date info
   const today = new Date();
-  const startDate = localProject.startDate
-    ? new Date(localProject.startDate)
-    : null;
   const endDate = localProject.endDate ? new Date(localProject.endDate) : null;
   const daysRemaining = endDate
     ? Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
@@ -224,7 +221,14 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                         );
                         const data = await response.json();
                         if (response.ok && data.customers) {
-                          const filtered = (data.customers as any[]).filter(
+                          const filtered = (
+                            data.customers as Array<{
+                              id: string;
+                              name: string;
+                              email: string;
+                              companyId: string;
+                            }>
+                          ).filter(
                             (c) => c.companyId === localProject.company.id
                           );
                           setCustomers(
@@ -278,9 +282,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                           }
                         );
                         if (!response.ok) {
-                          const err = await response
-                            .json()
-                            .catch(() => ({}));
+                          const err = await response.json().catch(() => ({}));
                           throw new Error(
                             err.error || "Failed to update customer"
                           );

@@ -2,7 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 
 export default function OnboardingUnavailablePage() {
   const router = useRouter();
@@ -19,14 +25,20 @@ export default function OnboardingUnavailablePage() {
         </CardHeader>
         <CardContent>
           <p className="mb-4 text-sm text-muted-foreground">
-            It looks like your onboarding is incomplete and we don't have an active
-            onboarding link for you. Please contact your company administrator to
-            reactivate onboarding — they can generate a fresh 48-hour link.
+            It looks like your onboarding is incomplete and we don&apos;t have
+            an active onboarding link for you. Please contact your company
+            administrator to reactivate onboarding — they can generate a fresh
+            48-hour link.
           </p>
 
           <div className="flex gap-3">
             <Button onClick={() => router.push("/")}>Go to Homepage</Button>
-            <Button variant="outline" onClick={() => window.location.href = "mailto:admin@yourcompany.example"}>
+            <Button
+              variant="outline"
+              onClick={() =>
+                (window.location.href = "mailto:admin@yourcompany.example")
+              }
+            >
               Contact Administrator
             </Button>
           </div>

@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-expressions, @typescript-eslint/no-unused-expressions */
 import { expect } from "chai";
 import fs from "fs";
 // path is not required when using process.cwd()

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Sheet,
   SheetContent,
@@ -102,15 +102,18 @@ export function AddSubscriberSheet({
     trialDays: 30,
   };
 
-  const initialAddressData: AddressData = {
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    state: "",
-    country: "",
-    countryCode: "",
-    postalCode: "",
-  };
+  const initialAddressData: AddressData = useMemo(
+    () => ({
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      country: "",
+      countryCode: "",
+      postalCode: "",
+    }),
+    []
+  );
 
   const [formData, setFormData] = useState(initialFormData);
   const [addressData, setAddressData] =
@@ -143,7 +146,7 @@ export function AddSubscriberSheet({
       setShowPassword(false);
       setShowConfirmPassword(false);
     }
-  }, [open]);
+  }, [open, initialAddressData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

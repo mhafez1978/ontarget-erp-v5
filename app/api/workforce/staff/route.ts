@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { sendEmail } from "@/lib/email-service";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { PLAN_LIMITS, getTotalUserLimit } from "@/lib/plan-limits";
+import { getTotalUserLimit } from "@/lib/plan-limits";
 
 // GET /api/workforce/staff
 export async function GET(request: NextRequest) {
@@ -290,7 +290,10 @@ export async function POST(request: NextRequest) {
       entityType: ENTITY_TYPES.STAFF_MEMBER,
       entityId: staff.id,
       description: `Created onboarding token for ${name} (${email})`,
-      metadata: { token: onboardingToken.token, expiresAt: onboardingToken.expiresAt.toISOString() },
+      metadata: {
+        token: onboardingToken.token,
+        expiresAt: onboardingToken.expiresAt.toISOString(),
+      },
     });
 
     // Send welcome email with onboarding link

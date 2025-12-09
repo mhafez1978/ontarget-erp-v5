@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   Hammer,
   HardHat,
@@ -162,9 +163,11 @@ export default function CraftAndBuildOrangeBlack() {
               key={i}
               className="bg-black rounded-xl shadow-xl overflow-hidden border-4 border-[#ff6b00]"
             >
-              <img
+              <Image
                 src={p.img}
                 alt={p.title || "project image"}
+                width={900}
+                height={256}
                 className="h-64 w-full object-cover"
               />
               <div className="p-6">

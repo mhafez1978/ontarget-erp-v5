@@ -66,6 +66,15 @@ import {
   > | null>(null);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
 
+  // Track whether the last test succeeded
+  const [testSuccess, setTestSuccess] = useState(false);
+
+  // Track secret-related UI state and validation
+  const [office365SecretDirty, setOffice365SecretDirty] = useState(false);
+  const [office365SecretError, setOffice365SecretError] = useState<
+    string | null
+  >(null);
+
   // SMTP fields
   const [smtpHost, setSmtpHost] = useState("");
   const [smtpPort, setSmtpPort] = useState("587");
@@ -217,7 +226,10 @@ import {
             awsSecretKey: "",
             office365TenantId: p.office365TenantId || "",
             office365ClientId: p.office365ClientId || "",
-            office365ClientSecret: p.office365ClientSecret || "",
+            // Do NOT pre-fill secret inputs with stored (encrypted) values.
+            // Stored secrets are encrypted in the DB; exposing them in the UI
+            // would show ciphertext and cause errors if used for a token request.
+            office365ClientSecret: "",
             office365FromEmail: p.office365FromEmail || "",
             fromEmail: p.fromEmail || "",
             fromName: p.fromName || "",
@@ -240,6 +252,10 @@ import {
           setOffice365TenantId(configValues.office365TenantId);
           setOffice365ClientId(configValues.office365ClientId);
           setOffice365ClientSecret(configValues.office365ClientSecret);
+          // Reset secret-related UI state when loading an existing configuration
+          setOffice365SecretDirty(false);
+          setOffice365SecretError(null);
+          setTestSuccess(Boolean(p.isConnected));
           setOffice365FromEmail(configValues.office365FromEmail);
           setFromEmail(configValues.fromEmail);
           setFromName(configValues.fromName);
@@ -312,12 +328,14 @@ import {
 
       if (response.ok) {
         setTestResult({ success: true, message: "Connection successful!" });
+        setTestSuccess(true);
         toast.success("Email provider connection successful!");
       } else {
         setTestResult({
           success: false,
           message: data.error || "Connection failed",
         });
+        setTestSuccess(false);
         toast.error(data.error || "Connection failed");
       }
     } catch {
@@ -325,6 +343,7 @@ import {
         success: false,
         message: "Failed to test connection",
       });
+      setTestSuccess(false);
       toast.error("Failed to test connection");
     } finally {
       setIsTesting(false);
@@ -333,6 +352,36 @@ import {
 
   const handleSave = async () => {
     try {
+      // Guard: prevent saving mismatched Office365 credentials
+      if (provider === "OFFICE365") {
+        const origTenant = String(originalConfig?.office365TenantId || "");
+        const origClient = String(originalConfig?.office365ClientId || "");
+        const tenantChanged = office365TenantId.trim() !== origTenant;
+        const clientChanged = office365ClientId.trim() !== origClient;
+        const secretProvided =
+          String(office365ClientSecret || "").trim() !== "";
+
+        if ((tenantChanged || clientChanged) && !secretProvided) {
+          setOffice365SecretError(
+            "You changed the Tenant or Client ID but did not provide the client secret. Paste the new client secret value and test the connection before saving."
+          );
+          toast.error(
+            "Provide the new Office 365 client secret and test connection before saving."
+          );
+          return;
+        }
+
+        if (office365SecretDirty && !testSuccess) {
+          setOffice365SecretError(
+            "The client secret was changed but hasn't been verified. Run 'Test Connection' and wait for success before saving."
+          );
+          toast.error(
+            "New client secret must be tested successfully before saving."
+          );
+          return;
+        }
+      }
+
       setIsSaving(true);
 
       const config = buildConfig();
@@ -752,15 +801,93 @@ import {
               <Alert className="mb-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Office 365 uses Microsoft Graph API with OAuth 2.0. Register
-                  an app in Azure Portal and grant Mail.Send permission.
+                  <p className="mb-2">
+                    Office 365 uses Microsoft Graph API (OAuth 2.0). To
+                    configure the app correctly, follow these steps:
+                  </p>
+                  <ol className="text-xs text-muted-foreground list-decimal ml-5 space-y-1">
+                    <li>
+                      Register a new app in the Azure Portal (Azure Active
+                      Directory → App registrations).
+                    </li>
+                    <li>
+                      Create a Client Secret (Certificates & secrets) and copy
+                      its <strong>value</strong> — you will only see it once.
+                    </li>
+                    <li>
+                      Under API permissions → Microsoft Graph →{" "}
+                      <strong>Application permissions</strong>, add{" "}
+                      <code>Mail.Send</code> and grant{" "}
+                      <strong>Admin consent</strong>.
+                    </li>
+                    <li>
+                      For the ERP email service (daemon/service principal) you
+                      do not need a Redirect URI — use the Tenant ID, Client ID
+                      and Client Secret (app-only authentication).
+                    </li>
+                  </ol>
+
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    <strong>Example URIs</strong>
+                    <div className="mt-1 ml-4">
+                      <div>
+                        <code className="rounded px-1 bg-muted/10">
+                          Redirect URI (for user OAuth flows)
+                        </code>
+                        :
+                        <div className="mt-1 ml-3">
+                          <div className="font-mono">
+                            http://localhost:3000/api/auth/microsoft/callback
+                          </div>
+                          <div className="mt-1 font-mono">
+                            https://your-app.example.com/api/auth/microsoft/callback
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            (This app uses <code>NEXT_PUBLIC_APP_URL</code> when
+                            building the redirect URI on the server — set it to
+                            your app URL.)
+                          </div>
+                        </div>
+                        <div className="mt-1">
+                          <code className="rounded px-1 bg-muted/10">
+                            Logout / Post-logout redirect
+                          </code>
+                          :
+                          <div className="mt-1 ml-3 font-mono">
+                            http://localhost:3000/
+                          </div>
+                          <div className="mt-1 ml-3 font-mono">
+                            https://your-app.example.com/
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            (Azure expects a GET-accessible redirect after
+                            sign-out — use &apos;/&apos; or a dedicated
+                            &apos;/logout&apos; page.)
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-1">
+                        <em>Daemon / app-only (no redirect)</em>: use{" "}
+                        <span className="font-mono">Tenant ID</span>,{" "}
+                        <span className="font-mono">Client ID</span> and{" "}
+                        <span className="font-mono">Client Secret</span> in the
+                        ERP settings.
+                      </div>
+                    </div>
+                  </div>
                 </AlertDescription>
               </Alert>
               <div className="space-y-2">
                 <Label>Tenant ID</Label>
                 <Input
                   value={office365TenantId}
-                  onChange={(e) => setOffice365TenantId(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    setOffice365TenantId(v);
+                    // Changing tenant invalidates a previous successful test
+                    setTestSuccess(false);
+                    setOffice365SecretError(null);
+                  }}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -771,7 +898,13 @@ import {
                 <Label>Client ID (Application ID)</Label>
                 <Input
                   value={office365ClientId}
-                  onChange={(e) => setOffice365ClientId(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    setOffice365ClientId(v);
+                    // Changing client id invalidates a previous successful test
+                    setTestSuccess(false);
+                    setOffice365SecretError(null);
+                  }}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -784,7 +917,15 @@ import {
                   <Input
                     type={showOffice365Secret ? "text" : "password"}
                     value={office365ClientSecret}
-                    onChange={(e) => setOffice365ClientSecret(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value.trim();
+                      setOffice365ClientSecret(v);
+                      // Mark secret as dirty when a new value is entered and clear any prior error
+                      setOffice365SecretDirty(Boolean(v));
+                      setOffice365SecretError(null);
+                      // New secret requires a re-test
+                      setTestSuccess(false);
+                    }}
                     placeholder="Leave empty to keep existing secret"
                     className="pr-10"
                   />
@@ -803,7 +944,9 @@ import {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Client secret value from Azure app registration
+                  Paste the client secret <strong>value</strong> from Azure (the
+                  long value shown immediately after creation). Do not paste the
+                  secret <em>ID</em>. Avoid leading/trailing spaces.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1013,6 +1156,17 @@ import {
           )}
 
           {/* Actions */}
+          {/* Compute Office365 guards for UI disabling/messages */}
+          {provider === "OFFICE365" && (
+            <div className="mb-2">
+              {/* Render secret-related UI error if present */}
+              {office365SecretError && (
+                <div className="text-sm text-destructive mb-2">
+                  {office365SecretError}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex gap-4 items-center">
             <Button
               onClick={handleTest}
@@ -1024,7 +1178,31 @@ import {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isTesting || isSaving}
+              disabled={(() => {
+                // Basic disabled checks
+                if (isTesting || isSaving) return true;
+
+                // Office365 specific UI blocking
+                if (provider === "OFFICE365") {
+                  const origTenant = String(
+                    originalConfig?.office365TenantId || ""
+                  );
+                  const origClient = String(
+                    originalConfig?.office365ClientId || ""
+                  );
+                  const tenantChanged = office365TenantId.trim() !== origTenant;
+                  const clientChanged = office365ClientId.trim() !== origClient;
+                  const missingSecretForChange =
+                    (tenantChanged || clientChanged) &&
+                    String(office365ClientSecret || "").trim() === "";
+                  const newSecretUnverified =
+                    office365SecretDirty && !testSuccess;
+                  if (missingSecretForChange || newSecretUnverified)
+                    return true;
+                }
+
+                return false;
+              })()}
               className="relative"
             >
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -1041,6 +1219,20 @@ import {
                 ● Unsaved changes
               </span>
             )}
+            {/* If Save is disabled for Office365 show a hint */}
+            {provider === "OFFICE365" &&
+              originalConfig &&
+              (((office365TenantId.trim() !==
+                String(originalConfig.office365TenantId || "") ||
+                office365ClientId.trim() !==
+                  String(originalConfig.office365ClientId || "")) &&
+                String(office365ClientSecret || "").trim() === "") ||
+                (office365SecretDirty && !testSuccess)) && (
+                <div className="text-xs text-muted-foreground ml-2">
+                  Please provide a valid client secret and run{" "}
+                  <strong>Test Connection</strong> successfully before saving.
+                </div>
+              )}
           </div>
 
           {/* Diagnostics panel for admins */}

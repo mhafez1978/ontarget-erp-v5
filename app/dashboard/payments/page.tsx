@@ -260,7 +260,7 @@ export default function PaymentsPage() {
       });
 
       if (response.ok) {
-        const { linkToken } = await response.json();
+        await response.json();
         // TODO: Initialize Plaid Link UI with linkToken
         // Do not log the token value to console to avoid exposing it in logs
         console.info("Plaid link token obtained (redacted)");

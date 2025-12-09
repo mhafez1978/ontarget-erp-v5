@@ -14,14 +14,6 @@ import {
   SupplierView,
   GuestView,
 } from "@/components/dashboard-views";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
 
 // Role-based view component renderer
 function getRoleView(

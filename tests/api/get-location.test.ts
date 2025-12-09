@@ -42,12 +42,12 @@ describe("GET /api/get-location (unit)", () => {
 
     const mockRequest = {
       headers: {
-        get: (_name: string) => "222.222.222.222",
+        get: () => "222.222.222.222",
       },
     } as unknown as Request;
 
     // First call should hit the provider
-    const res1 = await GET(mockRequest as any);
+    const res1 = await GET(mockRequest);
     const body1 = await (res1 as Response).json();
 
     expect(res1.status).to.equal(200);
@@ -56,7 +56,7 @@ describe("GET /api/get-location (unit)", () => {
     expect(callCount).to.equal(1);
 
     // Second call with same IP should be served from cache (no extra fetch)
-    const res2 = await GET(mockRequest as any);
+    const res2 = await GET(mockRequest);
     const body2 = await (res2 as Response).json();
 
     expect(res2.status).to.equal(200);
@@ -91,11 +91,11 @@ describe("GET /api/get-location (unit)", () => {
 
     const mockRequest = {
       headers: {
-        get: (_name: string) => null,
+        get: () => null,
       },
     } as unknown as Request;
 
-    const res = await GET(mockRequest as any);
+    const res = await GET(mockRequest);
     const body = await (res as Response).json();
 
     expect(res.status).to.equal(200);
@@ -150,11 +150,11 @@ describe("GET /api/get-location (unit)", () => {
 
     const mockRequest = {
       headers: {
-        get: (_name: string) => null,
+        get: () => null,
       },
     } as unknown as Request;
 
-    const res = await GET(mockRequest as any);
+    const res = await GET(mockRequest);
     const body = await (res as Response).json();
 
     expect(res.status).to.equal(200);
@@ -175,11 +175,11 @@ describe("GET /api/get-location (unit)", () => {
 
     const mockRequest = {
       headers: {
-        get: (_name: string) => null,
+        get: () => null,
       },
     } as unknown as Request;
 
-    const res = await GET(mockRequest as any);
+    const res = await GET(mockRequest);
     const body = await (res as Response).json();
 
     expect(res.status).to.equal(200);

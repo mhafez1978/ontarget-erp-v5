@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { validateSession } from "@/lib/session-manager";
 
 // GET - Fetch storage providers
 export async function GET(request: NextRequest) {

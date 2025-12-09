@@ -95,16 +95,24 @@ export async function callStorefrontModel<T>(
 
     if (!response.ok) {
       const text = await response.text();
-      console.error("[AI Storefront] Anthropic model call failed:", response.status, text);
+      console.error(
+        "[AI Storefront] Anthropic model call failed:",
+        response.status,
+        text
+      );
       throw new Error(
         `AI storefront model call failed with status ${response.status}`
       );
     }
 
-    const json = (await response.json()) as any;
+    const json = (await response.json()) as Record<string, unknown>;
     const content =
       json?.content && Array.isArray(json.content)
-        ? json.content.map((c: any) => c.text || "").join("\n")
+        ? json.content
+            .map((c: Record<string, unknown>) =>
+              typeof c.text === "string" ? c.text : ""
+            )
+            .join("\n")
         : null;
 
     if (!content || typeof content !== "string") {
@@ -114,7 +122,7 @@ export async function callStorefrontModel<T>(
     let parsed: unknown;
     try {
       parsed = JSON.parse(content);
-    } catch (error) {
+    } catch {
       console.error(
         "[AI Storefront] Failed to parse Anthropic JSON content:",
         content
@@ -155,8 +163,18 @@ export async function callStorefrontModel<T>(
     );
   }
 
-  const json = (await response.json()) as any;
-  const content = json?.choices?.[0]?.message?.content;
+  const json = (await response.json()) as Record<string, unknown>;
+  const choices = Array.isArray(json?.choices) ? json.choices : [];
+  const content =
+    choices.length > 0 &&
+    typeof (choices[0] as Record<string, unknown>)?.message === "object"
+      ? (
+          (choices[0] as Record<string, unknown>).message as Record<
+            string,
+            unknown
+          >
+        )?.content
+      : null;
 
   if (!content || typeof content !== "string") {
     throw new Error("[AI Storefront] Empty or invalid model response");
@@ -165,7 +183,7 @@ export async function callStorefrontModel<T>(
   let parsed: unknown;
   try {
     parsed = JSON.parse(content);
-  } catch (error) {
+  } catch {
     console.error("[AI Storefront] Failed to parse JSON content:", content);
     throw new Error("[AI Storefront] Failed to parse model JSON output");
   }

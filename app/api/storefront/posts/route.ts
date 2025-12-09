@@ -21,8 +21,6 @@ export async function GET(request: NextRequest) {
       return validation.response;
     }
 
-    const { user } = validation;
-
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get("companyId");
     const status = searchParams.get("status");
@@ -73,7 +71,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const where: any = { companyId };
+    const where: { companyId: string; status?: string } = { companyId };
     if (status) {
       where.status = status.toUpperCase();
     }
@@ -114,8 +112,6 @@ export async function POST(request: NextRequest) {
     if (!validation.valid) {
       return validation.response;
     }
-
-    const { user } = validation;
 
     const body = await request.json();
     const parsed = createPostSchema.safeParse(body);
@@ -189,7 +185,6 @@ export async function POST(request: NextRequest) {
 
     // Ensure slug uniqueness per company
     let slugSuffix = 1;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const existing = await db.storefrontPost.findFirst({
         where: {

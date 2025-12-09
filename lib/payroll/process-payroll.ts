@@ -36,7 +36,7 @@ export async function processPayrollForCompany(
   // Don't eagerly query for the ledger — we only need it when we actually have
   // pending payroll entries to process. Deferring the lookup/creation avoids
   // unnecessary DB writes and simplifies unit testing.
-  let ledger: any = null;
+  let ledger: { id: string; totalPayroll: number } | null = null;
 
   const pendingEntries = await db.timeEntry.findMany({
     where: {
@@ -250,7 +250,7 @@ export async function processPayrollForCompany(
         taxWithheld: taxes,
         deductions,
         netAmount: netPay,
-        taxBreakdown: taxBreakdown as any,
+        taxBreakdown: taxBreakdown as unknown,
         status: "PENDING",
       },
     });

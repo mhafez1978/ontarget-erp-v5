@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Dumbbell, Flame, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -120,25 +119,32 @@ export function FitnessBoutiqueTheme(props: ThemeRendererProps) {
 
           <div className="w-full max-w-md">
             <div className="grid gap-4 sm:grid-cols-3">
-              {highlightServices.map((service, index) => (
-                <div
-                  key={(service as any).id || index}
-                  className="rounded-2xl border border-orange-500/40 bg-black/40 p-4 shadow-lg shadow-black/40"
-                >
-                  <div className="mb-3 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      {icons[index % icons.length]}
-                      <h3 className="text-sm font-semibold leading-tight">
-                        {(service as any).name}
-                      </h3>
+              {highlightServices.map((service, index) => {
+                const svc = service as {
+                  id?: string;
+                  name?: string;
+                  description?: string;
+                };
+                return (
+                  <div
+                    key={svc.id || index}
+                    className="rounded-2xl border border-orange-500/40 bg-black/40 p-4 shadow-lg shadow-black/40"
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {icons[index % icons.length]}
+                        <h3 className="text-sm font-semibold leading-tight">
+                          {svc.name}
+                        </h3>
+                      </div>
                     </div>
+                    <p className="text-xs text-slate-300">
+                      {svc.description ||
+                        "Focused, coached sessions built around your goals."}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-300">
-                    {(service as any).description ||
-                      "Focused, coached sessions built around your goals."}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

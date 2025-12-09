@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import StorefrontLayout from "@/components/storefront/storefront-layout";
-import { defaultThemes } from "@/lib/storefront-themes";
 
 interface PageProps {
   params: Promise<{
@@ -67,7 +66,7 @@ export default async function StorePostsPage({ params }: PageProps) {
         company.aiStorefrontEnabled && company.aiStorefrontSpec
           ? typeof company.aiStorefrontSpec === "string"
             ? JSON.parse(company.aiStorefrontSpec as string).meta
-            : (company.aiStorefrontSpec as any)?.meta
+            : (company.aiStorefrontSpec as Record<string, unknown>)?.meta
           : null
       }
       isStoreEnabled={company.isStoreEnabled}

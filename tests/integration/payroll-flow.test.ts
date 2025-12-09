@@ -2,17 +2,17 @@ import { expect } from "chai";
 import { startNext, stopNext, baseUrl } from "./server";
 import { db } from "@/lib/db";
 import { createSession } from "@/lib/session-manager";
+import type { Company, User, CompanyStaff, Session } from "@prisma/client";
 
 describe("Integration: Payroll end-to-end flow", function () {
   this.timeout(120000);
 
-  let company: any;
-  let staffUser: any;
-  let adminUser: any;
-  let staffStaff: any; // companyStaff record for the staff user
-  let adminStaff: any; // companyStaff for admin
-  let staffSession: any;
-  let adminSession: any;
+  let company: Company;
+  let staffUser: User;
+  let adminUser: User;
+  let staffStaff: CompanyStaff; // companyStaff record for the staff user
+  let staffSession: Session;
+  let adminSession: Session;
 
   before(async () => {
     // Start Next dev server
@@ -56,7 +56,8 @@ describe("Integration: Payroll end-to-end flow", function () {
       },
     });
 
-    adminStaff = await db.companyStaff.create({
+    // Create admin staff for company
+    await db.companyStaff.create({
       data: {
         userId: adminUser.id,
         companyId: company.id,
@@ -167,13 +168,15 @@ describe("Integration: Payroll end-to-end flow", function () {
     const createdPayroll = await db.payrollEntry.findFirst({
       where: { staffId: staffStaff.id },
     });
-    expect(createdPayroll).to.exist;
+    expect(createdPayroll).to.not.be.null; // eslint-disable-line @typescript-eslint/no-unused-expressions
+    expect(createdPayroll).to.not.be.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
 
     // Verify ledger updated
     const ledger = await db.ledger.findUnique({
       where: { companyId: company.id },
     });
-    expect(ledger).to.exist;
+    expect(ledger).to.not.be.null; // eslint-disable-line @typescript-eslint/no-unused-expressions
+    expect(ledger).to.not.be.undefined; // eslint-disable-line @typescript-eslint/no-unused-expressions
     // ledger.totalPayroll should reflect gross > 0
     expect(Number(ledger?.totalPayroll || 0)).to.be.greaterThan(0);
   });

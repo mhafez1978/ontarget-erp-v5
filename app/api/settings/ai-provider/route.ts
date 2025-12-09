@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { encrypt, decrypt, isEncrypted } from "@/lib/crypto";
+import { encrypt } from "@/lib/crypto";
 
 // Defensive guard shape for Prisma client delegate when client generation is missing
 // Keep the shape intentionally loose so runtime checks guard older deployments.

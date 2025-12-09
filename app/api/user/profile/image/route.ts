@@ -175,18 +175,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Build sanitized username to store under per-user folder (fallback to id)
-    const rawName = (await db.user.findUnique({
-      where: { id: effectiveUserId },
-      select: { name: true, email: true },
-    })) || { name: user.name, email: user.email };
-    const nameSource = rawName?.name || rawName?.email || effectiveUserId;
-    // sanitize: lowercase, replace spaces with '-', allow alphanum, dash and underscore
-    const sanitized =
-      String(nameSource)
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-_]/g, "")
-        .slice(0, 60) || effectiveUserId;
 
     // Process and compress image into a small webp data URL and store in DB
     // Try to process the image with sharp; if sharp fails (native binary missing etc.)
@@ -199,11 +187,11 @@ export async function POST(request: NextRequest) {
         .webp({ quality: 80 })
         .toBuffer();
       imageMime = "image/webp";
-    } catch (err) {
+    } catch (err: unknown) {
       // Log stack for diagnosis and attempt a graceful fallback
       console.warn(
         "Sharp processing failed — falling back to original buffer. Error:",
-        err?.message || err
+        err instanceof Error ? err.message : String(err)
       );
 
       // Fallback: use the original uploaded buffer and keep its mime type

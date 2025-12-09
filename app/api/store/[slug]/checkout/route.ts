@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { validateSessionForAPI } from "@/lib/validate-session";
 import { validateSession } from "@/lib/session-manager";
 
 export type CheckoutDb = {

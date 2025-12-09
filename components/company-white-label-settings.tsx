@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, DragEvent } from "react";
+import { useState, useEffect, useCallback, DragEvent } from "react";
 import {
   Card,
   CardContent,
@@ -80,9 +80,9 @@ export function CompanyWhiteLabelSettings() {
 
   useEffect(() => {
     fetchCompanyBranding();
-  }, []);
+  }, [fetchCompanyBranding]);
 
-  const fetchCompanyBranding = async () => {
+  const fetchCompanyBranding = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/company/white-label");
@@ -121,7 +121,7 @@ export function CompanyWhiteLabelSettings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const fetchUploadedLogos = async (companyId: string) => {
     try {

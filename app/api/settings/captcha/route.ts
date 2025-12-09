@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCaptchaForScope } from "@/lib/captcha";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { decrypt, encrypt } from "@/lib/encryption";
+import { encrypt } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -95,12 +95,16 @@ export async function POST(request: NextRequest) {
     );
 
     const body = await request.json();
-    const { provider, siteKey, secretKey, isActive } = body as {
+
+    type CaptchaSettingsBody = {
       provider?: string;
       siteKey?: string;
       secretKey?: string;
       isActive?: boolean;
     };
+
+    const { provider, siteKey, secretKey, isActive } =
+      body as CaptchaSettingsBody;
 
     if (!siteKey || !secretKey) {
       return NextResponse.json(
@@ -128,7 +132,7 @@ export async function POST(request: NextRequest) {
           await captchaProvider.update({
             where: { id: existing.id },
             data: {
-              provider: "GOOGLE_RECAPTCHA",
+              provider: provider ?? "GOOGLE_RECAPTCHA",
               siteKey,
               secretKey: encrypt(secretKey),
               isActive: isActive ?? true,
@@ -140,7 +144,7 @@ export async function POST(request: NextRequest) {
         if (typeof captchaProvider.create === "function") {
           await captchaProvider.create({
             data: {
-              provider: "GOOGLE_RECAPTCHA",
+              provider: provider ?? "GOOGLE_RECAPTCHA",
               siteKey,
               secretKey: encrypt(secretKey),
               isActive: isActive ?? true,

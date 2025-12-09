@@ -1,8 +1,4 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
-import { ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import StorefrontLayout from "@/components/storefront/storefront-layout";
 import { db } from "@/lib/db";
 import { defaultThemes } from "@/lib/storefront-themes";
@@ -64,14 +60,14 @@ export default async function StorePostDetailPage({ params }: PageProps) {
 
   // Determine AI spec or theme meta for styling the header + hero
   const aiSpecRaw = company.aiStorefrontSpec || null;
-  let aiSpec: any = null;
-  let aiMeta: any = null;
+  let aiSpec: Record<string, unknown> | null = null;
+  let aiMeta: Record<string, unknown> | null = null;
   if (company.aiStorefrontEnabled && aiSpecRaw) {
     try {
       aiSpec =
         typeof aiSpecRaw === "string" ? JSON.parse(aiSpecRaw) : aiSpecRaw;
       aiMeta = aiSpec?.meta ?? null;
-    } catch (e) {
+    } catch {
       // swallow parse errors — treat as not present
       aiSpec = null;
       aiMeta = null;
@@ -101,27 +97,6 @@ export default async function StorePostDetailPage({ params }: PageProps) {
     : isBuildCraft
     ? "bg-[#ff6b00] text-black border-b-4 border-black shadow-lg"
     : "border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60";
-  const linkClass = isBlackFriday
-    ? "text-sm font-medium hover:text-red-500 transition"
-    : isPrecisionCare
-    ? "text-sm font-medium text-gray-800 hover:text-teal-600 transition"
-    : isFitnessBoutique
-    ? "text-sm font-medium text-[#3a2c20] hover:text-[#d36c3b] transition"
-    : isDigitalCampus
-    ? "text-sm font-semibold text-white hover:text-[#ffdd33] transition"
-    : isBoutiqueStay
-    ? "text-sm font-medium text-[#3a2a2a] hover:text-[#dd6fa4] transition"
-    : isBuildCraft
-    ? "text-sm font-semibold text-black hover:text-white transition"
-    : "text-sm font-medium hover:underline";
-
-  const headerLogo: string | null =
-    (company.logo as string | null) ||
-    (company.logoLight as string | null) ||
-    (company.logoDark as string | null) ||
-    null;
-
-  const aiEnabled = company.aiStorefrontEnabled && !!aiMeta;
 
   return (
     <StorefrontLayout

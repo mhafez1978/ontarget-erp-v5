@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import Link from "next/link";
-import Image from "next/image";
-import { ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { defaultThemes, type ThemeSection } from "@/lib/storefront-themes";
 import { ThemeRenderer } from "@/components/storefront/theme-renderer";
 import StorefrontLayout from "@/components/storefront/storefront-layout";
@@ -488,19 +485,6 @@ export default async function StorefrontPage({ params }: PageProps) {
     : isBuildCraft
     ? "bg-[#ff6b00] text-black border-b-4 border-black shadow-lg"
     : "border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60";
-  const linkClass = isBlackFriday
-    ? "text-sm font-medium hover:text-red-500 transition"
-    : isPrecisionCare
-    ? "text-sm font-medium text-gray-800 hover:text-teal-600 transition"
-    : isFitnessBoutique
-    ? "text-sm font-medium text-[#3a2c20] hover:text-[#d36c3b] transition"
-    : isDigitalCampus
-    ? "text-sm font-semibold text-white hover:text-[#ffdd33] transition"
-    : isBoutiqueStay
-    ? "text-sm font-medium text-[#3a2a2a] hover:text-[#dd6fa4] transition"
-    : isBuildCraft
-    ? "text-sm font-semibold text-black hover:text-white transition"
-    : "text-sm font-medium hover:underline";
 
   return (
     <StorefrontLayout

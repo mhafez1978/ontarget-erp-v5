@@ -1,11 +1,13 @@
 import { expect } from "chai";
 import sinon from "sinon";
 import { Decimal } from "@prisma/client/runtime/library";
+import type { AuditLog, Ledger, CompanyStaff, TimeEntry } from "@prisma/client";
 
 // Module under test
 import * as payrollModule from "@/lib/payroll/process-payroll";
 import { db } from "@/lib/db";
 import { TaxCalculator } from "@/lib/payroll/tax-calculator";
+import type { TaxBreakdown } from "@/lib/payroll/tax-calculator";
 import * as audit from "@/lib/audit-log";
 
 describe("processPayrollForCompany", () => {
@@ -14,7 +16,7 @@ describe("processPayrollForCompany", () => {
   beforeEach(() => {
     sandbox = sinon.createSandbox();
     // Prevent actual audit log writes during unit tests
-    sandbox.stub(audit, "createAuditLog").resolves({} as any);
+    sandbox.stub(audit, "createAuditLog").resolves({} as AuditLog);
   });
 
   afterEach(() => {
@@ -24,49 +26,50 @@ describe("processPayrollForCompany", () => {
   it("returns an empty summary when there are no pending entries", async () => {
     // Replace the ledger and timeEntry delegates for this test with small fakes
     // so we don't touch the real DB.
-    const originalLedger = (db as any).ledger;
-    const originalTimeEntry = (db as any).timeEntry;
+    const originalLedger = (db as unknown as Record<string, unknown>).ledger;
+    const originalTimeEntry = (db as unknown as Record<string, unknown>)
+      .timeEntry;
 
     try {
-      (db as any).ledger = {
+      (db as unknown as Record<string, unknown>).ledger = {
         ...originalLedger,
-        findUnique: sandbox.stub().resolves(null as any),
-        create: sandbox.stub().resolves({ id: "ledger-fake" } as any),
-      } as any;
+        findUnique: sandbox.stub().resolves(null),
+        create: sandbox.stub().resolves({ id: "ledger-fake" } as Ledger),
+      };
 
-      (db as any).timeEntry = {
+      (db as unknown as Record<string, unknown>).timeEntry = {
         ...originalTimeEntry,
-        findMany: sandbox.stub().resolves([] as any),
-      } as any;
+        findMany: sandbox.stub().resolves([]),
+      };
 
       const res = await payrollModule.processPayrollForCompany("company-123");
 
       expect(res.companyId).to.equal("company-123");
       expect(res.processedTimeEntries).to.equal(0);
       expect(res.payrollEntriesCreated).to.equal(0);
-      expect(res.payrollEntries).to.be.an("array").that.is.empty;
-      expect(res.currencyBreakdown).to.be.an("array").that.is.empty;
+      expect(res.payrollEntries).to.be.an("array").that.is.empty; // eslint-disable-line @typescript-eslint/no-unused-expressions
+      expect(res.currencyBreakdown).to.be.an("array").that.is.empty; // eslint-disable-line @typescript-eslint/no-unused-expressions
     } finally {
-      (db as any).ledger = originalLedger;
-      (db as any).timeEntry = originalTimeEntry;
+      (db as unknown as Record<string, unknown>).ledger = originalLedger;
+      (db as unknown as Record<string, unknown>).timeEntry = originalTimeEntry;
     }
   });
 
   it("creates payroll entries and updates ledger for a single staff with valid pay rate", async () => {
     // Prepare fake data for a single staff and one time entry
-    const fakeLedger = { id: "ledger-1" } as any;
+    const fakeLedger = { id: "ledger-1" } as Ledger;
 
-    const staff = {
+    const staff: Partial<CompanyStaff> = {
       id: "staff-1",
       payRate: new Decimal(20),
       payrollJurisdiction: null,
       payrollJurisdictionId: null,
       currency: "USD",
-    } as any;
+    };
 
-    const entry = {
+    const entry: Partial<TimeEntry> & { staff: Partial<CompanyStaff> } = {
       id: "entry-1",
-      staffId: staff.id,
+      staffId: staff.id!,
       companyId: "company-123",
       clockIn: new Date("2025-01-01T09:00:00Z"),
       clockOut: new Date("2025-01-01T17:00:00Z"),
@@ -74,56 +77,56 @@ describe("processPayrollForCompany", () => {
       totalMinutes: null,
       status: "CLOCKED_OUT",
       staff,
-    } as any;
+    };
 
     // Replace delegate methods with stubs for the duration of this test so we
     // never call the real DB.
-    const originalLedger = (db as any).ledger;
-    const originalTimeEntry = (db as any).timeEntry;
-    const originalPayrollEntry = (db as any).payrollEntry;
+    const originalLedger = (db as unknown as Record<string, unknown>).ledger;
+    const originalTimeEntry = (db as unknown as Record<string, unknown>)
+      .timeEntry;
+    const originalPayrollEntry = (db as unknown as Record<string, unknown>)
+      .payrollEntry;
 
     try {
-      const ledgerFindUniqueStub = sandbox.stub().resolves(null as any);
-      const ledgerCreateStub = sandbox.stub().resolves(fakeLedger as any);
-      const ledgerUpdateStub = sandbox.stub().resolves({} as any);
+      const ledgerFindUniqueStub = sandbox.stub().resolves(null);
+      const ledgerCreateStub = sandbox.stub().resolves(fakeLedger);
+      const ledgerUpdateStub = sandbox.stub().resolves({});
 
-      const timeEntryFindManyStub = sandbox.stub().resolves([entry] as any);
-      const timeEntryUpdateManyStub = sandbox
-        .stub()
-        .resolves({ count: 1 } as any);
+      const timeEntryFindManyStub = sandbox.stub().resolves([entry]);
+      const timeEntryUpdateManyStub = sandbox.stub().resolves({ count: 1 });
 
       const payrollEntryAggregateStub = sandbox
         .stub()
-        .resolves({ _sum: { grossAmount: null } } as any);
+        .resolves({ _sum: { grossAmount: null } });
       const payrollEntryCreateStub = sandbox
         .stub()
-        .resolves({ id: "payroll-1" } as any);
+        .resolves({ id: "payroll-1" });
 
-      (db as any).ledger = {
+      (db as unknown as Record<string, unknown>).ledger = {
         ...originalLedger,
         findUnique: ledgerFindUniqueStub,
         create: ledgerCreateStub,
         update: ledgerUpdateStub,
-      } as any;
+      };
 
-      (db as any).timeEntry = {
+      (db as unknown as Record<string, unknown>).timeEntry = {
         ...originalTimeEntry,
         findMany: timeEntryFindManyStub,
         updateMany: timeEntryUpdateManyStub,
-      } as any;
+      };
 
-      (db as any).payrollEntry = {
+      (db as unknown as Record<string, unknown>).payrollEntry = {
         ...originalPayrollEntry,
         aggregate: payrollEntryAggregateStub,
         create: payrollEntryCreateStub,
-      } as any;
+      };
 
       // Make TaxCalculator.calculatePayroll deterministic
-      const taxResult = {
+      const taxResult: TaxBreakdown = {
         totals: {
-          netPay: "120.00",
-          totalTaxes: "40.00",
-          totalDeductions: "0.00",
+          netPay: 120.0,
+          totalTaxes: 40.0,
+          totalDeductions: 0.0,
         },
         federalIncomeTax: 10,
         stateIncomeTax: 5,
@@ -131,10 +134,11 @@ describe("processPayrollForCompany", () => {
         socialSecurity: 10,
         medicare: 5,
         medicareAdditional: 0,
+        stateUnemployment: 0,
         stateDisabilityInsurance: 0,
-      } as any;
+      };
 
-      sandbox.stub(TaxCalculator, "calculatePayroll").returns(taxResult as any);
+      sandbox.stub(TaxCalculator, "calculatePayroll").returns(taxResult);
 
       const res = await payrollModule.processPayrollForCompany("company-123", {
         payDate: new Date("2025-01-02"),
@@ -150,14 +154,20 @@ describe("processPayrollForCompany", () => {
       expect(created.currency).to.equal("USD");
 
       // Ensure updateMany was called with the created payroll entry id
-      expect((db as any).timeEntry.updateMany.calledOnce).to.equal(true);
+      expect(
+        (db as unknown as Record<string, unknown>).timeEntry.updateMany
+          .calledOnce
+      ).to.equal(true);
       // Ensure ledger.update was called to increment totalPayroll
-      expect((db as any).ledger.update.calledOnce).to.equal(true);
+      expect(
+        (db as unknown as Record<string, unknown>).ledger.update.calledOnce
+      ).to.equal(true);
     } finally {
       // Restore original delegates
-      (db as any).ledger = originalLedger;
-      (db as any).timeEntry = originalTimeEntry;
-      (db as any).payrollEntry = originalPayrollEntry;
+      (db as unknown as Record<string, unknown>).ledger = originalLedger;
+      (db as unknown as Record<string, unknown>).timeEntry = originalTimeEntry;
+      (db as unknown as Record<string, unknown>).payrollEntry =
+        originalPayrollEntry;
     }
   });
 });

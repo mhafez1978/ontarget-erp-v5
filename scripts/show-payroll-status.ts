@@ -1,4 +1,7 @@
-import { db } from "../lib/db";
+import { PrismaClient } from "@prisma/client";
+import type { TaxConfig, TaxBreakdown } from "../lib/payroll/tax-calculator";
+
+const prisma = new PrismaClient();
 
 /**
  * Display comprehensive payroll system status
@@ -9,14 +12,12 @@ async function showPayrollStatus() {
   console.log("📊 MULTI-JURISDICTION PAYROLL SYSTEM STATUS");
   console.log("═══════════════════════════════════════════════════════\n");
 
-  // Jurisdictions
-  console.log("🌍 CONFIGURED JURISDICTIONS:\n");
-  const jurisdictions = await db.payrollJurisdiction.findMany({
+  const jurisdictions = await prisma.payrollJurisdiction.findMany({
     orderBy: { code: "asc" },
   });
 
   jurisdictions.forEach((j) => {
-    const taxConfig = j.taxConfig as any;
+    const taxConfig = j.taxConfig as unknown as TaxConfig;
     const incomeTaxType = taxConfig?.incomeTax?.type || "UNKNOWN";
     const forms = Array.isArray(j.requiredForms)
       ? j.requiredForms.join(", ")
@@ -34,7 +35,7 @@ async function showPayrollStatus() {
   console.log("═══════════════════════════════════════════════════════");
   console.log("👥 STAFF WITH PAYROLL CONFIGURATION:\n");
 
-  const staffWithPayroll = await db.companyStaff.findMany({
+  const staffWithPayroll = await prisma.companyStaff.findMany({
     where: {
       payrollJurisdictionId: { not: null },
     },
@@ -66,7 +67,7 @@ async function showPayrollStatus() {
   console.log("═══════════════════════════════════════════════════════");
   console.log("💰 PAYROLL ENTRIES:\n");
 
-  const payrollEntries = await db.payrollEntry.findMany({
+  const payrollEntries = await prisma.payrollEntry.findMany({
     include: {
       staff: {
         include: {
@@ -88,7 +89,7 @@ async function showPayrollStatus() {
     console.log("⚠️  No payroll entries yet\n");
   } else {
     payrollEntries.forEach((p) => {
-      const taxBreakdown = p.taxBreakdown as any;
+      const taxBreakdown = p.taxBreakdown as unknown as TaxBreakdown;
       console.log(`📋 Payroll Entry: ${p.id}`);
       console.log(`   Employee: ${p.staff.user.name}`);
       console.log(`   Company: ${p.ledger.company.name}`);
@@ -133,12 +134,12 @@ async function showPayrollStatus() {
   console.log("═══════════════════════════════════════════════════════");
   console.log("📈 SUMMARY STATISTICS:\n");
 
-  const totalJurisdictions = await db.payrollJurisdiction.count();
-  const totalStaffConfigured = await db.companyStaff.count({
+  const totalJurisdictions = await prisma.payrollJurisdiction.count();
+  const totalStaffConfigured = await prisma.companyStaff.count({
     where: { payrollJurisdictionId: { not: null } },
   });
-  const totalPayrollEntries = await db.payrollEntry.count();
-  const totalPayrollAmount = await db.payrollEntry.aggregate({
+  const totalPayrollEntries = await prisma.payrollEntry.count();
+  const totalPayrollAmount = await prisma.payrollEntry.aggregate({
     _sum: { grossAmount: true, netAmount: true },
   });
 
@@ -159,5 +160,5 @@ showPayrollStatus()
     process.exit(1);
   })
   .finally(async () => {
-    await db.$disconnect();
+    await prisma.$disconnect();
   });

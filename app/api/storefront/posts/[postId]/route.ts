@@ -24,8 +24,6 @@ export async function PUT(
       return validation.response;
     }
 
-    const { user } = validation;
-
     const body = await request.json();
     const parsed = updatePostSchema.safeParse(body);
 
@@ -96,7 +94,16 @@ export async function PUT(
     }
 
     const data = parsed.data;
-    const updateData: any = {};
+    const updateData: {
+      title?: string;
+      excerpt?: string | null;
+      content?: string;
+      heroImage?: string | null;
+      tags?: string | null;
+      status?: string;
+      publishedAt?: Date;
+      slug?: string;
+    } = {};
 
     if (data.title !== undefined) updateData.title = data.title;
     if (data.excerpt !== undefined) updateData.excerpt = data.excerpt || null;
@@ -117,7 +124,6 @@ export async function PUT(
     if (data.slug !== undefined && data.slug.trim().length > 0) {
       let finalSlug = data.slug.trim().toLowerCase().replace(/\s+/g, "-");
       let suffix = 1;
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         const conflict = await db.storefrontPost.findFirst({
           where: {
@@ -170,8 +176,6 @@ export async function DELETE(
     if (!validation.valid) {
       return validation.response;
     }
-
-    const { user } = validation;
 
     const existingPost = await db.storefrontPost.findUnique({
       where: { id: postId },

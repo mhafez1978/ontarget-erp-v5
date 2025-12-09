@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import {
@@ -34,8 +33,6 @@ import {
   Clock,
   Coffee,
   CheckCircle2,
-  XCircle,
-  Calendar,
   Download,
   Filter,
   Loader2,
@@ -94,9 +91,7 @@ interface TimeEntry {
 }
 
 export default function TimesheetPage() {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -108,6 +103,18 @@ export default function TimesheetPage() {
   const [approvingId, setApprovingId] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        const data = await response.json();
+
+        if (data.user) {
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
     fetchUser();
   }, []);
 
@@ -129,25 +136,6 @@ export default function TimesheetPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-
-  const fetchUser = async () => {
-    try {
-      const response = await fetch("/api/auth/me");
-      const data = await response.json();
-
-      if (!data.authenticated) {
-        router.push("/");
-        return;
-      }
-
-    setUser(data.user);
-  } catch (error) {
-      console.error("Failed to fetch user:", error);
-      router.push("/");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchStaffMembers = async () => {
     if (!selectedCompany) return;

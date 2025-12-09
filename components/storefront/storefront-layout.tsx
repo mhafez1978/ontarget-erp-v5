@@ -10,6 +10,24 @@ interface HeroProps {
   ctaLabel?: string;
 }
 
+interface AiMeta {
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+interface StoreMetadata {
+  socialLinks?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  copyright?: string | boolean;
+}
+
 interface StorefrontLayoutProps {
   slug: string;
   companyName: string;
@@ -17,8 +35,8 @@ interface StorefrontLayoutProps {
   logoLight?: string | null;
   logoDark?: string | null;
   storeBanner?: string | null;
-  storeMetadata?: any | null;
-  aiMeta?: any | null;
+  storeMetadata?: StoreMetadata | null;
+  aiMeta?: AiMeta | null;
   isStoreEnabled?: boolean;
   useThemeClass?: string | null;
   storeBlogEnabled?: boolean;

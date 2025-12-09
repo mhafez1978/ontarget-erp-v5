@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
-import { validateSession } from "@/lib/session-manager";
 
 // GET /api/teams/[teamId]/members - Get team members
 // POST /api/teams/[teamId]/members - Add member to team
@@ -18,8 +17,6 @@ export async function GET(
     if (!validation.valid) {
       return validation.response;
     }
-
-    const userId = validation.user.id;
 
     const { teamId } = await params;
 

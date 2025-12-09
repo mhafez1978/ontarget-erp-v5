@@ -755,8 +755,6 @@ export async function GET(request: NextRequest) {
       return validation.response;
     }
 
-    const { user } = validation;
-
     const { searchParams } = new URL(request.url);
     const companyIdParam = searchParams.get("companyId");
     const statusParam = searchParams.get("status");
@@ -921,8 +919,6 @@ export async function POST(request: NextRequest) {
       return validation.response;
     }
 
-    const { user } = validation;
-
     const body = await request.json();
     const parsed = createArticleSchema.safeParse(body);
 
@@ -1013,7 +1009,6 @@ export async function POST(request: NextRequest) {
     let finalSlug = baseSlug;
     let suffix = 1;
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const supportArticleClient: typeof db.supportArticle = db.supportArticle;
       if (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -23,22 +23,29 @@ export const Meteors = ({
   angle = 215,
   className,
 }: MeteorsProps) => {
-  const [meteorStyles, setMeteorStyles] = useState<Array<React.CSSProperties>>(
-    []
-  );
+  // Generate random values once on mount and memoize them
+  const meteorStyles = useMemo(() => {
+    const windowWidth =
+      typeof window !== "undefined" ? window.innerWidth : 1000;
+    return [...new Array(number)].map(() => {
+      // Generate random values at creation time, not render time
+      const randomLeft = Math.floor(Math.random() * windowWidth);
+      const randomDelay = Math.random() * (maxDelay - minDelay) + minDelay;
+      const randomDuration = Math.floor(
+        Math.random() * (maxDuration - minDuration) + minDuration
+      );
 
-  useEffect(() => {
-    const styles = [...new Array(number)].map(() => ({
-      "--angle": -angle + "deg",
-      top: "-5%",
-      left: `calc(0% + ${Math.floor(Math.random() * window.innerWidth)}px)`,
-      animationDelay: Math.random() * (maxDelay - minDelay) + minDelay + "s",
-      animationDuration:
-        Math.floor(Math.random() * (maxDuration - minDuration) + minDuration) +
-        "s",
-    }));
-    setMeteorStyles(styles);
-  }, [number, minDelay, maxDelay, minDuration, maxDuration, angle]);
+      return {
+        "--angle": -angle + "deg",
+        top: "-5%",
+        left: `calc(0% + ${randomLeft}px)`,
+        animationDelay: randomDelay + "s",
+        animationDuration: randomDuration + "s",
+      };
+    });
+    // Only recreate when number changes, not when timing params change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [number, angle]);
 
   return (
     <>

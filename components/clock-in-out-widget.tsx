@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, Coffee, LogOut, Loader2 } from "lucide-react";
@@ -25,7 +25,7 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
   const [isStaff, setIsStaff] = useState(false);
 
   // Fetch current status
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     try {
       const response = await fetch(
         `/api/time-tracking/status?companyId=${companyId}`
@@ -42,13 +42,13 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
   useEffect(() => {
     if (companyId) {
       fetchStatus();
     }
-  }, [companyId]);
+  }, [companyId, fetchStatus]);
 
   // Update elapsed time every minute
   useEffect(() => {

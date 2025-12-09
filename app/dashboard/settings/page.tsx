@@ -143,7 +143,6 @@ export default function SettingsPage() {
     companyId: null as string | null,
   });
 
-  const [oauthScope, setOauthScope] = useState<"GLOBAL" | "COMPANY">("COMPANY");
   const [canCustomizeOAuth, setCanCustomizeOAuth] = useState(false);
 
   // Teams Management state
@@ -488,7 +487,7 @@ export default function SettingsPage() {
         toast.success("Global captcha settings saved");
         setGlobalCaptchaSecretKey("");
       }
-    } catch (e) {
+    } catch {
       toast.error("Error saving captcha settings");
     } finally {
       setCaptchaSaving(false);
@@ -519,7 +518,7 @@ export default function SettingsPage() {
         toast.success("Company captcha settings saved");
         setCompanyCaptchaSecretKey("");
       }
-    } catch (e) {
+    } catch {
       toast.error("Error saving captcha settings");
     } finally {
       setCaptchaSaving(false);
