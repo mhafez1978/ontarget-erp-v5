@@ -4,10 +4,45 @@ import sharp from "sharp";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { getRequestOrigin } from "@/lib/request-origin";
+import { promises as fs } from "fs";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
+
+/**
+ * Check if cold storage is configured
+ */
+async function hasStorageConfigured(): Promise<{
+  configured: boolean;
+  provider: string;
+  basePath: string;
+} | null> {
+  const globalStorage = await db.storageProvider.findFirst({
+    where: {
+      scope: "GLOBAL",
+      isActive: true,
+      isConnected: true,
+    },
+  });
+
+  if (!globalStorage) {
+    return null;
+  }
+
+  const config = JSON.parse(globalStorage.config || "{}");
+  const basePath =
+    globalStorage.provider === "LOCAL"
+      ? config.path || "../var/storage/cold"
+      : "";
+
+  return {
+    configured: true,
+    provider: globalStorage.provider,
+    basePath,
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -174,13 +209,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build sanitized username to store under per-user folder (fallback to id)
-
-    // Process and compress image into a small webp data URL and store in DB
-    // Try to process the image with sharp; if sharp fails (native binary missing etc.)
-    // fall back to storing the original uploaded file as base64 so we don't return 500.
+    // Process and compress image
     let processedBuffer: Buffer;
-    let imageMime = "image/webp"; // default mime for processed buffer
+    let imageMime = "image/webp";
     try {
       processedBuffer = await sharp(buffer)
         .resize(200, 200, { fit: "cover", position: "center" })
@@ -188,35 +219,71 @@ export async function POST(request: NextRequest) {
         .toBuffer();
       imageMime = "image/webp";
     } catch (err: unknown) {
-      // Log stack for diagnosis and attempt a graceful fallback
       console.warn(
         "Sharp processing failed — falling back to original buffer. Error:",
         err instanceof Error ? err.message : String(err)
       );
-
-      // Fallback: use the original uploaded buffer and keep its mime type
       processedBuffer = buffer;
       imageMime = file.type || "application/octet-stream";
     }
 
-    // Convert processed image to base64 data URL
-    const base64Image = processedBuffer.toString("base64");
-    const imageDataUrl = `data:${imageMime};base64,${base64Image}`;
+    // Check if cold storage is configured
+    const storage = await hasStorageConfigured();
+    let imageUrl: string;
+    let storageType: string;
 
-    // Limit the size of stored base64 string to avoid huge DB payload
-    if (imageDataUrl.length > 500000) {
-      const response = NextResponse.json(
-        { error: "Processed image is too large. Please use a smaller image." },
-        { status: 400 }
+    if (storage && storage.provider === "LOCAL") {
+      // Use cold storage - save to filesystem
+      const filename = `profile-${Date.now()}.webp`;
+      const userProfileDir = path.join(
+        storage.basePath,
+        "profile",
+        effectiveUserId
       );
-      response.headers.set("Cache-Control", "no-store, max-age=0");
-      return response;
+      const filepath = path.join(userProfileDir, filename);
+
+      try {
+        // Ensure directory exists
+        await fs.mkdir(userProfileDir, { recursive: true });
+        // Write file
+        await fs.writeFile(filepath, processedBuffer);
+
+        // Store relative path in database
+        imageUrl = `/uploads/profile/${effectiveUserId}/${filename}`;
+        storageType = "COLD_STORAGE_LOCAL";
+      } catch (storageError) {
+        console.error(
+          "Failed to write to cold storage, falling back to base64:",
+          storageError
+        );
+        // Fallback to base64
+        const base64Image = processedBuffer.toString("base64");
+        imageUrl = `data:${imageMime};base64,${base64Image}`;
+        storageType = "DB_BASE64_FALLBACK";
+      }
+    } else {
+      // No cold storage or non-LOCAL provider - use base64
+      const base64Image = processedBuffer.toString("base64");
+      imageUrl = `data:${imageMime};base64,${base64Image}`;
+      storageType = storage ? "DB_BASE64_NO_LOCAL" : "DB_BASE64_NO_STORAGE";
+
+      // Limit the size of stored base64 string
+      if (imageUrl.length > 500000) {
+        const response = NextResponse.json(
+          {
+            error: "Processed image is too large. Please use a smaller image.",
+          },
+          { status: 400 }
+        );
+        response.headers.set("Cache-Control", "no-store, max-age=0");
+        return response;
+      }
     }
 
-    // Persist the data URL to the user's image column (safe for runtime/static concerns)
+    // Update user record with image URL
     await db.user.update({
       where: { id: effectiveUserId },
-      data: { image: imageDataUrl },
+      data: { image: imageUrl },
     });
 
     // Log the audit action
@@ -229,17 +296,17 @@ export async function POST(request: NextRequest) {
       entityType: "USER",
       entityId: effectiveUserId,
       metadata: {
-        storage: "DB_BASE64",
+        storage: storageType,
         fileName: file.name,
         fileSize: file.size,
       },
     });
 
     const origin = getRequestOrigin(request);
-    // For base64 stored avatars we'll return the data URL directly
-    const absoluteImageUrl = imageDataUrl?.startsWith("data:")
-      ? imageDataUrl
-      : new URL(imageDataUrl || "", origin).toString();
+    // For base64 stored avatars return data URL directly, for file paths make absolute
+    const absoluteImageUrl = imageUrl.startsWith("data:")
+      ? imageUrl
+      : new URL(imageUrl, origin).toString();
 
     const response = NextResponse.json({
       success: true,
