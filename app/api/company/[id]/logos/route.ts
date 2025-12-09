@@ -5,6 +5,28 @@ import { join, extname } from "path";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
+/**
+ * Check if cold storage is configured
+ */
+async function hasStorageConfigured(): Promise<boolean> {
+  const globalStorage = await db.storageProvider.findFirst({
+    where: {
+      scope: "GLOBAL",
+      isActive: true,
+      isConnected: true,
+    },
+  });
+  return !!globalStorage && globalStorage.provider !== "LOCAL";
+}
+
+/**
+ * Convert file buffer to base64 data URL
+ */
+function bufferToDataURL(buffer: Buffer, mimeType: string): string {
+  const base64 = buffer.toString("base64");
+  return `data:${mimeType};base64,${base64}`;
+}
+
 // POST - Upload multiple logos
 export async function POST(
   request: NextRequest,
@@ -73,6 +95,8 @@ export async function POST(
       }
     }
 
+    // Check if cold storage is configured
+    const storageConfigured = await hasStorageConfigured();
     const uploadedLogos = [];
 
     // Process each file
@@ -80,25 +104,35 @@ export async function POST(
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Generate unique filename
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      const extension = extname(file.name);
-      const filename = `logo-${uniqueSuffix}${extension}`;
+      let logoUrl: string;
+      let filename: string;
 
-      // Create company-specific directory
-      const uploadDir = join(process.cwd(), "public", "uploads", "logos", id);
+      if (storageConfigured) {
+        // Storage configured → save to filesystem (will be migrated to cold storage later)
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        const extension = extname(file.name);
+        filename = `logo-${uniqueSuffix}${extension}`;
 
-      // Ensure directory exists
-      try {
-        await mkdir(uploadDir, { recursive: true });
-      } catch {
-        // Directory might already exist, ignore error
+        // Create company-specific directory
+        const uploadDir = join(process.cwd(), "public", "uploads", "logos", id);
+
+        // Ensure directory exists
+        try {
+          await mkdir(uploadDir, { recursive: true });
+        } catch {
+          // Directory might already exist, ignore error
+        }
+
+        const filepath = join(uploadDir, filename);
+        await writeFile(filepath, buffer);
+
+        logoUrl = `/uploads/logos/${id}/${filename}`;
+      } else {
+        // No storage configured → convert to base64 and store in DB
+        logoUrl = bufferToDataURL(buffer, file.type);
+        filename = file.name;
       }
 
-      const filepath = join(uploadDir, filename);
-      await writeFile(filepath, buffer);
-
-      const logoUrl = `/uploads/logos/${id}/${filename}`;
       uploadedLogos.push({ url: logoUrl, filename });
     }
 
@@ -172,29 +206,62 @@ export async function GET(
       );
     }
 
-    // Read logos directory for this specific company
-    const uploadDir = join(process.cwd(), "public", "uploads", "logos", id);
+    // Check if storage is configured
+    const storageConfigured = await hasStorageConfigured();
+    let logos: { url: string; filename: string }[] = [];
 
-    try {
-      const files = await readdir(uploadDir);
-      const logos = files
-        .filter((file) => file !== ".gitkeep")
-        .map((filename) => ({
-          url: `/uploads/logos/${id}/${filename}`,
-          filename,
-        }));
+    if (storageConfigured) {
+      // Storage configured → read from filesystem
+      const uploadDir = join(process.cwd(), "public", "uploads", "logos", id);
 
-      return NextResponse.json({
-        success: true,
-        logos,
+      try {
+        const files = await readdir(uploadDir);
+        logos = files
+          .filter((file) => file !== ".gitkeep")
+          .map((filename) => ({
+            url: `/uploads/logos/${id}/${filename}`,
+            filename,
+          }));
+      } catch {
+        // Directory doesn't exist or is empty
+        logos = [];
+      }
+    } else {
+      // No storage → logos are stored as base64 in the database
+      const company = await db.company.findUnique({
+        where: { id },
+        select: {
+          logo: true,
+          logoLight: true,
+          logoDark: true,
+        },
       });
-    } catch {
-      // Directory doesn't exist or is empty
-      return NextResponse.json({
-        success: true,
-        logos: [],
-      });
+
+      if (company) {
+        // Extract base64 logos that are already assigned
+        const extractedLogos: { url: string; filename: string }[] = [];
+
+        if (company.logo && company.logo.startsWith("data:")) {
+          extractedLogos.push({ url: company.logo, filename: "logo" });
+        }
+        if (company.logoLight && company.logoLight.startsWith("data:")) {
+          extractedLogos.push({
+            url: company.logoLight,
+            filename: "logo-light",
+          });
+        }
+        if (company.logoDark && company.logoDark.startsWith("data:")) {
+          extractedLogos.push({ url: company.logoDark, filename: "logo-dark" });
+        }
+
+        logos = extractedLogos;
+      }
     }
+
+    return NextResponse.json({
+      success: true,
+      logos,
+    });
   } catch (error) {
     console.error("List logos error:", error);
     return NextResponse.json(
@@ -258,28 +325,38 @@ export async function DELETE(
       );
     }
 
-    // Extract filename from URL (handle company-specific path)
-    const urlParts = logoUrl.split("/");
-    const filename = urlParts.pop();
-    if (!filename) {
-      return NextResponse.json({ error: "Invalid logo URL" }, { status: 400 });
-    }
+    // Check if this is a filesystem logo or base64
+    const isBase64Logo = logoUrl.startsWith("data:");
+    let filename = "base64-logo";
 
-    // Delete file from company-specific directory
-    const filepath = join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "logos",
-      id,
-      filename
-    );
+    if (!isBase64Logo) {
+      // Extract filename from URL (handle company-specific path)
+      const urlParts = logoUrl.split("/");
+      const extractedFilename = urlParts.pop();
+      if (!extractedFilename) {
+        return NextResponse.json(
+          { error: "Invalid logo URL" },
+          { status: 400 }
+        );
+      }
+      filename = extractedFilename;
 
-    try {
-      await unlink(filepath);
-    } catch (error) {
-      console.error("File deletion error:", error);
-      // File might not exist, continue anyway
+      // Delete file from company-specific directory
+      const filepath = join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "logos",
+        id,
+        filename
+      );
+
+      try {
+        await unlink(filepath);
+      } catch (error) {
+        console.error("File deletion error:", error);
+        // File might not exist, continue anyway
+      }
     }
 
     // Check if this logo is assigned to any company and unassign it

@@ -156,10 +156,10 @@ export async function POST(req: NextRequest) {
           // Create a client credential and Graph client for app-only send
           try {
             // Decrypt the client secret (it's encrypted in the database)
-            const decryptedSecret = data.office365ClientSecret 
+            const decryptedSecret = data.office365ClientSecret
               ? decrypt(String(data.office365ClientSecret))
               : "";
-            
+
             // Trim whitespace to reduce paste errors
             const credential = new ClientSecretCredential(
               data.office365TenantId?.trim(),
@@ -219,7 +219,8 @@ export async function POST(req: NextRequest) {
               message?: string;
             };
 
-            const messageBody = errorObj?.body || errorObj?.message || String(graphErr);
+            const messageBody =
+              errorObj?.body || errorObj?.message || String(graphErr);
             const statusCode = errorObj?.statusCode;
             const errorCode = errorObj?.code;
 
@@ -238,7 +239,11 @@ export async function POST(req: NextRequest) {
               }
 
               // 403 Forbidden - most common causes
-              if (statusCode === 403 || messageBody.includes("403") || errorCode === "Forbidden") {
+              if (
+                statusCode === 403 ||
+                messageBody.includes("403") ||
+                errorCode === "Forbidden"
+              ) {
                 return NextResponse.json(
                   {
                     error: "Permission denied (403). Common causes:",
@@ -248,7 +253,8 @@ export async function POST(req: NextRequest) {
                       "3. The sender email doesn't exist or isn't a valid mailbox",
                       "4. Application permissions require the mailbox to be a shared mailbox or the app needs 'Mail.Send' on that specific mailbox",
                     ],
-                    suggestion: "Verify in Azure Portal: App Registration > API Permissions > Ensure 'Mail.Send' (Application) is present and shows 'Granted for [tenant]'",
+                    suggestion:
+                      "Verify in Azure Portal: App Registration > API Permissions > Ensure 'Mail.Send' (Application) is present and shows 'Granted for [tenant]'",
                     details: messageBody,
                   },
                   { status: 403 }
@@ -256,7 +262,11 @@ export async function POST(req: NextRequest) {
               }
 
               // 401 Unauthorized - authentication issue
-              if (statusCode === 401 || messageBody.includes("401") || errorCode === "Unauthorized") {
+              if (
+                statusCode === 401 ||
+                messageBody.includes("401") ||
+                errorCode === "Unauthorized"
+              ) {
                 return NextResponse.json(
                   {
                     error: "Authentication failed (401). Check:",
@@ -272,11 +282,16 @@ export async function POST(req: NextRequest) {
               }
 
               // 404 Not Found - mailbox doesn't exist
-              if (statusCode === 404 || messageBody.includes("404") || errorCode === "ResourceNotFound") {
+              if (
+                statusCode === 404 ||
+                messageBody.includes("404") ||
+                errorCode === "ResourceNotFound"
+              ) {
                 return NextResponse.json(
                   {
                     error: `Mailbox not found (404). The email '${data.office365FromEmail}' doesn't exist or isn't accessible.`,
-                    suggestion: "Verify the email address is correct and is a licensed Microsoft 365 mailbox.",
+                    suggestion:
+                      "Verify the email address is correct and is a licensed Microsoft 365 mailbox.",
                     details: messageBody,
                   },
                   { status: 404 }

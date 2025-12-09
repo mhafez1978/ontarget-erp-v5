@@ -198,9 +198,9 @@ model Company {
   slogan       String?
   description  String? @db.Text
   industry     String? // Optional industry/vertical hint for AI storefront and theming
-  logo         String?
-  logoLight    String? // Logo for light theme
-  logoDark     String? // Logo for dark theme
+  logo         String? @db.LongText // Can store file path or base64 data URL
+  logoLight    String? @db.LongText // Logo for light theme (path or base64)
+  logoDark     String? @db.LongText // Logo for dark theme (path or base64)
   website      String?
   phone        String?
   email        String?
