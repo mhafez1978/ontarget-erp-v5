@@ -19,35 +19,59 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const scope = searchParams.get("scope") || "GLOBAL";
+    const companyId = searchParams.get("companyId");
 
     // Super admin can view all, admins can only view their company storage
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = { isActive: true }; // Only get active provider
 
     if (user.role === "SUPER_ADMIN") {
-      if (scope !== "GLOBAL") {
-        where.companyId = scope;
+      if (companyId) {
+        where.companyId = companyId;
       } else {
-        where.scope = "GLOBAL";
+        where.scope = scope;
+        where.companyId = null;
       }
     } else if (user.role === "ADMIN") {
       // Admins can only see their company storage
       const companies = await db.company.findMany({
-        where: { members: { some: { id: userId } } },
+        where: { ownerId: userId },
         select: { id: true },
       });
       const companyIds = companies.map((c) => c.id);
-      where.companyId = { in: companyIds };
+
+      if (companyId && companyIds.includes(companyId)) {
+        where.companyId = companyId;
+      } else {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     } else {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const providers = await db.storageProvider.findMany({
+    // Get the active provider (single record)
+    const provider = await db.storageProvider.findFirst({
       where,
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ providers });
+    // Parse config if provider exists
+    if (provider && provider.config) {
+      try {
+        const parsedConfig = JSON.parse(provider.config);
+        return NextResponse.json({
+          provider: {
+            ...provider,
+            config: parsedConfig,
+          },
+        });
+      } catch {
+        // If parsing fails, return as-is
+        return NextResponse.json({ provider });
+      }
+    }
+
+    return NextResponse.json({ provider: null });
   } catch (error) {
     console.error("Error fetching storage providers:", error);
     return NextResponse.json(
