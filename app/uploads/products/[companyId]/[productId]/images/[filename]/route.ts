@@ -40,9 +40,7 @@ export async function GET(
 
     const config = JSON.parse(storage.config || "{}");
     const basePath =
-      storage.provider === "LOCAL"
-        ? config.path || "../var/storage/cold"
-        : "";
+      storage.provider === "LOCAL" ? config.path || "../var/storage/cold" : "";
 
     if (!basePath) {
       return NextResponse.json(
