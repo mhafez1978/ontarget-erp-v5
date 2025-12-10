@@ -1,9 +1,7 @@
-[phases.setup]
-nixPkgs = ["shadow"]
+# Use Node 22
+[env]
+NIXPACKS_NODE_VERSION = "22"
 
-commands = [
-  "useradd -r -s /bin/false nextjs"
-]
-
+# Run as non-root
 [run]
 user = "nextjs"
