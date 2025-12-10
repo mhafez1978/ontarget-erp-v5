@@ -8,7 +8,11 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 /**
  * Check if cold storage is configured
  */
-async function hasStorageConfigured(): Promise<boolean> {
+async function hasStorageConfigured(): Promise<{
+  configured: boolean;
+  provider: string;
+  basePath: string;
+} | null> {
   const globalStorage = await db.storageProvider.findFirst({
     where: {
       scope: "GLOBAL",
@@ -16,7 +20,22 @@ async function hasStorageConfigured(): Promise<boolean> {
       isConnected: true,
     },
   });
-  return !!globalStorage; // Any provider configured = use storage
+
+  if (!globalStorage) {
+    return null;
+  }
+
+  const config = JSON.parse(globalStorage.config || "{}");
+  const basePath =
+    globalStorage.provider === "LOCAL"
+      ? config.path || "../var/storage/cold"
+      : "";
+
+  return {
+    configured: true,
+    provider: globalStorage.provider,
+    basePath,
+  };
 }
 
 /**
@@ -96,7 +115,7 @@ export async function POST(
     }
 
     // Check if cold storage is configured
-    const storageConfigured = await hasStorageConfigured();
+    const storageConfig = await hasStorageConfigured();
     const uploadedLogos = [];
 
     // Process each file
@@ -107,14 +126,14 @@ export async function POST(
       let logoUrl: string;
       let filename: string;
 
-      if (storageConfigured) {
-        // Storage configured → save to filesystem (will be migrated to cold storage later)
+      if (storageConfig) {
+        // Storage configured → save to cold storage
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
         const extension = extname(file.name);
         filename = `logo-${uniqueSuffix}${extension}`;
 
-        // Create company-specific directory
-        const uploadDir = join(process.cwd(), "public", "uploads", "logos", id);
+        // Create company-specific directory in cold storage
+        const uploadDir = join(storageConfig.basePath, "logos", id);
 
         // Ensure directory exists
         try {
@@ -126,6 +145,7 @@ export async function POST(
         const filepath = join(uploadDir, filename);
         await writeFile(filepath, buffer);
 
+        // Return path for serving via /uploads/logos route
         logoUrl = `/uploads/logos/${id}/${filename}`;
       } else {
         // No storage configured → convert to base64 and store in DB
@@ -146,6 +166,9 @@ export async function POST(
         field: "logos",
         action: "upload_multiple",
         count: uploadedLogos.length,
+        storageType: storageConfig
+          ? `COLD_STORAGE_${storageConfig.provider}`
+          : "DB_BASE64_FALLBACK",
       },
     });
 

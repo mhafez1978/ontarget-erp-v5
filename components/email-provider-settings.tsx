@@ -4,49 +4,69 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
-            <div className="text-sm text-muted-foreground">
-              This guide shows the recommended server-side flow (Microsoft Graph — app-only / client_credentials).
-              Follow these numbered steps exactly. If you later implement a delegated (user) flow you will need Redirect URIs and a different setup.
-            </div>
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import {
+  Loader2,
+  Mail,
+  AlertCircle,
+  Crown,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+} from "lucide-react";
+import { toast } from "sonner";
+import EmailProviderWizard from "@/components/email-provider-wizard";
 
-            <ol className="list-decimal list-inside space-y-2 pl-4 mt-3 text-sm text-muted-foreground">
-              <li>
-                Register an Azure AD app: Azure Portal → Azure Active Directory → <strong>App registrations</strong> → New registration.
-                Copy the <strong>Application (client) ID</strong> and <strong>Directory (tenant) ID</strong> — you will paste these into the form below.
-              </li>
+interface Company {
+  id: string;
+  name: string;
+}
 
-              <li>
-                Create a client secret: App registration → <strong>Certificates & secrets</strong> → New client secret. <strong>Copy the secret value now</strong> — it is shown only once and must be pasted into the form.
-              </li>
+interface EmailProviderSettingsProps {
+  userRole: string;
+}
 
-              <li>
-                Add API permissions: App registration → <strong>API permissions</strong> → Add a permission → Microsoft Graph → <strong>Application permissions</strong> → select <strong>Mail.Send</strong> and add it.
-              </li>
+interface TestDiagnostics {
+  success?: boolean;
+  error?: string;
+  message?: string;
+  tokenResponse?: {
+    access_token?: string;
+    token_type?: string;
+    expires_in?: number;
+    error?: string;
+    error_description?: string;
+  };
+  graphResponse?: {
+    status?: number;
+    statusText?: string;
+    data?: Record<string, unknown>;
+  };
+  [key: string]: unknown;
+}
 
-              <li>
-                Grant tenant admin consent (REQUIRED for app-only): In the API permissions pane click <strong>Grant admin consent for &lt;your tenant&gt;</strong> (Azure will ask for a tenant admin to confirm). If you are not a tenant admin, ask your administrator to sign in and click this button — without consent the app cannot send mail app-only.
+const PROVIDER_TYPES = [
+  { value: "SMTP", label: "SMTP" },
+  { value: "GMAIL", label: "Gmail" },
+  { value: "OFFICE365", label: "Office 365" },
+  { value: "SENDGRID", label: "SendGrid" },
+  { value: "MAILGUN", label: "Mailgun" },
+  { value: "AWS_SES", label: "AWS SES" },
+  { value: "RESEND", label: "Resend" },
+];
 
-                <div className="mt-2 text-xs text-muted-foreground ml-3">
-                  Quick steps to grant admin consent:
-                  <ol className="list-decimal list-inside pl-4 mt-1">
-                    <li>Open your app in Azure Portal → API permissions.</li>
-                    <li>Make sure Mail.Send (Application) appears in the list.</li>
-                    <li>Click <strong>Grant admin consent for &lt;your tenant&gt;</strong>.</li>
-                    <li>Confirm the dialog and wait for the permission to show as <em>Granted for &lt;tenant&gt;</em>.</li>
-                  </ol>
-                </div>
-              </li>
-
-              <li>
-                Choose a mailbox-enabled From Email (a userPrincipalName in the tenant, e.g., <em>admin@yourdomain.com</em>) — the app will act as this mailbox for the test send.
-              </li>
-
-              <li>
-                Paste Tenant ID, Client ID, Client Secret and From Email into the Email Provider form, Save, then click <strong>Test</strong>. The server will use client_credentials to get a token and call Graph /sendMail to verify.
-              </li>
-            </ol>
+export default function EmailProviderSettings({
+  userRole,
 }: EmailProviderSettingsProps) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("GLOBAL");
@@ -60,10 +80,8 @@ import {
     message: string;
   } | null>(null);
   // Raw diagnostics payload returned from the server (full JSON)
-  const [testDiagnostics, setTestDiagnostics] = useState<Record<
-    string,
-    any
-  > | null>(null);
+  const [testDiagnostics, setTestDiagnostics] =
+    useState<TestDiagnostics | null>(null);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
 
   // Track whether the last test succeeded
@@ -589,7 +607,7 @@ import {
                     toast.success(
                       "Copied required permission note to clipboard"
                     );
-                  } catch (e) {
+                  } catch {
                     toast.error("Failed to copy to clipboard");
                   }
                 }}
@@ -1251,7 +1269,7 @@ import {
                             JSON.stringify(testDiagnostics, null, 2)
                           );
                           toast.success("Diagnostics copied to clipboard");
-                        } catch (e) {
+                        } catch {
                           toast.error("Failed to copy diagnostics");
                         }
                       }}
