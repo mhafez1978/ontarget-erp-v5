@@ -1,8 +1,9 @@
 [phases.setup]
+nixPkgs = ["shadow"]
+
 commands = [
-  "adduser --system --group nextjs"
+  "useradd -r -s /bin/false nextjs"
 ]
 
-[start]
-cmd = "npm start"
+[run]
 user = "nextjs"
