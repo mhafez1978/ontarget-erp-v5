@@ -804,7 +804,7 @@ model Product {
 // Product Image Model
 model ProductImage {
   id         String  @id @default(cuid())
-  url        String
+  url        String  @db.LongText // Support base64 data URLs and file paths
   isFeatured Boolean @default(false)
   order      Int     @default(0)
 
@@ -865,7 +865,7 @@ model Service {
 // Service Image Model
 model ServiceImage {
   id         String  @id @default(cuid())
-  url        String
+  url        String  @db.LongText // Support base64 data URLs and file paths
   isFeatured Boolean @default(false)
   order      Int     @default(0)
 

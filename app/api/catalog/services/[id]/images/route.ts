@@ -5,6 +5,47 @@ import { join } from "path";
 import sharp from "sharp";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
+/**
+ * Check if cold storage is configured
+ */
+async function hasStorageConfigured(): Promise<{
+  configured: boolean;
+  provider: string;
+  basePath: string;
+} | null> {
+  const globalStorage = await db.storageProvider.findFirst({
+    where: {
+      scope: "GLOBAL",
+      isActive: true,
+      isConnected: true,
+    },
+  });
+
+  if (!globalStorage) {
+    return null;
+  }
+
+  const config = JSON.parse(globalStorage.config || "{}");
+  const basePath =
+    globalStorage.provider === "LOCAL"
+      ? config.path || "../var/storage/cold"
+      : "";
+
+  return {
+    configured: true,
+    provider: globalStorage.provider,
+    basePath,
+  };
+}
+
+/**
+ * Convert buffer to base64 data URL
+ */
+function bufferToDataURL(buffer: Buffer, mimeType: string): string {
+  const base64 = buffer.toString("base64");
+  return `data:${mimeType};base64,${base64}`;
+}
+
 // POST - Upload multiple service images
 export async function POST(
   request: NextRequest,
@@ -103,13 +144,8 @@ export async function POST(
       large: { width: 1920, height: 1080, fit: "cover" },
     };
 
-    // Ensure upload directory exists
-    const uploadDir = join(process.cwd(), "public", "uploads", "services");
-    try {
-      await mkdir(uploadDir, { recursive: true });
-    } catch {
-      // Directory might already exist
-    }
+    // Check if cold storage is configured
+    const storageConfig = await hasStorageConfigured();
 
     // Process each file
     for (const file of files) {
@@ -153,14 +189,37 @@ export async function POST(
       // Process image
       const processedBuffer = await sharpInstance.toBuffer();
 
-      // Generate unique filename
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      const filename = `service-${uniqueSuffix}.jpg`; // Always save as JPEG after Sharp processing
+      let imageUrl: string;
 
-      const filepath = join(uploadDir, filename);
-      await writeFile(filepath, processedBuffer);
+      if (storageConfig) {
+        // Cold storage configured → save to filesystem
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        const filename = `service-${uniqueSuffix}.jpg`;
 
-      const imageUrl = `/uploads/services/${filename}`;
+        // Create service-specific directory: /services/{companyId}/{serviceId}/images/
+        const uploadDir = join(
+          storageConfig.basePath,
+          "services",
+          service.companyId,
+          id,
+          "images"
+        );
+
+        try {
+          await mkdir(uploadDir, { recursive: true });
+        } catch {
+          // Directory might already exist
+        }
+
+        const filepath = join(uploadDir, filename);
+        await writeFile(filepath, processedBuffer);
+
+        // Return path for serving via /uploads route
+        imageUrl = `/uploads/services/${service.companyId}/${id}/images/${filename}`;
+      } else {
+        // No cold storage → convert to base64 and store in DB
+        imageUrl = bufferToDataURL(processedBuffer, "image/jpeg");
+      }
 
       // Get current max order for this service
       const existingImages = await db.serviceImage.findMany({
