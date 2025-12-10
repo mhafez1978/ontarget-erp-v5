@@ -36,10 +36,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch all subscriptions for this root company
+    // Fetch only ERP subscriber subscriptions (ESSENTIAL, GROWTH, ENTERPRISE)
+    // Exclude SUPER_USER, GUEST, and COMPANY_CUSTOMER plans
     const subscriptions = await db.subscription.findMany({
       where: {
         rootCompanyId: rootCompany.id,
+        plan: {
+          in: ["ESSENTIAL", "GROWTH", "ENTERPRISE"],
+        },
       },
       include: {
         subscriberCompany: {

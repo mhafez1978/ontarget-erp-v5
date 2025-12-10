@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  //url      = env("DATABASE_URL")
 }
 
 // NextAuth.js Models
@@ -2443,7 +2443,7 @@ enum AccountType {
 enum SubscriptionPlan {
   SUPER_USER // Free unlimited plan for SUPER_ADMIN users only - manages the root company
   GUEST // Temporary plan - requires plan selection before creating companies (for ERP_CUSTOMER signups)
-  COMPANY_CUSTOMER // Free plan for customers of subscriber companies (added by company staff or via e-commerce)
+  COMPANY_CUSTOMER // Free plan for customers of subscriber companies (added by company staff or via e-commerce frontstore)
   ESSENTIAL // Paid: 1 company limit - for ERP subscribers
   GROWTH // Paid: 3 companies limit - for ERP subscribers
   ENTERPRISE // Paid: Unlimited companies - for ERP subscribers
