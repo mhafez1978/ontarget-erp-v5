@@ -1,7 +1,13 @@
-# Use Node 22
-[env]
+
+[variables]
 NIXPACKS_NODE_VERSION = "22"
 
-# Run as non-root
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[build]
+user = "node"
+
 [run]
-user = "nextjs"
+user = "node"
+cmd = "npm run start"
