@@ -72,18 +72,29 @@ export function ServiceTableRow({
     return featured?.url || service.images[0]?.url || null;
   };
 
+  const imageUrl = getFeaturedImage();
+  const isBase64 = imageUrl?.startsWith("data:");
+
   return (
     <TableRow>
       <TableCell>
         <div className="relative w-16 h-16 bg-muted rounded overflow-hidden">
-          {getFeaturedImage() ? (
-            <Image
-              src={getFeaturedImage()!}
-              alt={service.name}
-              fill
-              className="object-cover"
-              sizes="64px"
-            />
+          {imageUrl ? (
+            isBase64 ? (
+              <img
+                src={imageUrl}
+                alt={service.name}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <Image
+                src={imageUrl}
+                alt={service.name}
+                fill
+                className="object-cover"
+                sizes="64px"
+              />
+            )
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <ImageIcon className="h-6 w-6 text-muted-foreground" />
