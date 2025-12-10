@@ -1,0 +1,8 @@
+[phases.setup]
+commands = [
+  "adduser --system --group nextjs"
+]
+
+[start]
+cmd = "npm start"
+user = "nextjs"
