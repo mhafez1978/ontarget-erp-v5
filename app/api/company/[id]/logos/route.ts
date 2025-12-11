@@ -478,7 +478,21 @@ export async function DELETE(
     // Non-super-admins must own the company (already verified above)
 
     const { searchParams } = new URL(request.url);
-    const logoUrl = searchParams.get("url");
+    let logoUrl = searchParams.get("url");
+
+    // If no url param was provided (or it's a very long base64), accept JSON body { url }
+    if (!logoUrl) {
+      try {
+        const body = await request.json();
+        logoUrl = body?.url;
+        console.log("[DELETE Logos] Read logo URL from request body");
+      } catch (err) {
+        console.log(
+          "[DELETE Logos] No URL in query params and failed to parse request body",
+          err
+        );
+      }
+    }
 
     if (!logoUrl) {
       return NextResponse.json(

@@ -287,20 +287,18 @@ export function RootCompanyBrandingCard() {
     console.log("[UI] handleDeleteLogo called for:", logoUrl);
 
     try {
-      const response = await fetch(
-        `/api/company/${rootCompany.id}/logos?url=${encodeURIComponent(
-          logoUrl
-        )}`,
-        {
-          method: "DELETE",
-        }
-      );
+      // Send the logo URL in the request body (safer for long base64 data URIs)
+      const response = await fetch(`/api/company/${rootCompany.id}/logos`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: logoUrl }),
+      });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.details || errorData.error || "Failed to delete logo"
-        );
+        const errorData = await response.json().catch(() => ({}));
+        const serverMsg =
+          errorData?.details || errorData?.error || "Failed to delete logo";
+        throw new Error(serverMsg);
       }
 
       toast.success("Logo deleted successfully");
