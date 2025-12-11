@@ -113,6 +113,19 @@ export default function OrdersPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
 
+  // User state for dashboard layout
+  const [user, setUser] = useState<{
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    role: string;
+  }>({
+    name: null,
+    email: null,
+    image: null,
+    role: "GUEST",
+  });
+
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
@@ -146,7 +159,26 @@ export default function OrdersPage() {
     }
   };
 
+  const fetchUser = async () => {
+    try {
+      const response = await fetch("/api/auth/me");
+      const data = await response.json();
+
+      if (data.authenticated && data.user) {
+        setUser({
+          name: data.user.name,
+          email: data.user.email,
+          image: data.user.image,
+          role: data.user.role,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  };
+
   useEffect(() => {
+    fetchUser();
     fetchOrders();
   }, []);
 
@@ -276,7 +308,7 @@ export default function OrdersPage() {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout user={user}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Orders</h1>

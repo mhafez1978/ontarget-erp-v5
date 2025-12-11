@@ -60,7 +60,18 @@ interface Company {
 
 export default function PaymentsPage() {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<{ role: string; plan: string } | null>(null);
+  const [user, setUser] = useState<{
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    role: string;
+    plan?: string;
+  }>({
+    name: null,
+    email: null,
+    image: null,
+    role: "GUEST",
+  });
 
   // Company selection for SUPER_ADMIN/ADMIN with multiple companies
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -95,23 +106,36 @@ export default function PaymentsPage() {
 
   const loadUserAndCompanies = async () => {
     try {
-      const userResponse = await fetch("/api/user");
+      const userResponse = await fetch("/api/auth/me");
       const userData = await userResponse.json();
-      setUser(userData);
 
-      // Load companies for company selector
-      const companiesResponse = await fetch("/api/companies");
-      const companiesData = await companiesResponse.json();
-      setCompanies(companiesData || []);
+      if (userData.authenticated && userData.user) {
+        setUser({
+          name: userData.user.name,
+          email: userData.user.email,
+          image: userData.user.image,
+          role: userData.user.role,
+          plan: userData.user.plan,
+        });
 
-      // Auto-select first company
-      if (companiesData && companiesData.length > 0) {
-        setSelectedCompanyId(companiesData[0].id);
+        // Load companies for company selector
+        const companiesResponse = await fetch("/api/companies");
+        const companiesData = await companiesResponse.json();
+        setCompanies(companiesData || []);
+
+        // Auto-select first company
+        if (companiesData && companiesData.length > 0) {
+          setSelectedCompanyId(companiesData[0].id);
+        }
+
+        setLoading(false);
+      } else {
+        // Not authenticated, stay in loading state (will be handled by dashboard layout)
+        console.error("User not authenticated");
       }
     } catch (error) {
       console.error("Failed to load user data:", error);
       toast.error("Failed to load user data");
-    } finally {
       setLoading(false);
     }
   };
@@ -278,7 +302,7 @@ export default function PaymentsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout user={user}>
         <div className="flex items-center justify-center h-screen">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
@@ -291,7 +315,7 @@ export default function PaymentsPage() {
 
   if (!canManagePayments) {
     return (
-      <DashboardLayout>
+      <DashboardLayout user={user}>
         <div className="container mx-auto py-10">
           <Card>
             <CardHeader>
@@ -307,7 +331,7 @@ export default function PaymentsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout user={user}>
       <div className="container mx-auto py-10">
         <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight">
