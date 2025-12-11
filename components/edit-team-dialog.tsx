@@ -189,8 +189,20 @@ export function EditTeamDialog({
   if (!team) return null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+    <Sheet open={open} onOpenChange={onOpenChange} modal={true}>
+      <SheetContent 
+        className="w-full sm:max-w-xl overflow-y-auto"
+        onInteractOutside={(e) => {
+          // Prevent closing when clicking outside during editing
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing on ESC key during editing
+          if (loading) {
+            e.preventDefault();
+          }
+        }}
+      >
         <SheetHeader>
           <SheetTitle>Edit Team</SheetTitle>
           <SheetDescription>Update team information</SheetDescription>
