@@ -312,7 +312,10 @@ export function RootCompanyBrandingCard() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to delete logo");
+        const errorData = await response.json();
+        throw new Error(
+          errorData.details || errorData.error || "Failed to delete logo"
+        );
       }
 
       toast.success("Logo deleted successfully");
@@ -327,7 +330,9 @@ export function RootCompanyBrandingCard() {
       }
     } catch (error) {
       console.error("Failed to delete logo:", error);
-      toast.error("Failed to delete logo");
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to delete logo";
+      toast.error(errorMessage);
     }
   };
 

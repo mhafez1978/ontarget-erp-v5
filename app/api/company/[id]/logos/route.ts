@@ -329,7 +329,7 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check authorization: SUPER_ADMIN can delete any logo, ADMIN can delete their own company logos
+    // Check authorization: SUPER_ADMIN can delete logos from any company
     const isSuperAdmin = user.role === "SUPER_ADMIN";
     const ownsCompany = user.ownedCompanies.length > 0;
 
@@ -342,6 +342,9 @@ export async function DELETE(
         { status: 403 }
       );
     }
+
+    // SUPER_ADMIN bypass: no further ownership check needed
+    // Non-super-admins must own the company (already verified above)
 
     const { searchParams } = new URL(request.url);
     const logoUrl = searchParams.get("url");
@@ -438,7 +441,7 @@ export async function DELETE(
       userId,
       action: "DELETE",
       entityType: "COMPANY",
-      entityId: companies[0]?.id || "system",
+      entityId: companies[0]?.id || id,
       metadata: {
         field: "logo",
         action: "delete",
@@ -452,8 +455,10 @@ export async function DELETE(
     });
   } catch (error) {
     console.error("Delete logo error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to delete logo";
     return NextResponse.json(
-      { error: "Failed to delete logo" },
+      { error: "Failed to delete logo", details: errorMessage },
       { status: 500 }
     );
   }
