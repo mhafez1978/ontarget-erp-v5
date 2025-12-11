@@ -594,7 +594,7 @@ export function RootCompanyBrandingCard() {
                 Uploaded Logos ({uploadedLogos.length})
               </Label>
               <p className="text-xs text-muted-foreground">
-                Drag logos to assign them to light or dark theme
+                Drag logos to assign them to light or dark theme • Hover over a logo to see delete button
               </p>
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                 {uploadedLogos.map((logo, index) => (
@@ -602,7 +602,7 @@ export function RootCompanyBrandingCard() {
                     key={index}
                     draggable="true"
                     onDragStart={(e) => handleDragStart(e, logo.url)}
-                    className="relative group cursor-grab active:cursor-grabbing aspect-square border-2 rounded-lg overflow-hidden hover:border-primary transition-colors bg-white dark:bg-gray-900 p-1"
+                    className="relative group cursor-grab active:cursor-grabbing aspect-square border-2 rounded-lg overflow-hidden hover:border-primary hover:shadow-lg transition-all bg-white dark:bg-gray-900 p-1"
                   >
                     <div className="relative w-full h-full select-none">
                       <Image
@@ -617,13 +617,15 @@ export function RootCompanyBrandingCard() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteLogo(logo.url);
+                        if (confirm("Are you sure you want to delete this logo?")) {
+                          handleDeleteLogo(logo.url);
+                        }
                       }}
                       onMouseDown={(e) => e.stopPropagation()}
-                      className="absolute top-0.5 right-0.5 p-0.5 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded shadow-md opacity-0 group-hover:opacity-100 transition-all z-10 hover:scale-110"
                       title="Delete logo"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
