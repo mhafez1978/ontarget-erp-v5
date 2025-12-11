@@ -21,6 +21,7 @@ import { Users, Loader2, Building2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EditCustomerSheet } from "./edit-customer-sheet";
 import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 
 interface CustomerData {
   id: string;
@@ -78,13 +79,11 @@ export function CompanyCustomers() {
   };
 
   const handleDelete = async (customer: CustomerData) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete customer "${customer.name}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await confirmToast(
+      `Are you sure you want to delete customer "${customer.name}"? This action cannot be undone.`,
+      { confirmLabel: "Delete customer" }
+    );
+    if (!confirmed) return;
 
     try {
       const response = await fetch(`/api/customers/${customer.id}`, {

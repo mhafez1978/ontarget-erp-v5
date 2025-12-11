@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { User2, Mail, UserPlus, UserMinus, Shield, Crown } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 
 interface Project {
   id: string;
@@ -102,11 +103,11 @@ export function ProjectTeamTab({
       return;
     }
 
-    if (
-      !confirm(`Are you sure you want to remove ${memberName} from the team?`)
-    ) {
-      return;
-    }
+    const confirmed = await confirmToast(
+      `Are you sure you want to remove ${memberName} from the team?`,
+      { confirmLabel: "Remove" }
+    );
+    if (!confirmed) return;
 
     setRemovingMemberId(memberId);
     try {
@@ -180,11 +181,13 @@ export function ProjectTeamTab({
             ? "Project Manager"
             : member.role;
 
-          const roleIcon = isTeamLead
-            ? <Crown className="h-4 w-4 text-yellow-600" />
-            : isProjectManager
-            ? <Shield className="h-4 w-4 text-blue-600" />
-            : getRoleIcon(member.role);
+          const roleIcon = isTeamLead ? (
+            <Crown className="h-4 w-4 text-yellow-600" />
+          ) : isProjectManager ? (
+            <Shield className="h-4 w-4 text-blue-600" />
+          ) : (
+            getRoleIcon(member.role)
+          );
 
           return (
             <Card key={member.id}>

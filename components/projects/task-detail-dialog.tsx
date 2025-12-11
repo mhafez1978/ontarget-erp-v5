@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 import { TimeTracker } from "@/components/projects/time-tracker";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
@@ -189,9 +190,11 @@ export function TaskDetailDialog({
   const handleDelete = async () => {
     if (!task) return;
 
-    if (!confirm("Are you sure you want to delete this task?")) {
-      return;
-    }
+    const confirmed = await confirmToast(
+      "Are you sure you want to delete this task?",
+      { confirmLabel: "Delete task" }
+    );
+    if (!confirmed) return;
 
     setIsDeleting(true);
     try {

@@ -40,6 +40,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { SessionManager } from "@/components/session-manager";
+import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 import { Globe } from "@/components/ui/globe";
 
 // Simple time ago formatter
@@ -250,9 +252,11 @@ export function SuperAdminSecurityView({
   }, [activeTab]);
 
   const handleUnblock = async (id: string, ipAddress: string) => {
-    if (!confirm(`Are you sure you want to unblock ${ipAddress}?`)) {
-      return;
-    }
+    const confirmed = await confirmToast(
+      `Are you sure you want to unblock ${ipAddress}?`,
+      { confirmLabel: "Unblock IP" }
+    );
+    if (!confirmed) return;
 
     try {
       const response = await fetch(`/api/security/blacklist/${id}`, {
@@ -262,13 +266,13 @@ export function SuperAdminSecurityView({
       if (response.ok) {
         // Remove from list
         setBlacklist((prev) => prev.filter((entry) => entry.id !== id));
-        alert(`IP ${ipAddress} has been unblocked successfully`);
+        toast.success(`IP ${ipAddress} has been unblocked successfully`);
       } else {
-        alert("Failed to unblock IP");
+        toast.error("Failed to unblock IP");
       }
     } catch (error) {
       console.error("Error unblocking IP:", error);
-      alert("Error unblocking IP");
+      toast.error("Error unblocking IP");
     }
   };
 

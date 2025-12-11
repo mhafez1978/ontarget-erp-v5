@@ -43,6 +43,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 import {
   AddressAutocomplete,
   AddressData,
@@ -320,9 +321,11 @@ export function AdminWorkforceView() {
 
   // Handle delete staff member
   const handleDeleteStaff = async (staffId: string, companyId: string) => {
-    if (!confirm("Are you sure you want to delete this staff member?")) {
-      return;
-    }
+    const confirmed = await confirmToast(
+      "Are you sure you want to delete this staff member?",
+      { confirmLabel: "Delete staff" }
+    );
+    if (!confirmed) return;
 
     setIsDeleting(staffId);
     try {
@@ -355,13 +358,11 @@ export function AdminWorkforceView() {
     staffId: string,
     staffName: string
   ) => {
-    if (
-      !confirm(
-        `Resend welcome email to ${staffName}? This will generate a new password.`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await confirmToast(
+      `Resend welcome email to ${staffName}? This will generate a new password.`,
+      { confirmLabel: "Resend" }
+    );
+    if (!confirmed) return;
 
     setIsResending(staffId);
     try {

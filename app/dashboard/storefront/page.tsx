@@ -2591,6 +2591,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 import {
   Sparkles,
   Store,
@@ -3618,7 +3619,11 @@ export default function StorefrontPage() {
   };
 
   const handleBannerDelete = async () => {
-    if (!confirm("Are you sure you want to delete the banner?")) return;
+    const confirmed = await confirmToast(
+      "Are you sure you want to delete the banner?",
+      { confirmLabel: "Delete banner" }
+    );
+    if (!confirmed) return;
 
     setUploadingBanner(true);
 
@@ -4416,13 +4421,11 @@ export default function StorefrontPage() {
                                 size="icon"
                                 variant="outline"
                                 onClick={async () => {
-                                  if (
-                                    !confirm(
-                                      "Are you sure you want to delete this post?"
-                                    )
-                                  ) {
-                                    return;
-                                  }
+                                  const confirmed = await confirmToast(
+                                    "Are you sure you want to delete this post?",
+                                    { confirmLabel: "Delete post" }
+                                  );
+                                  if (!confirmed) return;
                                   try {
                                     const response = await fetch(
                                       `/api/storefront/posts/${post.id}`,

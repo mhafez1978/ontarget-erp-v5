@@ -39,6 +39,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 import {
   AddressAutocomplete,
   AddressData,
@@ -258,13 +259,11 @@ export function ManagerWorkforceView() {
     staffId: string,
     staffName: string
   ) => {
-    if (
-      !confirm(
-        `Resend welcome email to ${staffName}? This will generate a new password.`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await confirmToast(
+      `Resend welcome email to ${staffName}? This will generate a new password.`,
+      { confirmLabel: "Resend" }
+    );
+    if (!confirmed) return;
 
     setIsResending(staffId);
     try {
