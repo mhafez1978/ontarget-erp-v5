@@ -139,7 +139,18 @@ export default function TestimonialsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setTestimonials(data);
+        // Sort: PENDING first, then by most recent
+        const sorted = data.sort((a: Testimonial, b: Testimonial) => {
+          // First priority: PENDING status on top
+          if (a.status === "PENDING" && b.status !== "PENDING") return -1;
+          if (a.status !== "PENDING" && b.status === "PENDING") return 1;
+
+          // Second priority: Most recent first
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        });
+        setTestimonials(sorted);
       } else {
         toast.error(data.error || "Failed to fetch testimonials");
       }
@@ -406,129 +417,161 @@ export default function TestimonialsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {testimonials.map((testimonial) => (
-              <Card
-                key={testimonial.id}
-                className={
-                  testimonial.status === "PENDING"
-                    ? "border-l-4 border-l-yellow-500"
-                    : ""
-                }
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CardTitle className="text-xl">
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {testimonials.map((testimonial) => (
+                  <div
+                    key={testimonial.id}
+                    className={`p-4 hover:bg-muted/50 transition-colors ${
+                      testimonial.status === "PENDING"
+                        ? "bg-yellow-50 dark:bg-yellow-950/10 border-l-4 border-l-yellow-500"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Customer Info - 25% */}
+                      <div className="flex-shrink-0 w-48">
+                        <div className="font-medium text-sm mb-1">
                           {testimonial.customerName}
-                        </CardTitle>
-                        <Badge
-                          variant={
-                            testimonial.status === "APPROVED"
-                              ? "default"
-                              : testimonial.status === "PENDING"
-                              ? "secondary"
-                              : "destructive"
-                          }
-                        >
-                          {testimonial.status}
-                        </Badge>
-                        {testimonial.isFeatured && (
-                          <Badge variant="outline" className="gap-1">
-                            <Trophy className="h-3 w-3" />
-                            Featured
-                          </Badge>
+                        </div>
+                        {testimonial.customerTitle && (
+                          <div className="text-xs text-muted-foreground">
+                            {testimonial.customerTitle}
+                          </div>
                         )}
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {testimonial.customerEmail}
+                        </div>
+                        <div className="flex items-center gap-1 mt-2">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-3 w-3 ${
+                                i < testimonial.rating
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
                       </div>
-                      {testimonial.customerTitle && (
-                        <CardDescription>
-                          {testimonial.customerTitle}
-                        </CardDescription>
-                      )}
-                      <CardDescription className="text-xs mt-1">
-                        {testimonial.customerEmail}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < testimonial.rating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm mb-4 leading-relaxed">
-                    &ldquo;{testimonial.testimonial}&rdquo;
-                  </p>
-                  <div className="text-xs text-muted-foreground mb-4">
-                    Submitted:{" "}
-                    {new Date(testimonial.createdAt).toLocaleDateString()}
-                  </div>
 
-                  <div className="flex gap-2">
-                    {testimonial.status === "PENDING" && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(testimonial.id)}
-                          disabled={actionLoading === testimonial.id}
-                        >
-                          {actionLoading === testimonial.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
+                      {/* Testimonial Text - 45% */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm line-clamp-2 leading-relaxed">
+                          &ldquo;{testimonial.testimonial}&rdquo;
+                        </p>
+                        <div className="text-xs text-muted-foreground mt-2">
+                          {new Date(testimonial.createdAt).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Status & Badges - 15% */}
+                      <div className="flex-shrink-0 w-32">
+                        <div className="flex flex-col gap-2">
+                          <Badge
+                            variant={
+                              testimonial.status === "APPROVED"
+                                ? "default"
+                                : testimonial.status === "PENDING"
+                                ? "secondary"
+                                : "destructive"
+                            }
+                            className="w-fit"
+                          >
+                            {testimonial.status}
+                          </Badge>
+                          {testimonial.isFeatured && (
+                            <Badge variant="outline" className="gap-1 w-fit">
+                              <Trophy className="h-3 w-3" />
+                              Featured
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions - 15% */}
+                      <div className="flex-shrink-0">
+                        <div className="flex gap-1">
+                          {testimonial.status === "PENDING" && (
                             <>
-                              <Check className="h-4 w-4 mr-1" />
-                              Approve
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-950"
+                                onClick={() => handleApprove(testimonial.id)}
+                                disabled={actionLoading === testimonial.id}
+                                title="Approve"
+                              >
+                                {actionLoading === testimonial.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Check className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-950"
+                                onClick={() => handleReject(testimonial.id)}
+                                disabled={actionLoading === testimonial.id}
+                                title="Reject"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </>
                           )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleReject(testimonial.id)}
-                          disabled={actionLoading === testimonial.id}
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </>
-                    )}
-                    {testimonial.status === "APPROVED" && (
-                      <Button
-                        size="sm"
-                        variant={
-                          testimonial.isFeatured ? "secondary" : "outline"
-                        }
-                        onClick={() =>
-                          handleFeature(testimonial.id, !testimonial.isFeatured)
-                        }
-                        disabled={actionLoading === testimonial.id}
-                      >
-                        <Trophy className="h-4 w-4 mr-1" />
-                        {testimonial.isFeatured ? "Unfeature" : "Feature"}
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setDeleteId(testimonial.id)}
-                      disabled={actionLoading === testimonial.id}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                          {testimonial.status === "APPROVED" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className={`h-8 w-8 p-0 ${
+                                testimonial.isFeatured
+                                  ? "text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-950"
+                                  : "text-muted-foreground hover:text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-950"
+                              }`}
+                              onClick={() =>
+                                handleFeature(
+                                  testimonial.id,
+                                  !testimonial.isFeatured
+                                )
+                              }
+                              disabled={actionLoading === testimonial.id}
+                              title={
+                                testimonial.isFeatured ? "Unfeature" : "Feature"
+                              }
+                            >
+                              <Trophy className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-red-100 dark:hover:bg-red-950"
+                            onClick={() => setDeleteId(testimonial.id)}
+                            disabled={actionLoading === testimonial.id}
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 
