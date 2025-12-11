@@ -638,7 +638,41 @@ export function RootCompanyBrandingCard() {
               </div>
 
               {uploadedLogos.length === 0 ? (
-                <div className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg text-center">
+                <div
+                  className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg text-center"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const url = draggedLogo;
+                    if (!url) return;
+                    if (url === (tempLogoLight || rootCompany.logoLight)) {
+                      if (isEditing) {
+                        setTempLogoLight(null);
+                        toast.success("Light theme logo unassigned (save to apply)");
+                        setDraggedLogo(null);
+                        return;
+                      }
+                      handleUnassignThemeLogo("light");
+                      setDraggedLogo(null);
+                      return;
+                    }
+                    if (url === (tempLogoDark || rootCompany.logoDark)) {
+                      if (isEditing) {
+                        setTempLogoDark(null);
+                        toast.success("Dark theme logo unassigned (save to apply)");
+                        setDraggedLogo(null);
+                        return;
+                      }
+                      handleUnassignThemeLogo("dark");
+                      setDraggedLogo(null);
+                      return;
+                    }
+                    setDraggedLogo(null);
+                  }}
+                >
                   <ImageIcon className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                   <p className="text-sm text-muted-foreground">
                     No logos uploaded yet. Click &quot;Upload Logos&quot; to get
