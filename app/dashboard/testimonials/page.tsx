@@ -26,6 +26,7 @@ import {
   Trash2,
   Loader2,
   Trophy,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -74,6 +75,7 @@ export default function TestimonialsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchCompanies = useCallback(async () => {
     try {
@@ -267,6 +269,19 @@ export default function TestimonialsPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchTestimonials();
+      toast.success("Testimonials refreshed");
+    } catch (error) {
+      console.error("Error refreshing testimonials:", error);
+      toast.error("Failed to refresh testimonials");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const pendingCount = testimonials.filter(
     (t) => t.status === "PENDING"
   ).length;
@@ -317,7 +332,20 @@ export default function TestimonialsPage() {
               Manage customer testimonials for your storefront
             </p>
           </div>
-          <MessageSquare className="h-10 w-10 text-muted-foreground" />
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh testimonials"
+            >
+              <RefreshCw
+                className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+            </Button>
+            <MessageSquare className="h-10 w-10 text-muted-foreground" />
+          </div>
         </div>
 
         {/* Filters */}
