@@ -40,11 +40,7 @@ export async function GET(
                 isPublished: true,
               },
             },
-            staff: {
-              where: {
-                isFeatured: true,
-              },
-            },
+            staff: true, // Count ALL staff members - isFeatured toggle removed from UI
             testimonials: {
               where: {
                 // Count ALL approved testimonials for readiness — featured-only was

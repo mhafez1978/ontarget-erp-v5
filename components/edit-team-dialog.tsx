@@ -190,7 +190,7 @@ export function EditTeamDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} modal={true}>
-      <SheetContent 
+      <SheetContent
         className="w-full sm:max-w-xl overflow-y-auto"
         onInteractOutside={(e) => {
           // Prevent closing when clicking outside during editing

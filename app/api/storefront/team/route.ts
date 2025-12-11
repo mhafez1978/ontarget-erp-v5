@@ -13,12 +13,11 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Fetch featured team members for the company
+    // Fetch ALL active team members for the company (isFeatured filter removed from UI)
     const teamMembers = await db.companyStaff.findMany({
       where: {
         companyId,
         status: "ACTIVE",
-        isFeatured: true,
       },
       include: {
         user: {
