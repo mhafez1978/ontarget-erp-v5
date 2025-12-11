@@ -102,9 +102,9 @@ export function ServiceTableRow({
           )}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="max-w-[250px]">
         <div>
-          <div className="font-medium">{service.name}</div>
+          <div className="font-medium truncate">{service.name}</div>
           {service.description && (
             <div className="text-sm text-muted-foreground line-clamp-1">
               {service.description}
