@@ -39,15 +39,11 @@ export async function GET(request: NextRequest) {
           plan: {
             in: ["ESSENTIAL", "GROWTH", "ENTERPRISE"],
           },
-          role: {
-            not: "GUEST",
-          },
         },
         select: {
           id: true,
           name: true,
           email: true,
-          phone: true,
           plan: true,
           role: true,
           image: true,
@@ -69,7 +65,6 @@ export async function GET(request: NextRequest) {
           id: true,
           name: true,
           email: true,
-          phone: true,
           role: true,
           image: true,
         },

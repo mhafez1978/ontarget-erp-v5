@@ -2855,9 +2855,8 @@ export default function StorefrontPage() {
       if (heroThemeSection) {
         const heroContent = aiHero.content as Record<string, unknown>;
         // Map styling/background image + overlay/animations when present
-        const aiHeroStyling = (aiHero as AiFrontstoreSection).styling as
-          | Record<string, unknown>
-          | undefined;
+        const aiHeroStyling = (aiHero as AiFrontstoreSection | undefined)
+          ?.styling;
         heroThemeSection.styling = {
           ...(heroThemeSection.styling || {}),
           ...(aiHeroStyling?.backgroundImage?.url
@@ -2949,9 +2948,8 @@ export default function StorefrontPage() {
         };
 
         // Map optional section styling and animations
-        const aiStyling = (aiProducts as AiFrontstoreSection).styling as
-          | Record<string, unknown>
-          | undefined;
+        const aiStyling = (aiProducts as AiFrontstoreSection | undefined)
+          ?.styling;
         if (aiStyling?.backgroundImage?.url) {
           productsThemeSection.styling = {
             ...(productsThemeSection.styling || {}),
