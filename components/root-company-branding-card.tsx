@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 import Image from "next/image";
 import { removeBackground } from "@imgly/background-removal";
 
@@ -56,46 +57,53 @@ export function RootCompanyBrandingCard() {
   const [tempLogoDark, setTempLogoDark] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: "",
+                  onDrop={async (e) => {
     slogan: "",
     description: "",
     email: "",
     phone: "",
-    website: "",
-  });
+                    const confirmed = await confirmToast(
+                      "Unassign this theme logo? (The uploaded logo will remain in your library)",
+                      { confirmLabel: "Unassign", cancelLabel: "Cancel" }
+                    );
 
-  const fetchUploadedLogos = useCallback(async (companyId: string) => {
-    try {
-      const response = await fetch(`/api/company/${companyId}/logos`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Fetched uploaded logos:", data.logos);
-        setUploadedLogos(data.logos || []);
-      } else {
-        console.error("Failed to fetch logos, status:", response.status);
-        const errorData = await response.json();
-        console.error("Error details:", errorData);
-        setUploadedLogos([]);
-        toast.error(
-          errorData?.error ||
-            `Failed to fetch logos (status ${response.status})`
-        );
-        toast.error(
-          errorData?.error ||
-            `Failed to fetch logos (status ${response.status})`
-        );
-      }
-    } catch (error) {
-      console.error("Failed to fetch uploaded logos:", error);
-      setUploadedLogos([]);
-      toast.error("Failed to fetch uploaded logos");
-    }
-  }, []);
+                    if (!confirmed) {
+                      setDraggedLogo(null);
+                      return;
+                    }
 
-  const fetchRootCompany = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/company/root");
+                    // If the dragged url is assigned to Light theme
+                    if (url === (tempLogoLight || rootCompany.logoLight)) {
+                      // In edit mode, just clear the temp assignment (save to apply)
+                      if (isEditing) {
+                        setTempLogoLight(null);
+                        toast.success("Light theme logo unassigned (save to apply)");
+                        setDraggedLogo(null);
+                        return;
+                      }
+
+                      // Not editing: call unassign endpoint
+                      await handleUnassignThemeLogo("light");
+                      setDraggedLogo(null);
+                      return;
+                    }
+
+                    // If the dragged url is assigned to Dark theme
+                    if (url === (tempLogoDark || rootCompany.logoDark)) {
+                      if (isEditing) {
+                        setTempLogoDark(null);
+                        toast.success("Dark theme logo unassigned (save to apply)");
+                        setDraggedLogo(null);
+                        return;
+                      }
+
+                      await handleUnassignThemeLogo("dark");
+                      setDraggedLogo(null);
+                      return;
+                    }
+
+                    // otherwise, it's a drop of an available logo (no-op)
+                    setDraggedLogo(null);
 
       if (!response.ok) {
         throw new Error("Failed to fetch root company");
@@ -644,10 +652,21 @@ export function RootCompanyBrandingCard() {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";
                   }}
-                  onDrop={(e) => {
+                  onDrop={async (e) => {
                     e.preventDefault();
                     const url = draggedLogo;
                     if (!url) return;
+
+                    const confirmed = await confirmToast(
+                      "Unassign this theme logo? (The uploaded logo will remain in your library)",
+                      { confirmLabel: "Unassign", cancelLabel: "Cancel" }
+                    );
+
+                    if (!confirmed) {
+                      setDraggedLogo(null);
+                      return;
+                    }
+
                     if (url === (tempLogoLight || rootCompany.logoLight)) {
                       if (isEditing) {
                         setTempLogoLight(null);
@@ -657,7 +676,7 @@ export function RootCompanyBrandingCard() {
                         setDraggedLogo(null);
                         return;
                       }
-                      handleUnassignThemeLogo("light");
+                      await handleUnassignThemeLogo("light");
                       setDraggedLogo(null);
                       return;
                     }
@@ -670,7 +689,7 @@ export function RootCompanyBrandingCard() {
                         setDraggedLogo(null);
                         return;
                       }
-                      handleUnassignThemeLogo("dark");
+                      await handleUnassignThemeLogo("dark");
                       setDraggedLogo(null);
                       return;
                     }
