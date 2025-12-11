@@ -324,6 +324,32 @@ export async function GET(
         console.log("[GET Logos] Directory read error:", error);
         logos = [];
       }
+      // If storage is configured but no logos were found from the filesystem,
+      // attempt to read the DB uploadedLogos and the assigned logo fields so
+      // the UI can still show assigned logos (base64 or DB stored entries).
+      if (logos.length === 0) {
+        console.log("[GET Logos] No files found in storage, reading DB uploadedLogos as fallback");
+        const companyFallback = await db.company.findUnique({
+          where: { id },
+          select: { uploadedLogos: true, logo: true, logoLight: true, logoDark: true },
+        });
+
+        if (companyFallback?.uploadedLogos) {
+          logos = companyFallback.uploadedLogos as Array<{ url: string; filename: string }>;
+        } else {
+          logos = [];
+        }
+        // Include assigned logo fields in the response as well so theme previews are deletable
+        const addLogoIfMissing = (url?: string | null, label?: string) => {
+          if (!url) return;
+          if (!logos.some((l) => l.url === url)) {
+            logos.push({ url, filename: label || (url.split('/').pop() ?? 'logo') });
+          }
+        };
+        addLogoIfMissing(companyFallback?.logo, 'logo');
+        addLogoIfMissing(companyFallback?.logoLight, 'logoLight');
+        addLogoIfMissing(companyFallback?.logoDark, 'logoDark');
+      }
     } else {
       // No storage → read from uploadedLogos JSON field
       console.log("[GET Logos] No storage configured, reading from DB");
@@ -339,7 +365,23 @@ export async function GET(
           url: string;
           filename: string;
         }>;
+      } else {
+        logos = [];
       }
+      // Also include assigned theme logos if present
+      const addLogoIfMissing = (url?: string | null, label?: string) => {
+        if (!url) return;
+        if (!logos.some((l) => l.url === url)) {
+          logos.push({ url, filename: label || (url.split('/').pop() ?? 'logo') });
+        }
+      };
+      const companyRecord = await db.company.findUnique({
+        where: { id },
+        select: { logo: true, logoLight: true, logoDark: true },
+      });
+      addLogoIfMissing(companyRecord?.logo, 'logo');
+      addLogoIfMissing(companyRecord?.logoLight, 'logoLight');
+      addLogoIfMissing(companyRecord?.logoDark, 'logoDark');
     }
 
     console.log("[GET Logos] Returning logos:", logos);
@@ -484,6 +526,7 @@ export async function DELETE(
     }
 
     // Check if this logo is assigned to any company and unassign it
+    console.log("[DELETE Logos] Unassigning theme logo if present for URL:", logoUrl);
     const companies = await db.company.findMany({
       where: {
         OR: [{ logoLight: logoUrl }, { logoDark: logoUrl }, { logo: logoUrl }],
@@ -505,6 +548,7 @@ export async function DELETE(
         where: { id: company.id },
         data: updateData,
       });
+      console.log("[DELETE Logos] Unassigned logo fields for company:", company.id, updateData);
     }
 
     // Create audit log
