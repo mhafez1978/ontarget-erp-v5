@@ -359,6 +359,33 @@ export function RootCompanyBrandingCard() {
     }
   };
 
+  const handleUnassignThemeLogo = async (theme: "light" | "dark") => {
+    if (!rootCompany) return;
+    try {
+      const field =
+        theme === "light" ? { logoLight: null } : { logoDark: null };
+      console.log("[UI] Unassign theme logo", theme, field);
+      const response = await fetch(`/api/company/${rootCompany.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(field),
+      });
+
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Failed to unassign theme logo");
+
+      // Refresh local data
+      fetchRootCompany();
+      toast.success("Theme logo unassigned");
+    } catch (error) {
+      console.error("[UI] Failed to unassign theme logo:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to unassign theme logo"
+      );
+    }
+  };
+
   const handleCancel = () => {
     if (rootCompany) {
       setFormData({
@@ -625,8 +652,15 @@ export function RootCompanyBrandingCard() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          console.log("[UI] Delete button clicked for logo:", logo.url);
-                          if (confirm("Are you sure you want to delete this logo?")) {
+                          console.log(
+                            "[UI] Delete button clicked for logo:",
+                            logo.url
+                          );
+                          if (
+                            confirm(
+                              "Are you sure you want to delete this logo?"
+                            )
+                          ) {
                             handleDeleteLogo(logo.url);
                           }
                         }}
@@ -670,6 +704,42 @@ export function RootCompanyBrandingCard() {
                           fill
                           className="object-contain"
                         />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (
+                              confirm(
+                                "Are you sure you want to delete this logo? This will remove it from uploaded logos too."
+                              )
+                            ) {
+                              handleDeleteLogo(
+                                tempLogoLight || rootCompany.logoLight || ""
+                              );
+                            }
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-20 hover:scale-110"
+                          title="Delete logo"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (
+                              confirm(
+                                "Unassign this theme logo? (Keep the uploaded logo in your library)"
+                              )
+                            ) {
+                              handleUnassignThemeLogo("light");
+                            }
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="absolute top-2 left-2 p-2 bg-amber-600 hover:bg-amber-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-20 hover:scale-110"
+                          title="Unassign logo from light theme"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
                       {tempLogoLight && (
                         <p className="text-xs text-center mt-2 text-emerald-600 dark:text-emerald-400 font-medium">
@@ -716,6 +786,32 @@ export function RootCompanyBrandingCard() {
                           fill
                           className="object-contain"
                         />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm("Are you sure you want to delete this logo? This will remove it from uploaded logos too.")) {
+                              handleDeleteLogo(tempLogoDark || rootCompany.logoDark || "");
+                            }
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-20 hover:scale-110"
+                          title="Delete logo"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm("Unassign this theme logo? (Keep the uploaded logo in your library)")) {
+                              handleUnassignThemeLogo("dark");
+                            }
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="absolute top-2 left-2 p-2 bg-amber-600 hover:bg-amber-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-20 hover:scale-110"
+                          title="Unassign logo from dark theme"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
                       {tempLogoDark && (
                         <p className="text-xs text-center mt-2 text-emerald-600 dark:text-emerald-400 font-medium">
