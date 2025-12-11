@@ -151,7 +151,10 @@ export async function POST(
         // No storage configured → convert to base64
         logoUrl = bufferToDataURL(buffer, file.type);
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        filename = `${file.name.replace(/\.[^/.]+$/, "")}-${uniqueSuffix}${extname(file.name)}`;
+        filename = `${file.name.replace(
+          /\.[^/.]+$/,
+          ""
+        )}-${uniqueSuffix}${extname(file.name)}`;
       }
 
       uploadedLogos.push({ url: logoUrl, filename });
@@ -164,7 +167,9 @@ export async function POST(
         select: { uploadedLogos: true },
       });
 
-      const existingLogos = (company?.uploadedLogos as Array<{url: string; filename: string}>) || [];
+      const existingLogos =
+        (company?.uploadedLogos as Array<{ url: string; filename: string }>) ||
+        [];
       const updatedLogos = [...existingLogos, ...uploadedLogos];
 
       await db.company.update({
@@ -247,7 +252,7 @@ export async function GET(
     }
 
     // Check if storage is configured
-    const storageConfigured = await hasStorageConfigured();
+    const storageConfig = await hasStorageConfigured();
     let logos: { url: string; filename: string }[] = [];
 
     if (storageConfig) {
@@ -274,7 +279,10 @@ export async function GET(
       });
 
       if (company?.uploadedLogos) {
-        logos = company.uploadedLogos as Array<{url: string; filename: string}>;
+        logos = company.uploadedLogos as Array<{
+          url: string;
+          filename: string;
+        }>;
       }
     }
 
@@ -385,9 +393,14 @@ export async function DELETE(
       });
 
       if (company?.uploadedLogos) {
-        const existingLogos = company.uploadedLogos as Array<{url: string; filename: string}>;
-        const updatedLogos = existingLogos.filter(logo => logo.url !== logoUrl);
-        
+        const existingLogos = company.uploadedLogos as Array<{
+          url: string;
+          filename: string;
+        }>;
+        const updatedLogos = existingLogos.filter(
+          (logo) => logo.url !== logoUrl
+        );
+
         await db.company.update({
           where: { id },
           data: { uploadedLogos: updatedLogos },
