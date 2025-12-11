@@ -161,6 +161,7 @@ export async function POST(
       // Apply custom resize if enabled
       if (shouldResize && resizePresets[resizePreset]) {
         const preset = resizePresets[resizePreset];
+        console.log(`Resizing service image to ${resizePreset}:`, preset);
         sharpInstance = sharpInstance.resize(preset.width, preset.height, {
           fit: preset.fit,
           position: "center",
