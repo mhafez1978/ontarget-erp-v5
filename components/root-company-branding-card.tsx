@@ -292,6 +292,8 @@ export function RootCompanyBrandingCard() {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: logoUrl }),
+        // ensure cookies are included in cross-origin contexts if necessary
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -644,7 +646,56 @@ export function RootCompanyBrandingCard() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-gray-200 dark:border-gray-700">
+                <div
+                  className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-gray-200 dark:border-gray-700"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    // When a theme logo is dragged here, unassign it from the theme
+                    const url = draggedLogo;
+                    if (!url) return;
+
+                    // If the dragged url is assigned to Light theme
+                    if (url === (tempLogoLight || rootCompany.logoLight)) {
+                      // In edit mode, just clear the temp assignment (save to apply)
+                      if (isEditing) {
+                        setTempLogoLight(null);
+                        toast.success(
+                          "Light theme logo unassigned (save to apply)"
+                        );
+                        setDraggedLogo(null);
+                        return;
+                      }
+
+                      // Not editing: call unassign endpoint
+                      handleUnassignThemeLogo("light");
+                      setDraggedLogo(null);
+                      return;
+                    }
+
+                    // If the dragged url is assigned to Dark theme
+                    if (url === (tempLogoDark || rootCompany.logoDark)) {
+                      if (isEditing) {
+                        setTempLogoDark(null);
+                        toast.success(
+                          "Dark theme logo unassigned (save to apply)"
+                        );
+                        setDraggedLogo(null);
+                        return;
+                      }
+
+                      handleUnassignThemeLogo("dark");
+                      setDraggedLogo(null);
+                      return;
+                    }
+
+                    // otherwise, it's a drop of an available logo (no-op)
+                    setDraggedLogo(null);
+                  }}
+                >
                   {uploadedLogos.map((logo, index) => (
                     <div
                       key={index}
@@ -711,7 +762,19 @@ export function RootCompanyBrandingCard() {
                     <h3 className="font-semibold text-sm">Light Theme Logo</h3>
                   </div>
                   {tempLogoLight || rootCompany.logoLight ? (
-                    <div className="relative group">
+                    <div
+                      className="relative group"
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        const url =
+                          tempLogoLight || rootCompany.logoLight || "";
+                        setDraggedLogo(url);
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", url);
+                      }}
+                      onDragEnd={() => setDraggedLogo(null)}
+                    >
                       <div className="h-32 w-full relative rounded-lg overflow-hidden border-2 border-yellow-300 bg-white p-3">
                         <Image
                           src={tempLogoLight || rootCompany.logoLight || ""}
@@ -803,7 +866,18 @@ export function RootCompanyBrandingCard() {
                     <h3 className="font-semibold text-sm">Dark Theme Logo</h3>
                   </div>
                   {tempLogoDark || rootCompany.logoDark ? (
-                    <div className="relative group">
+                    <div
+                      className="relative group"
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        const url = tempLogoDark || rootCompany.logoDark || "";
+                        setDraggedLogo(url);
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", url);
+                      }}
+                      onDragEnd={() => setDraggedLogo(null)}
+                    >
                       <div className="h-32 w-full relative rounded-lg overflow-hidden border-2 border-purple-300 bg-gray-900 p-3">
                         <Image
                           src={tempLogoDark || rootCompany.logoDark || ""}
