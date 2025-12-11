@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 import Image from "next/image";
 import { removeBackground } from "@imgly/background-removal";
 
@@ -56,46 +57,53 @@ export function RootCompanyBrandingCard() {
   const [tempLogoDark, setTempLogoDark] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: "",
+                  onDrop={async (e) => {
     slogan: "",
     description: "",
     email: "",
     phone: "",
-    website: "",
-  });
+                    const confirmed = await confirmToast(
+                      "Unassign this theme logo? (The uploaded logo will remain in your library)",
+                      { confirmLabel: "Unassign", cancelLabel: "Cancel" }
+                    );
 
-  const fetchUploadedLogos = useCallback(async (companyId: string) => {
-    try {
-      const response = await fetch(`/api/company/${companyId}/logos`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Fetched uploaded logos:", data.logos);
-        setUploadedLogos(data.logos || []);
-      } else {
-        console.error("Failed to fetch logos, status:", response.status);
-        const errorData = await response.json();
-        console.error("Error details:", errorData);
-        setUploadedLogos([]);
-        toast.error(
-          errorData?.error ||
-            `Failed to fetch logos (status ${response.status})`
-        );
-        toast.error(
-          errorData?.error ||
-            `Failed to fetch logos (status ${response.status})`
-        );
-      }
-    } catch (error) {
-      console.error("Failed to fetch uploaded logos:", error);
-      setUploadedLogos([]);
-      toast.error("Failed to fetch uploaded logos");
-    }
-  }, []);
+                    if (!confirmed) {
+                      setDraggedLogo(null);
+                      return;
+                    }
 
-  const fetchRootCompany = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/company/root");
+                    // If the dragged url is assigned to Light theme
+                    if (url === (tempLogoLight || rootCompany.logoLight)) {
+                      // In edit mode, just clear the temp assignment (save to apply)
+                      if (isEditing) {
+                        setTempLogoLight(null);
+                        toast.success("Light theme logo unassigned (save to apply)");
+                        setDraggedLogo(null);
+                        return;
+                      }
+
+                      // Not editing: call unassign endpoint
+                      await handleUnassignThemeLogo("light");
+                      setDraggedLogo(null);
+                      return;
+                    }
+
+                    // If the dragged url is assigned to Dark theme
+                    if (url === (tempLogoDark || rootCompany.logoDark)) {
+                      if (isEditing) {
+                        setTempLogoDark(null);
+                        toast.success("Dark theme logo unassigned (save to apply)");
+                        setDraggedLogo(null);
+                        return;
+                      }
+
+                      await handleUnassignThemeLogo("dark");
+                      setDraggedLogo(null);
+                      return;
+                    }
+
+                    // otherwise, it's a drop of an available logo (no-op)
+                    setDraggedLogo(null);
 
       if (!response.ok) {
         throw new Error("Failed to fetch root company");
@@ -287,20 +295,20 @@ export function RootCompanyBrandingCard() {
     console.log("[UI] handleDeleteLogo called for:", logoUrl);
 
     try {
-      const response = await fetch(
-        `/api/company/${rootCompany.id}/logos?url=${encodeURIComponent(
-          logoUrl
-        )}`,
-        {
-          method: "DELETE",
-        }
-      );
+      // Send the logo URL in the request body (safer for long base64 data URIs)
+      const response = await fetch(`/api/company/${rootCompany.id}/logos`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: logoUrl }),
+        // ensure cookies are included in cross-origin contexts if necessary
+        credentials: "include",
+      });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.details || errorData.error || "Failed to delete logo"
-        );
+        const errorData = await response.json().catch(() => ({}));
+        const serverMsg =
+          errorData?.details || errorData?.error || "Failed to delete logo";
+        throw new Error(serverMsg);
       }
 
       toast.success("Logo deleted successfully");
@@ -638,7 +646,56 @@ export function RootCompanyBrandingCard() {
               </div>
 
               {uploadedLogos.length === 0 ? (
-                <div className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg text-center">
+                <div
+                  className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg text-center"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    const url = draggedLogo;
+                    if (!url) return;
+
+                    const confirmed = await confirmToast(
+                      "Unassign this theme logo? (The uploaded logo will remain in your library)",
+                      { confirmLabel: "Unassign", cancelLabel: "Cancel" }
+                    );
+
+                    if (!confirmed) {
+                      setDraggedLogo(null);
+                      return;
+                    }
+
+                    if (url === (tempLogoLight || rootCompany.logoLight)) {
+                      if (isEditing) {
+                        setTempLogoLight(null);
+                        toast.success(
+                          "Light theme logo unassigned (save to apply)"
+                        );
+                        setDraggedLogo(null);
+                        return;
+                      }
+                      await handleUnassignThemeLogo("light");
+                      setDraggedLogo(null);
+                      return;
+                    }
+                    if (url === (tempLogoDark || rootCompany.logoDark)) {
+                      if (isEditing) {
+                        setTempLogoDark(null);
+                        toast.success(
+                          "Dark theme logo unassigned (save to apply)"
+                        );
+                        setDraggedLogo(null);
+                        return;
+                      }
+                      await handleUnassignThemeLogo("dark");
+                      setDraggedLogo(null);
+                      return;
+                    }
+                    setDraggedLogo(null);
+                  }}
+                >
                   <ImageIcon className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                   <p className="text-sm text-muted-foreground">
                     No logos uploaded yet. Click &quot;Upload Logos&quot; to get
@@ -646,7 +703,56 @@ export function RootCompanyBrandingCard() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-gray-200 dark:border-gray-700">
+                <div
+                  className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-gray-200 dark:border-gray-700"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    // When a theme logo is dragged here, unassign it from the theme
+                    const url = draggedLogo;
+                    if (!url) return;
+
+                    // If the dragged url is assigned to Light theme
+                    if (url === (tempLogoLight || rootCompany.logoLight)) {
+                      // In edit mode, just clear the temp assignment (save to apply)
+                      if (isEditing) {
+                        setTempLogoLight(null);
+                        toast.success(
+                          "Light theme logo unassigned (save to apply)"
+                        );
+                        setDraggedLogo(null);
+                        return;
+                      }
+
+                      // Not editing: call unassign endpoint
+                      handleUnassignThemeLogo("light");
+                      setDraggedLogo(null);
+                      return;
+                    }
+
+                    // If the dragged url is assigned to Dark theme
+                    if (url === (tempLogoDark || rootCompany.logoDark)) {
+                      if (isEditing) {
+                        setTempLogoDark(null);
+                        toast.success(
+                          "Dark theme logo unassigned (save to apply)"
+                        );
+                        setDraggedLogo(null);
+                        return;
+                      }
+
+                      handleUnassignThemeLogo("dark");
+                      setDraggedLogo(null);
+                      return;
+                    }
+
+                    // otherwise, it's a drop of an available logo (no-op)
+                    setDraggedLogo(null);
+                  }}
+                >
                   {uploadedLogos.map((logo, index) => (
                     <div
                       key={index}
@@ -713,7 +819,19 @@ export function RootCompanyBrandingCard() {
                     <h3 className="font-semibold text-sm">Light Theme Logo</h3>
                   </div>
                   {tempLogoLight || rootCompany.logoLight ? (
-                    <div className="relative group">
+                    <div
+                      className="relative group"
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        const url =
+                          tempLogoLight || rootCompany.logoLight || "";
+                        setDraggedLogo(url);
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", url);
+                      }}
+                      onDragEnd={() => setDraggedLogo(null)}
+                    >
                       <div className="h-32 w-full relative rounded-lg overflow-hidden border-2 border-yellow-300 bg-white p-3">
                         <Image
                           src={tempLogoLight || rootCompany.logoLight || ""}
@@ -805,7 +923,18 @@ export function RootCompanyBrandingCard() {
                     <h3 className="font-semibold text-sm">Dark Theme Logo</h3>
                   </div>
                   {tempLogoDark || rootCompany.logoDark ? (
-                    <div className="relative group">
+                    <div
+                      className="relative group"
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        const url = tempLogoDark || rootCompany.logoDark || "";
+                        setDraggedLogo(url);
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", url);
+                      }}
+                      onDragEnd={() => setDraggedLogo(null)}
+                    >
                       <div className="h-32 w-full relative rounded-lg overflow-hidden border-2 border-purple-300 bg-gray-900 p-3">
                         <Image
                           src={tempLogoDark || rootCompany.logoDark || ""}

@@ -51,4 +51,6 @@ next-env.d.ts
 !README.md
 *.mjs
 check-*.ts
-/scripts/**
+scripts/**
+!scripts/
+!scripts/check-tailwind.ts

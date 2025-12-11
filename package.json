@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "lint:tailwind": "node ./scripts/check-tailwind.js",
+    "lint:tailwind": "node -r ts-node/register ./scripts/check-tailwind.ts",
     "test": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register --exclude \"tests/integration/**/*.test.ts\" \"tests/**/*.test.ts\"",
     "test:integration": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register \"tests/integration/**/*.test.ts\"",
     "seed": "node prisma/seed.mjs",

@@ -1,6 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+async function safeFetch(url: string | URL, options: RequestInit = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } catch (err) {
+    // normalize the error so callers can inspect it without throwing
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -18,19 +32,28 @@ export async function proxy(request: NextRequest) {
   try {
     // Check if setup is needed
     // Use the request's origin to avoid protocol mismatches
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    const baseUrl =
+      request.nextUrl?.origin ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
     const setupUrl = new URL("/api/setup/check", baseUrl);
     const setupHeaders: Record<string, string> = {
       "Content-Type": "application/json",
       cookie: request.headers.get("cookie") || "",
     };
-    const response = await fetch(setupUrl, {
+    const response = await safeFetch(setupUrl, {
       method: "GET",
       headers: setupHeaders,
       cache: "no-store",
     });
 
-    if (response.ok) {
+    if (!response) {
+      // Fetch failed; log at debug level and continue gracefully
+      console.warn(
+        "Proxy setup check could not reach setup URL (skipping):",
+        String(setupUrl)
+      );
+    } else if (response.ok) {
       const data = await response.json();
 
       // If setup is needed and user is not on setup page, redirect to setup
@@ -48,7 +71,9 @@ export async function proxy(request: NextRequest) {
     if (pathname.startsWith("/dashboard")) {
       try {
         const baseUrl =
-          process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+          request.nextUrl?.origin ||
+          process.env.NEXT_PUBLIC_APP_URL ||
+          "http://localhost:3000";
         const onboardingUrl = new URL("/api/onboarding/check", baseUrl);
         const onboardingHeaders: Record<string, string> = {
           "Content-Type": "application/json",
@@ -63,13 +88,17 @@ export async function proxy(request: NextRequest) {
           onboardingHeaders["x-real-ip"] = realIp;
         }
 
-        const onboardingResponse = await fetch(onboardingUrl, {
+        const onboardingResponse = await safeFetch(onboardingUrl, {
           method: "GET",
           headers: onboardingHeaders,
           cache: "no-store",
         });
-
-        if (onboardingResponse.ok) {
+        if (!onboardingResponse) {
+          console.warn(
+            "Proxy onboarding check could not reach onboarding URL (skipping):",
+            String(onboardingUrl)
+          );
+        } else if (onboardingResponse.ok) {
           const onboardingData = await onboardingResponse.json();
 
           if (onboardingData.needsOnboarding && onboardingData.onboardingUrl) {
@@ -84,7 +113,8 @@ export async function proxy(request: NextRequest) {
       }
     }
   } catch (error) {
-    console.error("Middleware setup check failed:", error);
+    // guard: ensure any unexpected error doesn't propagate and take down middleware
+    console.error("Middleware setup check failed (unexpected error):", error);
   }
 
   return NextResponse.next();
