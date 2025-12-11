@@ -32,7 +32,10 @@ export async function proxy(request: NextRequest) {
   try {
     // Check if setup is needed
     // Use the request's origin to avoid protocol mismatches
-    const baseUrl = request.nextUrl?.origin || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl =
+      request.nextUrl?.origin ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
     const setupUrl = new URL("/api/setup/check", baseUrl);
     const setupHeaders: Record<string, string> = {
       "Content-Type": "application/json",
@@ -67,7 +70,10 @@ export async function proxy(request: NextRequest) {
     // Check onboarding status if accessing dashboard
     if (pathname.startsWith("/dashboard")) {
       try {
-        const baseUrl = request.nextUrl?.origin || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const baseUrl =
+          request.nextUrl?.origin ||
+          process.env.NEXT_PUBLIC_APP_URL ||
+          "http://localhost:3000";
         const onboardingUrl = new URL("/api/onboarding/check", baseUrl);
         const onboardingHeaders: Record<string, string> = {
           "Content-Type": "application/json",
