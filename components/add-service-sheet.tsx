@@ -107,28 +107,117 @@ export function AddServiceSheet({
   // Track if form is dirty
   const isFormDirty = useFormDirty(initialFormData, formData);
 
-  const handleFilesSelected = (files: FileList | null) => {
+  const handleFilesSelected = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     const fileArray = Array.from(files);
 
+    // Create initial entries with preview URLs
     const newEntries: ImageFile[] = fileArray.map((f, i) => ({
       url: URL.createObjectURL(f),
       file: f,
       isFeatured: images.length === 0 && i === 0,
       order: images.length + i,
       localId: `local-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-      progress: 0,
+      progress: 0, // Start at 0%, will update as upload progresses
       error: null,
       uploadedId: null,
       uploadedUrl: null,
     }));
 
+    // if there are existing images and none are featured, mark first new as featured
     if (!images.some((img) => img.isFeatured) && newEntries.length > 0) {
       newEntries[0].isFeatured = true;
     }
 
     setImages((prev) => [...prev, ...newEntries]);
+
+    // Upload images immediately
+    if (!formData.companyId) {
+      // Can't upload without company ID
+      return;
+    }
+
+    // Upload each file separately to show per-file progress
+    for (const entry of newEntries) {
+      if (!entry.file) continue;
+
+      const fd = new FormData();
+      fd.append("images", entry.file, entry.file.name);
+      fd.append("companyId", formData.companyId);
+      fd.append("type", "service");
+
+      try {
+        const xhrUpload = () =>
+          new Promise<{
+            success: boolean;
+            images: Array<{ tempId: string; url: string }>;
+          }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/api/catalog/temp-images");
+
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const pct = Math.round((event.loaded / event.total) * 100);
+                setImages((prev) =>
+                  prev.map((p) =>
+                    p.localId === entry.localId ? { ...p, progress: pct } : p
+                  )
+                );
+              }
+            };
+
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const res = JSON.parse(xhr.responseText);
+                  resolve(res);
+                } catch {
+                  resolve({ success: true, images: [] });
+                }
+              } else {
+                reject(new Error(`Upload failed (${xhr.status})`));
+              }
+            };
+
+            xhr.onerror = () => reject(new Error("Network error"));
+            xhr.send(fd);
+          });
+
+        const result = await xhrUpload();
+        const uploaded = Array.isArray(result.images) ? result.images[0] : null;
+
+        if (uploaded) {
+          // Update the entry with uploaded info
+          setImages((prev) =>
+            prev.map((p) =>
+              p.localId === entry.localId
+                ? {
+                    ...p,
+                    progress: 100,
+                    uploadedId: uploaded.tempId,
+                    uploadedUrl: uploaded.url,
+                    url: uploaded.url, // Use uploaded URL for display
+                    file: null, // Clear file object
+                  }
+                : p
+            )
+          );
+
+          // Revoke the blob URL since we now have the uploaded URL
+          URL.revokeObjectURL(entry.url);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setImages((prev) =>
+          prev.map((p) =>
+            p.localId === entry.localId
+              ? { ...p, error: msg, progress: undefined }
+              : p
+          )
+        );
+      }
+    }
   };
 
   const handleAddImage = () => {
@@ -183,16 +272,25 @@ export function AddServiceSheet({
       return;
     }
 
+    // Check if any images are still uploading
+    const stillUploading = images.some(
+      (img) => typeof img.progress === "number" && img.progress < 100
+    );
+    if (stillUploading) {
+      setError("Please wait for all images to finish uploading");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const urlImages = images
-        .filter((img) => !img.file)
-        .map((img) => ({
-          url: img.url,
-          isFeatured: img.isFeatured || false,
-          order: img.order,
-        }));
+      // All images are already uploaded (either URLs or uploaded files)
+      // Map them to the format expected by the API
+      const allImages = images.map((img) => ({
+        url: img.url,
+        isFeatured: img.isFeatured || false,
+        order: img.order,
+      }));
 
       const response = await fetch("/api/catalog/services", {
         method: "POST",
@@ -205,7 +303,7 @@ export function AddServiceSheet({
           category: result.data.category || null,
           companyId: result.data.companyId,
           address: addressData,
-          images: urlImages,
+          images: allImages, // Use already-uploaded images
         }),
       });
 
@@ -214,130 +312,8 @@ export function AddServiceSheet({
         throw new Error(data.error || "Failed to create service");
       }
 
+      // Service created successfully with all images
       const createData = await response.json();
-      const service = createData?.service;
-
-      // Upload local files (if any)
-      const fileImages = images.filter((img) => img.file);
-
-      if (fileImages.length > 0) {
-        setIsUploadingFiles(true);
-        try {
-          const uploadResults: Array<{
-            success: boolean;
-            images: Array<{ url: string }>;
-          }> = [];
-
-          for (const fimg of fileImages) {
-            if (!fimg.file) continue;
-
-            const fd = new FormData();
-            fd.append("images", fimg.file, fimg.file.name);
-
-            const xhrUpload = () =>
-              new Promise<{ success: boolean; images: Array<{ url: string }> }>(
-                (resolve, reject) => {
-                  const xhr = new XMLHttpRequest();
-                  xhr.open(
-                    "POST",
-                    `/api/catalog/services/${service.id}/images`
-                  );
-
-                  xhr.upload.onprogress = (event) => {
-                    if (event.lengthComputable) {
-                      const pct = Math.round(
-                        (event.loaded / event.total) * 100
-                      );
-                      setImages((prev) =>
-                        prev.map((p) =>
-                          p.localId === fimg.localId
-                            ? { ...p, progress: pct }
-                            : p
-                        )
-                      );
-                    }
-                  };
-
-                  xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                      try {
-                        const res = JSON.parse(xhr.responseText);
-                        resolve(res);
-                      } catch {
-                        resolve({ success: true, images: [] });
-                      }
-                    } else {
-                      reject(new Error(`Upload failed (${xhr.status})`));
-                    }
-                  };
-
-                  xhr.onerror = () => reject(new Error("Network error"));
-                  xhr.send(fd);
-                }
-              );
-
-            try {
-              const result = await xhrUpload();
-              const uploaded = Array.isArray(result.images)
-                ? result.images[0]
-                : null;
-              uploadResults.push(uploaded);
-
-              setImages((prev) =>
-                prev.map((p) =>
-                  p.localId === fimg.localId
-                    ? {
-                        ...p,
-                        progress: 100,
-                        uploadedId: uploaded?.id || null,
-                        uploadedUrl: uploaded?.url || null,
-                        file: null,
-                      }
-                    : p
-                )
-              );
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err);
-              setImages((prev) =>
-                prev.map((p) =>
-                  p.localId === fimg.localId ? { ...p, error: msg } : p
-                )
-              );
-            }
-          }
-
-          const uploadData = { images: uploadResults };
-
-          // If featured image is one of the uploaded files, mark it after upload
-          const featuredIndex = images.findIndex((img) => img.isFeatured);
-          const featuredImage = images[featuredIndex];
-          if (featuredImage?.file || featuredImage?.uploadedId) {
-            if (featuredImage.file) {
-              const fileIndex = fileImages.findIndex(
-                (fi) =>
-                  fi.localId === featuredImage.localId ||
-                  fi.url === featuredImage.url
-              );
-              const corresponding = uploadData.images[fileIndex];
-              if (corresponding && corresponding.id) {
-                await fetch(
-                  `/api/catalog/services/${service.id}/images/${corresponding.id}/feature`,
-                  { method: "PATCH" }
-                );
-              }
-            } else if (featuredImage.uploadedId) {
-              await fetch(
-                `/api/catalog/services/${service.id}/images/${featuredImage.uploadedId}/feature`,
-                { method: "PATCH" }
-              );
-            }
-          }
-        } catch (uploadErr) {
-          console.error("Service image upload failed:", uploadErr);
-        } finally {
-          setIsUploadingFiles(false);
-        }
-      }
 
       // Reset form and close sheet
       setFormData(initialFormData);
