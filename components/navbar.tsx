@@ -17,11 +17,11 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
-  { href: "#home", label: "Home" },
-  { href: "#features", label: "Features" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#about", label: "About" },
-  { href: "#contact", label: "Contact" },
+  { href: "/#home", label: "Home" },
+  { href: "/#features", label: "Features" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
+  { href: "/#contact", label: "Contact" },
 ];
 
 export function Navbar() {

@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VisitorTracker } from "@/components/visitor-tracker";
-import { AboutSection } from "@/components/about-section";
 import { ContactSection } from "@/components/contact-section";
 import { db } from "@/lib/db";
 import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
@@ -680,9 +679,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* About Section */}
-      <AboutSection />
 
       {/* Contact Section */}
       <ContactSection />
