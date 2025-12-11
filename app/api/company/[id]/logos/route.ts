@@ -148,12 +148,29 @@ export async function POST(
         // Return path for serving via /uploads/logos route
         logoUrl = `/uploads/logos/${id}/${filename}`;
       } else {
-        // No storage configured → convert to base64 and store in DB
+        // No storage configured → convert to base64
         logoUrl = bufferToDataURL(buffer, file.type);
-        filename = file.name;
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        filename = `${file.name.replace(/\.[^/.]+$/, "")}-${uniqueSuffix}${extname(file.name)}`;
       }
 
       uploadedLogos.push({ url: logoUrl, filename });
+    }
+
+    // If no storage, save base64 logos to Company.uploadedLogos JSON field
+    if (!storageConfig) {
+      const company = await db.company.findUnique({
+        where: { id },
+        select: { uploadedLogos: true },
+      });
+
+      const existingLogos = (company?.uploadedLogos as Array<{url: string; filename: string}>) || [];
+      const updatedLogos = [...existingLogos, ...uploadedLogos];
+
+      await db.company.update({
+        where: { id },
+        data: { uploadedLogos: updatedLogos },
+      });
     }
 
     // Create audit log
@@ -233,7 +250,7 @@ export async function GET(
     const storageConfigured = await hasStorageConfigured();
     let logos: { url: string; filename: string }[] = [];
 
-    if (storageConfigured) {
+    if (storageConfig) {
       // Storage configured → read from filesystem
       const uploadDir = join(process.cwd(), "public", "uploads", "logos", id);
 
@@ -250,29 +267,14 @@ export async function GET(
         logos = [];
       }
     } else {
-      // No storage → only return assigned base64 logos from the database
+      // No storage → read from uploadedLogos JSON field
       const company = await db.company.findUnique({
         where: { id },
-        select: {
-          logo: true,
-          logoLight: true,
-          logoDark: true,
-        },
+        select: { uploadedLogos: true },
       });
 
-      if (company) {
-        if (company.logoLight && company.logoLight.startsWith("data:")) {
-          logos.push({
-            url: company.logoLight,
-            filename: "logo-light",
-          });
-        }
-        if (company.logoDark && company.logoDark.startsWith("data:")) {
-          logos.push({ url: company.logoDark, filename: "logo-dark" });
-        }
-        if (company.logo && company.logo.startsWith("data:")) {
-          logos.push({ url: company.logo, filename: "logo" });
-        }
+      if (company?.uploadedLogos) {
+        logos = company.uploadedLogos as Array<{url: string; filename: string}>;
       }
     }
 
@@ -374,6 +376,22 @@ export async function DELETE(
       } catch (error) {
         console.error("File deletion error:", error);
         // File might not exist, continue anyway
+      }
+    } else {
+      // Delete from uploadedLogos JSON field
+      const company = await db.company.findUnique({
+        where: { id },
+        select: { uploadedLogos: true },
+      });
+
+      if (company?.uploadedLogos) {
+        const existingLogos = company.uploadedLogos as Array<{url: string; filename: string}>;
+        const updatedLogos = existingLogos.filter(logo => logo.url !== logoUrl);
+        
+        await db.company.update({
+          where: { id },
+          data: { uploadedLogos: updatedLogos },
+        });
       }
     }
 
