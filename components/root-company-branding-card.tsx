@@ -190,8 +190,10 @@ export function RootCompanyBrandingCard() {
         uploadFormData.append("logos", file);
       });
 
-      console.log(`[Upload] Uploading ${processedFiles.length} files to /api/company/${rootCompany.id}/logos`);
-      
+      console.log(
+        `[Upload] Uploading ${processedFiles.length} files to /api/company/${rootCompany.id}/logos`
+      );
+
       const response = await fetch(`/api/company/${rootCompany.id}/logos`, {
         method: "POST",
         body: uploadFormData,
