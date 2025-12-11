@@ -353,12 +353,13 @@ export async function DELETE(
       );
     }
 
-    // Check if this is a filesystem logo or base64
+    // Check if storage is configured
+    const storageConfig = await hasStorageConfigured();
     const isBase64Logo = logoUrl.startsWith("data:");
     let filename = "base64-logo";
 
-    if (!isBase64Logo) {
-      // Extract filename from URL (handle company-specific path)
+    if (storageConfig && !isBase64Logo) {
+      // Storage configured and it's a file path → delete from filesystem
       const urlParts = logoUrl.split("/");
       const extractedFilename = urlParts.pop();
       if (!extractedFilename) {
@@ -386,7 +387,7 @@ export async function DELETE(
         // File might not exist, continue anyway
       }
     } else {
-      // Delete from uploadedLogos JSON field
+      // No storage or base64 → delete from uploadedLogos JSON field
       const company = await db.company.findUnique({
         where: { id },
         select: { uploadedLogos: true },

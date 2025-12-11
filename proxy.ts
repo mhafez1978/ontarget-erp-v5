@@ -17,7 +17,9 @@ export async function proxy(request: NextRequest) {
 
   try {
     // Check if setup is needed
-    const setupUrl = new URL("/api/setup/check", request.url);
+    // Use the request's origin to avoid protocol mismatches
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    const setupUrl = new URL("/api/setup/check", baseUrl);
     const setupHeaders: Record<string, string> = {
       "Content-Type": "application/json",
       cookie: request.headers.get("cookie") || "",
@@ -33,19 +35,21 @@ export async function proxy(request: NextRequest) {
 
       // If setup is needed and user is not on setup page, redirect to setup
       if (data.needsSetup && pathname !== "/setup") {
-        return NextResponse.redirect(new URL("/setup", request.url));
+        return NextResponse.redirect(new URL("/setup", baseUrl));
       }
 
       // If setup is complete and user is on setup page, redirect to home
       if (data.hasSetup && pathname === "/setup") {
-        return NextResponse.redirect(new URL("/", request.url));
+        return NextResponse.redirect(new URL("/", baseUrl));
       }
     }
 
     // Check onboarding status if accessing dashboard
     if (pathname.startsWith("/dashboard")) {
       try {
-        const onboardingUrl = new URL("/api/onboarding/check", request.url);
+        const baseUrl =
+          process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+        const onboardingUrl = new URL("/api/onboarding/check", baseUrl);
         const onboardingHeaders: Record<string, string> = {
           "Content-Type": "application/json",
           cookie: request.headers.get("cookie") || "",
@@ -70,7 +74,7 @@ export async function proxy(request: NextRequest) {
 
           if (onboardingData.needsOnboarding && onboardingData.onboardingUrl) {
             return NextResponse.redirect(
-              new URL(onboardingData.onboardingUrl, request.url)
+              new URL(onboardingData.onboardingUrl, baseUrl)
             );
           }
         }
