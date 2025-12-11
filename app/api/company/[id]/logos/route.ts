@@ -39,6 +39,30 @@ async function hasStorageConfigured(): Promise<{
 }
 
 /**
+ * Extract filename from common urls like /uploads/logos/{id}/{file} or full URLs
+ */
+function filenameFromUrl(url?: string | null): string | null {
+  if (!url) return null;
+  try {
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      const p = new URL(url).pathname;
+      return p.split("/").pop() || null;
+    }
+
+    // Also handle data: urls
+    if (url.startsWith("data:")) {
+      return null;
+    }
+
+    // Fallback: path-like url
+    const parts = url.split("/");
+    return parts.pop() || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
  * Convert file buffer to base64 data URL
  */
 function bufferToDataURL(buffer: Buffer, mimeType: string): string {
@@ -395,55 +419,68 @@ export async function DELETE(
     const isBase64Logo = logoUrl.startsWith("data:");
     let filename = "base64-logo";
 
-    if (storageConfig && !isBase64Logo) {
-      // Storage configured and it's a file path → delete from filesystem
-      const urlParts = logoUrl.split("/");
-      const extractedFilename = urlParts.pop();
-      if (!extractedFilename) {
-        return NextResponse.json(
-          { error: "Invalid logo URL" },
-          { status: 400 }
-        );
-      }
-      filename = extractedFilename;
+    // Try to delete from storage (prefer cold storage if configured), then
+    // always clear any references from the DB uploadedLogos JSON field so the
+    // UI no longer shows the logo.
+    const storageBasePath = storageConfig?.basePath ?? "";
+    const isFilenameUrl = !isBase64Logo;
+    let fileDeletedFromStorage = false;
+    let dbRemovedFromUploadedLogos = false;
 
-      // Delete file from company-specific directory
-      const filepath = join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "logos",
-        id,
-        filename
-      );
-
+    if (isFilenameUrl) {
+      // Extract filename safely
       try {
-        await unlink(filepath);
-      } catch (error) {
-        console.error("File deletion error:", error);
-        // File might not exist, continue anyway
+        const extractedFilename = filenameFromUrl(logoUrl);
+        filename = extractedFilename || filename;
+
+        // Prefer deletion from configured storage base path
+        if (storageBasePath) {
+          const filepath = join(storageBasePath, "logos", id, filename);
+          try {
+            await unlink(filepath);
+            fileDeletedFromStorage = true;
+            console.log("[DELETE Logos] Removed file from storage basePath:", filepath);
+          } catch (error) {
+            console.log("[DELETE Logos] Failed to delete from storage basePath:", filepath, error);
+          }
+        }
+
+        // Fallback to public uploads path (if it exists)
+        if (!fileDeletedFromStorage) {
+          const publicPath = join(process.cwd(), "public", "uploads", "logos", id, filename);
+          try {
+            await unlink(publicPath);
+            fileDeletedFromStorage = true;
+            console.log("[DELETE Logos] Removed file from public uploads path:", publicPath);
+          } catch (error) {
+            console.log("[DELETE Logos] Failed to delete from public path:", publicPath, error);
+          }
+        }
+      } catch (err) {
+        console.error("[DELETE Logos] Error extracting filename:", err);
       }
-    } else {
-      // No storage or base64 → delete from uploadedLogos JSON field
-      const company = await db.company.findUnique({
-        where: { id },
-        select: { uploadedLogos: true },
-      });
+    }
 
-      if (company?.uploadedLogos) {
-        const existingLogos = company.uploadedLogos as Array<{
-          url: string;
-          filename: string;
-        }>;
-        const updatedLogos = existingLogos.filter(
-          (logo) => logo.url !== logoUrl
-        );
-
-        await db.company.update({
+    // Always remove any references from the uploadedLogos DB JSON field, this
+    // works both for base64 data urls and for path urls recorded in the DB.
+      try {
+        const company = await db.company.findUnique({
           where: { id },
-          data: { uploadedLogos: updatedLogos },
+          select: { uploadedLogos: true },
         });
+        const existingLogos = (company?.uploadedLogos as Array<{ url: string; filename: string }>) || [];
+        const updatedLogos = existingLogos.filter((l) => l.url !== logoUrl);
+
+        dbRemovedFromUploadedLogos = updatedLogos.length !== existingLogos.length;
+        if (dbRemovedFromUploadedLogos) {
+          await db.company.update({ where: { id }, data: { uploadedLogos: updatedLogos } });
+          console.log("[DELETE Logos] Removed logo entry from DB uploadedLogos field for company:", id);
+        }
+      } catch (err) {
+        console.error("[DELETE Logos] Error removing logo from DB uploadedLogos field:", err);
       }
+    } catch (err) {
+      console.error("[DELETE Logos] Error removing logo from DB uploadedLogos field:", err);
     }
 
     // Check if this logo is assigned to any company and unassign it
@@ -480,6 +517,8 @@ export async function DELETE(
         field: "logo",
         action: "delete",
         filename,
+        deletedFromStorage: fileDeletedFromStorage,
+        removedFromUploadedLogos: dbRemovedFromUploadedLogos,
       },
     });
 
