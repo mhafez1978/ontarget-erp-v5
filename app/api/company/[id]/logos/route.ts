@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { writeFile, unlink, readdir, mkdir } from "fs/promises";
-import { join, extname } from "path";
+import { join, extname, resolve } from "path";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
@@ -162,8 +162,8 @@ export async function POST(
         const extension = extname(file.name);
         filename = `logo-${uniqueSuffix}${extension}`;
 
-        // Create company-specific directory in cold storage
-        const uploadDir = join(storageConfig.basePath, "logos", id);
+        // Create company-specific directory in cold storage (resolve absolute path)
+        const uploadDir = resolve(storageConfig.basePath, "logos", id);
         console.log(`[POST Logos] Upload directory: ${uploadDir}`);
 
         // Ensure directory exists
@@ -174,7 +174,7 @@ export async function POST(
           console.log(`[POST Logos] Directory already exists or error: ${error}`);
         }
 
-        const filepath = join(uploadDir, filename);
+        const filepath = resolve(uploadDir, filename);
         await writeFile(filepath, buffer);
         console.log(`[POST Logos] File written to: ${filepath}`);
 
@@ -306,7 +306,7 @@ export async function GET(
 
     if (storageConfig) {
       // Storage configured → read from filesystem
-      const uploadDir = join(storageConfig.basePath, "logos", id);
+      const uploadDir = resolve(storageConfig.basePath, "logos", id);
       console.log("[GET Logos] Reading from directory:", uploadDir);
 
       try {
@@ -489,7 +489,7 @@ export async function DELETE(
 
         // Fallback to public uploads path (if it exists)
         if (!fileDeletedFromStorage) {
-          const publicPath = join(process.cwd(), "public", "uploads", "logos", id, filename);
+          const publicPath = resolve(process.cwd(), "public", "uploads", "logos", id, filename);
           try {
             await unlink(publicPath);
             fileDeletedFromStorage = true;
@@ -521,9 +521,6 @@ export async function DELETE(
       } catch (err) {
         console.error("[DELETE Logos] Error removing logo from DB uploadedLogos field:", err);
       }
-    } catch (err) {
-      console.error("[DELETE Logos] Error removing logo from DB uploadedLogos field:", err);
-    }
 
     // Check if this logo is assigned to any company and unassign it
     console.log("[DELETE Logos] Unassigning theme logo if present for URL:", logoUrl);
