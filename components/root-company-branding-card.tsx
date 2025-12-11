@@ -75,9 +75,20 @@ export function RootCompanyBrandingCard() {
         console.error("Failed to fetch logos, status:", response.status);
         const errorData = await response.json();
         console.error("Error details:", errorData);
+        setUploadedLogos([]);
+        toast.error(
+          errorData?.error ||
+            `Failed to fetch logos (status ${response.status})`
+        );
+        toast.error(
+          errorData?.error ||
+            `Failed to fetch logos (status ${response.status})`
+        );
       }
     } catch (error) {
       console.error("Failed to fetch uploaded logos:", error);
+      setUploadedLogos([]);
+      toast.error("Failed to fetch uploaded logos");
     }
   }, []);
 
@@ -304,8 +315,13 @@ export function RootCompanyBrandingCard() {
       }
     } catch (error) {
       console.error("Failed to delete logo:", error);
-      const errorMessage =
+      let errorMessage =
         error instanceof Error ? error.message : "Failed to delete logo";
+      // Map common network error message to a friendlier string
+      if (errorMessage.toLowerCase().includes("failed to fetch")) {
+        errorMessage =
+          "Network error: Could not reach the server. Check your server and storage configuration.";
+      }
       toast.error(errorMessage);
     }
   };
@@ -656,13 +672,14 @@ export function RootCompanyBrandingCard() {
                             "[UI] Delete button clicked for logo:",
                             logo.url
                           );
-                          if (
-                            confirm(
-                              "Are you sure you want to delete this logo?"
-                            )
-                          ) {
-                            handleDeleteLogo(logo.url);
-                          }
+                          // Use sonner toast to confirm deletion with action
+                          toast("Are you sure you want to delete this logo?", {
+                            action: {
+                              label: "Delete",
+                              onClick: () => handleDeleteLogo(logo.url),
+                            },
+                            cancel: { label: "Cancel", onClick: () => {} },
+                          });
                         }}
                         onMouseDown={(e) => e.stopPropagation()}
                         aria-label={`Delete logo ${logo.filename}`}
@@ -707,15 +724,21 @@ export function RootCompanyBrandingCard() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (
-                              confirm(
-                                "Are you sure you want to delete this logo? This will remove it from uploaded logos too."
-                              )
-                            ) {
-                              handleDeleteLogo(
-                                tempLogoLight || rootCompany.logoLight || ""
-                              );
-                            }
+                            toast(
+                              "Are you sure you want to delete this logo? This will remove it from uploaded logos too.",
+                              {
+                                action: {
+                                  label: "Delete",
+                                  onClick: () =>
+                                    handleDeleteLogo(
+                                      tempLogoLight ||
+                                        rootCompany.logoLight ||
+                                        ""
+                                    ),
+                                },
+                                cancel: { label: "Cancel", onClick: () => {} },
+                              }
+                            );
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
                           className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-20 hover:scale-110"
@@ -726,13 +749,17 @@ export function RootCompanyBrandingCard() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (
-                              confirm(
-                                "Unassign this theme logo? (Keep the uploaded logo in your library)"
-                              )
-                            ) {
-                              handleUnassignThemeLogo("light");
-                            }
+                            toast(
+                              "Unassign this theme logo? (Keep the uploaded logo in your library)",
+                              {
+                                action: {
+                                  label: "Unassign",
+                                  onClick: () =>
+                                    handleUnassignThemeLogo("light"),
+                                },
+                                cancel: { label: "Cancel", onClick: () => {} },
+                              }
+                            );
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
                           className="absolute top-2 left-2 p-2 bg-amber-600 hover:bg-amber-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-20 hover:scale-110"
@@ -789,9 +816,19 @@ export function RootCompanyBrandingCard() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm("Are you sure you want to delete this logo? This will remove it from uploaded logos too.")) {
-                              handleDeleteLogo(tempLogoDark || rootCompany.logoDark || "");
-                            }
+                            toast(
+                              "Are you sure you want to delete this logo? This will remove it from uploaded logos too.",
+                              {
+                                action: {
+                                  label: "Delete",
+                                  onClick: () =>
+                                    handleDeleteLogo(
+                                      tempLogoDark || rootCompany.logoDark || ""
+                                    ),
+                                },
+                                cancel: { label: "Cancel", onClick: () => {} },
+                              }
+                            );
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
                           className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-20 hover:scale-110"
@@ -802,9 +839,17 @@ export function RootCompanyBrandingCard() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm("Unassign this theme logo? (Keep the uploaded logo in your library)")) {
-                              handleUnassignThemeLogo("dark");
-                            }
+                            toast(
+                              "Unassign this theme logo? (Keep the uploaded logo in your library)",
+                              {
+                                action: {
+                                  label: "Unassign",
+                                  onClick: () =>
+                                    handleUnassignThemeLogo("dark"),
+                                },
+                                cancel: { label: "Cancel", onClick: () => {} },
+                              }
+                            );
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
                           className="absolute top-2 left-2 p-2 bg-amber-600 hover:bg-amber-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-20 hover:scale-110"

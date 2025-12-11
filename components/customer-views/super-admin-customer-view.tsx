@@ -7,6 +7,7 @@ import { UserPlus, Loader2, Trash2, Pencil } from "lucide-react";
 import { AddSubscriberSheet } from "@/components/add-subscriber-sheet";
 import { EditSubscriptionSheet } from "@/components/edit-subscription-sheet";
 import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirm";
 //import { OnTargetERPSubscribers } from "@/components/ontarget-erp-subscribers";
 
 interface SuperAdminCustomerViewProps {
@@ -72,13 +73,11 @@ export function SuperAdminCustomerView({
   };
 
   const handleDeleteSubscriber = async (subscriber: Subscriber) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete the subscription for "${subscriber.companyName}"? This will remove the company and all its data. This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await confirmToast(
+      `Are you sure you want to delete the subscription for "${subscriber.companyName}"? This will remove the company and all its data. This action cannot be undone.`,
+      { confirmLabel: "Delete subscription" }
+    );
+    if (!confirmed) return;
 
     try {
       const response = await fetch(`/api/subscription/${subscriber.id}`, {

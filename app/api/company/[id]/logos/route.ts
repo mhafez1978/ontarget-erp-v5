@@ -143,21 +143,25 @@ export async function POST(
     console.log("[POST Logos] Storage config:", storageConfig);
     console.log("[POST Logos] Company ID:", id);
     console.log("[POST Logos] Files to upload:", files.length);
-    
+
     const uploadedLogos = [];
 
     // Process each file
     for (const file of files) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      console.log(`[POST Logos] Processing file: ${file.name}, size: ${buffer.length} bytes`);
+      console.log(
+        `[POST Logos] Processing file: ${file.name}, size: ${buffer.length} bytes`
+      );
 
       let logoUrl: string;
       let filename: string;
 
       if (storageConfig) {
         // Storage configured → save to cold storage
-        console.log(`[POST Logos] Using cold storage: ${storageConfig.provider}`);
+        console.log(
+          `[POST Logos] Using cold storage: ${storageConfig.provider}`
+        );
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
         const extension = extname(file.name);
         filename = `logo-${uniqueSuffix}${extension}`;
@@ -171,7 +175,9 @@ export async function POST(
           await mkdir(uploadDir, { recursive: true });
           console.log(`[POST Logos] Directory created/verified: ${uploadDir}`);
         } catch (error) {
-          console.log(`[POST Logos] Directory already exists or error: ${error}`);
+          console.log(
+            `[POST Logos] Directory already exists or error: ${error}`
+          );
         }
 
         const filepath = resolve(uploadDir, filename);
@@ -189,7 +195,9 @@ export async function POST(
           /\.[^/.]+$/,
           ""
         )}-${uniqueSuffix}${extname(file.name)}`;
-        console.log(`[POST Logos] Base64 URL length: ${logoUrl.length}, filename: ${filename}`);
+        console.log(
+          `[POST Logos] Base64 URL length: ${logoUrl.length}, filename: ${filename}`
+        );
       }
 
       uploadedLogos.push({ url: logoUrl, filename });
@@ -212,7 +220,9 @@ export async function POST(
         [];
       const updatedLogos = [...existingLogos, ...uploadedLogos];
 
-      console.log(`[POST Logos] Updating DB with ${updatedLogos.length} total logos`);
+      console.log(
+        `[POST Logos] Updating DB with ${updatedLogos.length} total logos`
+      );
 
       await db.company.update({
         where: { id },
@@ -221,7 +231,9 @@ export async function POST(
 
       console.log(`[POST Logos] DB updated successfully`);
     } else {
-      console.log(`[POST Logos] Storage configured, logos saved to filesystem, skipping DB update`);
+      console.log(
+        `[POST Logos] Storage configured, logos saved to filesystem, skipping DB update`
+      );
     }
 
     // Create audit log
@@ -328,14 +340,24 @@ export async function GET(
       // attempt to read the DB uploadedLogos and the assigned logo fields so
       // the UI can still show assigned logos (base64 or DB stored entries).
       if (logos.length === 0) {
-        console.log("[GET Logos] No files found in storage, reading DB uploadedLogos as fallback");
+        console.log(
+          "[GET Logos] No files found in storage, reading DB uploadedLogos as fallback"
+        );
         const companyFallback = await db.company.findUnique({
           where: { id },
-          select: { uploadedLogos: true, logo: true, logoLight: true, logoDark: true },
+          select: {
+            uploadedLogos: true,
+            logo: true,
+            logoLight: true,
+            logoDark: true,
+          },
         });
 
         if (companyFallback?.uploadedLogos) {
-          logos = companyFallback.uploadedLogos as Array<{ url: string; filename: string }>;
+          logos = companyFallback.uploadedLogos as Array<{
+            url: string;
+            filename: string;
+          }>;
         } else {
           logos = [];
         }
@@ -343,12 +365,15 @@ export async function GET(
         const addLogoIfMissing = (url?: string | null, label?: string) => {
           if (!url) return;
           if (!logos.some((l) => l.url === url)) {
-            logos.push({ url, filename: label || (url.split('/').pop() ?? 'logo') });
+            logos.push({
+              url,
+              filename: label || (url.split("/").pop() ?? "logo"),
+            });
           }
         };
-        addLogoIfMissing(companyFallback?.logo, 'logo');
-        addLogoIfMissing(companyFallback?.logoLight, 'logoLight');
-        addLogoIfMissing(companyFallback?.logoDark, 'logoDark');
+        addLogoIfMissing(companyFallback?.logo, "logo");
+        addLogoIfMissing(companyFallback?.logoLight, "logoLight");
+        addLogoIfMissing(companyFallback?.logoDark, "logoDark");
       }
     } else {
       // No storage → read from uploadedLogos JSON field
@@ -358,7 +383,10 @@ export async function GET(
         select: { uploadedLogos: true },
       });
 
-      console.log("[GET Logos] Company uploadedLogos field:", company?.uploadedLogos);
+      console.log(
+        "[GET Logos] Company uploadedLogos field:",
+        company?.uploadedLogos
+      );
 
       if (company?.uploadedLogos) {
         logos = company.uploadedLogos as Array<{
@@ -372,16 +400,19 @@ export async function GET(
       const addLogoIfMissing = (url?: string | null, label?: string) => {
         if (!url) return;
         if (!logos.some((l) => l.url === url)) {
-          logos.push({ url, filename: label || (url.split('/').pop() ?? 'logo') });
+          logos.push({
+            url,
+            filename: label || (url.split("/").pop() ?? "logo"),
+          });
         }
       };
       const companyRecord = await db.company.findUnique({
         where: { id },
         select: { logo: true, logoLight: true, logoDark: true },
       });
-      addLogoIfMissing(companyRecord?.logo, 'logo');
-      addLogoIfMissing(companyRecord?.logoLight, 'logoLight');
-      addLogoIfMissing(companyRecord?.logoDark, 'logoDark');
+      addLogoIfMissing(companyRecord?.logo, "logo");
+      addLogoIfMissing(companyRecord?.logoLight, "logoLight");
+      addLogoIfMissing(companyRecord?.logoDark, "logoDark");
     }
 
     console.log("[GET Logos] Returning logos:", logos);
@@ -481,21 +512,42 @@ export async function DELETE(
           try {
             await unlink(filepath);
             fileDeletedFromStorage = true;
-            console.log("[DELETE Logos] Removed file from storage basePath:", filepath);
+            console.log(
+              "[DELETE Logos] Removed file from storage basePath:",
+              filepath
+            );
           } catch (error) {
-            console.log("[DELETE Logos] Failed to delete from storage basePath:", filepath, error);
+            console.log(
+              "[DELETE Logos] Failed to delete from storage basePath:",
+              filepath,
+              error
+            );
           }
         }
 
         // Fallback to public uploads path (if it exists)
         if (!fileDeletedFromStorage) {
-          const publicPath = resolve(process.cwd(), "public", "uploads", "logos", id, filename);
+          const publicPath = resolve(
+            process.cwd(),
+            "public",
+            "uploads",
+            "logos",
+            id,
+            filename
+          );
           try {
             await unlink(publicPath);
             fileDeletedFromStorage = true;
-            console.log("[DELETE Logos] Removed file from public uploads path:", publicPath);
+            console.log(
+              "[DELETE Logos] Removed file from public uploads path:",
+              publicPath
+            );
           } catch (error) {
-            console.log("[DELETE Logos] Failed to delete from public path:", publicPath, error);
+            console.log(
+              "[DELETE Logos] Failed to delete from public path:",
+              publicPath,
+              error
+            );
           }
         }
       } catch (err) {
@@ -505,25 +557,39 @@ export async function DELETE(
 
     // Always remove any references from the uploadedLogos DB JSON field, this
     // works both for base64 data urls and for path urls recorded in the DB.
-      try {
-        const company = await db.company.findUnique({
-          where: { id },
-          select: { uploadedLogos: true },
-        });
-        const existingLogos = (company?.uploadedLogos as Array<{ url: string; filename: string }>) || [];
-        const updatedLogos = existingLogos.filter((l) => l.url !== logoUrl);
+    try {
+      const company = await db.company.findUnique({
+        where: { id },
+        select: { uploadedLogos: true },
+      });
+      const existingLogos =
+        (company?.uploadedLogos as Array<{ url: string; filename: string }>) ||
+        [];
+      const updatedLogos = existingLogos.filter((l) => l.url !== logoUrl);
 
-        dbRemovedFromUploadedLogos = updatedLogos.length !== existingLogos.length;
-        if (dbRemovedFromUploadedLogos) {
-          await db.company.update({ where: { id }, data: { uploadedLogos: updatedLogos } });
-          console.log("[DELETE Logos] Removed logo entry from DB uploadedLogos field for company:", id);
-        }
-      } catch (err) {
-        console.error("[DELETE Logos] Error removing logo from DB uploadedLogos field:", err);
+      dbRemovedFromUploadedLogos = updatedLogos.length !== existingLogos.length;
+      if (dbRemovedFromUploadedLogos) {
+        await db.company.update({
+          where: { id },
+          data: { uploadedLogos: updatedLogos },
+        });
+        console.log(
+          "[DELETE Logos] Removed logo entry from DB uploadedLogos field for company:",
+          id
+        );
       }
+    } catch (err) {
+      console.error(
+        "[DELETE Logos] Error removing logo from DB uploadedLogos field:",
+        err
+      );
+    }
 
     // Check if this logo is assigned to any company and unassign it
-    console.log("[DELETE Logos] Unassigning theme logo if present for URL:", logoUrl);
+    console.log(
+      "[DELETE Logos] Unassigning theme logo if present for URL:",
+      logoUrl
+    );
     const companies = await db.company.findMany({
       where: {
         OR: [{ logoLight: logoUrl }, { logoDark: logoUrl }, { logo: logoUrl }],
@@ -545,7 +611,11 @@ export async function DELETE(
         where: { id: company.id },
         data: updateData,
       });
-      console.log("[DELETE Logos] Unassigned logo fields for company:", company.id, updateData);
+      console.log(
+        "[DELETE Logos] Unassigned logo fields for company:",
+        company.id,
+        updateData
+      );
     }
 
     // Create audit log
