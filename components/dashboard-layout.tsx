@@ -369,17 +369,18 @@ export function DashboardLayout({
         {/* Collapse Toggle */}
         <div className="border-t p-2">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="w-full"
+            className="w-full hover:bg-accent"
             onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
               <ChevronRight className="h-4 w-4" />
             ) : (
               <>
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                <span className="text-xs">Collapse</span>
+                <span className="text-xs font-medium">Collapse</span>
               </>
             )}
           </Button>

@@ -65,7 +65,12 @@ export function RootCompanyBrandingCard() {
       const response = await fetch(`/api/company/${companyId}/logos`);
       if (response.ok) {
         const data = await response.json();
+        console.log("Fetched uploaded logos:", data.logos);
         setUploadedLogos(data.logos || []);
+      } else {
+        console.error("Failed to fetch logos, status:", response.status);
+        const errorData = await response.json();
+        console.error("Error details:", errorData);
       }
     } catch (error) {
       console.error("Failed to fetch uploaded logos:", error);
@@ -192,8 +197,11 @@ export function RootCompanyBrandingCard() {
         throw new Error(data.error || "Failed to upload logos");
       }
 
+      console.log("Upload response:", data);
       toast.success(`${processedFiles.length} logo(s) uploaded successfully!`);
-      fetchUploadedLogos(rootCompany.id);
+      
+      // Refresh the uploaded logos list
+      await fetchUploadedLogos(rootCompany.id);
     } catch (error) {
       console.error("Logo upload error:", error);
       toast.error(
@@ -594,7 +602,8 @@ export function RootCompanyBrandingCard() {
                 Uploaded Logos ({uploadedLogos.length})
               </Label>
               <p className="text-xs text-muted-foreground">
-                Drag logos to assign them to light or dark theme • Hover over a logo to see delete button
+                Drag logos to assign them to light or dark theme • Hover over a
+                logo to see delete button
               </p>
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                 {uploadedLogos.map((logo, index) => (
@@ -602,9 +611,9 @@ export function RootCompanyBrandingCard() {
                     key={index}
                     draggable="true"
                     onDragStart={(e) => handleDragStart(e, logo.url)}
-                    className="relative group cursor-grab active:cursor-grabbing aspect-square border-2 rounded-lg overflow-hidden hover:border-primary hover:shadow-lg transition-all bg-white dark:bg-gray-900 p-1"
+                    className="relative group cursor-grab active:cursor-grabbing aspect-square border-2 rounded-lg hover:border-primary hover:shadow-lg transition-all bg-white dark:bg-gray-900 p-1"
                   >
-                    <div className="relative w-full h-full select-none">
+                    <div className="relative w-full h-full select-none overflow-hidden rounded-md">
                       <Image
                         src={logo.url}
                         alt={logo.filename}
@@ -617,7 +626,9 @@ export function RootCompanyBrandingCard() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm("Are you sure you want to delete this logo?")) {
+                        if (
+                          confirm("Are you sure you want to delete this logo?")
+                        ) {
                           handleDeleteLogo(logo.url);
                         }
                       }}
