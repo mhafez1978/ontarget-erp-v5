@@ -212,9 +212,14 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [
+        {
+          status: "asc",
+        },
+        {
+          sortOrder: "asc",
+        },
+      ],
     })) as ProjectWithIncludes[];
 
     // Calculate progress for each project
@@ -247,6 +252,7 @@ export async function GET(req: NextRequest) {
             }
           : null,
         customerId: project.customerId,
+        sortOrder: project.sortOrder ?? 0,
         _count: {
           tasks: project._count.tasks,
         },

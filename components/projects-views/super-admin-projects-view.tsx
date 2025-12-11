@@ -283,6 +283,66 @@ export function SuperAdminProjectsView() {
     }
   };
 
+  // Handle project reordering within a status lane
+  const handleProjectReorder = async (
+    projectId: string,
+    newStatus: Project["status"],
+    newOrder: number
+  ) => {
+    // Store previous state for rollback
+    const previousProjects = projects;
+
+    try {
+      // Optimistically update the UI
+      setProjects((prevProjects) => {
+        // Get projects in the target status lane
+        const laneProjects = prevProjects.filter((p) => p.status === newStatus);
+        const otherProjects = prevProjects.filter(
+          (p) => p.status !== newStatus
+        );
+
+        // Remove the dragged project
+        const draggedProject = laneProjects.find((p) => p.id === projectId);
+        if (!draggedProject) return prevProjects;
+
+        const filteredLane = laneProjects.filter((p) => p.id !== projectId);
+
+        // Insert at new position
+        filteredLane.splice(newOrder, 0, draggedProject);
+
+        // Update sortOrder for all projects in lane
+        const updatedLane = filteredLane.map((p, index) => ({
+          ...p,
+          sortOrder: index,
+        }));
+
+        return [...otherProjects, ...updatedLane];
+      });
+
+      // Call the API
+      const response = await fetch("/api/projects/reorder", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ projectId, status: newStatus, newOrder }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to reorder project:", errorData);
+        // Rollback on error
+        setProjects(previousProjects);
+        throw new Error(errorData.error || "Failed to reorder project");
+      }
+
+      await response.json(); // Consume the response
+    } catch (error) {
+      console.error("Error reordering project:", error);
+      throw error; // Re-throw to let BoardView handle the error
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -473,6 +533,7 @@ export function SuperAdminProjectsView() {
             <BoardView
               projects={filteredProjects}
               onProjectMove={handleProjectMove}
+              onProjectReorder={handleProjectReorder}
             />
           )}
           {viewMode === "list" && (

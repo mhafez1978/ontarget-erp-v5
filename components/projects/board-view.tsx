@@ -10,7 +10,14 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  closestCenter,
+  DragOverEvent,
 } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ProjectCard } from "@/components/projects/project-card";
@@ -64,6 +71,11 @@ interface BoardViewProps {
     projectId: string,
     newStatus: Project["status"]
   ) => Promise<void>;
+  onProjectReorder?: (
+    projectId: string,
+    newStatus: Project["status"],
+    newOrder: number
+  ) => Promise<void>;
 }
 
 const STATUS_CONFIG = {
@@ -93,9 +105,16 @@ const STATUS_CONFIG = {
   },
 } as const;
 
-export function BoardView({ projects, onProjectMove }: BoardViewProps) {
+export function BoardView({
+  projects,
+  onProjectMove,
+  onProjectReorder,
+}: BoardViewProps) {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [activeStatus, setActiveStatus] = useState<Project["status"] | null>(
+    null
+  );
 
   // Configure drag sensors
   const sensors = useSensors(
@@ -106,7 +125,7 @@ export function BoardView({ projects, onProjectMove }: BoardViewProps) {
     })
   );
 
-  // Group projects by status
+  // Group projects by status and sort by sortOrder
   const projectsByStatus = projects.reduce((acc, project) => {
     if (!acc[project.status]) {
       acc[project.status] = [];
@@ -115,18 +134,29 @@ export function BoardView({ projects, onProjectMove }: BoardViewProps) {
     return acc;
   }, {} as Record<string, Project[]>);
 
+  // Sort projects within each status by sortOrder
+  Object.keys(projectsByStatus).forEach((status) => {
+    projectsByStatus[status].sort((a, b) => {
+      const aOrder = (a as any).sortOrder ?? 0;
+      const bOrder = (b as any).sortOrder ?? 0;
+      return aOrder - bOrder;
+    });
+  });
+
   const handleDragStart = (event: DragStartEvent) => {
     const project = projects.find((p) => p.id === event.active.id);
     if (project) {
       setActiveProject(project);
+      setActiveStatus(project.status);
     }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveProject(null);
+    setActiveStatus(null);
 
-    if (!over || active.id === over.id) {
+    if (!over) {
       return;
     }
 
@@ -134,25 +164,66 @@ export function BoardView({ projects, onProjectMove }: BoardViewProps) {
     const project = projects.find((p) => p.id === active.id);
     if (!project) return;
 
-    // Get the new status from the droppable area
-    const newStatus = over.id as Project["status"];
+    // Check if we're dropping over a status column or another project
+    const overId = over.id as string;
+    const overProject = projects.find((p) => p.id === overId);
 
-    // Don't update if status hasn't changed
-    if (project.status === newStatus) {
-      return;
-    }
+    if (overProject) {
+      // Reordering within the same status or moving to a different status
+      const newStatus = overProject.status;
 
-    // Call the onProjectMove callback if provided
-    if (onProjectMove) {
-      setIsUpdating(true);
-      try {
-        await onProjectMove(project.id, newStatus);
-        toast.success(`Project moved to ${STATUS_CONFIG[newStatus].label}`);
-      } catch (error) {
-        console.error("Failed to update project status:", error);
-        toast.error("Failed to move project. Please try again.");
-      } finally {
-        setIsUpdating(false);
+      if (project.status === newStatus && active.id !== over.id) {
+        // Reordering within the same lane
+        const statusProjects = projectsByStatus[newStatus];
+        const oldIndex = statusProjects.findIndex((p) => p.id === active.id);
+        const newIndex = statusProjects.findIndex((p) => p.id === over.id);
+
+        if (oldIndex !== -1 && newIndex !== -1 && onProjectReorder) {
+          setIsUpdating(true);
+          try {
+            await onProjectReorder(project.id, newStatus, newIndex);
+            toast.success("Project reordered");
+          } catch (error) {
+            console.error("Failed to reorder project:", error);
+            toast.error("Failed to reorder project. Please try again.");
+          } finally {
+            setIsUpdating(false);
+          }
+        }
+      } else if (project.status !== newStatus) {
+        // Moving to a different status lane
+        if (onProjectMove) {
+          setIsUpdating(true);
+          try {
+            await onProjectMove(project.id, newStatus);
+            toast.success(`Project moved to ${STATUS_CONFIG[newStatus].label}`);
+          } catch (error) {
+            console.error("Failed to update project status:", error);
+            toast.error("Failed to move project. Please try again.");
+          } finally {
+            setIsUpdating(false);
+          }
+        }
+      }
+    } else {
+      // Dropping on a status column directly
+      const newStatus = overId as Project["status"];
+      if (
+        Object.keys(STATUS_CONFIG).includes(newStatus) &&
+        project.status !== newStatus
+      ) {
+        if (onProjectMove) {
+          setIsUpdating(true);
+          try {
+            await onProjectMove(project.id, newStatus);
+            toast.success(`Project moved to ${STATUS_CONFIG[newStatus].label}`);
+          } catch (error) {
+            console.error("Failed to update project status:", error);
+            toast.error("Failed to move project. Please try again.");
+          } finally {
+            setIsUpdating(false);
+          }
+        }
       }
     }
   };
@@ -160,6 +231,7 @@ export function BoardView({ projects, onProjectMove }: BoardViewProps) {
   return (
     <DndContext
       sensors={sensors}
+      collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -195,7 +267,8 @@ export function BoardView({ projects, onProjectMove }: BoardViewProps) {
 
 // Droppable Column Component
 import { useDroppable } from "@dnd-kit/core";
-import { useDraggable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface DroppableColumnProps {
   status: Project["status"];
@@ -207,6 +280,8 @@ function DroppableColumn({ status, config, projects }: DroppableColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: status,
   });
+
+  const projectIds = projects.map((p) => p.id);
 
   return (
     <Card
@@ -239,40 +314,45 @@ function DroppableColumn({ status, config, projects }: DroppableColumnProps) {
             </p>
           </div>
         ) : (
-          projects.map((project) => (
-            <DraggableProjectCard key={project.id} project={project} />
-          ))
+          <SortableContext
+            items={projectIds}
+            strategy={verticalListSortingStrategy}
+          >
+            {projects.map((project) => (
+              <SortableProjectCard key={project.id} project={project} />
+            ))}
+          </SortableContext>
         )}
       </CardContent>
     </Card>
   );
 }
 
-// Draggable Project Card Component
-interface DraggableProjectCardProps {
+// Sortable Project Card Component
+interface SortableProjectCardProps {
   project: Project;
 }
 
-function DraggableProjectCard({ project }: DraggableProjectCardProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: project.id,
-    });
+function SortableProjectCard({ project }: SortableProjectCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: project.id,
+  });
 
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-      }
-    : undefined;
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={isDragging ? "opacity-50" : ""}
-    >
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       <ProjectCard
         project={project}
         isDragging={isDragging}

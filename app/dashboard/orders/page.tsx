@@ -935,7 +935,10 @@ export default function OrdersPage() {
             {/* Company Selection */}
             <div>
               <Label>Company</Label>
-              <Select value={selectedCompanyId} onValueChange={handleCompanyChange}>
+              <Select
+                value={selectedCompanyId}
+                onValueChange={handleCompanyChange}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select company" />
                 </SelectTrigger>
@@ -953,7 +956,10 @@ export default function OrdersPage() {
             {selectedCompanyId && (
               <div>
                 <Label>Customer</Label>
-                <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                <Select
+                  value={selectedCustomerId}
+                  onValueChange={setSelectedCustomerId}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
@@ -977,10 +983,12 @@ export default function OrdersPage() {
             {selectedCompanyId && (
               <div>
                 <Label>Add Product</Label>
-                <Select onValueChange={(id) => {
-                  const product = products.find(p => p.id === id);
-                  if (product) addOrderItem("product", product);
-                }}>
+                <Select
+                  onValueChange={(id) => {
+                    const product = products.find((p) => p.id === id);
+                    if (product) addOrderItem("product", product);
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select product to add" />
                   </SelectTrigger>
@@ -999,10 +1007,12 @@ export default function OrdersPage() {
             {selectedCompanyId && (
               <div>
                 <Label>Add Service</Label>
-                <Select onValueChange={(id) => {
-                  const service = services.find(s => s.id === id);
-                  if (service) addOrderItem("service", service);
-                }}>
+                <Select
+                  onValueChange={(id) => {
+                    const service = services.find((s) => s.id === id);
+                    if (service) addOrderItem("service", service);
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select service to add" />
                   </SelectTrigger>
@@ -1023,7 +1033,10 @@ export default function OrdersPage() {
                 <Label>Order Items</Label>
                 <div className="space-y-2 mt-2">
                   {orderItems.map((item, index) => (
-                    <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 p-3 border rounded-lg"
+                    >
                       <div className="flex-1">
                         <p className="font-medium text-sm">{item.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -1034,7 +1047,9 @@ export default function OrdersPage() {
                         type="number"
                         min="1"
                         value={item.quantity}
-                        onChange={(e) => updateItemQuantity(index, parseInt(e.target.value))}
+                        onChange={(e) =>
+                          updateItemQuantity(index, parseInt(e.target.value))
+                        }
                         className="w-20"
                       />
                       <Button
@@ -1070,7 +1085,12 @@ export default function OrdersPage() {
 
             <Button
               onClick={handleCreateOrder}
-              disabled={creatingOrder || !selectedCompanyId || !selectedCustomerId || orderItems.length === 0}
+              disabled={
+                creatingOrder ||
+                !selectedCompanyId ||
+                !selectedCustomerId ||
+                orderItems.length === 0
+              }
               className="w-full"
             >
               {creatingOrder ? (

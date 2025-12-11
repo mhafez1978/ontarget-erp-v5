@@ -1722,6 +1722,9 @@ model Project {
   // Status
   status ProjectStatus @default(PLANNING)
 
+  // Sort order for kanban board (within each status lane)
+  sortOrder Int @default(0)
+
   // Dates
   startDate DateTime?
   endDate   DateTime?
@@ -1744,6 +1747,8 @@ model Project {
   @@index([status])
   // composite index to accelerate queries for projects by company and status
   @@index([companyId, status])
+  // composite index for ordering projects within status lanes
+  @@index([companyId, status, sortOrder])
 }
 
 // Task Model - Projects have many tasks
