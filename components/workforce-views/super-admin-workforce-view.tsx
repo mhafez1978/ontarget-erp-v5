@@ -143,6 +143,9 @@ export function SuperAdminWorkforceView() {
     role: "STAFF" as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
     jobTitle: "SALES_REP" as string,
     employmentType: "FULL_TIME" as string,
+    isFeatured: false,
+    bio: "",
+    displayOrder: 0,
   };
 
   const initialAddressData: AddressData = {
@@ -169,6 +172,9 @@ export function SuperAdminWorkforceView() {
     employmentType: "FULL_TIME" as string,
     status: "ACTIVE" as string,
     canSetupPersonalEmail: false,
+    isFeatured: false,
+    bio: "",
+    displayOrder: 0,
   };
 
   const initialEditAddressData: AddressData = {
@@ -202,6 +208,9 @@ export function SuperAdminWorkforceView() {
       employmentType: member.employmentType,
       status: member.status,
       canSetupPersonalEmail: member.user.canSetupPersonalEmail || false,
+      isFeatured: member.isFeatured || false,
+      bio: member.bio || "",
+      displayOrder: member.displayOrder || 0,
     });
     setEditAddressData({
       addressLine1: member.user.addressLine1 || "",
@@ -986,6 +995,61 @@ export function SuperAdminWorkforceView() {
               </p>
             </div>
 
+            {/* Storefront Display */}
+            <div className="space-y-4 border-2 border-purple-300 p-4 rounded-lg bg-purple-50 dark:bg-purple-950/20">
+              <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-400">
+                🌟 Storefront Display (Meet the Team)
+              </h3>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isFeatured"
+                  checked={formData.isFeatured}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isFeatured: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="isFeatured" className="cursor-pointer">
+                  Feature on Storefront (Meet the Team)
+                </Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bio">Public Bio (Optional)</Label>
+                <textarea
+                  id="bio"
+                  value={formData.bio}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bio: e.target.value })
+                  }
+                  placeholder="Brief bio to display on storefront..."
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="displayOrder">Display Order</Label>
+                <Input
+                  id="displayOrder"
+                  type="number"
+                  value={formData.displayOrder}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      displayOrder: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="0"
+                  min="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Lower numbers appear first in the team section
+                </p>
+              </div>
+            </div>
+
             {/* Address Information */}
             <div className="space-y-2">
               <AddressAutocomplete
@@ -1347,6 +1411,64 @@ export function SuperAdminWorkforceView() {
                     }
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Storefront Display */}
+            <div className="space-y-4 border-2 border-purple-300 p-4 rounded-lg bg-purple-50 dark:bg-purple-950/20">
+              <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-400">
+                🌟 Storefront Display (Meet the Team)
+              </h3>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="editIsFeatured"
+                  checked={editFormData.isFeatured}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      isFeatured: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="editIsFeatured" className="cursor-pointer">
+                  Feature on Storefront (Meet the Team)
+                </Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editBio">Public Bio (Optional)</Label>
+                <textarea
+                  id="editBio"
+                  value={editFormData.bio}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, bio: e.target.value })
+                  }
+                  placeholder="Brief bio to display on storefront..."
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editDisplayOrder">Display Order</Label>
+                <Input
+                  id="editDisplayOrder"
+                  type="number"
+                  value={editFormData.displayOrder}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      displayOrder: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="0"
+                  min="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Lower numbers appear first in the team section
+                </p>
               </div>
             </div>
 
