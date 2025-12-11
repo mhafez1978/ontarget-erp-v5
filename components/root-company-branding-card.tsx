@@ -51,6 +51,10 @@ export function RootCompanyBrandingCard() {
   const [draggedLogo, setDraggedLogo] = useState<string | null>(null);
   const [removeBackgroundEnabled, setRemoveBackgroundEnabled] = useState(false);
 
+  // Track temporary logo assignments before saving
+  const [tempLogoLight, setTempLogoLight] = useState<string | null>(null);
+  const [tempLogoDark, setTempLogoDark] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     name: "",
     slogan: "",
@@ -228,7 +232,7 @@ export function RootCompanyBrandingCard() {
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDropOnTheme = async (
+  const handleDropOnTheme = (
     e: DragEvent<HTMLDivElement>,
     theme: "light" | "dark"
   ) => {
@@ -242,68 +246,21 @@ export function RootCompanyBrandingCard() {
       return;
     }
 
-    try {
-      // Update theme-specific logo AND set as fallback logo if not already set
-      const updateData =
-        theme === "light"
-          ? {
-              logoLight: draggedLogo,
-              ...(!rootCompany.logo && { logo: draggedLogo }),
-            }
-          : {
-              logoDark: draggedLogo,
-              ...(!rootCompany.logo && { logo: draggedLogo }),
-            };
-
-      console.log("Updating company with:", updateData);
-
-      const response = await fetch(`/api/company/${rootCompany.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updateData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update theme logo");
+    // In edit mode, just update temporary state
+    if (isEditing) {
+      if (theme === "light") {
+        setTempLogoLight(draggedLogo);
+      } else {
+        setTempLogoDark(draggedLogo);
       }
-
-      await response.json(); // Consume response
-
-      // Update local state immediately
-      setRootCompany((prev) =>
-        prev
-          ? {
-              ...prev,
-              ...(theme === "light"
-                ? {
-                    logoLight: draggedLogo,
-                    ...(!prev.logo && { logo: draggedLogo }),
-                  }
-                : {
-                    logoDark: draggedLogo,
-                    ...(!prev.logo && { logo: draggedLogo }),
-                  }),
-            }
-          : null
-      );
-
       toast.success(
-        `Logo assigned to ${theme === "light" ? "light" : "dark"} theme!`
+        `Logo assigned to ${
+          theme === "light" ? "light" : "dark"
+        } theme (not saved yet)`
       );
-
-      // Force refresh the branding in dashboard
-      window.dispatchEvent(new Event("branding-updated"));
-    } catch (error) {
-      console.error("Failed to assign logo:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to assign logo to theme"
-      );
-    } finally {
-      setDraggedLogo(null);
     }
+
+    setDraggedLogo(null);
   };
 
   const handleDeleteLogo = async (logoUrl: string) => {
@@ -350,10 +307,22 @@ export function RootCompanyBrandingCard() {
     setIsSaving(true);
 
     try {
+      // Prepare update data with form fields and logo assignments
+      const updateData = {
+        ...formData,
+        ...(tempLogoLight !== null && { logoLight: tempLogoLight }),
+        ...(tempLogoDark !== null && { logoDark: tempLogoDark }),
+        // Set fallback logo if not already set
+        ...(!rootCompany.logo &&
+          (tempLogoLight || tempLogoDark) && {
+            logo: tempLogoLight || tempLogoDark,
+          }),
+      };
+
       const response = await fetch(`/api/company/${rootCompany.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updateData),
       });
 
       const data = await response.json();
@@ -364,7 +333,13 @@ export function RootCompanyBrandingCard() {
 
       setRootCompany(data.company);
       setIsEditing(false);
+      // Reset temp logo states
+      setTempLogoLight(null);
+      setTempLogoDark(null);
       toast.success("System branding updated successfully!");
+
+      // Force refresh the branding in dashboard
+      window.dispatchEvent(new Event("branding-updated"));
     } catch (error) {
       console.error("Update error:", error);
       toast.error(
@@ -386,6 +361,9 @@ export function RootCompanyBrandingCard() {
         website: rootCompany.website || "",
       });
     }
+    // Reset temporary logo assignments
+    setTempLogoLight(null);
+    setTempLogoDark(null);
     setIsEditing(false);
   };
 
@@ -417,7 +395,12 @@ export function RootCompanyBrandingCard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsEditing(true)}
+              onClick={() => {
+                setIsEditing(true);
+                // Initialize temp logo states with current values
+                setTempLogoLight(rootCompany?.logoLight || null);
+                setTempLogoDark(rootCompany?.logoDark || null);
+              }}
             >
               <Pencil className="h-4 w-4 mr-2" />
               Edit Info
@@ -455,208 +438,312 @@ export function RootCompanyBrandingCard() {
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Logo Upload Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="text-base font-semibold">Theme Logos</Label>
-            <div>
-              <input
-                type="file"
-                id="logos-upload"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleMultipleLogoUpload}
-                disabled={uploadingLogos}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={uploadingLogos}
-                onClick={() => document.getElementById("logos-upload")?.click()}
-              >
-                {uploadingLogos ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Logos
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* Background Removal Option */}
-          <div className="flex items-center space-x-2 p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
-            <Checkbox
-              id="remove-bg"
-              checked={removeBackgroundEnabled}
-              onCheckedChange={(checked) =>
-                setRemoveBackgroundEnabled(checked as boolean)
-              }
-              disabled={uploadingLogos}
-            />
-            <div className="flex-1">
-              <label
-                htmlFor="remove-bg"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
-              >
-                <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                Auto-remove background from uploaded images
-              </label>
-              <p className="text-xs text-muted-foreground mt-1">
-                AI will automatically remove backgrounds before upload (runs in
-                your browser, 100% free)
-              </p>
-            </div>
-          </div>
-
-          {/* Theme Assignment Zones */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Light Theme Drop Zone */}
-            <div
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDropOnTheme(e, "light")}
-              className={`border-2 border-dashed rounded-lg p-3 transition-colors ${
-                draggedLogo
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                  : "border-gray-300 dark:border-gray-700"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Sun className="h-4 w-4 text-yellow-500" />
-                <h3 className="font-medium text-sm">Light Theme</h3>
-              </div>
-              {rootCompany.logoLight ? (
-                <div className="relative group">
-                  <div className="h-24 w-24 relative rounded-lg overflow-hidden border bg-white p-2 mx-auto">
-                    <Image
-                      src={rootCompany.logoLight}
-                      alt="Light theme logo"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <p className="text-xs text-center mt-1 text-muted-foreground truncate">
-                    {rootCompany.logoLight.split("/").pop()}
-                  </p>
+        {/* Current Theme Logos Display (View Mode) */}
+        {!isEditing && (
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">
+              Current Theme Logos
+            </Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Light Theme */}
+              <div className="border-2 rounded-lg p-4 bg-linear-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sun className="h-4 w-4 text-yellow-600" />
+                  <h3 className="font-medium text-sm">Light Theme Logo</h3>
                 </div>
-              ) : (
-                <div className="h-24 flex items-center justify-center border-2 border-dashed rounded-lg bg-white dark:bg-gray-900">
-                  <div className="text-center text-muted-foreground">
-                    <ImageIcon className="h-6 w-6 mx-auto mb-1 opacity-50" />
-                    <p className="text-xs">Drag here</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Dark Theme Drop Zone */}
-            <div
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDropOnTheme(e, "dark")}
-              className={`border-2 border-dashed rounded-lg p-3 transition-colors ${
-                draggedLogo
-                  ? "border-purple-500 bg-purple-50 dark:bg-purple-950"
-                  : "border-gray-300 dark:border-gray-700"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Moon className="h-4 w-4 text-purple-500" />
-                <h3 className="font-medium text-sm">Dark Theme</h3>
-              </div>
-              {rootCompany.logoDark ? (
-                <div className="relative group">
-                  <div className="h-24 w-24 relative rounded-lg overflow-hidden border bg-gray-900 p-2 mx-auto">
-                    <Image
-                      src={rootCompany.logoDark}
-                      alt="Dark theme logo"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <p className="text-xs text-center mt-1 text-muted-foreground truncate">
-                    {rootCompany.logoDark.split("/").pop()}
-                  </p>
-                </div>
-              ) : (
-                <div className="h-24 flex items-center justify-center border-2 border-dashed rounded-lg bg-gray-900">
-                  <div className="text-center text-muted-foreground">
-                    <ImageIcon className="h-6 w-6 mx-auto mb-1 opacity-50" />
-                    <p className="text-xs">Drag here</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Uploaded Logos Grid */}
-          {uploadedLogos.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Uploaded Logos ({uploadedLogos.length})
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Drag logos to assign them to light or dark theme • Hover over a
-                logo to see delete button
-              </p>
-              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                {uploadedLogos.map((logo, index) => (
-                  <div
-                    key={index}
-                    draggable="true"
-                    onDragStart={(e) => handleDragStart(e, logo.url)}
-                    className="relative group cursor-grab active:cursor-grabbing aspect-square border-2 rounded-lg hover:border-primary hover:shadow-lg transition-all bg-white dark:bg-gray-900 p-1"
-                  >
-                    <div className="relative w-full h-full select-none overflow-hidden rounded-md">
+                {rootCompany.logoLight ? (
+                  <div className="relative group">
+                    <div className="h-32 w-full relative rounded-lg overflow-hidden border-2 border-yellow-200 bg-white p-3">
                       <Image
-                        src={logo.url}
-                        alt={logo.filename}
+                        src={rootCompany.logoLight}
+                        alt="Light theme logo"
                         fill
-                        className="object-contain pointer-events-none"
-                        draggable={false}
-                        unoptimized
+                        className="object-contain"
                       />
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (
-                          confirm("Are you sure you want to delete this logo?")
-                        ) {
-                          handleDeleteLogo(logo.url);
-                        }
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded shadow-md opacity-0 group-hover:opacity-100 transition-all z-10 hover:scale-110"
-                      title="Delete logo"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
                   </div>
-                ))}
+                ) : (
+                  <div className="h-32 flex items-center justify-center border-2 border-dashed border-yellow-300 rounded-lg bg-white/50">
+                    <p className="text-xs text-muted-foreground">
+                      No logo assigned
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Dark Theme */}
+              <div className="border-2 rounded-lg p-4 bg-linear-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <Moon className="h-4 w-4 text-purple-600" />
+                  <h3 className="font-medium text-sm">Dark Theme Logo</h3>
+                </div>
+                {rootCompany.logoDark ? (
+                  <div className="relative group">
+                    <div className="h-32 w-full relative rounded-lg overflow-hidden border-2 border-purple-200 bg-gray-900 p-3">
+                      <Image
+                        src={rootCompany.logoDark}
+                        alt="Dark theme logo"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-32 flex items-center justify-center border-2 border-dashed border-purple-300 rounded-lg bg-gray-900/50">
+                    <p className="text-xs text-muted-foreground">
+                      No logo assigned
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-          )}
-
-          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-            <p className="text-xs text-blue-900 dark:text-blue-100">
-              <strong>💡 Logo Size Tip:</strong> For best display in the
-              sidebar, use logos with a 3:1 or 4:1 aspect ratio (e.g., 600x150px
-              or 800x200px). Maximum width: 240px in sidebar. PNG with
-              transparent background recommended.
-            </p>
           </div>
+        )}
 
-          <p className="text-xs text-muted-foreground">
-            Recommended: 200x200px, PNG or JPG, max 2MB per file
-          </p>
-        </div>
+        {/* Logo Upload and Management Section (Edit Mode Only) */}
+        {isEditing && (
+          <div className="space-y-4 p-4 bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base font-semibold">
+                  Logo Management
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Upload logos, then drag them to Light or Dark theme zones
+                  below
+                </p>
+              </div>
+              <div>
+                <input
+                  type="file"
+                  id="logos-upload"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleMultipleLogoUpload}
+                  disabled={uploadingLogos}
+                />
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  disabled={uploadingLogos}
+                  onClick={() =>
+                    document.getElementById("logos-upload")?.click()
+                  }
+                >
+                  {uploadingLogos ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Logos
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Background Removal Option */}
+            <div className="flex items-center space-x-2 p-3 bg-purple-100 dark:bg-purple-950/50 border border-purple-300 dark:border-purple-700 rounded-lg">
+              <Checkbox
+                id="remove-bg"
+                checked={removeBackgroundEnabled}
+                onCheckedChange={(checked) =>
+                  setRemoveBackgroundEnabled(checked as boolean)
+                }
+                disabled={uploadingLogos}
+              />
+              <div className="flex-1">
+                <label
+                  htmlFor="remove-bg"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  Auto-remove background from uploaded images
+                </label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  AI will automatically remove backgrounds before upload (runs
+                  in your browser, 100% free)
+                </p>
+              </div>
+            </div>
+
+            {/* Uploaded Logos Grid - Always visible in edit mode */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">
+                  Available Logos ({uploadedLogos.length})
+                </Label>
+                {uploadedLogos.length > 0 && (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                    👆 Drag logos below to assign them to themes
+                  </p>
+                )}
+              </div>
+
+              {uploadedLogos.length === 0 ? (
+                <div className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg text-center">
+                  <ImageIcon className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <p className="text-sm text-muted-foreground">
+                    No logos uploaded yet. Click &quot;Upload Logos&quot; to get
+                    started.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-gray-200 dark:border-gray-700">
+                  {uploadedLogos.map((logo, index) => (
+                    <div
+                      key={index}
+                      draggable="true"
+                      onDragStart={(e) => handleDragStart(e, logo.url)}
+                      className="relative group cursor-grab active:cursor-grabbing aspect-square border-2 rounded-lg hover:border-primary hover:shadow-xl transition-all bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-2 hover:scale-105"
+                      title={`Drag to assign: ${logo.filename}`}
+                    >
+                      <div className="relative w-full h-full select-none overflow-hidden rounded">
+                        <Image
+                          src={logo.url}
+                          alt={logo.filename}
+                          fill
+                          className="object-contain pointer-events-none"
+                          draggable={false}
+                          unoptimized
+                        />
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (
+                            confirm(
+                              "Are you sure you want to delete this logo?"
+                            )
+                          ) {
+                            handleDeleteLogo(logo.url);
+                          }
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className="absolute -top-2 -right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all z-10 hover:scale-110"
+                        title="Delete logo"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Theme Assignment Drop Zones */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Theme Assignment</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Light Theme Drop Zone */}
+                <div
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDropOnTheme(e, "light")}
+                  className={`border-3 border-dashed rounded-xl p-4 transition-all ${
+                    draggedLogo
+                      ? "border-yellow-500 bg-yellow-100 dark:bg-yellow-950/50 shadow-lg scale-105"
+                      : "border-yellow-300 dark:border-yellow-700 bg-linear-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sun className="h-5 w-5 text-yellow-600" />
+                    <h3 className="font-semibold text-sm">Light Theme Logo</h3>
+                  </div>
+                  {tempLogoLight || rootCompany.logoLight ? (
+                    <div className="relative group">
+                      <div className="h-32 w-full relative rounded-lg overflow-hidden border-2 border-yellow-300 bg-white p-3">
+                        <Image
+                          src={tempLogoLight || rootCompany.logoLight || ""}
+                          alt="Light theme logo"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                      {tempLogoLight && (
+                        <p className="text-xs text-center mt-2 text-emerald-600 dark:text-emerald-400 font-medium">
+                          ✓ New logo assigned (save to apply)
+                        </p>
+                      )}
+                      {!tempLogoLight && (
+                        <p className="text-xs text-center mt-2 text-muted-foreground">
+                          Current logo • Drag a new one to replace
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="h-32 flex items-center justify-center border-2 border-dashed border-yellow-400 rounded-lg bg-white/50">
+                      <div className="text-center text-yellow-700 dark:text-yellow-400">
+                        <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-70" />
+                        <p className="text-sm font-medium">Drop logo here</p>
+                        <p className="text-xs mt-1">For light theme</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Dark Theme Drop Zone */}
+                <div
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDropOnTheme(e, "dark")}
+                  className={`border-3 border-dashed rounded-xl p-4 transition-all ${
+                    draggedLogo
+                      ? "border-purple-500 bg-purple-100 dark:bg-purple-950/50 shadow-lg scale-105"
+                      : "border-purple-300 dark:border-purple-700 bg-linear-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Moon className="h-5 w-5 text-purple-600" />
+                    <h3 className="font-semibold text-sm">Dark Theme Logo</h3>
+                  </div>
+                  {tempLogoDark || rootCompany.logoDark ? (
+                    <div className="relative group">
+                      <div className="h-32 w-full relative rounded-lg overflow-hidden border-2 border-purple-300 bg-gray-900 p-3">
+                        <Image
+                          src={tempLogoDark || rootCompany.logoDark || ""}
+                          alt="Dark theme logo"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                      {tempLogoDark && (
+                        <p className="text-xs text-center mt-2 text-emerald-600 dark:text-emerald-400 font-medium">
+                          ✓ New logo assigned (save to apply)
+                        </p>
+                      )}
+                      {!tempLogoDark && (
+                        <p className="text-xs text-center mt-2 text-muted-foreground">
+                          Current logo • Drag a new one to replace
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="h-32 flex items-center justify-center border-2 border-dashed border-purple-400 rounded-lg bg-gray-900/50">
+                      <div className="text-center text-purple-400">
+                        <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-70" />
+                        <p className="text-sm font-medium">Drop logo here</p>
+                        <p className="text-xs mt-1">For dark theme</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Tips */}
+            <div className="bg-blue-100 dark:bg-blue-950/50 border border-blue-300 dark:border-blue-700 rounded-lg p-3">
+              <p className="text-xs text-blue-900 dark:text-blue-100">
+                <strong>💡 Quick Tips:</strong> Upload multiple logos → Drag
+                them to Light/Dark zones → Click Save to apply changes globally
+                to dashboard and homepage
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Company Info Section */}
         <div className="space-y-4 pt-4 border-t">
