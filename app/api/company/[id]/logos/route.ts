@@ -661,3 +661,25 @@ export async function DELETE(
     );
   }
 }
+
+// OPTIONS - CORS preflight for cross-origin DELETE requests (if deployed behind cross-origin frontends)
+export async function OPTIONS(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Useful to log the request origin for debugging CORS issues
+    console.log("[OPTIONS Logos] Received CORS preflight for:", request.url);
+    const headers = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
+    };
+
+    return NextResponse.json({ success: true }, { headers });
+  } catch (err) {
+    console.error("[OPTIONS Logos] Error handling preflight:", err);
+    return NextResponse.json({ error: "Preflight failed" }, { status: 500 });
+  }
+}
