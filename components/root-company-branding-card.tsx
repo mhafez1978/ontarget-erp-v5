@@ -199,7 +199,7 @@ export function RootCompanyBrandingCard() {
 
       console.log("Upload response:", data);
       toast.success(`${processedFiles.length} logo(s) uploaded successfully!`);
-      
+
       // Refresh the uploaded logos list
       await fetchUploadedLogos(rootCompany.id);
     } catch (error) {

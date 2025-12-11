@@ -46,6 +46,9 @@ import {
   ShoppingCart,
   TrendingUp,
   Clock,
+  Plus,
+  X,
+  Trash,
 } from "lucide-react";
 import Image from "next/image";
 import { format } from "date-fns";
@@ -140,6 +143,38 @@ export default function OrdersPage() {
     revenue: 0,
   });
 
+  // Create order states
+  const [createOrderOpen, setCreateOrderOpen] = useState(false);
+  const [companies, setCompanies] = useState<
+    Array<{ id: string; name: string; isRoot: boolean }>
+  >([]);
+  const [customers, setCustomers] = useState<
+    Array<{
+      id: string;
+      name: string | null;
+      email: string | null;
+      phone: string | null;
+    }>
+  >([]);
+  const [products, setProducts] = useState<
+    Array<{ id: string; name: string; price: number }>
+  >([]);
+  const [services, setServices] = useState<
+    Array<{ id: string; name: string; price: number }>
+  >([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [orderItems, setOrderItems] = useState<
+    Array<{
+      type: "product" | "service";
+      id: string;
+      name: string;
+      quantity: number;
+      unitPrice: number;
+    }>
+  >([]);
+  const [creatingOrder, setCreatingOrder] = useState(false);
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
@@ -181,6 +216,12 @@ export default function OrdersPage() {
     fetchUser();
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+    if (createOrderOpen) {
+      fetchCompanies();
+    }
+  }, [createOrderOpen]);
 
   const filterOrders = () => {
     let filtered = [...orders];
@@ -268,6 +309,149 @@ export default function OrdersPage() {
     }
   };
 
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch("/api/company/my-companies");
+      if (response.ok) {
+        const data = await response.json();
+        setCompanies(data.companies || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch companies:", error);
+    }
+  };
+
+  const fetchCustomers = async (companyId: string) => {
+    try {
+      const response = await fetch(`/api/customers?companyId=${companyId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCustomers(data.customers || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch customers:", error);
+      toast.error("Failed to load customers");
+    }
+  };
+
+  const fetchCatalog = async (companyId: string) => {
+    try {
+      const [productsRes, servicesRes] = await Promise.all([
+        fetch(`/api/catalog/products?companyId=${companyId}`),
+        fetch(`/api/catalog/services?companyId=${companyId}`),
+      ]);
+
+      if (productsRes.ok) {
+        const productsData = await productsRes.json();
+        setProducts(productsData.products || []);
+      }
+
+      if (servicesRes.ok) {
+        const servicesData = await servicesRes.json();
+        setServices(servicesData.services || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch catalog:", error);
+    }
+  };
+
+  const handleCompanyChange = async (companyId: string) => {
+    setSelectedCompanyId(companyId);
+    setSelectedCustomerId("");
+    setOrderItems([]);
+    await Promise.all([fetchCustomers(companyId), fetchCatalog(companyId)]);
+  };
+
+  const addOrderItem = (
+    type: "product" | "service",
+    item: { id: string; name: string; price: number }
+  ) => {
+    const existing = orderItems.find(
+      (i) => i.id === item.id && i.type === type
+    );
+    if (existing) {
+      toast.error("Item already added");
+      return;
+    }
+    setOrderItems([
+      ...orderItems,
+      {
+        type,
+        id: item.id,
+        name: item.name,
+        quantity: 1,
+        unitPrice: item.price,
+      },
+    ]);
+  };
+
+  const updateItemQuantity = (index: number, quantity: number) => {
+    if (quantity <= 0) return;
+    const updated = [...orderItems];
+    updated[index].quantity = quantity;
+    setOrderItems(updated);
+  };
+
+  const removeOrderItem = (index: number) => {
+    setOrderItems(orderItems.filter((_, i) => i !== index));
+  };
+
+  const calculateTotal = () => {
+    const subtotal = orderItems.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0
+    );
+    const tax = subtotal * 0.1;
+    const total = subtotal + tax;
+    return { subtotal, tax, total };
+  };
+
+  const handleCreateOrder = async () => {
+    if (!selectedCompanyId || !selectedCustomerId || orderItems.length === 0) {
+      toast.error("Please select company, customer, and add at least one item");
+      return;
+    }
+
+    try {
+      setCreatingOrder(true);
+      const items = orderItems.map((item) => ({
+        [item.type === "product" ? "productId" : "serviceId"]: item.id,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      }));
+
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyId: selectedCompanyId,
+          customerId: selectedCustomerId,
+          items,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create order");
+      }
+
+      toast.success("Order created successfully!");
+      setCreateOrderOpen(false);
+      setSelectedCompanyId("");
+      setSelectedCustomerId("");
+      setOrderItems([]);
+      fetchOrders();
+    } catch (error) {
+      console.error("Failed to create order:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create order"
+      );
+    } finally {
+      setCreatingOrder(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<
       string,
@@ -310,11 +494,17 @@ export default function OrdersPage() {
   return (
     <DashboardLayout user={user}>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Orders</h1>
-          <p className="text-muted-foreground">
-            Manage and track customer orders
-          </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold">Orders</h1>
+            <p className="text-muted-foreground">
+              Manage and track customer orders
+            </p>
+          </div>
+          <Button onClick={() => setCreateOrderOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Order
+          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -728,6 +918,171 @@ export default function OrdersPage() {
               </div>
             </>
           )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Create Order Sheet */}
+      <Sheet open={createOrderOpen} onOpenChange={setCreateOrderOpen}>
+        <SheetContent className="sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Create New Order</SheetTitle>
+            <SheetDescription>
+              Select a company, customer, and add items to create an order
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-6 mt-6">
+            {/* Company Selection */}
+            <div>
+              <Label>Company</Label>
+              <Select value={selectedCompanyId} onValueChange={handleCompanyChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select company" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name} {company.isRoot && "(Root)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Customer Selection */}
+            {selectedCompanyId && (
+              <div>
+                <Label>Customer</Label>
+                <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        {customer.name || customer.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {customers.length === 0 && selectedCompanyId && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    No customers found for this company
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Add Products */}
+            {selectedCompanyId && (
+              <div>
+                <Label>Add Product</Label>
+                <Select onValueChange={(id) => {
+                  const product = products.find(p => p.id === id);
+                  if (product) addOrderItem("product", product);
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select product to add" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name} - ${product.price.toFixed(2)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Add Services */}
+            {selectedCompanyId && (
+              <div>
+                <Label>Add Service</Label>
+                <Select onValueChange={(id) => {
+                  const service = services.find(s => s.id === id);
+                  if (service) addOrderItem("service", service);
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select service to add" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {services.map((service) => (
+                      <SelectItem key={service.id} value={service.id}>
+                        {service.name} - ${service.price.toFixed(2)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Order Items */}
+            {orderItems.length > 0 && (
+              <div>
+                <Label>Order Items</Label>
+                <div className="space-y-2 mt-2">
+                  {orderItems.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          ${item.unitPrice.toFixed(2)} × {item.quantity}
+                        </p>
+                      </div>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => updateItemQuantity(index, parseInt(e.target.value))}
+                        className="w-20"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeOrderItem(index)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Order Summary */}
+            {orderItems.length > 0 && (
+              <div className="space-y-2 p-4 bg-muted rounded-lg">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span>${calculateTotal().subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Tax (10%):</span>
+                  <span>${calculateTotal().tax.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold">
+                  <span>Total:</span>
+                  <span>${calculateTotal().total.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
+
+            <Button
+              onClick={handleCreateOrder}
+              disabled={creatingOrder || !selectedCompanyId || !selectedCustomerId || orderItems.length === 0}
+              className="w-full"
+            >
+              {creatingOrder ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Order...
+                </>
+              ) : (
+                "Create Order"
+              )}
+            </Button>
+          </div>
         </SheetContent>
       </Sheet>
     </DashboardLayout>
