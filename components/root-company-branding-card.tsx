@@ -190,22 +190,27 @@ export function RootCompanyBrandingCard() {
         uploadFormData.append("logos", file);
       });
 
+      console.log(`[Upload] Uploading ${processedFiles.length} files to /api/company/${rootCompany.id}/logos`);
+      
       const response = await fetch(`/api/company/${rootCompany.id}/logos`, {
         method: "POST",
         body: uploadFormData,
       });
 
       const data = await response.json();
+      console.log("[Upload] Response status:", response.status);
+      console.log("[Upload] Response data:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to upload logos");
       }
 
-      console.log("Upload response:", data);
       toast.success(`${processedFiles.length} logo(s) uploaded successfully!`);
 
       // Refresh the uploaded logos list
+      console.log("[Upload] Fetching updated logos list...");
       await fetchUploadedLogos(rootCompany.id);
+      console.log("[Upload] Logos list updated, count:", uploadedLogos.length);
     } catch (error) {
       console.error("Logo upload error:", error);
       toast.error(

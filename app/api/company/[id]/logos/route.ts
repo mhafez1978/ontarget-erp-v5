@@ -116,66 +116,88 @@ export async function POST(
 
     // Check if cold storage is configured
     const storageConfig = await hasStorageConfigured();
+    console.log("[POST Logos] Storage config:", storageConfig);
+    console.log("[POST Logos] Company ID:", id);
+    console.log("[POST Logos] Files to upload:", files.length);
+    
     const uploadedLogos = [];
 
     // Process each file
     for (const file of files) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
+      console.log(`[POST Logos] Processing file: ${file.name}, size: ${buffer.length} bytes`);
 
       let logoUrl: string;
       let filename: string;
 
       if (storageConfig) {
         // Storage configured → save to cold storage
+        console.log(`[POST Logos] Using cold storage: ${storageConfig.provider}`);
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
         const extension = extname(file.name);
         filename = `logo-${uniqueSuffix}${extension}`;
 
         // Create company-specific directory in cold storage
         const uploadDir = join(storageConfig.basePath, "logos", id);
+        console.log(`[POST Logos] Upload directory: ${uploadDir}`);
 
         // Ensure directory exists
         try {
           await mkdir(uploadDir, { recursive: true });
-        } catch {
-          // Directory might already exist, ignore error
+          console.log(`[POST Logos] Directory created/verified: ${uploadDir}`);
+        } catch (error) {
+          console.log(`[POST Logos] Directory already exists or error: ${error}`);
         }
 
         const filepath = join(uploadDir, filename);
         await writeFile(filepath, buffer);
+        console.log(`[POST Logos] File written to: ${filepath}`);
 
         // Return path for serving via /uploads/logos route
         logoUrl = `/uploads/logos/${id}/${filename}`;
       } else {
         // No storage configured → convert to base64
+        console.log(`[POST Logos] No storage configured, converting to base64`);
         logoUrl = bufferToDataURL(buffer, file.type);
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
         filename = `${file.name.replace(
           /\.[^/.]+$/,
           ""
         )}-${uniqueSuffix}${extname(file.name)}`;
+        console.log(`[POST Logos] Base64 URL length: ${logoUrl.length}, filename: ${filename}`);
       }
 
       uploadedLogos.push({ url: logoUrl, filename });
     }
 
+    console.log(`[POST Logos] Total logos processed: ${uploadedLogos.length}`);
+
     // If no storage, save base64 logos to Company.uploadedLogos JSON field
     if (!storageConfig) {
+      console.log(`[POST Logos] Saving to DB uploadedLogos field`);
       const company = await db.company.findUnique({
         where: { id },
         select: { uploadedLogos: true },
       });
+
+      console.log(`[POST Logos] Existing logos in DB:`, company?.uploadedLogos);
 
       const existingLogos =
         (company?.uploadedLogos as Array<{ url: string; filename: string }>) ||
         [];
       const updatedLogos = [...existingLogos, ...uploadedLogos];
 
+      console.log(`[POST Logos] Updating DB with ${updatedLogos.length} total logos`);
+
       await db.company.update({
         where: { id },
         data: { uploadedLogos: updatedLogos },
       });
+
+      console.log(`[POST Logos] DB updated successfully`);
+    } else {
+      console.log(`[POST Logos] Storage configured, logos saved to filesystem, skipping DB update`);
     }
 
     // Create audit log
@@ -255,28 +277,38 @@ export async function GET(
     const storageConfig = await hasStorageConfigured();
     let logos: { url: string; filename: string }[] = [];
 
+    console.log("[GET Logos] Storage config:", storageConfig);
+    console.log("[GET Logos] Company ID:", id);
+
     if (storageConfig) {
       // Storage configured → read from filesystem
-      const uploadDir = join(process.cwd(), "public", "uploads", "logos", id);
+      const uploadDir = join(storageConfig.basePath, "logos", id);
+      console.log("[GET Logos] Reading from directory:", uploadDir);
 
       try {
         const files = await readdir(uploadDir);
+        console.log("[GET Logos] Files found:", files);
         logos = files
           .filter((file) => file !== ".gitkeep")
           .map((filename) => ({
             url: `/uploads/logos/${id}/${filename}`,
             filename,
           }));
-      } catch {
+        console.log("[GET Logos] Filtered logos:", logos);
+      } catch (error) {
         // Directory doesn't exist or is empty
+        console.log("[GET Logos] Directory read error:", error);
         logos = [];
       }
     } else {
       // No storage → read from uploadedLogos JSON field
+      console.log("[GET Logos] No storage configured, reading from DB");
       const company = await db.company.findUnique({
         where: { id },
         select: { uploadedLogos: true },
       });
+
+      console.log("[GET Logos] Company uploadedLogos field:", company?.uploadedLogos);
 
       if (company?.uploadedLogos) {
         logos = company.uploadedLogos as Array<{
@@ -285,6 +317,8 @@ export async function GET(
         }>;
       }
     }
+
+    console.log("[GET Logos] Returning logos:", logos);
 
     return NextResponse.json({
       success: true,
