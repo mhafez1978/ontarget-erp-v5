@@ -651,7 +651,9 @@ export function RootCompanyBrandingCard() {
                     if (url === (tempLogoLight || rootCompany.logoLight)) {
                       if (isEditing) {
                         setTempLogoLight(null);
-                        toast.success("Light theme logo unassigned (save to apply)");
+                        toast.success(
+                          "Light theme logo unassigned (save to apply)"
+                        );
                         setDraggedLogo(null);
                         return;
                       }
@@ -662,7 +664,9 @@ export function RootCompanyBrandingCard() {
                     if (url === (tempLogoDark || rootCompany.logoDark)) {
                       if (isEditing) {
                         setTempLogoDark(null);
-                        toast.success("Dark theme logo unassigned (save to apply)");
+                        toast.success(
+                          "Dark theme logo unassigned (save to apply)"
+                        );
                         setDraggedLogo(null);
                         return;
                       }
