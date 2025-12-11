@@ -14,6 +14,8 @@ import {
   HelpCircle,
   MessageSquare,
   Clock,
+  ShoppingCart,
+  Receipt,
 } from "lucide-react";
 
 export const adminMenuItems = [
@@ -23,6 +25,8 @@ export const adminMenuItems = [
   { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/catalog", label: "Catalog", icon: Tags },
   { href: "/dashboard/storefront", label: "Storefront", icon: Store },
+  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/dashboard/payments", label: "Payments", icon: Receipt },
   {
     href: "/dashboard/testimonials",
     label: "Testimonials",

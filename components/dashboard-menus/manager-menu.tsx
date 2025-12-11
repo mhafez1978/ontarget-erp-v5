@@ -7,6 +7,8 @@ import {
   UsersRound,
   FolderKanban,
   Clock,
+  ShoppingCart,
+  Receipt,
 } from "lucide-react";
 
 export const managerMenuItems = [
@@ -14,6 +16,8 @@ export const managerMenuItems = [
   { href: "/dashboard/profile", label: "Profile", icon: User },
   { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
   { href: "/dashboard/customers", label: "Customers", icon: Users },
+  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/dashboard/payments", label: "Payments", icon: Receipt },
   { href: "/dashboard/workforce", label: "Workforce", icon: UsersRound },
   { href: "/dashboard/timesheet", label: "Timesheet", icon: Clock },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
