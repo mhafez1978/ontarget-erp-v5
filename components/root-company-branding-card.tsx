@@ -273,6 +273,8 @@ export function RootCompanyBrandingCard() {
   const handleDeleteLogo = async (logoUrl: string) => {
     if (!rootCompany) return;
 
+    console.log("[UI] handleDeleteLogo called for:", logoUrl);
+
     try {
       const response = await fetch(
         `/api/company/${rootCompany.id}/logos?url=${encodeURIComponent(
@@ -623,19 +625,17 @@ export function RootCompanyBrandingCard() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (
-                            confirm(
-                              "Are you sure you want to delete this logo?"
-                            )
-                          ) {
+                          console.log("[UI] Delete button clicked for logo:", logo.url);
+                          if (confirm("Are you sure you want to delete this logo?")) {
                             handleDeleteLogo(logo.url);
                           }
                         }}
                         onMouseDown={(e) => e.stopPropagation()}
-                        className="absolute -top-2 -right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all z-10 hover:scale-110"
+                        aria-label={`Delete logo ${logo.filename}`}
+                        className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-20 hover:scale-110"
                         title="Delete logo"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   ))}
