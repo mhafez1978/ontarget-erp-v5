@@ -33,15 +33,31 @@ import {
   Save,
   Loader2,
   ExternalLink,
-  Eye,
   Upload,
   Trash2,
+  Building,
 } from "lucide-react";
 import { ThemeGallery } from "@/components/storefront/theme-gallery";
 import { ContentWizard } from "@/components/storefront/content-wizard";
 import { StorefrontReadinessWidget } from "@/components/storefront/storefront-readiness-widget";
-import { ThemeSection } from "@/lib/storefront-themes";
+import { ThemeSection, defaultThemes } from "@/lib/storefront-themes";
 import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
+import type {
+  AiFrontstoreSpec,
+  AiFrontstoreSection,
+  StorefrontTestimonial,
+  FeaturedTeamMember,
+  FeaturedProduct,
+} from "@/lib/ai/ai-storefront-types";
+
+// Extend FeaturedService type to include price
+type FeaturedService = {
+  id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  price: number;
+};
 
 interface StorefrontSettings {
   slug: string | null;
@@ -62,6 +78,8 @@ interface StorefrontSettings {
     };
     contactEmail?: string;
     contactPhone?: string;
+    // Optional persisted layout/content overrides for ThemeRenderer
+    sections?: ThemeSection[];
   } | null;
   storeBlogEnabled?: boolean;
 }
@@ -83,6 +101,7 @@ interface Company {
   state: string | null;
   country: string | null;
   postalCode: string | null;
+  createdAt?: string;
 }
 
 export default function StorefrontPage() {
@@ -92,6 +111,7 @@ export default function StorefrontPage() {
     email: string | null;
     image: string | null;
     role: string;
+    plan?: string | null;
   }>({
     name: null,
     email: null,
@@ -119,14 +139,14 @@ export default function StorefrontPage() {
   // AI Storefront builder state
   const [aiConfigLoading, setAiConfigLoading] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(false);
-  const [aiSpec, setAiSpec] = useState<any | null>(null);
+  const [aiSpec, setAiSpec] = useState<AiFrontstoreSpec | null>(null);
   const [aiPrompt, setAiPrompt] = useState("");
-  const [aiGoal, setAiGoal] = useState<"sell-products" | "sell-services" | "lead-gen" | "bookings">(
-    "lead-gen"
-  );
-  const [aiTone, setAiTone] = useState<"playful" | "serious" | "luxury" | "minimal">(
-    "serious"
-  );
+  const [aiGoal, setAiGoal] = useState<
+    "sell-products" | "sell-services" | "lead-gen" | "bookings"
+  >("lead-gen");
+  const [aiTone, setAiTone] = useState<
+    "playful" | "serious" | "luxury" | "minimal"
+  >("serious");
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiPrimaryColor, setAiPrimaryColor] = useState("");
   const [aiSecondaryColor, setAiSecondaryColor] = useState("");
@@ -139,16 +159,16 @@ export default function StorefrontPage() {
 
   // AI preview catalog data (for realistic preview)
   const [aiPreviewLoading, setAiPreviewLoading] = useState(false);
-  const [aiPreviewProducts, setAiPreviewProducts] = useState<any[] | null>(
+  const [aiPreviewProducts, setAiPreviewProducts] = useState<unknown[] | null>(
     null
   );
-  const [aiPreviewServices, setAiPreviewServices] = useState<any[] | null>(
+  const [aiPreviewServices, setAiPreviewServices] = useState<unknown[] | null>(
     null
   );
   const [aiPreviewTestimonials, setAiPreviewTestimonials] = useState<
-    any[] | null
+    unknown[] | null
   >(null);
-  const [aiPreviewTeam, setAiPreviewTeam] = useState<any[] | null>(null);
+  const [aiPreviewTeam, setAiPreviewTeam] = useState<unknown[] | null>(null);
   const [aiPreviewContactEmail, setAiPreviewContactEmail] = useState<
     string | null
   >(null);
@@ -187,6 +207,195 @@ export default function StorefrontPage() {
   const aiMeta =
     aiSpec && typeof aiSpec === "object" ? aiSpec.meta || null : null;
 
+  const [aiUsageLimit, setAiUsageLimit] = useState<number | "unlimited" | null>(
+    null
+  );
+  const [aiUsageUsed, setAiUsageUsed] = useState<number | null>(null);
+  const [aiHeroSize, setAiHeroSize] = useState<"inherit" | "compact" | "full">(
+    "inherit"
+  );
+  const [aiEmphasis, setAiEmphasis] = useState<
+    "balanced" | "products" | "services" | "testimonials"
+  >("balanced");
+  const [aiRefining, setAiRefining] = useState(false);
+
+  const planAllowsAiStorefront =
+    user.role === "SUPER_ADMIN" ||
+    ["SUPER_USER", "GROWTH", "ENTERPRISE"].includes(user.plan || "");
+
+  const [activeTab, setActiveTab] = useState<string>("general");
+
+  const mapAiSpecToThemeSections = (
+    spec: AiFrontstoreSpec,
+    themeId: string
+  ): ThemeSection[] | null => {
+    const theme = defaultThemes.find((t) => t.id === themeId);
+    if (!theme) return null;
+
+    const cloneSections: ThemeSection[] = theme.sections.map((section) => ({
+      ...section,
+      content: { ...section.content },
+    }));
+
+    const findAiSection = (type: AiFrontstoreSection["type"]) =>
+      spec.sections.find((s) => s.type === type);
+
+    const aiHero = findAiSection("hero");
+    if (aiHero) {
+      const heroThemeSection = cloneSections.find((s) => s.type === "hero");
+      if (heroThemeSection) {
+        const heroContent = aiHero.content as Record<string, unknown>;
+        heroThemeSection.content = {
+          ...heroThemeSection.content,
+          heading:
+            (heroContent.title as string) ||
+            (heroThemeSection.content.heading as string),
+          subheading:
+            (heroContent.subtitle as string) ||
+            (heroThemeSection.content.subheading as string),
+          description:
+            (heroContent.description as string) ||
+            (heroThemeSection.content.description as string),
+          ctaText:
+            (heroContent.primaryCTA as string) ||
+            (heroThemeSection.content.ctaText as string),
+          secondaryCtaText:
+            (heroContent.secondaryCTA as string) ||
+            (heroThemeSection.content.secondaryCtaText as string),
+        };
+      }
+    }
+
+    const aiProducts = findAiSection("product-grid");
+    if (aiProducts) {
+      const productsThemeSection = cloneSections.find(
+        (s) => s.type === "featured-products"
+      );
+      if (productsThemeSection) {
+        const productContent = aiProducts.content as Record<string, unknown>;
+        productsThemeSection.content = {
+          ...productsThemeSection.content,
+          heading:
+            (productContent.heading as string) ||
+            (productsThemeSection.content.heading as string),
+          description:
+            (productContent.subheading as string) ||
+            (productsThemeSection.content.description as string),
+        };
+      }
+    }
+
+    const aiServices = findAiSection("service-grid");
+    if (aiServices) {
+      const servicesThemeSection = cloneSections.find(
+        (s) => s.type === "featured-services"
+      );
+      if (servicesThemeSection) {
+        const serviceContent = aiServices.content as Record<string, unknown>;
+        servicesThemeSection.content = {
+          ...servicesThemeSection.content,
+          heading:
+            (serviceContent.heading as string) ||
+            (servicesThemeSection.content.heading as string),
+          description:
+            (serviceContent.subheading as string) ||
+            (servicesThemeSection.content.description as string),
+        };
+      }
+    }
+
+    const aiTestimonials = findAiSection("testimonials");
+    if (aiTestimonials) {
+      const socialProofSection = cloneSections.find(
+        (s) => s.type === "social-proof"
+      );
+      if (socialProofSection) {
+        const testimonialContent = aiTestimonials.content as Record<
+          string,
+          unknown
+        >;
+        socialProofSection.content = {
+          ...socialProofSection.content,
+          heading:
+            (testimonialContent.heading as string) ||
+            (socialProofSection.content.heading as string),
+          description:
+            (testimonialContent.subheading as string) ||
+            (socialProofSection.content.description as string),
+        };
+      }
+    }
+
+    const aiContact = findAiSection("contact");
+    if (aiContact) {
+      const contactSection = cloneSections.find((s) => s.type === "contact");
+      if (contactSection) {
+        const contactContent = aiContact.content as Record<string, unknown>;
+        contactSection.content = {
+          ...contactSection.content,
+          heading:
+            (contactContent.heading as string) ||
+            (contactSection.content.heading as string),
+          description:
+            (contactContent.description as string) ||
+            (contactSection.content.description as string),
+        };
+      }
+    }
+
+    const aiFaq = findAiSection("faq");
+    if (aiFaq) {
+      const aboutSection = cloneSections.find((s) => s.type === "about");
+      if (aboutSection) {
+        const faqContent = aiFaq.content as Record<string, unknown>;
+        const faqItemsRaw = (faqContent.items ??
+          (faqContent.faqItems as unknown)) as
+          | Array<Record<string, unknown>>
+          | undefined;
+        aboutSection.content = {
+          ...aboutSection.content,
+          heading:
+            (faqContent.heading as string) ||
+            (aboutSection.content.heading as string),
+          description:
+            (faqContent.subheading as string) ||
+            (aboutSection.content.description as string),
+          faqItems:
+            Array.isArray(faqItemsRaw) && faqItemsRaw.length > 0
+              ? faqItemsRaw
+              : aboutSection.content.faqItems,
+        };
+      }
+    }
+
+    const aiCta = findAiSection("cta-band");
+    if (aiCta) {
+      const promoSection = cloneSections.find((s) => s.type === "promo-banner");
+      if (promoSection) {
+        const ctaContent = aiCta.content as Record<string, unknown>;
+        const heading = ctaContent.heading as string | undefined;
+        const subheading = ctaContent.subheading as string | undefined;
+        const buttonLabel = ctaContent.buttonLabel as string | undefined;
+
+        promoSection.content = {
+          ...promoSection.content,
+          text:
+            heading ||
+            subheading ||
+            (promoSection.content.text as string) ||
+            (promoSection.content.heading as string),
+          linkText:
+            buttonLabel ||
+            (promoSection.content.linkText as string) ||
+            (promoSection.content.ctaText as string),
+        };
+      }
+    }
+
+    return cloneSections;
+  };
+
+  // 1. Define fetchUser
   const fetchUser = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/me");
@@ -198,6 +407,7 @@ export default function StorefrontPage() {
           email: data.user.email,
           image: data.user.image,
           role: data.user.role,
+          plan: data.user.plan,
         });
         return true;
       } else {
@@ -212,34 +422,23 @@ export default function StorefrontPage() {
     }
   }, [router]);
 
-  useEffect(() => {
-    const init = async () => {
-      const authenticated = await fetchUser();
-      if (authenticated) {
-        await fetchCompanies();
-      }
-    };
-    init();
-  }, [fetchUser]);
-
-  useEffect(() => {
-    if (selectedCompanyId) {
-      const company = companies.find((c) => c.id === selectedCompanyId);
-      setSelectedCompany(company || null);
-      fetchSettings();
-      fetchAiConfig();
-      fetchAiPreviewData();
-    }
-  }, [selectedCompanyId]);
-
-  const fetchCompanies = async () => {
+  // 2. Define fetchCompanies (Moved up before usage)
+  const fetchCompanies = useCallback(async () => {
     try {
       const response = await fetch("/api/companies/my-owned");
       if (!response.ok) {
         throw new Error("Failed to fetch companies");
       }
       const data = await response.json();
-      const ownedCompanies = data.companies || [];
+      const ownedCompanies: Company[] = (data.companies || []).slice();
+
+      // Order by oldest company first (createdAt ascending)
+      ownedCompanies.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return aTime - bTime;
+      });
+
       setCompanies(ownedCompanies);
 
       // Auto-select first company if available
@@ -254,9 +453,10 @@ export default function StorefrontPage() {
       toast.error("Failed to load companies");
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchSettings = async () => {
+  // 3. Define fetchSettings
+  const fetchSettings = useCallback(async () => {
     if (!selectedCompanyId) return;
 
     setLoading(true);
@@ -276,15 +476,23 @@ export default function StorefrontPage() {
         ...data,
         storeBlogEnabled: data.storeBlogEnabled ?? false,
       });
+
+      // Load any previously saved content sections from storeMetadata
+      if (data.storeMetadata && Array.isArray(data.storeMetadata.sections)) {
+        setThemeSections(data.storeMetadata.sections as ThemeSection[]);
+      } else {
+        setThemeSections([]);
+      }
     } catch (error) {
       console.error("Error fetching storefront settings:", error);
       toast.error("Failed to load storefront settings");
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCompanyId]);
 
-  const fetchAiConfig = async () => {
+  // 4. Define fetchAiConfig
+  const fetchAiConfig = useCallback(async () => {
     if (!selectedCompanyId) return;
     setAiConfigLoading(true);
     try {
@@ -298,14 +506,38 @@ export default function StorefrontPage() {
       const data = await response.json();
       setAiEnabled(!!data.enabled);
       setAiSpec(data.spec || null);
+      if (data.spec && typeof data.spec === "object" && data.spec.meta) {
+        const meta = data.spec.meta as {
+          tone?: "playful" | "serious" | "luxury" | "minimal";
+          heroSize?: "compact" | "full";
+        };
+        if (meta.tone) {
+          setAiTone(meta.tone);
+        }
+        if (meta.heroSize === "compact" || meta.heroSize === "full") {
+          setAiHeroSize(meta.heroSize);
+        } else {
+          setAiHeroSize("inherit");
+        }
+      }
+      if (data.usage) {
+        setAiUsageLimit(data.usage.limit ?? null);
+        setAiUsageUsed(
+          typeof data.usage.used === "number" ? data.usage.used : null
+        );
+      } else {
+        setAiUsageLimit(null);
+        setAiUsageUsed(null);
+      }
     } catch (error) {
       console.error("Error fetching AI storefront config:", error);
     } finally {
       setAiConfigLoading(false);
     }
-  };
+  }, [selectedCompanyId]);
 
-  const fetchAiPreviewData = async () => {
+  // 5. Define fetchAiPreviewData
+  const fetchAiPreviewData = useCallback(async () => {
     if (!selectedCompanyId) return;
     setAiPreviewLoading(true);
     try {
@@ -327,9 +559,10 @@ export default function StorefrontPage() {
     } finally {
       setAiPreviewLoading(false);
     }
-  };
+  }, [selectedCompanyId]);
 
-  const fetchPosts = async () => {
+  // 6. Define fetchPosts
+  const fetchPosts = useCallback(async () => {
     if (!selectedCompanyId) return;
     setPostsLoading(true);
     try {
@@ -346,7 +579,34 @@ export default function StorefrontPage() {
     } finally {
       setPostsLoading(false);
     }
-  };
+  }, [selectedCompanyId]);
+
+  // Effects
+  useEffect(() => {
+    const init = async () => {
+      const authenticated = await fetchUser();
+      if (authenticated) {
+        await fetchCompanies();
+      }
+    };
+    init();
+  }, [fetchUser, fetchCompanies]);
+
+  useEffect(() => {
+    if (selectedCompanyId) {
+      const company = companies.find((c) => c.id === selectedCompanyId);
+      setSelectedCompany(company || null);
+      fetchSettings();
+      fetchAiConfig();
+      fetchAiPreviewData();
+    }
+  }, [
+    selectedCompanyId,
+    companies,
+    fetchSettings,
+    fetchAiConfig,
+    fetchAiPreviewData,
+  ]);
 
   const handleSave = async () => {
     if (!selectedCompanyId) {
@@ -356,12 +616,21 @@ export default function StorefrontPage() {
 
     setSaving(true);
     try {
+      const payload: StorefrontSettings = {
+        ...settings,
+        storeMetadata: {
+          ...(settings.storeMetadata || {}),
+          // Persist the current content wizard sections into storeMetadata
+          sections: themeSections,
+        },
+      };
+
       const response = await fetch(
         `/api/company/storefront?companyId=${selectedCompanyId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(settings),
+          body: JSON.stringify(payload),
         }
       );
 
@@ -537,7 +806,7 @@ export default function StorefrontPage() {
             <CardHeader>
               <CardTitle className="text-lg">Select Company</CardTitle>
               <CardDescription>
-                Choose which company's storefront you want to configure
+                Choose which company&apos;s storefront you want to configure
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -552,15 +821,7 @@ export default function StorefrontPage() {
                   {companies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       <div className="flex items-center gap-2">
-                        {company.logo && (
-                          <Image
-                            src={company.logo}
-                            alt={company.name}
-                            width={20}
-                            height={20}
-                            className="rounded"
-                          />
-                        )}
+                        <Building className="h-4 w-4" />
                         <span>{company.name}</span>
                       </div>
                     </SelectItem>
@@ -635,9 +896,10 @@ export default function StorefrontPage() {
 
         {/* Settings Tabs */}
         <Tabs
-          defaultValue="general"
+          value={activeTab}
           className="space-y-4"
           onValueChange={(value) => {
+            setActiveTab(value);
             if (value === "posts") {
               fetchPosts();
             }
@@ -790,11 +1052,11 @@ export default function StorefrontPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <p className="text-sm font-medium">Enable Blogroll</p>
                   <p className="text-xs text-muted-foreground max-w-md">
-                    When enabled, your storefront navigation can link to a
-                    posts page and you can create posts from the Posts tab.
+                    When enabled, your storefront navigation can link to a posts
+                    page and you can create posts from the Posts tab.
                   </p>
                 </div>
                 <Switch
@@ -911,7 +1173,13 @@ export default function StorefrontPage() {
                     }
                   : undefined
               }
+              initialSections={
+                themeSections && themeSections.length > 0
+                  ? themeSections
+                  : undefined
+              }
               onContentChange={(sections) => setThemeSections(sections)}
+              onSave={handleSave}
             />
           </TabsContent>
 
@@ -1175,9 +1443,7 @@ export default function StorefrontPage() {
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-sm">
-                        Existing Posts
-                      </h3>
+                      <h3 className="font-semibold text-sm">Existing Posts</h3>
                     </div>
                     {postsLoading ? (
                       <div className="flex items-center justify-center h-32">
@@ -1434,15 +1700,28 @@ export default function StorefrontPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Plan gating in UI */}
+                {!planAllowsAiStorefront && (
+                  <div className="rounded-md border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground">
+                    <p className="font-medium mb-1">
+                      AI Storefront is available on Growth and Enterprise plans.
+                    </p>
+                    <p>
+                      Upgrade your subscription to let the resident AI design
+                      and maintain your storefront automatically.
+                    </p>
+                  </div>
+                )}
+
                 {!selectedCompany && (
                   <p className="text-sm text-muted-foreground">
                     Select a company above to configure its AI storefront.
                   </p>
                 )}
 
-                {selectedCompany && (
+                {selectedCompany && planAllowsAiStorefront && (
                   <>
-                    <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                    <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground space-y-2">
                       <p>
                         Company:{" "}
                         <span className="font-medium">
@@ -1455,17 +1734,35 @@ export default function StorefrontPage() {
                           {aiEnabled ? "Enabled" : "Disabled"}
                         </span>
                       </p>
+                      {aiUsageLimit && (
+                        <p>
+                          AI generations this month:{" "}
+                          <span className="font-medium">
+                            {aiUsageUsed ?? 0}
+                          </span>{" "}
+                          {aiUsageLimit === "unlimited" ? (
+                            <span className="font-medium">/ unlimited</span>
+                          ) : (
+                            <>
+                              /{" "}
+                              <span className="font-medium">
+                                {aiUsageLimit}
+                              </span>
+                            </>
+                          )}
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-3">
                         {/* Step 1: Brand & Colors */}
                         <div className="space-y-2">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <h3 className="text-lg font-semibold uppercase tracking-wide text-muted-foreground">
                             Step 1 · Brand & Colors
-                          </p>
+                          </h3>
                           <div className="grid grid-cols-3 gap-3">
-                            <div className="space-y-1">
+                            <div className="space-y-2">
                               <Label htmlFor="ai-primary-color">
                                 Primary color
                               </Label>
@@ -1478,7 +1775,7 @@ export default function StorefrontPage() {
                                 }
                               />
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-2">
                               <Label htmlFor="ai-secondary-color">
                                 Secondary color
                               </Label>
@@ -1491,7 +1788,7 @@ export default function StorefrontPage() {
                                 }
                               />
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-2">
                               <Label htmlFor="ai-accent-color">
                                 Accent color
                               </Label>
@@ -1506,16 +1803,16 @@ export default function StorefrontPage() {
                             </div>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Leave blank to use defaults. Colors help AI keep
-                            the homepage aligned with your brand.
+                            Leave blank to use defaults. Colors help AI keep the
+                            homepage aligned with your brand.
                           </p>
                         </div>
 
                         {/* Step 2: Layout & Data Toggles */}
                         <div className="space-y-2">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <h3 className="text-lg font-semibold uppercase tracking-wide text-muted-foreground">
                             Step 2 · Sections & Data
-                          </p>
+                          </h3>
                           <div className="grid grid-cols-3 gap-3 text-xs">
                             <div className="flex items-center justify-between rounded border px-3 py-2">
                               <span>Highlight location</span>
@@ -1547,26 +1844,28 @@ export default function StorefrontPage() {
                         </div>
 
                         {/* Step 3: Prompt & Goal */}
-                        <div className="space-y-2">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold uppercase tracking-wide text-muted-foreground">
                             Step 3 · Voice & Goal
-                          </p>
+                          </h3>
                           <div className="grid grid-cols-3 gap-3 text-xs mb-2">
-                            <div className="space-y-1">
-                              <Label htmlFor="ai-hero-layout">Hero layout</Label>
+                            <div className="space-y-2">
+                              <Label htmlFor="ai-hero-layout">
+                                Hero layout
+                              </Label>
                               <Select
                                 value={aiHeroLayout}
                                 onValueChange={(value) =>
-                                  setAiHeroLayout(
-                                    value as "left" | "center"
-                                  )
+                                  setAiHeroLayout(value as "left" | "center")
                                 }
                               >
                                 <SelectTrigger id="ai-hero-layout">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="left">Left aligned</SelectItem>
+                                  <SelectItem value="left">
+                                    Left aligned
+                                  </SelectItem>
                                   <SelectItem value="center">
                                     Centered hero
                                   </SelectItem>
@@ -1585,8 +1884,11 @@ export default function StorefrontPage() {
                             The AI will combine this with your company data to
                             shape headings, CTAs, and section copy.
                           </p>
-                          <div className="space-y-1">
-                            <Label htmlFor="ai-refine-notes" className="text-xs">
+                          <div className="space-y-2">
+                            <Label
+                              htmlFor="ai-refine-notes"
+                              className="text-xs"
+                            >
                               Refinement notes (optional)
                             </Label>
                             <Textarea
@@ -1604,78 +1906,229 @@ export default function StorefrontPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <Label htmlFor="ai-goal">Primary Goal</Label>
-                            <Select
-                              value={aiGoal}
-                              onValueChange={(value) =>
-                                setAiGoal(
-                                  value as
-                                    | "sell-products"
-                                    | "sell-services"
-                                    | "lead-gen"
-                                    | "bookings"
-                                )
+                        {/* Apply Quick Tweaks – refinement endpoint (no full rebuild) */}
+                        <div className="mt-3">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              if (!selectedCompanyId) {
+                                toast.error("Please select a company first");
+                                return;
                               }
-                            >
-                              <SelectTrigger id="ai-goal">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="sell-products">
-                                  Sell products
-                                </SelectItem>
-                                <SelectItem value="sell-services">
-                                  Sell services
-                                </SelectItem>
-                                <SelectItem value="lead-gen">
-                                  Generate leads
-                                </SelectItem>
-                                <SelectItem value="bookings">
-                                  Drive bookings/appointments
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
+                              if (!aiSpec) {
+                                toast.error(
+                                  "Generate an AI storefront first, then apply refinements."
+                                );
+                                return;
+                              }
+                              setAiRefining(true);
+                              try {
+                                const response = await fetch(
+                                  "/api/ai-storefront/refine",
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      companyId: selectedCompanyId,
+                                      refineNotes:
+                                        aiRefineNotes.trim().length > 0
+                                          ? aiRefineNotes.trim()
+                                          : undefined,
+                                      heroSize:
+                                        aiHeroSize === "compact" ||
+                                        aiHeroSize === "full"
+                                          ? aiHeroSize
+                                          : undefined,
+                                      tone: aiTone,
+                                      emphasis: aiEmphasis,
+                                    }),
+                                  }
+                                );
+                                const data = await response.json();
+
+                                if (!response.ok) {
+                                  toast.error(
+                                    data.error ||
+                                      "Failed to refine AI storefront"
+                                  );
+                                  return;
+                                }
+
+                                setAiSpec(data.spec);
+                                toast.success(
+                                  "AI storefront refined successfully"
+                                );
+                              } catch (error) {
+                                console.error(
+                                  "AI storefront refine error:",
+                                  error
+                                );
+                                toast.error("Failed to refine AI storefront");
+                              } finally {
+                                setAiRefining(false);
+                              }
+                            }}
+                            disabled={
+                              aiRefining || !selectedCompanyId || !aiSpec
+                            }
+                          >
+                            {aiRefining ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Applying tweaks...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Apply Quick Tweaks
+                              </>
+                            )}
+                          </Button>
+                        </div>
+
+                        <div className="space-y-2 pt-3 mt-4">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label htmlFor="ai-goal">Primary Goal</Label>
+                              <Select
+                                value={aiGoal}
+                                onValueChange={(value) =>
+                                  setAiGoal(
+                                    value as
+                                      | "sell-products"
+                                      | "sell-services"
+                                      | "lead-gen"
+                                      | "bookings"
+                                  )
+                                }
+                              >
+                                <SelectTrigger id="ai-goal">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="sell-products">
+                                    Sell products
+                                  </SelectItem>
+                                  <SelectItem value="sell-services">
+                                    Sell services
+                                  </SelectItem>
+                                  <SelectItem value="lead-gen">
+                                    Generate leads
+                                  </SelectItem>
+                                  <SelectItem value="bookings">
+                                    Drive bookings/appointments
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="ai-tone">Tone</Label>
+                              <Select
+                                value={aiTone}
+                                onValueChange={(value) =>
+                                  setAiTone(
+                                    value as
+                                      | "playful"
+                                      | "serious"
+                                      | "luxury"
+                                      | "minimal"
+                                  )
+                                }
+                              >
+                                <SelectTrigger id="ai-tone">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="playful">
+                                    Playful / fun
+                                  </SelectItem>
+                                  <SelectItem value="serious">
+                                    Serious / professional
+                                  </SelectItem>
+                                  <SelectItem value="luxury">
+                                    Premium / luxury
+                                  </SelectItem>
+                                  <SelectItem value="minimal">
+                                    Minimal / clean
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="ai-tone">Tone</Label>
-                            <Select
-                              value={aiTone}
-                              onValueChange={(value) =>
-                                setAiTone(
-                                  value as
-                                    | "playful"
-                                    | "serious"
-                                    | "luxury"
-                                    | "minimal"
-                                )
-                              }
-                            >
-                              <SelectTrigger id="ai-tone">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="playful">
-                                  Playful / fun
-                                </SelectItem>
-                                <SelectItem value="serious">
-                                  Serious / professional
-                                </SelectItem>
-                                <SelectItem value="luxury">
-                                  Premium / luxury
-                                </SelectItem>
-                                <SelectItem value="minimal">
-                                  Minimal / clean
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="space-y-2">
+                              <Label htmlFor="ai-hero-size">Hero size</Label>
+                              <Select
+                                value={aiHeroSize}
+                                onValueChange={(value) =>
+                                  setAiHeroSize(
+                                    value as "inherit" | "compact" | "full"
+                                  )
+                                }
+                              >
+                                <SelectTrigger id="ai-hero-size">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="inherit">
+                                    Use current size
+                                  </SelectItem>
+                                  <SelectItem value="compact">
+                                    Compact hero
+                                  </SelectItem>
+                                  <SelectItem value="full">
+                                    Full-height hero
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="ai-emphasis">
+                                Section emphasis
+                              </Label>
+                              <Select
+                                value={aiEmphasis}
+                                onValueChange={(value) =>
+                                  setAiEmphasis(
+                                    value as
+                                      | "balanced"
+                                      | "products"
+                                      | "services"
+                                      | "testimonials"
+                                  )
+                                }
+                              >
+                                <SelectTrigger id="ai-emphasis">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="balanced">
+                                    Balanced
+                                  </SelectItem>
+                                  <SelectItem value="products">
+                                    Emphasize products
+                                  </SelectItem>
+                                  <SelectItem value="services">
+                                    Emphasize services
+                                  </SelectItem>
+                                  <SelectItem value="testimonials">
+                                    Emphasize testimonials
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 mt-6">
                           <Button
+                            className="text-white font-semibold py-4 px-10"
                             size="sm"
                             onClick={async () => {
                               if (!selectedCompanyId) {
@@ -1741,27 +2194,65 @@ export default function StorefrontPage() {
                                   "AI storefront generation error:",
                                   error
                                 );
-                                toast.error(
-                                  "Failed to generate AI storefront"
-                                );
+                                toast.error("Failed to generate AI storefront");
                               } finally {
                                 setAiGenerating(false);
                               }
                             }}
-                            disabled={aiGenerating || !selectedCompanyId}
+                            disabled={
+                              aiGenerating ||
+                              !selectedCompanyId ||
+                              (user.role !== "SUPER_ADMIN" &&
+                                typeof aiUsageLimit === "number" &&
+                                aiUsageUsed !== null &&
+                                aiUsageUsed >= aiUsageLimit)
+                            }
                           >
                             {aiGenerating ? (
                               <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Generating...
+                                Generating your AI Storefront...
                               </>
                             ) : (
                               <>
                                 <Sparkles className="h-4 w-4 mr-2" />
-                                Generate & Enable AI Storefront
+                                Generate & Enable Ai Storefront
                               </>
                             )}
                           </Button>
+
+                          {aiSpec && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                if (!aiSpec) {
+                                  toast.error(
+                                    "Generate an AI storefront first, then export."
+                                  );
+                                  return;
+                                }
+                                const mapped = mapAiSpecToThemeSections(
+                                  aiSpec as AiFrontstoreSpec,
+                                  settings.storeTheme
+                                );
+                                if (!mapped) {
+                                  toast.error(
+                                    "Unable to export AI content for this theme."
+                                  );
+                                  return;
+                                }
+                                setThemeSections(mapped);
+                                setActiveTab("content");
+                                toast.success(
+                                  "AI content exported to Content Wizard. You can now edit it there."
+                                );
+                              }}
+                            >
+                              Export to Content Wizard
+                            </Button>
+                          )}
 
                           {aiEnabled && (
                             <Button
@@ -1843,7 +2334,9 @@ export default function StorefrontPage() {
                                     aiMeta
                                       ? {
                                           backgroundColor:
-                                            aiMeta.primaryColor || undefined,
+                                            aiMeta.backgroundColor ||
+                                            aiMeta.primaryColor ||
+                                            undefined,
                                           color: aiMeta.textColor || undefined,
                                           borderColor:
                                             aiMeta.accentColor ||
@@ -1887,8 +2380,7 @@ export default function StorefrontPage() {
                                                   aiMeta.accentColor ||
                                                   aiMeta.secondaryColor,
                                                 color:
-                                                  aiMeta.textColor ||
-                                                  "#111827",
+                                                  aiMeta.textColor || "#111827",
                                               }
                                             : undefined
                                         }
@@ -1905,8 +2397,7 @@ export default function StorefrontPage() {
                                                   aiMeta.accentColor ||
                                                   aiMeta.primaryColor,
                                                 color:
-                                                  aiMeta.textColor ||
-                                                  "#ffffff",
+                                                  aiMeta.textColor || "#ffffff",
                                               }
                                             : undefined
                                         }
@@ -1916,18 +2407,158 @@ export default function StorefrontPage() {
                                     </nav>
                                   </div>
                                 </header>
+                                {/* Optional promo banner mirror (from Content Wizard / storeMetadata) */}
+                                {(() => {
+                                  const sections =
+                                    (settings.storeMetadata?.sections as
+                                      | ThemeSection[]
+                                      | undefined) || [];
+                                  const promo = sections.find(
+                                    (s) =>
+                                      s.type === "promo-banner" && s.enabled
+                                  );
+                                  if (!promo) return null;
+                                  return (
+                                    <div
+                                      className="w-full py-2 px-3 text-center border-b text-xs sm:text-sm"
+                                      style={{
+                                        background:
+                                          promo.styling?.gradient ||
+                                          promo.styling?.backgroundColor ||
+                                          undefined,
+                                        color:
+                                          promo.styling?.textColor || undefined,
+                                      }}
+                                    >
+                                      <span className="font-semibold">
+                                        {String(promo.content.text || "")}
+                                      </span>
+                                      {promo.content.link &&
+                                        promo.content.linkText && (
+                                          <span className="ml-2 underline opacity-90">
+                                            {String(promo.content.linkText)}
+                                          </span>
+                                        )}
+                                    </div>
+                                  );
+                                })()}
                                 <AiStorefrontRenderer
                                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                   spec={aiSpec as any}
                                   slug={settings.slug}
                                   companyName={selectedCompany.name}
                                   enableCart={false}
-                                  featuredProducts={aiPreviewProducts || undefined}
-                                  featuredServices={aiPreviewServices || undefined}
-                                  featuredTeamMembers={aiPreviewTeam || undefined}
-                                  testimonials={aiPreviewTestimonials || undefined}
-                                  contactEmail={aiPreviewContactEmail || undefined}
-                                  contactPhone={aiPreviewContactPhone || undefined}
+                                  featuredProducts={
+                                    Array.isArray(aiPreviewProducts)
+                                      ? aiPreviewProducts.map((p) => {
+                                          const product = p as FeaturedProduct;
+                                          return {
+                                            ...product,
+                                            description:
+                                              typeof product.description ===
+                                              "undefined"
+                                                ? null
+                                                : product.description ?? null,
+                                            price:
+                                              typeof product.price === "number"
+                                                ? product.price
+                                                : 0,
+                                          };
+                                        })
+                                      : undefined
+                                  }
+                                  featuredServices={
+                                    Array.isArray(aiPreviewServices)
+                                      ? aiPreviewServices.map((s) => {
+                                          // Ensure 'price' exists on the service object
+                                          const service = {
+                                            ...(s as FeaturedService),
+                                            price:
+                                              typeof (s as FeaturedService)
+                                                .price === "number"
+                                                ? (s as FeaturedService).price
+                                                : 0,
+                                          };
+                                          return {
+                                            id: service.id,
+                                            name: service.name,
+                                            description:
+                                              service.description ?? null,
+                                            price: service.price,
+                                            image: service.image ?? undefined,
+                                          };
+                                        })
+                                      : undefined
+                                  }
+                                  featuredTeamMembers={
+                                    Array.isArray(aiPreviewTeam)
+                                      ? (aiPreviewTeam as FeaturedTeamMember[])
+                                      : undefined
+                                  }
+                                  testimonials={
+                                    Array.isArray(aiPreviewTestimonials)
+                                      ? (
+                                          aiPreviewTestimonials as StorefrontTestimonial[]
+                                        ).map((t) => ({
+                                          customerName: t.name,
+                                          testimonial: t.quote,
+                                          title: t.title,
+                                          company: t.company,
+                                          image: t.image,
+                                          id: t.id,
+                                        }))
+                                      : undefined
+                                  }
+                                  contactEmail={
+                                    aiPreviewContactEmail || undefined
+                                  }
+                                  contactPhone={
+                                    aiPreviewContactPhone || undefined
+                                  }
+                                  heroOverride={(() => {
+                                    const sections =
+                                      (settings.storeMetadata?.sections as
+                                        | ThemeSection[]
+                                        | undefined) || [];
+                                    const hero = sections.find(
+                                      (s) => s.type === "hero" && s.enabled
+                                    );
+                                    if (!hero || !hero.content) return null;
+                                    return {
+                                      title:
+                                        (hero.content.heading as
+                                          | string
+                                          | undefined) ||
+                                        (hero.content.title as
+                                          | string
+                                          | undefined),
+                                      subtitle:
+                                        (hero.content.subheading as
+                                          | string
+                                          | undefined) ||
+                                        (hero.content.subtitle as
+                                          | string
+                                          | undefined),
+                                      description:
+                                        (hero.content.description as
+                                          | string
+                                          | undefined) || undefined,
+                                      primaryCTA:
+                                        (hero.content.ctaText as
+                                          | string
+                                          | undefined) ||
+                                        (hero.content.primaryCTA as
+                                          | string
+                                          | undefined),
+                                      secondaryCTA:
+                                        (hero.content.secondaryCtaText as
+                                          | string
+                                          | undefined) ||
+                                        (hero.content.secondaryCTA as
+                                          | string
+                                          | undefined),
+                                    };
+                                  })()}
                                 />
                               </div>
                             )}
