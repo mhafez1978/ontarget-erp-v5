@@ -10,23 +10,6 @@ export interface EmailOptions {
   from?: string;
 }
 
-interface Office365TransportOptions {
-  host: string;
-  port: number;
-  secure: boolean;
-  auth: {
-    type: string;
-    user: string;
-    clientId: string;
-    clientSecret: string;
-    tenantId: string;
-  };
-  connectionTimeout: number;
-  socketTimeout: number;
-  logger: boolean;
-  debug: boolean;
-}
-
 interface EmailProvider {
   provider: string;
   fromEmail: string | null;
@@ -182,56 +165,8 @@ function createTransporter(provider: EmailProvider) {
   }
 
   // Office 365 OAuth 2.0
-  if (provider.provider === "OFFICE365") {
-    console.log("[Email Service] Using Office 365 OAuth 2.0 configuration");
-
-    if (
-      !provider.office365TenantId ||
-      !provider.office365ClientId ||
-      !provider.office365ClientSecret ||
-      !provider.office365FromEmail
-    ) {
-      throw new Error(
-        "Office 365 OAuth requires tenantId, clientId, clientSecret, and fromEmail"
-      );
-    }
-
-    let decryptedSecret: string;
-    try {
-      decryptedSecret = decrypt(provider.office365ClientSecret);
-      console.log(
-        "[Email Service] Successfully decrypted Office365 client secret"
-      );
-    } catch (decryptError) {
-      console.error(
-        "[Email Service] Failed to decrypt Office365 client secret:",
-        decryptError
-      );
-      throw new Error(
-        `Failed to decrypt Office365 credentials. The data may be corrupted or encrypted with a different key. ` +
-          `Please re-configure your Office365 settings.`
-      );
-    }
-
-    const transportOptions: Office365TransportOptions = {
-      host: "smtp.office365.com",
-      port: 587,
-      secure: false, // Use STARTTLS
-      auth: {
-        type: "OAuth2",
-        user: provider.office365FromEmail,
-        clientId: provider.office365ClientId,
-        clientSecret: decryptedSecret,
-        tenantId: provider.office365TenantId,
-      },
-      connectionTimeout: 15000,
-      socketTimeout: 15000,
-      logger: true,
-      debug: true,
-    };
-
-    return nodemailer.createTransport(transportOptions as TransportOptions);
-  }
+  // Office 365 is handled directly in sendEmail() using Microsoft Graph API
+  // Not using nodemailer for Office 365
 
   if (provider.provider === "SENDGRID" && provider.sendgridApiKey) {
     console.log("[Email Service] Using SendGrid configuration");
@@ -344,6 +279,84 @@ export async function sendEmail(
       provider.scope
     );
 
+    // Handle Office 365 with Microsoft Graph API
+    if (provider.provider === "OFFICE365") {
+      console.log("[Email Service] Using Microsoft Graph API for Office 365");
+
+      if (
+        !provider.office365TenantId ||
+        !provider.office365ClientId ||
+        !provider.office365ClientSecret ||
+        !provider.office365FromEmail
+      ) {
+        console.error("[Email Service] Missing Office 365 configuration");
+        return false;
+      }
+
+      try {
+        const { Client } = await import("@microsoft/microsoft-graph-client");
+        const { ClientSecretCredential } = await import("@azure/identity");
+
+        const decryptedSecret = decrypt(provider.office365ClientSecret);
+
+        const credential = new ClientSecretCredential(
+          provider.office365TenantId,
+          provider.office365ClientId,
+          decryptedSecret
+        );
+
+        const graphClient = Client.initWithMiddleware({
+          authProvider: {
+            getAccessToken: async () => {
+              const token = await credential.getToken(
+                "https://graph.microsoft.com/.default"
+              );
+              return token?.token || "";
+            },
+          },
+        });
+
+        const toRecipients = (
+          Array.isArray(options.to) ? options.to : [options.to]
+        ).map((email) => ({
+          emailAddress: { address: email },
+        }));
+
+        const graphMessage = {
+          message: {
+            subject: options.subject,
+            body: {
+              contentType: "HTML",
+              content: options.html,
+            },
+            toRecipients,
+            from: {
+              emailAddress: { address: provider.office365FromEmail },
+            },
+            replyTo: provider.replyToEmail
+              ? [{ emailAddress: { address: provider.replyToEmail } }]
+              : undefined,
+          },
+        };
+
+        await graphClient
+          .api(`/users/${provider.office365FromEmail}/sendMail`)
+          .post(graphMessage);
+
+        console.log(
+          "[Email Service] Email sent successfully via Microsoft Graph"
+        );
+        return true;
+      } catch (graphError) {
+        console.error(
+          "[Email Service] Microsoft Graph API error:",
+          graphError
+        );
+        return false;
+      }
+    }
+
+    // Handle all other providers with nodemailer
     const transporter = createTransporter(provider);
 
     const fromAddress =

@@ -861,23 +861,32 @@ export default function EmailProviderSettings({
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   <p className="mb-2">
-                    Google OAuth uses Gmail API with OAuth 2.0 authentication. Follow these steps:
+                    Google OAuth uses Gmail API with OAuth 2.0 authentication.
+                    Follow these steps:
                   </p>
                   <ol className="text-xs text-muted-foreground list-decimal ml-5 space-y-1">
                     <li>
-                      Go to Google Cloud Console and create a new project (or select existing).
+                      Go to Google Cloud Console and create a new project (or
+                      select existing).
                     </li>
                     <li>
                       Enable the <strong>Gmail API</strong> for your project.
                     </li>
                     <li>
-                      Create OAuth 2.0 credentials (OAuth client ID) with type "Web application".
+                      Create OAuth 2.0 credentials (OAuth client ID) with type
+                      "Web application".
                     </li>
                     <li>
-                      Add authorized redirect URI: <code>http://localhost:3000/api/auth/google/callback</code> or your production URL.
+                      Add authorized redirect URI:{" "}
+                      <code>
+                        http://localhost:3000/api/auth/google/callback
+                      </code>{" "}
+                      or your production URL.
                     </li>
                     <li>
-                      Use the OAuth playground or your app to obtain a refresh token with scope: <code>https://www.googleapis.com/auth/gmail.send</code>
+                      Use the OAuth playground or your app to obtain a refresh
+                      token with scope:{" "}
+                      <code>https://www.googleapis.com/auth/gmail.send</code>
                     </li>
                   </ol>
                 </AlertDescription>
@@ -938,7 +947,9 @@ export default function EmailProviderSettings({
                     variant="ghost"
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                    onClick={() => setShowGoogleRefreshToken(!showGoogleRefreshToken)}
+                    onClick={() =>
+                      setShowGoogleRefreshToken(!showGoogleRefreshToken)
+                    }
                   >
                     {showGoogleRefreshToken ? (
                       <EyeOff className="h-4 w-4 text-muted-foreground" />
