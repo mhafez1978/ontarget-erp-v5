@@ -6,7 +6,7 @@
     "dev": "next dev",
     "generatedb": "npx prisma generate",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
+    "start": "next start",
     "lint": "eslint",
     "lint:tailwind": "node -r ts-node/register ./scripts/check-tailwind.ts",
     "test": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register --exclude \"tests/integration/**/*.test.ts\" \"tests/**/*.test.ts\"",
