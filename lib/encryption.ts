@@ -54,7 +54,25 @@ export function decrypt(encryptedText: string): string {
 
   try {
     const key = getEncryptionKey();
-    const [ivBase64, authTagBase64, encryptedData] = encryptedText.split(":");
+    const parts = encryptedText.split(":");
+
+    // Check if this is the old CBC format (2 parts) or new GCM format (3 parts)
+    if (parts.length === 2) {
+      // Legacy aes-256-cbc format from lib/crypto.ts
+      const [ivHex, encryptedDataHex] = parts;
+      const legacyKey = Buffer.from(
+        ENCRYPTION_KEY.padEnd(32, "0").substring(0, 32)
+      );
+      const iv = Buffer.from(ivHex, "hex");
+      const decipher = crypto.createDecipheriv("aes-256-cbc", legacyKey, iv);
+
+      let decrypted = decipher.update(encryptedDataHex, "hex", "utf8");
+      decrypted += decipher.final("utf8");
+      return decrypted;
+    }
+
+    // New aes-256-gcm format
+    const [ivBase64, authTagBase64, encryptedData] = parts;
 
     if (!ivBase64 || !authTagBase64 || !encryptedData) {
       throw new Error("Invalid encrypted data format");
