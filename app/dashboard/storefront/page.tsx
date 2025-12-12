@@ -2855,12 +2855,16 @@ export default function StorefrontPage() {
       if (heroThemeSection) {
         const heroContent = aiHero.content as Record<string, unknown>;
         // Map styling/background image + overlay/animations when present
-        const aiHeroStyling = (aiHero as AiFrontstoreSection | undefined)
-          ?.styling;
+        const aiHeroStyling = (aiHero as AiFrontstoreSection).styling as
+          | Record<string, unknown>
+          | undefined;
+        const backgroundImage = aiHeroStyling?.backgroundImage as
+          | { url?: string }
+          | undefined;
         heroThemeSection.styling = {
           ...(heroThemeSection.styling || {}),
-          ...(aiHeroStyling?.backgroundImage?.url
-            ? { backgroundImage: aiHeroStyling.backgroundImage.url }
+          ...(backgroundImage?.url
+            ? { backgroundImage: backgroundImage.url }
             : {}),
         };
         // If no section-level background found, consider top-level meta background
@@ -2948,12 +2952,16 @@ export default function StorefrontPage() {
         };
 
         // Map optional section styling and animations
-        const aiStyling = (aiProducts as AiFrontstoreSection | undefined)
-          ?.styling;
-        if (aiStyling?.backgroundImage?.url) {
+        const aiStyling = (aiProducts as AiFrontstoreSection).styling as
+          | Record<string, unknown>
+          | undefined;
+        const backgroundImage = aiStyling?.backgroundImage as
+          | { url?: string }
+          | undefined;
+        if (backgroundImage?.url) {
           productsThemeSection.styling = {
             ...(productsThemeSection.styling || {}),
-            backgroundImage: aiStyling.backgroundImage.url,
+            backgroundImage: backgroundImage.url,
           };
         }
         if (

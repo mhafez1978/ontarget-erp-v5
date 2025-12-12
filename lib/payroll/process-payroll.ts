@@ -1,4 +1,4 @@
-import { Decimal } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
   TaxCalculator,
@@ -12,6 +12,8 @@ import type {
   PayrollProcessSkippedEntry,
   PayrollSummaryCurrencyTotal,
 } from "./types";
+
+const { Decimal } = Prisma;
 
 const DEFAULT_TAX_CONFIG: TaxConfig = {
   incomeTax: { type: "NONE" },
@@ -36,7 +38,7 @@ export async function processPayrollForCompany(
   // Don't eagerly query for the ledger — we only need it when we actually have
   // pending payroll entries to process. Deferring the lookup/creation avoids
   // unnecessary DB writes and simplifies unit testing.
-  let ledger: { id: string; totalPayroll: number } | null = null;
+  let ledger: { id: string; totalPayroll: Prisma.Decimal } | null = null;
 
   const pendingEntries = await db.timeEntry.findMany({
     where: {
@@ -250,7 +252,7 @@ export async function processPayrollForCompany(
         taxWithheld: taxes,
         deductions,
         netAmount: netPay,
-        taxBreakdown: taxBreakdown as unknown,
+        taxBreakdown: taxBreakdown as unknown as Prisma.InputJsonValue,
         status: "PENDING",
       },
     });
