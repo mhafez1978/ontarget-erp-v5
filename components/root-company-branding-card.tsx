@@ -57,81 +57,13 @@ export function RootCompanyBrandingCard() {
   const [tempLogoDark, setTempLogoDark] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-                  onDrop={async (e) => {
+    name: "",
     slogan: "",
     description: "",
     email: "",
     phone: "",
-                    const confirmed = await confirmToast(
-                      "Unassign this theme logo? (The uploaded logo will remain in your library)",
-                      { confirmLabel: "Unassign", cancelLabel: "Cancel" }
-                    );
-
-                    if (!confirmed) {
-                      setDraggedLogo(null);
-                      return;
-                    }
-
-                    // If the dragged url is assigned to Light theme
-                    if (url === (tempLogoLight || rootCompany.logoLight)) {
-                      // In edit mode, just clear the temp assignment (save to apply)
-                      if (isEditing) {
-                        setTempLogoLight(null);
-                        toast.success("Light theme logo unassigned (save to apply)");
-                        setDraggedLogo(null);
-                        return;
-                      }
-
-                      // Not editing: call unassign endpoint
-                      await handleUnassignThemeLogo("light");
-                      setDraggedLogo(null);
-                      return;
-                    }
-
-                    // If the dragged url is assigned to Dark theme
-                    if (url === (tempLogoDark || rootCompany.logoDark)) {
-                      if (isEditing) {
-                        setTempLogoDark(null);
-                        toast.success("Dark theme logo unassigned (save to apply)");
-                        setDraggedLogo(null);
-                        return;
-                      }
-
-                      await handleUnassignThemeLogo("dark");
-                      setDraggedLogo(null);
-                      return;
-                    }
-
-                    // otherwise, it's a drop of an available logo (no-op)
-                    setDraggedLogo(null);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch root company");
-      }
-
-      const data = await response.json();
-      setRootCompany(data.company);
-
-      if (data.company) {
-        setFormData({
-          name: data.company.name || "",
-          slogan: data.company.slogan || "",
-          description: data.company.description || "",
-          email: data.company.email || "",
-          phone: data.company.phone || "",
-          website: data.company.website || "",
-        });
-
-        // Fetch uploaded logos
-        fetchUploadedLogos(data.company.id);
-      }
-    } catch (error) {
-      console.error("Failed to fetch root company:", error);
-      toast.error("Failed to load system branding");
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchUploadedLogos]);
+    website: "",
+  });
 
   useEffect(() => {
     fetchRootCompany();
