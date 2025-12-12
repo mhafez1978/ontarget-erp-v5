@@ -65,6 +65,56 @@ export function RootCompanyBrandingCard() {
     website: "",
   });
 
+  const fetchRootCompany = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/company/root");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch root company");
+      }
+
+      setRootCompany(data.company);
+      setFormData({
+        name: data.company.name || "",
+        slogan: data.company.slogan || "",
+        description: data.company.description || "",
+        email: data.company.email || "",
+        phone: data.company.phone || "",
+        website: data.company.website || "",
+      });
+
+      // Fetch uploaded logos
+      if (data.company.id) {
+        await fetchUploadedLogos(data.company.id);
+      }
+    } catch (error) {
+      console.error("Error fetching root company:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to load root company"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchUploadedLogos = async (companyId: string) => {
+    try {
+      const response = await fetch(`/api/company/${companyId}/logos`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch logos");
+      }
+
+      setUploadedLogos(data.logos || []);
+    } catch (error) {
+      console.error("Error fetching uploaded logos:", error);
+      toast.error("Failed to load uploaded logos");
+    }
+  };
+
   useEffect(() => {
     fetchRootCompany();
   }, [fetchRootCompany]);
