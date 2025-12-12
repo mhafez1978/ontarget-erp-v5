@@ -1,13 +1,20 @@
-
 [variables]
 NIXPACKS_NODE_VERSION = "22"
 
 [phases.setup]
-nixPkgs = ["nodejs_22"]
+# Use "..." to keep default packages (like python/gcc) and add yours
+nixPkgs = ["...", "nodejs_22"]
 
-[build]
-user = "node"
+[phases.build]
+# 1. Run your build
+# 2. Create the 'node' user (if it doesn't exist)
+# 3. Give the 'node' user permission to the /app directory
+cmds = [
+    "npm run build",
+    "useradd -m -s /bin/bash node || true",
+    "chown -R node:node /app"
+]
 
-[run]
-user = "node"
-cmd = "npm run start"
+[start]
+# Use 'su' to switch from root to the 'node' user at runtime
+cmd = "su node -c 'npm run start'"

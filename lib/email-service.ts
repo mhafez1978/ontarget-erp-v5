@@ -348,10 +348,7 @@ export async function sendEmail(
         );
         return true;
       } catch (graphError) {
-        console.error(
-          "[Email Service] Microsoft Graph API error:",
-          graphError
-        );
+        console.error("[Email Service] Microsoft Graph API error:", graphError);
         return false;
       }
     }
