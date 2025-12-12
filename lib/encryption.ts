@@ -72,22 +72,33 @@ export function decrypt(encryptedText: string): string {
     }
 
     // New aes-256-gcm format
-    const [ivBase64, authTagBase64, encryptedData] = parts;
+    if (parts.length === 3) {
+      const [ivBase64, authTagBase64, encryptedData] = parts;
 
-    if (!ivBase64 || !authTagBase64 || !encryptedData) {
-      throw new Error("Invalid encrypted data format");
+      if (!ivBase64 || !authTagBase64 || !encryptedData) {
+        throw new Error("Invalid GCM encrypted data format - missing parts");
+      }
+
+      const iv = Buffer.from(ivBase64, "base64");
+      const authTag = Buffer.from(authTagBase64, "base64");
+      const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+
+      decipher.setAuthTag(authTag);
+
+      let decrypted = decipher.update(encryptedData, "base64", "utf8");
+      decrypted += decipher.final("utf8");
+
+      return decrypted;
     }
 
-    const iv = Buffer.from(ivBase64, "base64");
-    const authTag = Buffer.from(authTagBase64, "base64");
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
-
-    decipher.setAuthTag(authTag);
-
-    let decrypted = decipher.update(encryptedData, "base64", "utf8");
-    decrypted += decipher.final("utf8");
-
-    return decrypted;
+    // Unknown format - possibly plaintext or corrupted
+    console.error(
+      `[Decrypt] Invalid format - got ${parts.length} parts, expected 2 or 3. ` +
+        `First 50 chars: ${encryptedText.substring(0, 50)}...`
+    );
+    throw new Error(
+      `Invalid encrypted data format - expected 2 or 3 colon-separated parts, got ${parts.length}`
+    );
   } catch (error) {
     console.error("Decryption error:", error);
     throw new Error("Failed to decrypt data");

@@ -196,6 +196,23 @@ function createTransporter(provider: EmailProvider) {
       );
     }
 
+    let decryptedSecret: string;
+    try {
+      decryptedSecret = decrypt(provider.office365ClientSecret);
+      console.log(
+        "[Email Service] Successfully decrypted Office365 client secret"
+      );
+    } catch (decryptError) {
+      console.error(
+        "[Email Service] Failed to decrypt Office365 client secret:",
+        decryptError
+      );
+      throw new Error(
+        `Failed to decrypt Office365 credentials. The data may be corrupted or encrypted with a different key. ` +
+          `Please re-configure your Office365 settings.`
+      );
+    }
+
     const transportOptions: Office365TransportOptions = {
       host: "smtp.office365.com",
       port: 587,
@@ -204,7 +221,7 @@ function createTransporter(provider: EmailProvider) {
         type: "OAuth2",
         user: provider.office365FromEmail,
         clientId: provider.office365ClientId,
-        clientSecret: decrypt(provider.office365ClientSecret),
+        clientSecret: decryptedSecret,
         tenantId: provider.office365TenantId,
       },
       connectionTimeout: 15000,
