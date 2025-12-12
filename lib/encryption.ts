@@ -56,6 +56,19 @@ export function decrypt(encryptedText: string): string {
     const key = getEncryptionKey();
     const parts = encryptedText.split(":");
 
+    // Check if this is plaintext (1 part, no colons) - legacy unencrypted data
+    if (parts.length === 1) {
+      console.warn(
+        `[Decrypt] Data appears to be plaintext (no colons). ` +
+          `This should be re-encrypted. First 20 chars: ${encryptedText.substring(
+            0,
+            20
+          )}...`
+      );
+      // Return as-is - it's already plaintext
+      return encryptedText;
+    }
+
     // Check if this is the old CBC format (2 parts) or new GCM format (3 parts)
     if (parts.length === 2) {
       // Legacy aes-256-cbc format from lib/crypto.ts
@@ -91,13 +104,13 @@ export function decrypt(encryptedText: string): string {
       return decrypted;
     }
 
-    // Unknown format - possibly plaintext or corrupted
+    // Unknown format - corrupted data
     console.error(
-      `[Decrypt] Invalid format - got ${parts.length} parts, expected 2 or 3. ` +
+      `[Decrypt] Invalid format - got ${parts.length} parts, expected 1, 2, or 3. ` +
         `First 50 chars: ${encryptedText.substring(0, 50)}...`
     );
     throw new Error(
-      `Invalid encrypted data format - expected 2 or 3 colon-separated parts, got ${parts.length}`
+      `Invalid encrypted data format - expected 1, 2, or 3 colon-separated parts, got ${parts.length}`
     );
   } catch (error) {
     console.error("Decryption error:", error);
