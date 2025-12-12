@@ -2858,10 +2858,13 @@ export default function StorefrontPage() {
         const aiHeroStyling = (aiHero as AiFrontstoreSection).styling as
           | Record<string, unknown>
           | undefined;
+        const backgroundImage = aiHeroStyling?.backgroundImage as
+          | { url?: string }
+          | undefined;
         heroThemeSection.styling = {
           ...(heroThemeSection.styling || {}),
-          ...(aiHeroStyling?.backgroundImage?.url
-            ? { backgroundImage: aiHeroStyling.backgroundImage.url }
+          ...(backgroundImage?.url
+            ? { backgroundImage: backgroundImage.url }
             : {}),
         };
         // If no section-level background found, consider top-level meta background
@@ -2952,10 +2955,13 @@ export default function StorefrontPage() {
         const aiStyling = (aiProducts as AiFrontstoreSection).styling as
           | Record<string, unknown>
           | undefined;
-        if (aiStyling?.backgroundImage?.url) {
+        const backgroundImage = aiStyling?.backgroundImage as
+          | { url?: string }
+          | undefined;
+        if (backgroundImage?.url) {
           productsThemeSection.styling = {
             ...(productsThemeSection.styling || {}),
-            backgroundImage: aiStyling.backgroundImage.url,
+            backgroundImage: backgroundImage.url,
           };
         }
         if (
