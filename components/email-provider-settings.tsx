@@ -57,8 +57,9 @@ interface TestDiagnostics {
 
 const PROVIDER_TYPES = [
   { value: "SMTP", label: "SMTP" },
-  { value: "GMAIL", label: "Gmail" },
-  { value: "OFFICE365", label: "Office 365" },
+  { value: "GMAIL", label: "Gmail (Legacy)" },
+  { value: "GOOGLE_OAUTH", label: "Google OAuth (Recommended)" },
+  { value: "OFFICE365", label: "Office 365 / Microsoft OAuth" },
   { value: "SENDGRID", label: "SendGrid" },
   { value: "MAILGUN", label: "Mailgun" },
   { value: "AWS_SES", label: "AWS SES" },
@@ -112,6 +113,12 @@ export default function EmailProviderSettings({
   const [awsAccessKey, setAwsAccessKey] = useState("");
   const [awsSecretKey, setAwsSecretKey] = useState("");
 
+  // Google OAuth fields
+  const [googleClientId, setGoogleClientId] = useState("");
+  const [googleClientSecret, setGoogleClientSecret] = useState("");
+  const [googleFromEmail, setGoogleFromEmail] = useState("");
+  const [googleRefreshToken, setGoogleRefreshToken] = useState("");
+
   // Office 365 OAuth fields
   const [office365TenantId, setOffice365TenantId] = useState("");
   const [office365ClientId, setOffice365ClientId] = useState("");
@@ -128,6 +135,8 @@ export default function EmailProviderSettings({
   const [showSendgridKey, setShowSendgridKey] = useState(false);
   const [showMailgunKey, setShowMailgunKey] = useState(false);
   const [showAwsKeys, setShowAwsKeys] = useState(false);
+  const [showGoogleSecret, setShowGoogleSecret] = useState(false);
+  const [showGoogleRefreshToken, setShowGoogleRefreshToken] = useState(false);
   const [showOffice365Secret, setShowOffice365Secret] = useState(false);
 
   // Track dirty state
@@ -152,6 +161,10 @@ export default function EmailProviderSettings({
       smtpUsername,
       smtpPassword,
       smtpSecure,
+      googleClientId,
+      googleClientSecret,
+      googleFromEmail,
+      googleRefreshToken,
       sendgridApiKey,
       mailgunApiKey,
       mailgunDomain,
@@ -179,6 +192,10 @@ export default function EmailProviderSettings({
     smtpUsername,
     smtpPassword,
     smtpSecure,
+    googleClientId,
+    googleClientSecret,
+    googleFromEmail,
+    googleRefreshToken,
     sendgridApiKey,
     mailgunApiKey,
     mailgunDomain,
@@ -236,6 +253,10 @@ export default function EmailProviderSettings({
             smtpUsername: p.smtpUsername || "",
             smtpPassword: "",
             smtpSecure: p.smtpSecure,
+            googleClientId: p.googleClientId || "",
+            googleClientSecret: "",
+            googleFromEmail: p.googleFromEmail || "",
+            googleRefreshToken: "",
             sendgridApiKey: "",
             mailgunApiKey: "",
             mailgunDomain: p.mailgunDomain || "",
@@ -261,6 +282,10 @@ export default function EmailProviderSettings({
           setSmtpUsername(configValues.smtpUsername);
           setSmtpPassword(configValues.smtpPassword);
           setSmtpSecure(configValues.smtpSecure);
+          setGoogleClientId(configValues.googleClientId);
+          setGoogleClientSecret(configValues.googleClientSecret);
+          setGoogleFromEmail(configValues.googleFromEmail);
+          setGoogleRefreshToken(configValues.googleRefreshToken);
           setSendgridApiKey(configValues.sendgridApiKey);
           setMailgunApiKey(configValues.mailgunApiKey);
           setMailgunDomain(configValues.mailgunDomain);
@@ -311,6 +336,10 @@ export default function EmailProviderSettings({
     setSmtpUsername("");
     setSmtpPassword("");
     setSmtpSecure(true);
+    setGoogleClientId("");
+    setGoogleClientSecret("");
+    setGoogleFromEmail("");
+    setGoogleRefreshToken("");
     setSendgridApiKey("");
     setMailgunApiKey("");
     setMailgunDomain("");
@@ -480,6 +509,18 @@ export default function EmailProviderSettings({
         config.smtpPassword = smtpPassword.replace(/\s/g, ""); // Remove any spaces from app password
       }
       config.smtpSecure = false; // Use STARTTLS on port 587, not SSL
+    } else if (provider === "GOOGLE_OAUTH") {
+      // Google OAuth uses Gmail API with OAuth 2.0
+      config.googleClientId = googleClientId;
+      // Only include secret if it's been changed
+      if (googleClientSecret) {
+        config.googleClientSecret = googleClientSecret;
+      }
+      config.googleFromEmail = googleFromEmail;
+      // Only include refresh token if it's been changed
+      if (googleRefreshToken) {
+        config.googleRefreshToken = googleRefreshToken;
+      }
     } else if (provider === "OFFICE365") {
       // Office 365 uses OAuth with Microsoft Graph API
       config.office365TenantId = office365TenantId;
@@ -810,6 +851,104 @@ export default function EmailProviderSettings({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   16-character app password from Google Account settings
+                </p>
+              </div>
+            </TabsContent>
+
+            {/* Google OAuth Configuration */}
+            <TabsContent value="GOOGLE_OAUTH" className="space-y-4">
+              <Alert className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="mb-2">
+                    Google OAuth uses Gmail API with OAuth 2.0 authentication. Follow these steps:
+                  </p>
+                  <ol className="text-xs text-muted-foreground list-decimal ml-5 space-y-1">
+                    <li>
+                      Go to Google Cloud Console and create a new project (or select existing).
+                    </li>
+                    <li>
+                      Enable the <strong>Gmail API</strong> for your project.
+                    </li>
+                    <li>
+                      Create OAuth 2.0 credentials (OAuth client ID) with type "Web application".
+                    </li>
+                    <li>
+                      Add authorized redirect URI: <code>http://localhost:3000/api/auth/google/callback</code> or your production URL.
+                    </li>
+                    <li>
+                      Use the OAuth playground or your app to obtain a refresh token with scope: <code>https://www.googleapis.com/auth/gmail.send</code>
+                    </li>
+                  </ol>
+                </AlertDescription>
+              </Alert>
+              <div className="space-y-2">
+                <Label>Client ID</Label>
+                <Input
+                  value={googleClientId}
+                  onChange={(e) => setGoogleClientId(e.target.value)}
+                  placeholder="Your Google OAuth Client ID"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Client Secret</Label>
+                <div className="relative">
+                  <Input
+                    type={showGoogleSecret ? "text" : "password"}
+                    value={googleClientSecret}
+                    onChange={(e) => setGoogleClientSecret(e.target.value)}
+                    placeholder="Leave empty to keep existing secret"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowGoogleSecret(!showGoogleSecret)}
+                  >
+                    {showGoogleSecret ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>From Email (Gmail Address)</Label>
+                <Input
+                  value={googleFromEmail}
+                  onChange={(e) => setGoogleFromEmail(e.target.value)}
+                  placeholder="your-email@gmail.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Refresh Token</Label>
+                <div className="relative">
+                  <Input
+                    type={showGoogleRefreshToken ? "text" : "password"}
+                    value={googleRefreshToken}
+                    onChange={(e) => setGoogleRefreshToken(e.target.value)}
+                    placeholder="Leave empty to keep existing token"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowGoogleRefreshToken(!showGoogleRefreshToken)}
+                  >
+                    {showGoogleRefreshToken ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  OAuth refresh token obtained from Google OAuth flow
                 </p>
               </div>
             </TabsContent>
