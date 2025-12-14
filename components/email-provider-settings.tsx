@@ -874,7 +874,7 @@ export default function EmailProviderSettings({
                     </li>
                     <li>
                       Create OAuth 2.0 credentials (OAuth client ID) with type
-                      "Web application".
+                      &quot;Web application&quot;.
                     </li>
                     <li>
                       Add authorized redirect URI:{" "}

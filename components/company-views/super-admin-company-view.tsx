@@ -25,6 +25,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MyOwnedCompanies } from "@/components/my-owned-companies";
 import { AddCompanySheet } from "@/components/add-company-sheet";
+import { LogoImage } from "@/components/logo-image";
 
 interface SubscriberCompany {
   id: string;
@@ -337,7 +338,7 @@ export function SuperAdminCompanyView({
                             <div className="flex items-center gap-2">
                               {company.logo ? (
                                 <div className="relative h-8 w-8 rounded overflow-hidden">
-                                  <Image
+                                  <LogoImage
                                     src={company.logo}
                                     alt={company.name}
                                     fill

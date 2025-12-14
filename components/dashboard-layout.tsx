@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { getRoleMenuItems } from "@/components/dashboard-menus/main-dashboard-menu";
 import { getProxiedImageUrl } from "@/lib/image-proxy";
 import { VisitorTracker } from "@/components/visitor-tracker";
+import { LogoImage } from "@/components/logo-image";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -216,7 +217,7 @@ export function DashboardLayout({
               {hasThemeLogo ? (
                 // Theme-specific logo: Show ONLY the image (235px wide)
                 <div className="relative w-full flex items-center justify-center p-5">
-                  <Image
+                  <LogoImage
                     src={currentLogo!}
                     alt={branding.name}
                     width={235}
@@ -230,7 +231,7 @@ export function DashboardLayout({
                 <>
                   {currentLogo ? (
                     <div className="relative h-8 w-8 rounded-lg overflow-hidden shrink-0">
-                      <Image
+                      <LogoImage
                         src={currentLogo}
                         alt={branding.name}
                         fill
