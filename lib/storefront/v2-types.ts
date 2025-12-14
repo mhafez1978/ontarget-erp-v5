@@ -34,6 +34,7 @@ export interface ChatResponse {
   specDelta?: AiFrontstoreSpec | null;
   previewSpec?: AiFrontstoreSpec | null;
   versionId?: string | null;
+  conversationId?: string | null;
   actions?: string[]; // e.g., ["apply", "export", "rollback"]
 }
 

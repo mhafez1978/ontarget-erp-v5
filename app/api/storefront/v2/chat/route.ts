@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { canUseAiStorefront } from "@/lib/billing/plan-gating";
 import { generateAiStorefront } from "@/lib/ai/ai-storefront-service";
 import type { ChatRequestBody, ChatResponse } from "@/lib/storefront/v2-types";
 
@@ -36,9 +37,22 @@ export async function POST(request: NextRequest) {
     const isSuperAdmin = userWithCompanies?.role === "SUPER_ADMIN";
     const ownsCompany = (userWithCompanies?.ownedCompanies || []).length > 0;
 
-    if (!isSuperAdmin && !ownsCompany) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+      const userWithCompanies = await db.user.findUnique({
+        where: { id: user.id },
+        select: { role: true, plan: true, ownedCompanies: { where: { id: companyId }, select: { id: true } } },
+      });
+
+      const isSuperAdmin = userWithCompanies?.role === "SUPER_ADMIN";
+      const ownsCompany = (userWithCompanies?.ownedCompanies || []).length > 0;
+
+      // Plan gating: only allowed plans can use AI storefront (unless SUPER_ADMIN)
+      if (!isSuperAdmin && !canUseAiStorefront(userWithCompanies?.plan)) {
+        return NextResponse.json({ error: "AI Storefront is not available for your plan" }, { status: 403 });
+      }
+
+      if (!isSuperAdmin && !ownsCompany) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      }
 
     // Fetch company data
     const company = await db.company.findUnique({
@@ -241,6 +255,7 @@ export async function POST(request: NextRequest) {
       specDelta: result.spec,
       previewSpec: result.spec,
       versionId: specVersion.id,
+      conversationId: conversation.id,
       actions: ["apply", "export"],
     };
 
