@@ -21,7 +21,8 @@ export interface MenuItem {
 // Role-based menu renderer
 export function getRoleMenuItems(
   role: string,
-  companyCount: number = 0
+  companyCount: number = 0,
+  userPlan?: string | null
 ): MenuItem[] {
   let menuItems: MenuItem[] = [];
 
