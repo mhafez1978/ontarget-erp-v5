@@ -37,22 +37,29 @@ export async function POST(request: NextRequest) {
     const isSuperAdmin = userWithCompanies?.role === "SUPER_ADMIN";
     const ownsCompany = (userWithCompanies?.ownedCompanies || []).length > 0;
 
-      const userWithCompanies = await db.user.findUnique({
-        where: { id: user.id },
-        select: { role: true, plan: true, ownedCompanies: { where: { id: companyId }, select: { id: true } } },
-      });
+    const userWithCompanies = await db.user.findUnique({
+      where: { id: user.id },
+      select: {
+        role: true,
+        plan: true,
+        ownedCompanies: { where: { id: companyId }, select: { id: true } },
+      },
+    });
 
-      const isSuperAdmin = userWithCompanies?.role === "SUPER_ADMIN";
-      const ownsCompany = (userWithCompanies?.ownedCompanies || []).length > 0;
+    const isSuperAdmin = userWithCompanies?.role === "SUPER_ADMIN";
+    const ownsCompany = (userWithCompanies?.ownedCompanies || []).length > 0;
 
-      // Plan gating: only allowed plans can use AI storefront (unless SUPER_ADMIN)
-      if (!isSuperAdmin && !canUseAiStorefront(userWithCompanies?.plan)) {
-        return NextResponse.json({ error: "AI Storefront is not available for your plan" }, { status: 403 });
-      }
+    // Plan gating: only allowed plans can use AI storefront (unless SUPER_ADMIN)
+    if (!isSuperAdmin && !canUseAiStorefront(userWithCompanies?.plan)) {
+      return NextResponse.json(
+        { error: "AI Storefront is not available for your plan" },
+        { status: 403 }
+      );
+    }
 
-      if (!isSuperAdmin && !ownsCompany) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-      }
+    if (!isSuperAdmin && !ownsCompany) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     // Fetch company data
     const company = await db.company.findUnique({

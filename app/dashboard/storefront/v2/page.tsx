@@ -26,16 +26,71 @@ export default function FrontstoreV2Page() {
     if (!companyId || !prompt) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/storefront/v2/chat", {
+      // Use streaming endpoint for better UX
+      const res = await fetch("/api/storefront/v2/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyId, message: prompt }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to chat");
-      setMessages(data.messages || []);
-      setPreviewSpec(data.previewSpec || null);
-      if (data.conversationId) setConversationId(data.conversationId);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "unknown" }));
+        throw new Error(err.error || "Failed to stream chat");
+      }
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      // Helper to parse SSE-style chunks
+      const processChunk = (chunk: string) => {
+        buffer += chunk;
+        const parts = buffer.split("\n\n");
+        while (parts.length > 1) {
+          const rawEvent = parts.shift();
+          if (!rawEvent) continue;
+          const lines = rawEvent.split("\n");
+          let event = "message";
+          let data = "";
+          for (const line of lines) {
+            if (line.startsWith("event:")) event = line.replace("event:", "").trim();
+            if (line.startsWith("data:")) data += line.replace("data:", "").trim();
+          }
+
+          try {
+            const parsed = JSON.parse(data);
+            if (event === "ai.chunk") {
+              // Append AI chunk to messages
+              setMessages((prev) => {
+                const last = prev[prev.length - 1];
+                if (last && last.role === "ai") {
+                  const updated = [...prev.slice(0, -1), { role: "ai", content: parsed.text }];
+                  return updated;
+                }
+                return [...prev, { role: "ai", content: parsed.text }];
+              });
+            } else if (event === "spec") {
+              setPreviewSpec(parsed);
+            } else if (event === "version") {
+              if (parsed.versionId) alert("Preview saved as version " + parsed.versionId);
+              if (parsed.conversationId) setConversationId(parsed.conversationId);
+            } else if (event === "done") {
+              // noop
+            }
+          } catch (e) {
+            // ignore parse errors
+            console.warn("Failed to parse SSE data", e);
+          }
+        }
+        buffer = parts[0] || "";
+      };
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        processChunk(chunk);
+      }
     } catch (err) {
       console.error(err);
       alert("Failed to generate preview");
