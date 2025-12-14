@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -106,6 +106,7 @@ interface Company {
 
 export default function StorefrontPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<{
     name: string | null;
     email: string | null;
@@ -118,6 +119,8 @@ export default function StorefrontPage() {
     image: null,
     role: "GUEST",
   });
+  const [authChecking, setAuthChecking] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
@@ -224,6 +227,20 @@ export default function StorefrontPage() {
     ["SUPER_USER", "GROWTH", "ENTERPRISE"].includes(user.plan || "");
 
   const [activeTab, setActiveTab] = useState<string>("general");
+
+  // Handle URL parameters for tab and company selection
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const company = searchParams.get("company");
+
+    if (tab) {
+      setActiveTab(tab);
+    }
+
+    if (company && companies.some((c) => c.id === company)) {
+      setSelectedCompanyId(company);
+    }
+  }, [searchParams, companies]);
 
   const mapAiSpecToThemeSections = (
     spec: AiFrontstoreSpec,
@@ -409,6 +426,27 @@ export default function StorefrontPage() {
           role: data.user.role,
           plan: data.user.plan,
         });
+
+        // Check V1 access: Essential, Growth, Enterprise, or SUPER_ADMIN
+        const allowedPlans = [
+          "ESSENTIAL",
+          "GROWTH",
+          "ENTERPRISE",
+          "SUPER_USER",
+        ];
+        const isSuperAdmin = data.user.role === "SUPER_ADMIN";
+        const hasV1Access =
+          isSuperAdmin || allowedPlans.includes(data.user.plan);
+
+        if (!hasV1Access) {
+          setAuthError(
+            "AI Storefront V1 requires at least an Essential plan. Please upgrade your plan."
+          );
+          setAuthChecking(false);
+          return false;
+        }
+
+        setAuthChecking(false);
         return true;
       } else {
         // Not authenticated - redirect to login
@@ -769,6 +807,40 @@ export default function StorefrontPage() {
     ? `${window.location.origin}/store/${settings.slug}`
     : null;
 
+  // Show loading state while checking auth
+  if (authChecking) {
+    return (
+      <DashboardLayout user={user}>
+        <div className="h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-muted-foreground">Checking access...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show error if user doesn't have access
+  if (authError) {
+    return (
+      <DashboardLayout user={user}>
+        <div className="h-screen flex items-center justify-center">
+          <Card className="max-w-md p-6">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
+              <h2 className="text-xl font-bold mb-2">Access Restricted</h2>
+              <p className="text-muted-foreground mb-4">{authError}</p>
+              <Button onClick={() => (window.location.href = "/dashboard")}>
+                Go to Dashboard
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout user={user}>
       <div className="space-y-6">
@@ -921,8 +993,17 @@ export default function StorefrontPage() {
             )}
             <TabsTrigger value="ai">
               <Sparkles className="h-4 w-4 mr-2" />
-              AI Storefront (Beta)
+              AI Storefront V1
             </TabsTrigger>
+            {(user.role === "SUPER_ADMIN" ||
+              ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
+                user.plan?.toUpperCase() || ""
+              )) && (
+              <TabsTrigger value="ai-v2">
+                <Sparkles className="h-4 w-4 mr-2" />
+                AI Storefront V2
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* General Settings Tab */}
@@ -2567,6 +2648,35 @@ export default function StorefrontPage() {
                     </div>
                   </>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* AI Storefront V2 Tab */}
+          <TabsContent value="ai-v2" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  AI Storefront Builder V2
+                </CardTitle>
+                <CardDescription>
+                  Next-generation conversational AI storefront builder with
+                  advanced features. Create stunning websites through natural
+                  conversation.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="rounded-lg border bg-muted/20 overflow-hidden"
+                  style={{ height: "calc(100vh - 300px)" }}
+                >
+                  <iframe
+                    src="/dashboard/storefront/v2"
+                    className="w-full h-full border-0"
+                    title="AI Storefront V2"
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

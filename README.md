@@ -4,6 +4,12 @@ A comprehensive Enterprise Resource Planning system built with Next.js, featurin
 
 ## Features
 
+### 🛍️ Storefront & AI Storefront
+
+- Static theme-based storefronts with content wizard.
+- AI Storefront v1 (prompt-driven) for Growth/Enterprise: generates layout and copy from company data.
+- AI Storefront v2 (in progress): chat-driven “genie” with data grounding, style diversity, versioning, inline editing, and export-to-editor. See `FRONTSTORE-V2.md`.
+
 ### 🏢 Multi-Tenant Company Management
 
 - Root company configuration with white-label branding

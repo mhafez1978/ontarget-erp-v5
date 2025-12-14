@@ -24,6 +24,7 @@ interface DashboardLayoutProps {
     email?: string | null;
     image?: string | null;
     role?: string;
+    plan?: string | null;
   };
   containerClassName?: string;
 }
@@ -159,8 +160,12 @@ export function DashboardLayout({
     }
   }, [user?.role, fetchCompanyCount]);
 
-  // Get menu items based on user role and company count
-  const menuItems = getRoleMenuItems(user?.role || "GUEST", companyCount);
+  // Get menu items based on user role, company count, and plan
+  const menuItems = getRoleMenuItems(
+    user?.role || "GUEST",
+    companyCount,
+    user?.plan
+  );
 
   const handleSignOut = async () => {
     try {
