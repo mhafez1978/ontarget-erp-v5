@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
       shippingAddress,
       billingAddress,
       paymentMethod,
+      customerPhone: providedCustomerPhone,
     } = body;
 
     // Validate required fields
@@ -169,7 +170,7 @@ export async function POST(request: NextRequest) {
     // Get customer details
     const customer = await db.user.findUnique({
       where: { id: customerId },
-      select: { name: true, email: true, phone: true },
+      select: { name: true, email: true },
     });
 
     if (!customer) {
@@ -203,8 +204,11 @@ export async function POST(request: NextRequest) {
       orderItems.push({
         productId: productId || null,
         serviceId: serviceId || null,
+        // Snapshot fields required by StorefrontOrderItem schema
+        itemName: item.itemName || productId || serviceId || "Unknown",
+        itemSku: item.itemSku || null,
         quantity,
-        unitPrice,
+        price: unitPrice,
         total,
       });
     }
@@ -222,7 +226,7 @@ export async function POST(request: NextRequest) {
         userId: customerId,
         customerName: customer.name || "Unknown",
         customerEmail: customer.email || "",
-        customerPhone: customer.phone,
+        customerPhone: providedCustomerPhone ?? null,
         status: "PENDING",
         paymentStatus: "PENDING",
         subtotal,

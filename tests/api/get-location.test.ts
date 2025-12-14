@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { GET, __clearGetLocationCache } from "@/app/api/get-location/route";
+import type { NextRequest } from "next/server";
 
 type MockResponse = {
   ok: boolean;
@@ -44,7 +45,8 @@ describe("GET /api/get-location (unit)", () => {
       headers: {
         get: () => "222.222.222.222",
       },
-    } as unknown as Request;
+      nextUrl: new URL("http://localhost"),
+    } as unknown as NextRequest;
 
     // First call should hit the provider
     const res1 = await GET(mockRequest);
@@ -93,7 +95,8 @@ describe("GET /api/get-location (unit)", () => {
       headers: {
         get: () => null,
       },
-    } as unknown as Request;
+      nextUrl: new URL("http://localhost"),
+    } as unknown as NextRequest;
 
     const res = await GET(mockRequest);
     const body = await (res as Response).json();
@@ -152,7 +155,8 @@ describe("GET /api/get-location (unit)", () => {
       headers: {
         get: () => null,
       },
-    } as unknown as Request;
+      nextUrl: new URL("http://localhost"),
+    } as unknown as NextRequest;
 
     const res = await GET(mockRequest);
     const body = await (res as Response).json();
@@ -177,7 +181,8 @@ describe("GET /api/get-location (unit)", () => {
       headers: {
         get: () => null,
       },
-    } as unknown as Request;
+      nextUrl: new URL("http://localhost"),
+    } as unknown as NextRequest;
 
     const res = await GET(mockRequest);
     const body = await (res as Response).json();

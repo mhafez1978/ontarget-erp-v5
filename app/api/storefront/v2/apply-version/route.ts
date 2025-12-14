@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { aiFrontstoreSpecSchema } from "@/lib/ai/ai-storefront-types";
+import { mapAiSpecToThemeSections } from "@/lib/storefront/ai-spec-mapper";
+import {
+  computeSectionDiffs,
+  humanReadableSummary,
+} from "@/lib/storefront/section-diffs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,9 +15,16 @@ export async function POST(request: NextRequest) {
 
     const user = validation.user;
     const body = await request.json();
-    const { companyId, versionId } = body as {
+    const {
+      companyId,
+      versionId,
+      dryRun = false,
+      themeId = "default",
+    } = body as {
       companyId?: string;
       versionId?: string;
+      dryRun?: boolean;
+      themeId?: string;
     };
 
     if (!companyId || !versionId)
@@ -39,6 +52,35 @@ export async function POST(request: NextRequest) {
     });
     if (!version || version.companyId !== companyId)
       return NextResponse.json({ error: "Version not found" }, { status: 404 });
+
+    // Validate and compute diffs
+    const specValidation = aiFrontstoreSpecSchema.safeParse(
+      version.spec as any
+    );
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+      select: { storeMetadata: true },
+    });
+    const prevSections = Array.isArray(
+      (company?.storeMetadata as any)?.sections
+    )
+      ? (company?.storeMetadata as any).sections
+      : [];
+    const mapped = mapAiSpecToThemeSections(version.spec as any, themeId);
+    const changes = mapped ? computeSectionDiffs(prevSections, mapped) : [];
+    const summary = humanReadableSummary(changes);
+
+    if (dryRun) {
+      return NextResponse.json({
+        success: true,
+        dryRun: true,
+        validation: specValidation.success
+          ? { valid: true }
+          : { valid: false, errors: specValidation.error.errors },
+        changes,
+        summary,
+      });
+    }
 
     // Apply spec (save to company.aiStorefrontSpec and enable)
     await db.company.update({
