@@ -38,6 +38,13 @@ import { CreateTeamDialog } from "@/components/create-team-dialog";
 import { EditTeamDialog } from "@/components/edit-team-dialog";
 import { DeleteTeamDialog } from "@/components/delete-team-dialog";
 import { AddTeamMemberDialog } from "@/components/add-team-member-dialog";
+import {
+  getModelsForProvider,
+  estimateGenerationCost,
+  formatCost,
+  getRelativeCostMultiplier,
+  type ModelInfo,
+} from "@/lib/ai/model-config";
 
 interface OAuthProvider {
   id: string;
@@ -371,6 +378,17 @@ export default function SettingsPage() {
 
     loadAiProvider();
   }, [user.role]);
+
+  // Auto-update model when provider changes
+  useEffect(() => {
+    const models = getModelsForProvider(
+      aiProviderType as "openai" | "anthropic" | "deepseek"
+    );
+    const defaultModel = models.find((m) => m.recommended) || models[0];
+    if (defaultModel && !models.find((m) => m.id === aiModel)) {
+      setAiModel(defaultModel.id);
+    }
+  }, [aiProviderType]);
 
   const handleGeoTrackingToggle = async (checked: boolean) => {
     setIsLoading(true);
@@ -2491,12 +2509,13 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/30 p-4 space-y-3">
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                      OpenAI & Compatible Provider Setup (Quick Start)
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                      <Info className="h-4 w-4" />
+                      Setup Instructions
                     </p>
-                    <ol className="list-decimal list-inside text-xs text-blue-900 dark:text-blue-100 space-y-1">
+                    <ol className="list-decimal list-inside text-xs text-blue-900 dark:text-blue-100 space-y-2">
                       <li>
-                        Go to{" "}
+                        <strong>For OpenAI:</strong> Go to{" "}
                         <a
                           href="https://platform.openai.com/api-keys"
                           target="_blank"
@@ -2505,30 +2524,103 @@ export default function SettingsPage() {
                         >
                           platform.openai.com/api-keys
                         </a>{" "}
-                        and create a secret key (or use an existing one).
+                        and create a secret key. Add billing at{" "}
+                        <a
+                          href="https://platform.openai.com/account/billing"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          platform.openai.com/account/billing
+                        </a>
+                        .
+                      </li>
+                      <li>
+                        <strong>For Anthropic Claude:</strong> Sign up at{" "}
+                        <a
+                          href="https://console.anthropic.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          console.anthropic.com
+                        </a>
+                        , then go to{" "}
+                        <a
+                          href="https://console.anthropic.com/settings/keys"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          Settings → API Keys
+                        </a>{" "}
+                        and click &quot;Create Key&quot;.{" "}
+                        <strong>New accounts get $5 free credits</strong> (no
+                        credit card required initially).
+                      </li>
+                      <li>
+                        <strong>For DeepSeek:</strong> Sign up at{" "}
+                        <a
+                          href="https://platform.deepseek.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          platform.deepseek.com
+                        </a>
+                        , then go to{" "}
+                        <a
+                          href="https://platform.deepseek.com/api_keys"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          API Keys
+                        </a>{" "}
+                        and create a new key.{" "}
+                        <strong>Most affordable option</strong> at $0.14/$0.28
+                        per 1M tokens (~$0.001/generation).
                       </li>
                       <li>
                         Paste the key into the <strong>API Key</strong> field
                         below. It will be encrypted and never shown again.
                       </li>
                       <li>
-                        Leave <strong>API Base URL</strong> empty for OpenAI.
-                        For compatible providers (Azure OpenAI, self‑hosted
-                        vLLM/Ollama, etc.), put their base URL here and use the
-                        model name they document.
+                        Select a <strong>Model</strong> - recommended models are
+                        marked with ⭐ and show estimated cost per generation.
                       </li>
                       <li>
                         Click <strong>Save Settings</strong>, then{" "}
-                        <strong>Test Connection</strong> to verify the model is
-                        reachable and responding.
+                        <strong>Test Connection</strong> to verify.
                       </li>
                     </ol>
-                    <p className="text-xs text-blue-900 dark:text-blue-100">
-                      Note: all serious LLM providers require an API key. If you
-                      want a “free” option, you can point this at a
-                      self‑hosted/OpenAI‑compatible server that you control and
-                      give it a local key.
-                    </p>
+                    <div className="mt-2 p-2 bg-green-50 dark:bg-green-950/30 rounded border border-green-200 dark:border-green-800">
+                      <p className="text-xs text-green-900 dark:text-green-100">
+                        <strong>💡 Recommendations:</strong>
+                      </p>
+                      <ul className="text-xs text-green-900 dark:text-green-100 mt-1 space-y-1 ml-4 list-disc">
+                        <li>
+                          <strong>For testing with free credits:</strong> Start
+                          with <strong>Anthropic Claude 3.5 Haiku</strong> - new
+                          accounts get{" "}
+                          <a
+                            href="https://www.anthropic.com/pricing"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline hover:no-underline"
+                          >
+                            $5 free credits
+                          </a>{" "}
+                          (no credit card required).
+                        </li>
+                        <li>
+                          <strong>For production/high-volume:</strong> Use{" "}
+                          <strong>DeepSeek Chat</strong> - GPT-4 level quality
+                          at 90-99% lower cost (~$0.001 per generation vs
+                          ~$0.01-0.10 for others).
+                        </li>
+                      </ul>
+                    </div>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
@@ -2559,7 +2651,11 @@ export default function SettingsPage() {
                           placeholder={
                             aiHasExistingKey
                               ? "•••••••••••••••• (stored)"
-                              : "Enter OpenAI or compatible API key"
+                              : aiProviderType === "anthropic"
+                              ? "Enter Anthropic API key (sk-ant-...)"
+                              : aiProviderType === "deepseek"
+                              ? "Enter DeepSeek API key (sk-...)"
+                              : "Enter OpenAI API key (sk-...)"
                           }
                           value={aiApiKey}
                           onChange={(e) => setAiApiKey(e.target.value)}
@@ -2581,31 +2677,80 @@ export default function SettingsPage() {
                           disabled={aiProviderLoading}
                         >
                           <option value="openai">
-                            OpenAI / OpenAI-compatible (default)
+                            OpenAI (GPT-4o, GPT-4o Mini) - Requires billing
                           </option>
-                          <option value="anthropic">Anthropic Claude</option>
+                          <option value="anthropic">
+                            Anthropic Claude (3.5 Sonnet, Haiku) - $5 free
+                            credits
+                          </option>
+                          <option value="deepseek">
+                            DeepSeek (Chat, Coder) - Most affordable option
+                          </option>
                         </select>
                         <p className="text-xs text-muted-foreground">
-                          For Grok or other OpenAI-style APIs, keep{" "}
-                          <strong>OpenAI / OpenAI-compatible</strong> selected
-                          and set API base + model per their docs.
+                          {aiProviderType === "anthropic"
+                            ? "Anthropic offers $5 in free credits for new accounts, making it ideal for testing."
+                            : aiProviderType === "deepseek"
+                            ? "DeepSeek offers extremely affordable pricing ($0.14/$0.28 per 1M tokens) with GPT-4 level performance."
+                            : "OpenAI requires a paid account with billing information."}
                         </p>
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="ai-model">Model</Label>
-                        <Input
+                        <select
                           id="ai-model"
-                          placeholder="e.g. gpt-4o-mini"
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                           value={aiModel}
                           onChange={(e) => setAiModel(e.target.value)}
                           disabled={aiProviderLoading}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Optional. Defaults to{" "}
-                          <code className="text-xs">gpt-4o-mini</code> if left
-                          blank.
-                        </p>
+                        >
+                          {(() => {
+                            const models = getModelsForProvider(
+                              aiProviderType as
+                                | "openai"
+                                | "anthropic"
+                                | "deepseek"
+                            );
+                            return models.map((model) => (
+                              <option key={model.id} value={model.id}>
+                                {model.name} - {estimateGenerationCost(model)}
+                                /gen {getRelativeCostMultiplier(model, models)}
+                                {model.recommended ? " ⭐" : ""}
+                              </option>
+                            ));
+                          })()}
+                        </select>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          {(() => {
+                            const models = getModelsForProvider(
+                              aiProviderType as
+                                | "openai"
+                                | "anthropic"
+                                | "deepseek"
+                            );
+                            const currentModel = models.find(
+                              (m) => m.id === aiModel
+                            );
+                            if (currentModel) {
+                              return (
+                                <>
+                                  <p>{currentModel.description}</p>
+                                  <p>
+                                    <strong>Context:</strong>{" "}
+                                    {currentModel.contextWindow.toLocaleString()}{" "}
+                                    tokens • <strong>Input:</strong>{" "}
+                                    {formatCost(currentModel.inputCostPer1M)}/1M
+                                    • <strong>Output:</strong>{" "}
+                                    {formatCost(currentModel.outputCostPer1M)}
+                                    /1M
+                                  </p>
+                                </>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                       </div>
 
                       <div className="space-y-2">

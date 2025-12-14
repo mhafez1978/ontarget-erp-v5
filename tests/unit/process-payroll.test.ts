@@ -26,9 +26,8 @@ describe("processPayrollForCompany", () => {
   it("returns an empty summary when there are no pending entries", async () => {
     // Replace the ledger and timeEntry delegates for this test with small fakes
     // so we don't touch the real DB.
-    const originalLedger = (db as unknown as Record<string, unknown>).ledger;
-    const originalTimeEntry = (db as unknown as Record<string, unknown>)
-      .timeEntry;
+    const originalLedger = (db as unknown as Record<string, any>).ledger;
+    const originalTimeEntry = (db as unknown as Record<string, any>).timeEntry;
 
     try {
       (db as unknown as Record<string, unknown>).ledger = {
@@ -62,7 +61,6 @@ describe("processPayrollForCompany", () => {
     const staff: Partial<CompanyStaff> = {
       id: "staff-1",
       payRate: new Decimal(20),
-      payrollJurisdiction: null,
       payrollJurisdictionId: null,
       currency: "USD",
     };
@@ -81,10 +79,9 @@ describe("processPayrollForCompany", () => {
 
     // Replace delegate methods with stubs for the duration of this test so we
     // never call the real DB.
-    const originalLedger = (db as unknown as Record<string, unknown>).ledger;
-    const originalTimeEntry = (db as unknown as Record<string, unknown>)
-      .timeEntry;
-    const originalPayrollEntry = (db as unknown as Record<string, unknown>)
+    const originalLedger = (db as unknown as Record<string, any>).ledger;
+    const originalTimeEntry = (db as unknown as Record<string, any>).timeEntry;
+    const originalPayrollEntry = (db as unknown as Record<string, any>)
       .payrollEntry;
 
     try {
@@ -155,18 +152,17 @@ describe("processPayrollForCompany", () => {
 
       // Ensure updateMany was called with the created payroll entry id
       expect(
-        (db as unknown as Record<string, unknown>).timeEntry.updateMany
-          .calledOnce
+        (db as unknown as Record<string, any>).timeEntry.updateMany.calledOnce
       ).to.equal(true);
       // Ensure ledger.update was called to increment totalPayroll
       expect(
-        (db as unknown as Record<string, unknown>).ledger.update.calledOnce
+        (db as unknown as Record<string, any>).ledger.update.calledOnce
       ).to.equal(true);
     } finally {
       // Restore original delegates
-      (db as unknown as Record<string, unknown>).ledger = originalLedger;
-      (db as unknown as Record<string, unknown>).timeEntry = originalTimeEntry;
-      (db as unknown as Record<string, unknown>).payrollEntry =
+      (db as unknown as Record<string, any>).ledger = originalLedger;
+      (db as unknown as Record<string, any>).timeEntry = originalTimeEntry;
+      (db as unknown as Record<string, any>).payrollEntry =
         originalPayrollEntry;
     }
   });

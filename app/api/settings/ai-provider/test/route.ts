@@ -78,7 +78,14 @@ export async function POST(request: NextRequest) {
       },
     ];
 
+    console.log(
+      `[AI Provider Test] Testing connection to ${provider.provider.toUpperCase()} with model: ${
+        provider.model || "default"
+      }`
+    );
+
     const result = await callStorefrontModel(messages, testSchemaZod, {
+      provider: provider.provider as "openai" | "anthropic",
       apiKey: decrypt(provider.apiKey),
       model: provider.model || undefined,
       apiBase: provider.apiBase || undefined,
@@ -91,9 +98,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log(
+      `[AI Provider Test] ✅ ${provider.provider.toUpperCase()} connection successful!`
+    );
+
     return NextResponse.json({
       success: true,
-      message: "AI provider connection test succeeded",
+      message: `${
+        provider.provider === "anthropic" ? "Anthropic Claude" : "OpenAI"
+      } connection test succeeded`,
+      provider: provider.provider,
+      model:
+        provider.model ||
+        (provider.provider === "anthropic"
+          ? "claude-3-5-sonnet-latest"
+          : "gpt-4o-mini"),
     });
   } catch (error) {
     console.error("[AI Provider] Test error:", error);

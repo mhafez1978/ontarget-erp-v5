@@ -210,7 +210,9 @@ export class TaxCalculator {
   static calculateMedicare(
     grossPay: Decimal,
     taxConfig: TaxConfig,
-    yearToDateGross: number = 0
+    yearToDateGross: number = 0,
+    // Optional filing status for jurisdictions where thresholds vary by filing status
+    _filingStatus?: string
   ): { medicare: number; medicareAdditional: number } {
     const medicareConfig = taxConfig.payrollTaxes.medicare;
     if (!medicareConfig) return { medicare: 0, medicareAdditional: 0 };
