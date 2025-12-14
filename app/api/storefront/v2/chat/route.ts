@@ -3,16 +3,30 @@ import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { canUseAiStorefront } from "@/lib/billing/plan-gating";
 import { generateAiStorefront } from "@/lib/ai/ai-storefront-service";
+import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
+import { decrypt } from "@/lib/crypto";
 import type { ChatRequestBody, ChatResponse } from "@/lib/storefront/v2-types";
 
 export async function POST(request: NextRequest) {
   try {
-    const validation = await validateSessionForAPI(request);
-    if (!validation.valid) {
-      return validation.response;
-    }
+    // Public mode allows bypassing auth for testing. Enable by setting
+    // FRONTSTORE_V2_PUBLIC=true in your environment (dev only).
+    const isPublic = process.env.FRONTSTORE_V2_PUBLIC === "true";
+    let user: { id: string; role: string };
 
-    const user = validation.user;
+    if (isPublic) {
+      console.warn(
+        "[AI Storefront] FRONTSTORE_V2_PUBLIC enabled — bypassing auth for testing"
+      );
+      user = { id: "public", role: "PUBLIC" };
+    } else {
+      const validation = await validateSessionForAPI(request);
+      if (!validation.valid) {
+        return validation.response;
+      }
+
+      user = validation.user;
+    }
 
     const body = (await request.json()) as ChatRequestBody;
     const { companyId, conversationId, message, previewOnly, intentHints } =
@@ -26,39 +40,38 @@ export async function POST(request: NextRequest) {
     }
 
     // Permission check: SUPER_ADMIN or company owner or owned companies
-    const userWithCompanies = await db.user.findUnique({
-      where: { id: user.id },
-      select: {
-        role: true,
-        ownedCompanies: { where: { id: companyId }, select: { id: true } },
-      },
-    });
+    let isSuperAdmin = false;
+    let ownsCompany = false;
+    let userPlan: string | undefined;
 
-    const isSuperAdmin = userWithCompanies?.role === "SUPER_ADMIN";
-    const ownsCompany = (userWithCompanies?.ownedCompanies || []).length > 0;
+    if (!isPublic) {
+      const userWithCompanies = await db.user.findUnique({
+        where: { id: user.id },
+        select: {
+          role: true,
+          plan: true,
+          ownedCompanies: { where: { id: companyId }, select: { id: true } },
+        },
+      });
+      isSuperAdmin = userWithCompanies?.role === "SUPER_ADMIN";
+      ownsCompany = (userWithCompanies?.ownedCompanies || []).length > 0;
+      userPlan = userWithCompanies?.plan;
 
-    const userWithCompanies = await db.user.findUnique({
-      where: { id: user.id },
-      select: {
-        role: true,
-        plan: true,
-        ownedCompanies: { where: { id: companyId }, select: { id: true } },
-      },
-    });
+      // Plan gating: only allowed plans can use AI storefront (unless SUPER_ADMIN)
+      if (!isSuperAdmin && !canUseAiStorefront(userPlan)) {
+        return NextResponse.json(
+          { error: "AI Storefront is not available for your plan" },
+          { status: 403 }
+        );
+      }
 
-    const isSuperAdmin = userWithCompanies?.role === "SUPER_ADMIN";
-    const ownsCompany = (userWithCompanies?.ownedCompanies || []).length > 0;
-
-    // Plan gating: only allowed plans can use AI storefront (unless SUPER_ADMIN)
-    if (!isSuperAdmin && !canUseAiStorefront(userWithCompanies?.plan)) {
-      return NextResponse.json(
-        { error: "AI Storefront is not available for your plan" },
-        { status: 403 }
-      );
-    }
-
-    if (!isSuperAdmin && !ownsCompany) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      if (!isSuperAdmin && !ownsCompany) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      }
+    } else {
+      // In public mode, we allow calls for testing but do not grant admin rights
+      isSuperAdmin = false;
+      ownsCompany = true; // allow company-scoped testing
     }
 
     // Fetch company data
@@ -106,6 +119,41 @@ export async function POST(request: NextRequest) {
         isPreviewOnly: !!previewOnly,
       },
     });
+
+    // Load conversation history if continuing an existing conversation
+    let conversationHistory: Array<{ role: string; content: string }> = [];
+    let previousSpec: any = null;
+
+    if (conversationId) {
+      const previousMessages = await db.storefrontMessage.findMany({
+        where: { conversationId },
+        orderBy: { createdAt: "asc" },
+        take: 10, // Last 10 messages for context
+        select: {
+          role: true,
+          content: true,
+          specVersionId: true,
+        },
+      });
+
+      conversationHistory = previousMessages
+        .filter((m) => m.content)
+        .map((m) => ({
+          role: m.role === "user" ? "user" : "assistant",
+          content: m.content || "",
+        }));
+
+      // Load the most recent spec version to use as baseline
+      const lastSpecVersion = await db.storefrontSpecVersion.findFirst({
+        where: { companyId },
+        orderBy: { createdAt: "desc" },
+        select: { spec: true },
+      });
+
+      if (lastSpecVersion) {
+        previousSpec = lastSpecVersion.spec;
+      }
+    }
 
     // Gather storefront preview data (small samples)
     const [products, services, testimonials, postsCount] = await Promise.all([
@@ -196,10 +244,58 @@ export async function POST(request: NextRequest) {
       includeProducts: intentHints?.emphasis === "products" || true,
       includeServices: intentHints?.emphasis === "services" || true,
       includePosts: !!company.storeBlogEnabled,
+      conversationHistory,
+      previousSpec,
     };
 
-    // Call AI service to generate preview spec
-    const result = await generateAiStorefront(aiInput as any);
+    // Load global AI provider config, if any (so admin settings apply)
+    let providerConfig: AiProviderConfig | undefined;
+    const aiProviderClient = (db as unknown as Record<string, unknown>)[
+      "aiProviderSetting"
+    ] as
+      | { findFirst?: (opts?: unknown) => Promise<unknown | null> }
+      | undefined;
+    if (aiProviderClient && typeof aiProviderClient.findFirst === "function") {
+      try {
+        const aiProvider = (await aiProviderClient.findFirst({
+          where: { scope: "GLOBAL", isActive: true },
+        })) as Record<string, unknown> | null;
+        if (aiProvider) {
+          // If apiKey is present as a string, attempt to decrypt it. Otherwise
+          // log a helpful message so admins know to re-save the provider key.
+          if (typeof aiProvider.apiKey === "string" && aiProvider.apiKey) {
+            try {
+              providerConfig = {
+                provider: (aiProvider.provider as AiProviderType) || "openai",
+                apiKey: decrypt(aiProvider.apiKey as string),
+                model:
+                  typeof aiProvider.model === "string"
+                    ? (aiProvider.model as string)
+                    : undefined,
+                apiBase:
+                  typeof aiProvider.apiBase === "string"
+                    ? (aiProvider.apiBase as string)
+                    : undefined,
+              };
+            } catch (dErr) {
+              console.warn(
+                "[AI Storefront] Failed to decrypt stored AI provider key; ensure ENCRYPTION_KEY matches the value used when saving the provider",
+                dErr
+              );
+            }
+          } else {
+            console.warn(
+              "[AI Storefront] AI provider record found but apiKey is empty — re-enter the API key in Settings > AI Provider and toggle active."
+            );
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to load AI provider settings:", e);
+      }
+    }
+
+    // Call AI service to generate preview spec (pass provider config so admin setting is honored)
+    const result = await generateAiStorefront(aiInput as any, providerConfig);
 
     if (result.safety && result.safety.blocked) {
       // Persist AI blocked message
@@ -216,6 +312,48 @@ export async function POST(request: NextRequest) {
         messages: [userMessage, blockedMessage],
         specDelta: null,
       } as ChatResponse);
+    }
+    // If the model wants to ask a clarifying question, return it as an AI message
+    if (result.shouldAsk && result.assistantMessage) {
+      const aiMessage = await db.storefrontMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: "ai",
+          content: result.assistantMessage,
+          isPreviewOnly: true,
+        },
+      });
+
+      await db.storefrontConversation.update({
+        where: { id: conversation.id },
+        data: { lastMessageAt: new Date() },
+      });
+
+      const messages = [userMessage, aiMessage].map((m) => ({
+        id: m.id,
+        conversationId: m.conversationId,
+        role: m.role as "user" | "ai" | "system",
+        content: m.content ?? null,
+        toolsUsed: null,
+        specVersionId: (m as any).specVersionId ?? null,
+        isApplied: m.isApplied,
+        isPreviewOnly: m.isPreviewOnly,
+        createdAt: m.createdAt.toISOString(),
+      }));
+
+      const response: ChatResponse = {
+        messages,
+        specDelta: null,
+        previewSpec: null,
+        versionId: null,
+        conversationId: conversation.id,
+        actions: [],
+      };
+
+      (response as any).modelUsed = !!(result as any).usedModel;
+      (response as any).providerUsed = !!providerConfig;
+
+      return NextResponse.json(response);
     }
 
     // Persist spec version (preview)
@@ -265,6 +403,10 @@ export async function POST(request: NextRequest) {
       conversationId: conversation.id,
       actions: ["apply", "export"],
     };
+
+    // Include debug info so UI can surface whether a remote model was used
+    (response as any).modelUsed = !!result.usedModel;
+    (response as any).providerUsed = !!providerConfig;
 
     return NextResponse.json(response);
   } catch (error) {
