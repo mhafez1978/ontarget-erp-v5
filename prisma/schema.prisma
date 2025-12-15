@@ -1399,9 +1399,11 @@ model StorefrontMessage {
   isPreviewOnly  Boolean  @default(true)
   createdAt      DateTime @default(now())
 
-  conversation StorefrontConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation StorefrontConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  specVersion  StorefrontSpecVersion? @relation(fields: [specVersionId], references: [id], onDelete: SetNull)
 
   @@index([conversationId])
+  @@index([specVersionId])
 }
 
 model StorefrontSpecVersion {
@@ -1415,7 +1417,8 @@ model StorefrontSpecVersion {
   title     String?
   source    String?  @default("ai")
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company  Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  messages StorefrontMessage[]
 
   @@index([companyId])
 }
