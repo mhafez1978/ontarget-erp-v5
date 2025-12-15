@@ -159,7 +159,9 @@ export async function POST(
             mkdirError
           );
           throw new Error(
-            `Failed to create storage directory: ${mkdirError instanceof Error ? mkdirError.message : "Unknown error"}. Check volume permissions (needs UID 1001 write access).`
+            `Failed to create storage directory: ${
+              mkdirError instanceof Error ? mkdirError.message : "Unknown error"
+            }. Check volume permissions (needs UID 1001 write access).`
           );
         }
 
@@ -173,7 +175,9 @@ export async function POST(
             writeError
           );
           throw new Error(
-            `Failed to write file: ${writeError instanceof Error ? writeError.message : "Unknown error"}. Check volume permissions (needs UID 1001 write access).`
+            `Failed to write file: ${
+              writeError instanceof Error ? writeError.message : "Unknown error"
+            }. Check volume permissions (needs UID 1001 write access).`
           );
         }
 
