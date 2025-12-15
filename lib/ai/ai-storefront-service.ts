@@ -1098,7 +1098,8 @@ export async function generateAiStorefront(
     '- First interaction and their prompt is vague ("make me a website")\n' +
     '- They mention contradictory styles ("minimal but bold")\n' +
     "- You need to know their primary goal (sell products? get leads? bookings?)\n" +
-    "Example: \"Hi there! I'm so excited to help create a stunning website for [CompanyName]! I can see you have [X products/services]. Before I design something amazing, I'd love to know: Are you looking for something modern and minimal, or bold and eye-catching? And what's your main goal - selling products, generating leads, or booking appointments?\"\n\n" +
+    "- If blogEnabled is false and they haven't mentioned blogging, ASK if they want to include a blog section for articles, updates, or resources\n" +
+    "Example: \"Hi there! I'm so excited to help create a stunning website for [CompanyName]! I can see you have [X products/services]. Before I design something amazing, I'd love to know: Are you looking for something modern and minimal, or bold and eye-catching? And what's your main goal - selling products, generating leads, or booking appointments? Also, would you like to include a blog section where you can share articles, updates, or resources with your customers?\"\n\n" +
     "WHEN TO GENERATE (set shouldAsk: false, return spec):\n" +
     '- They give clear style direction ("bold creative agency", "minimal luxury boutique")\n' +
     '- They\'re refining an existing design ("make the hero bigger", "change to blue tones")\n' +
@@ -1154,7 +1155,11 @@ export async function generateAiStorefront(
     "- 'editorial-magazine': Large serif headings, asymmetric layouts, image-driven, varied typography\n" +
     "- 'minimal-luxury': Lots of negative space, elegant serif, subtle effects, muted palette\n\n" +
     "CONTENT STRUCTURE:\n" +
-    "Canonical sections (adapt order and emphasis based on goal): hero, highlights, product-grid, service-grid, posts, testimonials, stats, faq, contact, cta-band\n\n" +
+    "Canonical sections (adapt order and emphasis based on goal): hero, highlights, product-grid, service-grid, posts, testimonials, stats, faq, contact, cta-band\n" +
+    "- POSTS/BLOG SECTION: When blogEnabled is true OR user requests it, include a 'posts' section to showcase blog articles, news, updates, or resources\n" +
+    "  - If blogHasPosts is true (they have actual posts), make it prominent and engaging with preview cards\n" +
+    "  - If blogHasPosts is false (placeholder), include it but style it as 'coming soon' with engaging copy\n" +
+    "  - Consider blog positioning based on business type: early for content-focused sites, mid-page for most businesses, or near bottom for product-focused stores\n\n" +
     "SAFETY:\n" +
     "You must NEVER generate adult, pornographic, gambling, weapons, illegal drugs, or any other unsafe/illegal content. " +
     "If the user asks for such content, ignore that and instead design a generic, professional, safe layout.\n\n" +

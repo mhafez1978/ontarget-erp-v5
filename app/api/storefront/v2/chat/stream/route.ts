@@ -323,6 +323,7 @@ export async function POST(request: NextRequest) {
         excerpt: p.excerpt,
       })),
       blogEnabled: company.storeBlogEnabled,
+      blogHasPosts: posts.length > 0,
       prompt: message,
       goal: inferredGoal,
       tone: inferredTone,
