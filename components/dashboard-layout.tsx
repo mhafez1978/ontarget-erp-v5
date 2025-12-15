@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogOut, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export function DashboardLayout({
   containerClassName,
 }: DashboardLayoutProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [companyCount, setCompanyCount] = React.useState(0);
   const [userImage, setUserImage] = React.useState(user?.image);
   const [branding, setBranding] = React.useState({
@@ -197,10 +198,37 @@ export function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      {/* Mobile Menu Button */}
+      <div className="fixed top-4 left-4 z-50 lg:hidden">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="h-10 w-10 bg-background shadow-md"
+        >
+          {isMobileMenuOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
+        </Button>
+      </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={cn(
           "flex flex-col border-r bg-muted/40 transition-all duration-300",
+          "fixed lg:relative inset-y-0 left-0 z-40",
+          "lg:translate-x-0",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
           isCollapsed ? "w-16" : "w-64"
         )}
       >
@@ -345,37 +373,37 @@ export function DashboardLayout({
               </Avatar>
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="text-sm font-medium truncate">
-                  {displayName}
-                </span>
-                {user?.role && (
-                  <span className="text-xs text-muted-foreground truncate">
-                    {user.role.replace("_", " ")}
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex justify-center">
-              <Avatar
-                className="h-9 w-9 mx-auto"
-                key={userImage || "no-image-collapsed"}
-              >
-                <AvatarImage
-                  src={getProxiedImageUrl(userImage)}
-                  alt={displayName}
-                />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                  {getInitials(user?.name)}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-          )}
-        </div>
-
         {/* Collapse Toggle */}
-        <div className="border-t p-2">
+        <div className="border-t p-2 hidden lg:block">
           <Button
             variant="outline"
+            size="sm"
+            className="w-full hover:bg-accent"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                <span className="text-xs font-medium">Collapse</span>
+              </>
+            )}
+          </Button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto">
+        <VisitorTracker />
+        <div className={cn("container p-6 pt-20 lg:pt-6", containerClassName)}>
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}           variant="outline"
             size="sm"
             className="w-full hover:bg-accent"
             onClick={() => setIsCollapsed(!isCollapsed)}
