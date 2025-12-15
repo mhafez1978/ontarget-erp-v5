@@ -51,6 +51,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Install Prisma CLI globally for migrations/management in production
+RUN npm install -g prisma@6.19.0
+
 # 3. Copy public folder with correct permissions
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
@@ -58,6 +61,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
+# Copy package.json for npm scripts
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
 # Automatically leverage output traces to reduce image size
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
