@@ -145,15 +145,16 @@ export default function FrontstoreV2Page() {
       .catch((err) => console.error("Failed to load companies:", err));
   }, [companyId]);
 
-  const send = async () => {
-    if (!companyId || !prompt.trim()) {
+  const send = async (messageToSend?: string) => {
+    const userMessage = messageToSend || prompt.trim();
+
+    if (!companyId || !userMessage) {
       toast.error("Please select a company and enter a message");
       return;
     }
 
     setLoading(true);
     setGenerationProgress(0);
-    const userMessage = prompt.trim();
     setPrompt("");
 
     try {
@@ -278,12 +279,14 @@ export default function FrontstoreV2Page() {
   };
 
   const handleStarterPrompt = (promptText: string) => {
+    if (!companyId) {
+      toast.error("Please select a company first");
+      return;
+    }
     setPrompt(promptText);
     // Auto-send after a short delay to show the prompt was set
     setTimeout(() => {
-      if (companyId) {
-        send();
-      }
+      send(promptText);
     }, 100);
   };
 
