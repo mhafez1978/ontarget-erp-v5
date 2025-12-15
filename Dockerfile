@@ -54,6 +54,11 @@ RUN adduser --system --uid 1001 nextjs
 # 3. Copy public folder with correct permissions
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# Copy prisma schema and generated client for runtime
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
 # Automatically leverage output traces to reduce image size
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
