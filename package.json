@@ -13,11 +13,7 @@
     "test:integration": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register \"tests/integration/**/*.test.ts\"",
     "seed": "node prisma/seed.mjs",
     "seed:ts": "ts-node prisma/seed.ts",
-    "seed:check": "node prisma/seed.mjs --check",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:migrate:reset": "prisma migrate reset",
-    "prisma:studio": "prisma studio"
+    "seed:check": "node prisma/seed.mjs --check"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -72,6 +68,7 @@
     "nodemailer": "^7.0.10",
     "onnxruntime-web": "^1.21.0",
     "plaid": "^39.1.0",
+    "prisma": "^6.19.0",
     "qrcode": "^1.5.4",
     "react": "19.2.0",
     "react-dom": "19.2.0",

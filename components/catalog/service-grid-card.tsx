@@ -79,21 +79,14 @@ export function ServiceGridCard({
     <Card className="overflow-hidden group">
       <div className="relative aspect-video bg-muted">
         {imageUrl ? (
-          isBase64 ? (
-            <img
-              src={imageUrl}
-              alt={service.name}
-              className="object-cover w-full h-full"
-            />
-          ) : (
-            <Image
-              src={imageUrl}
-              alt={service.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          )
+          <Image
+            src={imageUrl}
+            alt={service.name}
+            fill
+            unoptimized={isBase64}
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <ImageIcon className="h-12 w-12 text-muted-foreground" />

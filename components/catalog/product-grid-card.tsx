@@ -75,23 +75,14 @@ export function ProductGridCard({
     <Card className="overflow-hidden group">
       <div className="relative aspect-video bg-muted">
         {imageUrl ? (
-          isBase64 ? (
-            // Use regular img tag for base64 images
-            <img
-              src={imageUrl}
-              alt={product.name}
-              className="object-cover w-full h-full"
-            />
-          ) : (
-            // Use Next.js Image for file paths
-            <Image
-              src={imageUrl}
-              alt={product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          )
+          <Image
+            src={imageUrl}
+            alt={product.name}
+            fill
+            unoptimized={isBase64}
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <ImageIcon className="h-12 w-12 text-muted-foreground" />

@@ -80,21 +80,14 @@ export function ServiceTableRow({
       <TableCell>
         <div className="relative w-16 h-16 bg-muted rounded overflow-hidden">
           {imageUrl ? (
-            isBase64 ? (
-              <img
-                src={imageUrl}
-                alt={service.name}
-                className="object-cover w-full h-full"
-              />
-            ) : (
-              <Image
-                src={imageUrl}
-                alt={service.name}
-                fill
-                className="object-cover"
-                sizes="64px"
-              />
-            )
+            <Image
+              src={imageUrl}
+              alt={service.name}
+              fill
+              unoptimized={isBase64}
+              className="object-cover"
+              sizes="64px"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <ImageIcon className="h-6 w-6 text-muted-foreground" />

@@ -76,23 +76,14 @@ export function ProductTableRow({
       <TableCell>
         <div className="relative w-16 h-16 bg-muted rounded overflow-hidden">
           {imageUrl ? (
-            isBase64 ? (
-              // Use regular img tag for base64 images
-              <img
-                src={imageUrl}
-                alt={product.name}
-                className="object-cover w-full h-full"
-              />
-            ) : (
-              // Use Next.js Image for file paths
-              <Image
-                src={imageUrl}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="64px"
-              />
-            )
+            <Image
+              src={imageUrl}
+              alt={product.name}
+              unoptimized={isBase64}
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <ImageIcon className="h-6 w-6 text-muted-foreground" />
