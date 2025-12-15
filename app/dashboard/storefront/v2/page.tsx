@@ -440,11 +440,17 @@ export default function FrontstoreV2Page() {
           duration: 10000,
           action: {
             label: "Start New",
-            onClick: () => resolve(true),
+            onClick: (e) => {
+              e?.preventDefault?.();
+              resolve(true);
+            },
           },
           cancel: {
             label: "Cancel",
-            onClick: () => resolve(false),
+            onClick: (e) => {
+              e?.preventDefault?.();
+              resolve(false);
+            },
           },
         }
       );
@@ -506,11 +512,17 @@ export default function FrontstoreV2Page() {
           duration: 10000,
           action: {
             label: "Publish",
-            onClick: () => resolve(true),
+            onClick: (e) => {
+              e?.preventDefault?.();
+              resolve(true);
+            },
           },
           cancel: {
             label: "Cancel",
-            onClick: () => resolve(false),
+            onClick: (e) => {
+              e?.preventDefault?.();
+              resolve(false);
+            },
           },
         }
       );
