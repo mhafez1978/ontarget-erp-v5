@@ -279,6 +279,8 @@ export async function POST(request: NextRequest) {
         description: companyData?.description,
         industry: companyData?.industry,
         logo: companyData?.logo,
+        logoLight: companyData?.logoLight,
+        logoDark: companyData?.logoDark,
         email: companyData?.email,
         phone: companyData?.phone,
         address: companyData?.addressLine1 || null,

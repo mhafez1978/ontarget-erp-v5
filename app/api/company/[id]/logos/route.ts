@@ -4,40 +4,19 @@ import { writeFile, unlink, readdir, mkdir } from "fs/promises";
 import { join, extname, resolve } from "path";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { getStorageConfig } from "@/lib/storage-config";
 
 /**
  * Check if cold storage is configured
+ * @deprecated Use getStorageConfig from @/lib/storage-config instead
  */
 async function hasStorageConfigured(): Promise<{
   configured: boolean;
   provider: string;
   basePath: string;
 } | null> {
-  const globalStorage = await db.storageProvider.findFirst({
-    where: {
-      scope: "GLOBAL",
-      isActive: true,
-      isConnected: true,
-    },
-  });
-
-  if (!globalStorage) {
-    return null;
-  }
-
-  const config = JSON.parse(globalStorage.config || "{}");
-  const basePath =
-    globalStorage.provider === "LOCAL"
-      ? config.path || "../var/storage/cold"
-      : "";
-
-  return {
-    configured: true,
-    provider: globalStorage.provider,
-    basePath,
-  };
+  return getStorageConfig();
 }
-
 /**
  * Extract filename from common urls like /uploads/logos/{id}/{file} or full URLs
  */

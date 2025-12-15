@@ -959,6 +959,9 @@ export interface CompanySummary {
   slogan?: string | null;
   description?: string | null;
   industry?: string | null;
+  logo?: string | null;
+  logoLight?: string | null;
+  logoDark?: string | null;
 }
 
 export interface ProductSummary {
