@@ -28,8 +28,8 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Build the application
-RUN npm run build
+# Generate and Build the application
+RUN npx prisma generate && npm run build
 
 # Production image
 FROM base AS runner
