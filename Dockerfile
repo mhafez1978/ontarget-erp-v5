@@ -29,7 +29,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 # Generate and Build the application
-RUN npx prisma generate && npm run build
+RUN npx prisma generate && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
 
 # Production image
 FROM base AS runner
