@@ -11,6 +11,10 @@ WORKDIR /app
 
 # Install dependencies
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+
+# --- FIX: Set memory limit to 6GB for the install step ---
+ENV NODE_OPTIONS="--max-old-space-size=6144"
+
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
@@ -24,11 +28,14 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# --- FIX: Set memory limit to 6GB for the build step ---
+ENV NODE_OPTIONS="--max-old-space-size=6144"
+
 # Disable telemetry during the build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Generate and Build the application
+# Generate and Build the application (Your custom command)
 RUN npx prisma generate && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
 
 # Production image
@@ -42,7 +49,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# 3. Copy public folder with correct permissions (Updated from your original)
+# 3. Copy public folder with correct permissions
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Automatically leverage output traces to reduce image size
