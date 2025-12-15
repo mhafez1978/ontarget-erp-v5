@@ -431,10 +431,26 @@ export default function FrontstoreV2Page() {
     }, 100);
   };
 
-  const handleReset = () => {
-    if (
-      confirm("Start a new conversation? This will clear the current design.")
-    ) {
+  const handleReset = async () => {
+    // Show confirmation toast
+    const proceed = await new Promise<boolean>((resolve) => {
+      toast.warning(
+        "Start a new conversation? This will clear the current design.",
+        {
+          duration: 10000,
+          action: {
+            label: "Start New",
+            onClick: () => resolve(true),
+          },
+          cancel: {
+            label: "Cancel",
+            onClick: () => resolve(false),
+          },
+        }
+      );
+    });
+
+    if (proceed) {
       setMessages([]);
       setPreviewSpec(null);
       setConversationId(null);
