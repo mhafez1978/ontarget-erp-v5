@@ -50,17 +50,18 @@ export async function GET(request: NextRequest) {
 
         // Check if user has a company with white-label eligible subscription
         const membership = user?.companyMemberships[0];
-        
-        console.log('[Branding API] Dashboard context check:', {
+
+        console.log("[Branding API] Dashboard context check:", {
           hasMembership: !!membership,
           companyId: membership?.companyId,
           companyName: membership?.company.name,
-          subscriptionsCount: membership?.company.subscriberSubscriptions.length,
+          subscriptionsCount:
+            membership?.company.subscriberSubscriptions.length,
           hasLogoLight: !!membership?.company.logoLight,
           hasLogoDark: !!membership?.company.logoDark,
           hasLogo: !!membership?.company.logo,
         });
-        
+
         if (
           membership &&
           membership.company.subscriberSubscriptions.length > 0 &&
@@ -68,7 +69,10 @@ export async function GET(request: NextRequest) {
             membership.company.logoDark ||
             membership.company.logo)
         ) {
-          console.log('[Branding API] Returning white-label branding for:', membership.company.name);
+          console.log(
+            "[Branding API] Returning white-label branding for:",
+            membership.company.name
+          );
           // Return company-specific branding (only in dashboard context)
           return NextResponse.json({
             name: membership.company.name,
@@ -79,7 +83,9 @@ export async function GET(request: NextRequest) {
             isWhiteLabel: true,
           });
         } else {
-          console.log('[Branding API] White-label not eligible, falling back to root company branding');
+          console.log(
+            "[Branding API] White-label not eligible, falling back to root company branding"
+          );
         }
       }
     }
