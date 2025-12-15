@@ -153,15 +153,29 @@ export async function POST(
         try {
           await mkdir(uploadDir, { recursive: true });
           console.log(`[POST Logos] Directory created/verified: ${uploadDir}`);
-        } catch (error) {
-          console.log(
-            `[POST Logos] Directory already exists or error: ${error}`
+        } catch (mkdirError) {
+          console.error(
+            `[POST Logos] Failed to create directory ${uploadDir}:`,
+            mkdirError
+          );
+          throw new Error(
+            `Failed to create storage directory: ${mkdirError instanceof Error ? mkdirError.message : "Unknown error"}. Check volume permissions (needs UID 1001 write access).`
           );
         }
 
         const filepath = resolve(uploadDir, filename);
-        await writeFile(filepath, buffer);
-        console.log(`[POST Logos] File written to: ${filepath}`);
+        try {
+          await writeFile(filepath, buffer);
+          console.log(`[POST Logos] File written to: ${filepath}`);
+        } catch (writeError) {
+          console.error(
+            `[POST Logos] Failed to write file ${filepath}:`,
+            writeError
+          );
+          throw new Error(
+            `Failed to write file: ${writeError instanceof Error ? writeError.message : "Unknown error"}. Check volume permissions (needs UID 1001 write access).`
+          );
+        }
 
         // Return path for serving via /uploads/logos route
         logoUrl = `/uploads/logos/${id}/${filename}`;

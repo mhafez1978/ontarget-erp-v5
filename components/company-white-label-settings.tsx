@@ -165,14 +165,46 @@ export function CompanyWhiteLabelSettings() {
 
         if (removeBackgroundEnabled) {
           try {
-            toast.info(`Removing background from ${file.name}...`, {
-              id: `processing-${i}`,
+            toast.info(
+              `Removing background from ${file.name}... (this may take 30-60 seconds)`,
+              {
+                id: `processing-${i}`,
+                duration: 60000, // Show for 60 seconds
+              }
+            );
+
+            // Add timeout wrapper (90 seconds max)
+            const timeoutPromise = new Promise<never>((_, reject) =>
+              setTimeout(
+                () =>
+                  reject(
+                    new Error("Background removal timed out after 90 seconds")
+                  ),
+                90000
+              )
+            );
+
+            const removalPromise = removeBackground(file, {
+              output: { format: "image/png", quality: 0.8 },
+              progress: (key, current, total) => {
+                const percent = Math.round((current / total) * 100);
+                if (key === "compute:inference") {
+                  toast.info(
+                    `Processing ${file.name}... ${percent}% (AI inference)`,
+                    {
+                      id: `processing-${i}`,
+                      duration: 60000,
+                    }
+                  );
+                }
+              },
             });
 
-            // Read file as blob
-            const imageBlob = await removeBackground(file, {
-              output: { format: "image/png", quality: 1 },
-            });
+            // Race between removal and timeout
+            const imageBlob = await Promise.race([
+              removalPromise,
+              timeoutPromise,
+            ]);
 
             // Convert blob to file
             const processedFile = new File(
@@ -190,9 +222,11 @@ export function CompanyWhiteLabelSettings() {
               `Failed to remove background from ${file.name}:`,
               error
             );
+            const errorMessage =
+              error instanceof Error ? error.message : "Unknown error";
             toast.error(
-              `Failed to remove background from ${file.name}, uploading original`,
-              { id: `processing-${i}` }
+              `Background removal failed for ${file.name}: ${errorMessage}. Uploading original.`,
+              { id: `processing-${i}`, duration: 5000 }
             );
             processedFiles.push(file);
           }
@@ -514,8 +548,9 @@ export function CompanyWhiteLabelSettings() {
                 Auto-remove background from uploaded images
               </label>
               <p className="text-xs text-muted-foreground mt-1">
-                AI will automatically remove backgrounds before upload (runs in
-                your browser, 100% free)
+                AI will automatically remove backgrounds before upload. ⚠️{" "}
+                <strong>This takes 30-90 seconds per image</strong> as it runs
+                AI models in your browser (100% free, no server cost).
               </p>
             </div>
           </div>
