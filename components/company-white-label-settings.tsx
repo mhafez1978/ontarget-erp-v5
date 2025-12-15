@@ -78,10 +78,6 @@ export function CompanyWhiteLabelSettings() {
     website: "",
   });
 
-  useEffect(() => {
-    fetchCompanyBranding();
-  }, [fetchCompanyBranding]);
-
   const fetchCompanyBranding = useCallback(async () => {
     try {
       setLoading(true);
@@ -122,6 +118,10 @@ export function CompanyWhiteLabelSettings() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchCompanyBranding();
+  }, [fetchCompanyBranding]);
 
   const fetchUploadedLogos = async (companyId: string) => {
     try {
