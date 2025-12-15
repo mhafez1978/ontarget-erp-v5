@@ -40,11 +40,7 @@ export async function GET(
                 isPublished: true,
               },
             },
-            staff: {
-              where: {
-                isFeatured: true,
-              },
-            },
+            staff: true, // Count ALL staff members, not just featured ones
             testimonials: {
               where: {
                 // Count ALL approved testimonials for readiness — featured-only was
