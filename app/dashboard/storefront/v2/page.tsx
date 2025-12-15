@@ -482,11 +482,25 @@ export default function FrontstoreV2Page() {
       return;
     }
 
-    if (
-      !confirm(
-        "Publish this design to your live storefront? This will replace your current storefront."
-      )
-    ) {
+    // Show confirmation toast
+    const proceed = await new Promise<boolean>((resolve) => {
+      toast.warning(
+        "Publish this design to your live storefront? This will replace your current storefront.",
+        {
+          duration: 10000,
+          action: {
+            label: "Publish",
+            onClick: () => resolve(true),
+          },
+          cancel: {
+            label: "Cancel",
+            onClick: () => resolve(false),
+          },
+        }
+      );
+    });
+
+    if (!proceed) {
       return;
     }
 
