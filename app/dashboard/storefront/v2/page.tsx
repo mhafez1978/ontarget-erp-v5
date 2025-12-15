@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { DashboardLayout } from "@/components/dashboard-layout";
 import { AiStorefrontRendererV2 } from "@/components/storefront/v2/ai-storefront-renderer-v2";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -334,16 +333,16 @@ export default function FrontstoreV2Page() {
   };
 
   return (
-    <DashboardLayout>
+    <div className="w-full h-screen">
       {authChecking ? (
-        <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="h-full flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
             <p className="text-muted-foreground">Checking access...</p>
           </div>
         </div>
       ) : authError ? (
-        <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="h-full flex items-center justify-center">
           <Card className="max-w-md p-6">
             <div className="text-center">
               <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
@@ -358,7 +357,7 @@ export default function FrontstoreV2Page() {
           </Card>
         </div>
       ) : (
-        <div className="h-[calc(100vh-4rem)] flex flex-col">
+        <div className="h-full flex flex-col">
           {/* Header */}
           <div className="border-b bg-gradient-to-r from-card/80 via-card/50 to-card/80 backdrop-blur-sm">
             <div className="flex items-center justify-between px-6 py-4">
@@ -880,6 +879,6 @@ export default function FrontstoreV2Page() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </div>
   );
 }
