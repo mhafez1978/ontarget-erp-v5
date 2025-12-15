@@ -54,7 +54,7 @@ export async function callStorefrontModel<T>(
     const model =
       providerConfig?.model ||
       process.env.ANTHROPIC_MODEL ||
-      "claude-3-5-sonnet-latest";
+      "claude-3-5-sonnet-20241022";
     const endpoint =
       providerConfig?.apiBase ||
       process.env.ANTHROPIC_API_BASE ||

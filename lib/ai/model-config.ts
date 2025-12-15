@@ -56,7 +56,7 @@ export const OPENAI_MODELS: ModelInfo[] = [
 
 export const ANTHROPIC_MODELS: ModelInfo[] = [
   {
-    id: "claude-3-5-sonnet-latest",
+    id: "claude-3-5-sonnet-20241022",
     name: "Claude 3.5 Sonnet",
     provider: "anthropic",
     contextWindow: 200000,
@@ -66,7 +66,7 @@ export const ANTHROPIC_MODELS: ModelInfo[] = [
     recommended: true,
   },
   {
-    id: "claude-3-5-haiku-latest",
+    id: "claude-3-5-haiku-20241022",
     name: "Claude 3.5 Haiku",
     provider: "anthropic",
     contextWindow: 200000,
@@ -75,7 +75,7 @@ export const ANTHROPIC_MODELS: ModelInfo[] = [
     description: "Fast and affordable, good quality",
   },
   {
-    id: "claude-3-opus-latest",
+    id: "claude-3-opus-20240229",
     name: "Claude 3 Opus",
     provider: "anthropic",
     contextWindow: 200000,
