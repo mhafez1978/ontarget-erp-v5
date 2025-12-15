@@ -200,20 +200,24 @@ export default function FrontstoreV2Page() {
 
         setCompanyData({
           logo: data.company?.logo || null,
-          products: (data.products || []).map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            description: p.description,
-            price: Number(p.price),
-            images: p.images || [],
-          })),
-          services: (data.services || []).map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            description: s.description,
-            price: Number(s.price || 0),
-            images: s.images || [],
-          })),
+          products: (data.featuredProducts || data.products || []).map(
+            (p: any) => ({
+              id: p.id,
+              name: p.name,
+              description: p.description,
+              price: Number(p.price),
+              images: p.images || [],
+            })
+          ),
+          services: (data.featuredServices || data.services || []).map(
+            (s: any) => ({
+              id: s.id,
+              name: s.name,
+              description: s.description,
+              price: Number(s.price || 0),
+              images: s.images || [],
+            })
+          ),
           teamMembers: (data.teamMembers || []).map((t: any) => ({
             id: t.id,
             name: t.name,
