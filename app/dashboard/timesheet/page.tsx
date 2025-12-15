@@ -101,6 +101,7 @@ export default function TimesheetPage() {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -113,6 +114,8 @@ export default function TimesheetPage() {
         }
       } catch (error) {
         console.error("Error fetching user:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
