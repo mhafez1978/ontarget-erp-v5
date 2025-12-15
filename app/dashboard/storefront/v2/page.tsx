@@ -237,6 +237,55 @@ export default function FrontstoreV2Page() {
     fetchCompanyData();
   }, [companyId]);
 
+  // Load latest conversation and design when company changes
+  useEffect(() => {
+    if (!companyId) return;
+
+    const loadLatestConversation = async () => {
+      try {
+        const res = await fetch(
+          `/api/storefront/v2/conversations?companyId=${companyId}`
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.conversations && data.conversations.length > 0) {
+          const latest = data.conversations[0];
+          setConversationId(latest.id);
+
+          // Load messages for this conversation
+          const messagesRes = await fetch(
+            `/api/storefront/v2/conversations/${latest.id}/messages`
+          );
+          if (messagesRes.ok) {
+            const messagesData = await messagesRes.json();
+            if (messagesData.messages) {
+              setMessages(
+                messagesData.messages.map((m: any) => ({
+                  role: m.role,
+                  content: m.content,
+                }))
+              );
+
+              // Find the latest spec version
+              const lastMessage = messagesData.messages
+                .reverse()
+                .find((m: any) => m.role === "ai" && m.specVersion?.spec);
+              if (lastMessage?.specVersion?.spec) {
+                setPreviewSpec(lastMessage.specVersion.spec);
+                setVersionId(lastMessage.specVersion.id);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading conversation:", error);
+      }
+    };
+
+    loadLatestConversation();
+  }, [companyId]);
+
   const send = async (messageToSend?: string) => {
     const userMessage = messageToSend || prompt.trim();
 

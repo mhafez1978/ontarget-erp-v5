@@ -44,6 +44,14 @@ export async function GET(
     const messages = await db.storefrontMessage.findMany({
       where: { conversationId: id },
       orderBy: { createdAt: "asc" },
+      include: {
+        specVersion: {
+          select: {
+            id: true,
+            spec: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json({ success: true, messages });
