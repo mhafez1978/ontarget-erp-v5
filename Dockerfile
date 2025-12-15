@@ -11,6 +11,8 @@ WORKDIR /app
 
 # Install dependencies
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+# Copy prisma schema for prisma client generation during install
+COPY prisma ./prisma
 
 # --- FIX: Set memory limit to 6GB for the install step ---
 ENV NODE_OPTIONS="--max-old-space-size=6144"
