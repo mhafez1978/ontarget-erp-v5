@@ -197,7 +197,7 @@ export default function FrontstoreV2Page() {
           return;
         }
         const data = await res.json();
-        
+
         setCompanyData({
           logo: data.company?.logo || null,
           products: (data.products || []).map((p: any) => ({
@@ -462,9 +462,6 @@ export default function FrontstoreV2Page() {
       toast.error(
         error instanceof Error ? error.message : "Failed to publish design"
       );
-    }
-  };
-      toast.error("Failed to export design");
     }
   };
 
