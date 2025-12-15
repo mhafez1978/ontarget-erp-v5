@@ -6,7 +6,14 @@ import Link from "next/link";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Marquee } from "@/components/ui/marquee";
-import { ShoppingCart, Check, Star, ArrowRight, Play } from "lucide-react";
+import {
+  ShoppingCart,
+  Check,
+  Star,
+  ArrowRight,
+  Play,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import type {
   AiFrontstoreSpec,
@@ -1279,6 +1286,7 @@ function ContactSectionV2({
   effects,
   contactEmail,
   contactPhone,
+  companyId,
 }: {
   section: AiFrontstoreSection;
   spec: AiFrontstoreSpec;
@@ -1287,17 +1295,55 @@ function ContactSectionV2({
   effects: ReturnType<typeof getEffectsStyles>;
   contactEmail?: string | null;
   contactPhone?: string | null;
+  companyId?: string;
 }) {
   const [formData, setFormData] = React.useState({
     name: "",
     email: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Message sent! We'll get back to you soon.");
-    setFormData({ name: "", email: "", message: "" });
+
+    if (!companyId) {
+      toast.error("Company information is missing");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/storefront/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyId,
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      toast.success("Message sent! We'll get back to you soon.");
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error) {
+      console.error("Contact form error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to send message. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -1385,9 +1431,17 @@ function ContactSectionV2({
             type="submit"
             size="lg"
             className="w-full"
+            disabled={isSubmitting}
             style={{ backgroundColor: spec.meta.primaryColor }}
           >
-            Send Message
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              "Send Message"
+            )}
           </Button>
         </motion.form>
 
@@ -1849,6 +1903,7 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                 effects={effects}
                 contactEmail={props.contactEmail}
                 contactPhone={props.contactPhone}
+                companyId={props.companyId}
               />
             );
 
@@ -2002,9 +2057,7 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
             <p>
               © {new Date().getFullYear()} {companyName}. All rights reserved.
             </p>
-            <p className="text-xs">
-              Powered by OnTarget Brands AI Storefront
-            </p>
+            <p className="text-xs">Powered by OnTarget Brands AI Storefront</p>
           </div>
         </div>
       </footer>
