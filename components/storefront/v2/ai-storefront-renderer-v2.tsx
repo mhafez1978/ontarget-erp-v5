@@ -1615,12 +1615,17 @@ function PostsSectionV2({
 // ============================================================================
 
 export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
-  const { spec } = props;
+  const { spec, companyName, slug } = props;
 
   // Extract design systems from spec
   const typography = getTypographyStyles(spec);
   const spacing = getSpacingStyles(spec);
   const effects = getEffectsStyles(spec);
+
+  // Get company logo if available
+  const selectedCompany = props.companyId
+    ? { name: companyName, logo: null }
+    : null;
 
   // Apply global font families
   useEffect(() => {
@@ -1649,6 +1654,11 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
 
   const sections = spec.sections || [];
 
+  // Get primary color from spec meta
+  const primaryColor = spec.meta?.primaryColor || "#2563EB";
+  const backgroundColor = spec.meta?.backgroundColor || "#FFFFFF";
+  const textColor = spec.meta?.textColor || "#111827";
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -1657,6 +1667,84 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
       className="min-h-screen"
       style={{ fontFamily: typography.bodyFont }}
     >
+      {/* Header Navigation */}
+      <header
+        className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        style={{
+          backgroundColor: `${backgroundColor}ee`,
+          borderColor: `${primaryColor}20`,
+        }}
+      >
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href={`/store/${slug}`} className="flex items-center gap-3">
+              <h2
+                className="text-lg font-semibold truncate"
+                style={{ color: textColor }}
+              >
+                {companyName}
+              </h2>
+            </Link>
+          </div>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <Link
+              href={`/store/${slug}`}
+              className="transition-colors hover:opacity-80"
+              style={{ color: textColor }}
+            >
+              Home
+            </Link>
+            <Link
+              href={`/store/${slug}/products`}
+              className="transition-colors hover:opacity-80"
+              style={{ color: textColor }}
+            >
+              Products
+            </Link>
+            <Link
+              href={`/store/${slug}/services`}
+              className="transition-colors hover:opacity-80"
+              style={{ color: textColor }}
+            >
+              Services
+            </Link>
+            <Link
+              href={`/store/${slug}/login`}
+              className="transition-colors hover:opacity-80"
+              style={{ color: textColor }}
+            >
+              Login
+            </Link>
+            <Button
+              size="sm"
+              variant="outline"
+              style={{
+                borderColor: primaryColor,
+                color: textColor,
+              }}
+              asChild
+            >
+              <Link href={`/store/${slug}/register`}>Register</Link>
+            </Button>
+            {props.enableCart && (
+              <Button
+                size="sm"
+                style={{
+                  backgroundColor: primaryColor,
+                  color: "#ffffff",
+                }}
+                asChild
+              >
+                <Link href={`/store/${slug}/cart`}>
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Cart
+                </Link>
+              </Button>
+            )}
+          </nav>
+        </div>
+      </header>
+
       {sections.map((section) => {
         switch (section.type) {
           case "hero":
@@ -1793,6 +1881,133 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
             return null;
         }
       })}
+
+      {/* Footer */}
+      <footer
+        className="border-t mt-16 py-12"
+        style={{
+          backgroundColor: spec.meta?.backgroundColor || "#FFFFFF",
+          color: spec.meta?.textColor || "#111827",
+          borderColor: `${primaryColor}20`,
+        }}
+      >
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            {/* Company Info */}
+            <div className="space-y-4">
+              <h3
+                className="text-lg font-bold"
+                style={{ fontFamily: typography.headingFont }}
+              >
+                {companyName}
+              </h3>
+              <p className="text-sm opacity-75">
+                Powered by AI-driven innovation
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div className="space-y-4">
+              <h4
+                className="text-sm font-semibold uppercase tracking-wider"
+                style={{ fontFamily: typography.headingFont }}
+              >
+                Quick Links
+              </h4>
+              <nav className="flex flex-col gap-2 text-sm">
+                <Link
+                  href={`/store/${slug}`}
+                  className="hover:opacity-75 transition-opacity"
+                >
+                  Home
+                </Link>
+                <Link
+                  href={`/store/${slug}/products`}
+                  className="hover:opacity-75 transition-opacity"
+                >
+                  Products
+                </Link>
+                <Link
+                  href={`/store/${slug}/services`}
+                  className="hover:opacity-75 transition-opacity"
+                >
+                  Services
+                </Link>
+              </nav>
+            </div>
+
+            {/* Support */}
+            <div className="space-y-4">
+              <h4
+                className="text-sm font-semibold uppercase tracking-wider"
+                style={{ fontFamily: typography.headingFont }}
+              >
+                Support
+              </h4>
+              <nav className="flex flex-col gap-2 text-sm">
+                <Link
+                  href={`/store/${slug}/login`}
+                  className="hover:opacity-75 transition-opacity"
+                >
+                  Login
+                </Link>
+                <Link
+                  href={`/store/${slug}/register`}
+                  className="hover:opacity-75 transition-opacity"
+                >
+                  Register
+                </Link>
+                {props.contactEmail && (
+                  <a
+                    href={`mailto:${props.contactEmail}`}
+                    className="hover:opacity-75 transition-opacity"
+                  >
+                    Contact Us
+                  </a>
+                )}
+              </nav>
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-4">
+              <h4
+                className="text-sm font-semibold uppercase tracking-wider"
+                style={{ fontFamily: typography.headingFont }}
+              >
+                Get in Touch
+              </h4>
+              <div className="flex flex-col gap-2 text-sm">
+                {props.contactEmail && (
+                  <a
+                    href={`mailto:${props.contactEmail}`}
+                    className="hover:opacity-75 transition-opacity"
+                  >
+                    {props.contactEmail}
+                  </a>
+                )}
+                {props.contactPhone && (
+                  <a
+                    href={`tel:${props.contactPhone}`}
+                    className="hover:opacity-75 transition-opacity"
+                  >
+                    {props.contactPhone}
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-current/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm opacity-75">
+            <p>
+              © {new Date().getFullYear()} {companyName}. All rights reserved.
+            </p>
+            <p className="text-xs">
+              Powered by OnTarget Brands AI Storefront
+            </p>
+          </div>
+        </div>
+      </footer>
     </motion.div>
   );
 }

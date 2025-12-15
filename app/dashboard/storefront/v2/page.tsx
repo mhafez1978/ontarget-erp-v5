@@ -91,6 +91,44 @@ export default function FrontstoreV2Page() {
   const [tokenLimit] = useState(1000000);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Company preview data
+  const [companyData, setCompanyData] = useState<{
+    logo?: string | null;
+    products: Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      price: number;
+      images?: Array<{ url: string }>;
+    }>;
+    services: Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      price: number;
+      images?: Array<{ url: string }>;
+    }>;
+    teamMembers: Array<{
+      id: string;
+      name: string;
+      email?: string | null;
+      image?: string | null;
+      role?: string | null;
+      jobTitle?: string | null;
+      bio?: string | null;
+    }>;
+    testimonials: Array<{
+      id: string;
+      customerName: string;
+      testimonial: string;
+    }>;
+  }>({
+    products: [],
+    services: [],
+    teamMembers: [],
+    testimonials: [],
+  });
+
   // Check authentication and V2 access
   useEffect(() => {
     const checkAuth = async () => {
@@ -143,6 +181,60 @@ export default function FrontstoreV2Page() {
         }
       })
       .catch((err) => console.error("Failed to load companies:", err));
+  }, [companyId]);
+
+  // Load company preview data (products, services, team, testimonials) when company changes
+  useEffect(() => {
+    if (!companyId) return;
+
+    const fetchCompanyData = async () => {
+      try {
+        const res = await fetch(
+          `/api/storefront/home-preview?companyId=${companyId}`
+        );
+        if (!res.ok) {
+          console.error("Failed to fetch company data");
+          return;
+        }
+        const data = await res.json();
+        
+        setCompanyData({
+          logo: data.company?.logo || null,
+          products: (data.products || []).map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: Number(p.price),
+            images: p.images || [],
+          })),
+          services: (data.services || []).map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            description: s.description,
+            price: Number(s.price || 0),
+            images: s.images || [],
+          })),
+          teamMembers: (data.teamMembers || []).map((t: any) => ({
+            id: t.id,
+            name: t.name,
+            email: t.email,
+            image: t.image,
+            role: t.role,
+            jobTitle: t.jobTitle,
+            bio: t.bio,
+          })),
+          testimonials: (data.testimonials || []).map((t: any) => ({
+            id: t.id,
+            customerName: t.customerName || t.name || "Customer",
+            testimonial: t.testimonial || t.quote || "",
+          })),
+        });
+      } catch (error) {
+        console.error("Error fetching company data:", error);
+      }
+    };
+
+    fetchCompanyData();
   }, [companyId]);
 
   const send = async (messageToSend?: string) => {
@@ -331,6 +423,47 @@ export default function FrontstoreV2Page() {
       window.location.href = `/dashboard/storefront?tab=content&company=${companyId}`;
     } catch (error) {
       console.error("Export error:", error);
+      toast.error("Failed to export design");
+    }
+  };
+
+  const handlePublishToLive = async () => {
+    if (!versionId || !companyId) {
+      toast.error("No design version to publish");
+      return;
+    }
+
+    if (
+      !confirm(
+        "Publish this design to your live storefront? This will replace your current storefront."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/storefront/v2/apply-version", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyId,
+          versionId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to publish");
+      }
+
+      toast.success("Design published to live storefront!");
+    } catch (error) {
+      console.error("Publish error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to publish design"
+      );
+    }
+  };
       toast.error("Failed to export design");
     }
   };
@@ -747,6 +880,19 @@ export default function FrontstoreV2Page() {
                   {previewSpec && (
                     <>
                       <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handlePublishToLive}
+                        disabled={!versionId}
+                        className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span className="text-xs font-medium">
+                          Publish to Live Site
+                        </span>
+                      </Button>
+
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={handleExportToContentWizard}
@@ -872,6 +1018,10 @@ export default function FrontstoreV2Page() {
                             "Company"
                           }
                           companyId={companyId}
+                          featuredProducts={companyData.products}
+                          featuredServices={companyData.services}
+                          featuredTeamMembers={companyData.teamMembers}
+                          testimonials={companyData.testimonials}
                         />
                       </div>
                     </div>

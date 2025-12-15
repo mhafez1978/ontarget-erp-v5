@@ -5,6 +5,7 @@ import { defaultThemes, type ThemeSection } from "@/lib/storefront-themes";
 import { ThemeRenderer } from "@/components/storefront/theme-renderer";
 import StorefrontLayout from "@/components/storefront/storefront-layout";
 import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
+import { AiStorefrontRendererV2 } from "@/components/storefront/v2/ai-storefront-renderer-v2";
 import type { Metadata } from "next";
 import {
   aiFrontstoreSpecSchema,
@@ -340,6 +341,15 @@ export default async function StorefrontPage({ params }: PageProps) {
     }
   }
   const aiEnabled = company.aiStorefrontEnabled && !!aiSpec;
+
+  // Detect V2 spec by checking for rich design system properties
+  const isV2Spec =
+    aiSpec &&
+    (aiSpec.meta?.typography ||
+      aiSpec.meta?.spacing ||
+      aiSpec.meta?.effects ||
+      aiSpec.meta?.animations);
+
   const aiMeta = aiSpec?.meta ?? null;
   const headerLogo: string | null =
     company.logo || company.logoLight || company.logoDark || null;
@@ -432,32 +442,60 @@ export default async function StorefrontPage({ params }: PageProps) {
           </div>
         )}
 
-        <AiStorefrontRenderer
-          spec={aiSpec}
-          slug={slug}
-          companyName={company.name}
-          companyId={company.id}
-          enableCart={company.isStoreEnabled}
-          featuredProducts={serializedProducts}
-          featuredServices={serializedServices}
-          featuredTeamMembers={serializedTeamMembers}
-          posts={data.posts}
-          testimonials={testimonials}
-          // admin-created FAQs (support articles) — merged by renderer with AI FAQs
-          supportFaqs={data.faqs ?? []}
-          contactEmail={
-            (company.storeMetadata as StoreMetadata | null)?.contactEmail ||
-            null
-          }
-          contactPhone={
-            (company.storeMetadata as StoreMetadata | null)?.contactPhone ||
-            null
-          }
-          storeBanner={company.storeBanner}
-          customersCount={customersCount}
-          approvedTestimonialsCount={approvedTestimonialsCount}
-          heroOverride={heroOverride}
-        />
+        {isV2Spec ? (
+          <AiStorefrontRendererV2
+            spec={aiSpec}
+            slug={slug}
+            companyName={company.name}
+            companyId={company.id}
+            enableCart={company.isStoreEnabled}
+            featuredProducts={serializedProducts}
+            featuredServices={serializedServices}
+            featuredTeamMembers={serializedTeamMembers}
+            posts={data.posts}
+            testimonials={testimonials}
+            supportFaqs={data.faqs ?? []}
+            contactEmail={
+              (company.storeMetadata as StoreMetadata | null)?.contactEmail ||
+              null
+            }
+            contactPhone={
+              (company.storeMetadata as StoreMetadata | null)?.contactPhone ||
+              null
+            }
+            storeBanner={company.storeBanner}
+            customersCount={customersCount}
+            approvedTestimonialsCount={approvedTestimonialsCount}
+            heroOverride={heroOverride}
+          />
+        ) : (
+          <AiStorefrontRenderer
+            spec={aiSpec}
+            slug={slug}
+            companyName={company.name}
+            companyId={company.id}
+            enableCart={company.isStoreEnabled}
+            featuredProducts={serializedProducts}
+            featuredServices={serializedServices}
+            featuredTeamMembers={serializedTeamMembers}
+            posts={data.posts}
+            testimonials={testimonials}
+            // admin-created FAQs (support articles) — merged by renderer with AI FAQs
+            supportFaqs={data.faqs ?? []}
+            contactEmail={
+              (company.storeMetadata as StoreMetadata | null)?.contactEmail ||
+              null
+            }
+            contactPhone={
+              (company.storeMetadata as StoreMetadata | null)?.contactPhone ||
+              null
+            }
+            storeBanner={company.storeBanner}
+            customersCount={customersCount}
+            approvedTestimonialsCount={approvedTestimonialsCount}
+            heroOverride={heroOverride}
+          />
+        )}
       </StorefrontLayout>
     );
   }
