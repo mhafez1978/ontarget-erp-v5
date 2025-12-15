@@ -403,31 +403,4 @@ export function DashboardLayout({
       </main>
     </div>
   );
-}           variant="outline"
-            size="sm"
-            className="w-full hover:bg-accent"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <>
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                <span className="text-xs font-medium">Collapse</span>
-              </>
-            )}
-          </Button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto">
-        <VisitorTracker />
-        <div className={cn("container p-6", containerClassName)}>
-          {children}
-        </div>
-      </main>
-    </div>
-  );
 }
