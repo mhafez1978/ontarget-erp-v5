@@ -906,7 +906,7 @@ export default function FrontstoreV2Page() {
                         rows={1}
                       />
                       <Button
-                        onClick={send}
+                        onClick={() => send()}
                         disabled={loading || !companyId || !prompt.trim()}
                         className="h-[44px] px-4 shadow-lg shadow-primary/20"
                         size="lg"
