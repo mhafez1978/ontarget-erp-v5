@@ -303,7 +303,7 @@ export function EditProjectDialog({
           </SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+        <form onSubmit={handleSubmit} className="space-y-6 px-6 mt-6">
           {/* Project Name */}
           <div className="space-y-2">
             <Label htmlFor="name">
@@ -522,10 +522,7 @@ export function EditProjectDialog({
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <Select
-                value={customerId}
-                onValueChange={setCustomerId}
-              >
+              <Select value={customerId} onValueChange={setCustomerId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select customer" />
                 </SelectTrigger>

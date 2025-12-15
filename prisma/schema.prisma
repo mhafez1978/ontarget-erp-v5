@@ -549,6 +549,8 @@ model CompanyStaff {
   createdTasks    Task[]        @relation("TaskCreator")
   assignedTasks   Task[]        @relation("TaskAssignee")
   projectNotes    ProjectNote[]
+  projectDocuments ProjectDocument[] @relation("ProjectDocumentUploader")
+  projectFinancialEntries ProjectFinancialEntry[] @relation("ProjectFinancialEntryCreator")
 
   // Financial relations
   payrollEntries PayrollEntry[]
@@ -759,6 +761,10 @@ model Product {
   name        String
   description String? @db.Text
   price       Decimal @db.Decimal(10, 2)
+  unitCost    Decimal? @db.Decimal(13, 2)
+  markupPercent       Decimal? @db.Decimal(5, 2)
+  markupAmount        Decimal? @db.Decimal(13, 2)
+  profitMarginPercent Decimal? @db.Decimal(5, 2)
   sku         String?
   category    String?
   isPublished Boolean @default(true)
@@ -825,6 +831,10 @@ model Service {
   name        String
   description String? @db.Text
   price       Decimal @db.Decimal(10, 2)
+  unitCost    Decimal? @db.Decimal(13, 2)
+  markupPercent       Decimal? @db.Decimal(5, 2)
+  markupAmount        Decimal? @db.Decimal(13, 2)
+  profitMarginPercent Decimal? @db.Decimal(5, 2)
   duration    String? // e.g., "1 hour", "2 days", etc.
   category    String?
   isPublished Boolean @default(true)
@@ -1775,6 +1785,13 @@ model Project {
   // Status
   status ProjectStatus @default(PLANNING)
 
+  projectType ProjectType @default(INTERNAL)
+  isFeatured  Boolean     @default(false)
+  currency    String      @default("USD")
+  estimatedCost   Decimal? @db.Decimal(13, 2)
+  estimatedMarkup Decimal? @db.Decimal(13, 2)
+  featuredImage   String?  @db.LongText
+
   // Sort order for kanban board (within each status lane)
   sortOrder Int @default(0)
 
@@ -1787,6 +1804,8 @@ model Project {
 
   // Notes
   notes ProjectNote[]
+  documents ProjectDocument[]
+  financialEntries ProjectFinancialEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1802,6 +1821,8 @@ model Project {
   @@index([companyId, status])
   // composite index for ordering projects within status lanes
   @@index([companyId, status, sortOrder])
+  @@index([projectType])
+  @@index([isFeatured])
 }
 
 // Task Model - Projects have many tasks
@@ -1869,6 +1890,61 @@ model ProjectNote {
   @@index([projectId])
   @@index([authorId])
   @@index([createdAt])
+}
+
+// Project Document uploads for supporting files, receipts, etc.
+model ProjectDocument {
+  id        String @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  fileName        String
+  url             String @db.LongText
+  storageProvider String
+  documentType    DocumentType?
+  notes           String? @db.Text
+
+  uploadedById String?
+  uploadedBy   CompanyStaff? @relation("ProjectDocumentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([uploadedById])
+  @@index([storageProvider])
+}
+
+// Financial entries attached to projects (expenses/purchases)
+model ProjectFinancialEntry {
+  id        String            @id @default(cuid())
+  projectId String
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  entryType ProjectEntryType
+  description String? @db.Text
+  vendor      String?
+  referenceId String? // PO, receipt, invoice number
+
+  amount        Decimal @db.Decimal(13, 2)
+  cost          Decimal @db.Decimal(13, 2)
+  markupPercent Decimal? @db.Decimal(5, 2)
+  markupAmount  Decimal? @db.Decimal(13, 2)
+  currency      String  @default("USD")
+
+  occurrenceDate DateTime @default(now())
+  receiptUrl     String?  @db.LongText
+  notes          String?  @db.Text
+
+  createdById String?
+  createdBy   CompanyStaff? @relation("ProjectFinancialEntryCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([entryType])
+  @@index([createdById])
 }
 
 // ===================================
@@ -2412,6 +2488,16 @@ enum ProjectStatus {
   BLOCKED
   COMPLETED
   CANCELLED
+}
+
+enum ProjectType {
+  INTERNAL
+  COMPANY_CUSTOMER
+}
+
+enum ProjectEntryType {
+  EXPENSE
+  PURCHASE
 }
 
 // Task Status Enum

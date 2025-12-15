@@ -6,6 +6,16 @@ import { DashboardLayout } from "@/components/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
@@ -17,6 +27,8 @@ import {
   CheckCircle2,
   Activity,
   Clock,
+  Plus,
+  StickyNote,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectOverviewTab } from "@/components/projects/project-overview-tab";
@@ -26,7 +38,6 @@ import { TasksBoard } from "@/components/projects/tasks-board";
 import { TaskDetailDialog } from "@/components/projects/task-detail-dialog";
 import { CreateTaskDialog } from "@/components/projects/create-task-dialog";
 import { ProjectNotes } from "@/components/projects/project-notes";
-import { StickyNote } from "lucide-react";
 import { EditProjectDialog } from "@/components/edit-project-dialog";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 
@@ -160,6 +171,95 @@ interface Project {
   };
 }
 
+const FINANCE_FEATURE_FLAG =
+  process.env.NEXT_PUBLIC_PROJECT_FINANCE_FEATURE === "true";
+
+type FinancialEntryType = "EXPENSE" | "PURCHASE";
+
+interface FinancialEntry {
+  id: string;
+  entryType: FinancialEntryType;
+  description: string | null;
+  vendor: string | null;
+  referenceId: string | null;
+  amount: string;
+  cost: string;
+  markupAmount: string | null;
+  markupPercent: string | null;
+  currency: string;
+  occurrenceDate: string | null;
+  receiptUrl: string | null;
+  notes: string | null;
+  createdAt: string;
+  createdBy: {
+    user: {
+      name: string | null;
+      email: string;
+      image: string | null;
+    };
+  } | null;
+}
+
+interface FinancialFormState {
+  description: string;
+  vendor: string;
+  referenceId: string;
+  cost: string;
+  markupAmount: string;
+  markupPercent: string;
+  currency: string;
+  occurrenceDate: string;
+  receiptUrl: string;
+  notes: string;
+}
+
+const initialFinancialFormState: FinancialFormState = {
+  description: "",
+  vendor: "",
+  referenceId: "",
+  cost: "",
+  markupAmount: "",
+  markupPercent: "",
+  currency: "USD",
+  occurrenceDate: "",
+  receiptUrl: "",
+  notes: "",
+};
+
+const createEmptyFinancialFormState = (): FinancialFormState => ({
+  ...initialFinancialFormState,
+});
+
+const formatMoney = (value?: string | null) => {
+  if (!value) {
+    return "-";
+  }
+
+  const numeric = Number(value);
+  if (Number.isNaN(numeric)) {
+    return value;
+  }
+
+  return numeric.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const dateForInput = (value?: string | null) => {
+  if (!value) {
+    return "";
+  }
+
+  return value.split("T")[0];
+};
+
+const tabValueForType = (type: FinancialEntryType) =>
+  type === "EXPENSE" ? "expenses" : "purchases";
+
+const labelForType = (type: FinancialEntryType) =>
+  type === "EXPENSE" ? "Expense" : "Purchase";
+
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -184,6 +284,24 @@ export default function ProjectDetailPage() {
       };
     }>
   >([]);
+  const [financialEntries, setFinancialEntries] = useState<
+    Record<FinancialEntryType, FinancialEntry[]>
+  >({
+    EXPENSE: [],
+    PURCHASE: [],
+  });
+  const [financeLoading, setFinanceLoading] = useState(false);
+  const [financeRefreshTrigger, setFinanceRefreshTrigger] = useState(0);
+  const [isFinanceDialogOpen, setIsFinanceDialogOpen] = useState(false);
+  const [financeDialogType, setFinanceDialogType] =
+    useState<FinancialEntryType>("EXPENSE");
+  const [isEditingFinancialEntry, setIsEditingFinancialEntry] = useState(false);
+  const [selectedFinancialEntry, setSelectedFinancialEntry] =
+    useState<FinancialEntry | null>(null);
+  const [financeFormState, setFinanceFormState] = useState<FinancialFormState>(
+    createEmptyFinancialFormState()
+  );
+  const [financeSubmitting, setFinanceSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -263,6 +381,367 @@ export default function ProjectDetailPage() {
       fetchProjectData();
     }
   }, [projectId]);
+
+  const currentFinanceType: FinancialEntryType | null =
+    activeTab === "expenses"
+      ? "EXPENSE"
+      : activeTab === "purchases"
+      ? "PURCHASE"
+      : null;
+
+  const loadFinancialEntries = useCallback(
+    async (type: FinancialEntryType) => {
+      if (!projectId) {
+        return;
+      }
+
+      setFinanceLoading(true);
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/financial-entries?entryType=${type}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load financial entries");
+        }
+
+        const data = await response.json();
+        setFinancialEntries((prev) => ({
+          ...prev,
+          [type]: data.entries ?? [],
+        }));
+      } catch (error) {
+        console.error("Error fetching financial entries:", error);
+        toast.error("Unable to load financial entries");
+      } finally {
+        setFinanceLoading(false);
+      }
+    },
+    [projectId]
+  );
+
+  useEffect(() => {
+    if (!FINANCE_FEATURE_FLAG || !currentFinanceType) {
+      return;
+    }
+
+    loadFinancialEntries(currentFinanceType);
+  }, [
+    FINANCE_FEATURE_FLAG,
+    currentFinanceType,
+    financeRefreshTrigger,
+    loadFinancialEntries,
+  ]);
+
+  const handleFinanceDialogOpen = (
+    type: FinancialEntryType,
+    entry?: FinancialEntry
+  ) => {
+    setFinanceDialogType(type);
+    if (entry) {
+      setIsEditingFinancialEntry(true);
+      setSelectedFinancialEntry(entry);
+      setFinanceFormState({
+        description: entry.description ?? "",
+        vendor: entry.vendor ?? "",
+        referenceId: entry.referenceId ?? "",
+        cost: entry.cost ?? "",
+        markupAmount: entry.markupAmount ?? "",
+        markupPercent: entry.markupPercent ?? "",
+        currency: entry.currency ?? "USD",
+        occurrenceDate: dateForInput(entry.occurrenceDate),
+        receiptUrl: entry.receiptUrl ?? "",
+        notes: entry.notes ?? "",
+      });
+    } else {
+      setIsEditingFinancialEntry(false);
+      setSelectedFinancialEntry(null);
+      setFinanceFormState(createEmptyFinancialFormState());
+    }
+
+    setIsFinanceDialogOpen(true);
+  };
+
+  const handleFinanceDialogClose = () => {
+    setIsFinanceDialogOpen(false);
+    setIsEditingFinancialEntry(false);
+    setSelectedFinancialEntry(null);
+    setFinanceFormState(createEmptyFinancialFormState());
+    setFinanceDialogType("EXPENSE");
+    setFinanceSubmitting(false);
+  };
+
+  const handleFinanceDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      handleFinanceDialogClose();
+      return;
+    }
+
+    setIsFinanceDialogOpen(true);
+  };
+
+  const handleFinanceFormChange = (
+    field: keyof FinancialFormState,
+    value: string
+  ) => {
+    setFinanceFormState((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleFinanceSave = async () => {
+    if (!projectId) {
+      return;
+    }
+
+    const trimmedCost = financeFormState.cost.trim();
+    if (!trimmedCost) {
+      toast.error("Cost is required");
+      return;
+    }
+
+    setFinanceSubmitting(true);
+
+    const payload: Record<string, unknown> = {
+      cost: trimmedCost,
+    };
+
+    if (!isEditingFinancialEntry) {
+      payload.entryType = financeDialogType;
+    }
+
+    const attachValue = (key: string, value: string | undefined) => {
+      if (value === undefined) {
+        return;
+      }
+
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        payload[key] = trimmed;
+      }
+    };
+
+    attachValue("description", financeFormState.description);
+    attachValue("vendor", financeFormState.vendor);
+    attachValue("referenceId", financeFormState.referenceId);
+    attachValue("markupAmount", financeFormState.markupAmount);
+    attachValue("markupPercent", financeFormState.markupPercent);
+    const trimmedCurrencyInput = financeFormState.currency.trim();
+    if (trimmedCurrencyInput.length > 0) {
+      payload.currency = trimmedCurrencyInput.toUpperCase();
+    }
+    attachValue("occurrenceDate", financeFormState.occurrenceDate);
+    attachValue("receiptUrl", financeFormState.receiptUrl);
+    attachValue("notes", financeFormState.notes);
+
+    const entryLabel = labelForType(financeDialogType);
+    const endpoint =
+      isEditingFinancialEntry && selectedFinancialEntry
+        ? `/api/projects/${projectId}/financial-entries/${selectedFinancialEntry.id}`
+        : `/api/projects/${projectId}/financial-entries`;
+    const method = isEditingFinancialEntry ? "PATCH" : "POST";
+
+    try {
+      const savePromise = fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to save entry");
+        }
+        return data;
+      });
+
+      await toast.promise(savePromise, {
+        loading: isEditingFinancialEntry
+          ? `Updating ${entryLabel.toLowerCase()}...`
+          : `Saving ${entryLabel.toLowerCase()}...`,
+        success: isEditingFinancialEntry
+          ? `${entryLabel} updated`
+          : `${entryLabel} created`,
+        error: `Unable to save ${entryLabel.toLowerCase()}`,
+      });
+
+      setFinanceRefreshTrigger((prev) => prev + 1);
+      handleFinanceDialogClose();
+    } catch (error) {
+      console.error("Error saving financial entry:", error);
+    } finally {
+      setFinanceSubmitting(false);
+    }
+  };
+
+  const handleDeleteFinancialEntry = async (entry: FinancialEntry) => {
+    if (!projectId) {
+      return;
+    }
+
+    try {
+      const deletePromise = fetch(
+        `/api/projects/${projectId}/financial-entries/${entry.id}`,
+        { method: "DELETE" }
+      ).then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to delete entry");
+        }
+      });
+
+      await toast.promise(deletePromise, {
+        loading: "Deleting entry...",
+        success: "Entry deleted",
+        error: "Failed to delete entry",
+      });
+
+      setFinanceRefreshTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error deleting financial entry:", error);
+    }
+  };
+
+  const renderFinancialTabContent = (type: FinancialEntryType) => {
+    const entries = financialEntries[type];
+    const isActiveTab = currentFinanceType === type;
+    const label = labelForType(type);
+
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="text-sm font-semibold text-muted-foreground">
+            {label} overview
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleFinanceDialogOpen(type)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add {label}
+          </Button>
+        </div>
+
+        {financeLoading && isActiveTab ? (
+          <div className="flex items-center justify-center rounded border border-dashed border-border p-8 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Loading {label.toLowerCase()}...
+          </div>
+        ) : entries.length === 0 ? (
+          <div className="rounded border border-dashed border-border p-6 text-sm text-muted-foreground">
+            No {label.toLowerCase()} recorded yet.
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded border border-border">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b bg-muted text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-normal">Description</th>
+                  <th className="px-4 py-3 font-normal">Vendor</th>
+                  <th className="px-4 py-3 font-normal text-right">Cost</th>
+                  <th className="px-4 py-3 font-normal text-right">Markup</th>
+                  <th className="px-4 py-3 font-normal text-right">Amount</th>
+                  <th className="px-4 py-3 font-normal">Currency</th>
+                  <th className="px-4 py-3 font-normal">Date</th>
+                  <th className="px-4 py-3 font-normal">Creator</th>
+                  <th className="px-4 py-3 font-normal">Receipt</th>
+                  <th className="px-4 py-3 font-normal">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr key={entry.id} className="border-b last:border-0">
+                    <td className="px-4 py-3 align-top">
+                      <div className="font-medium">
+                        {entry.description || "—"}
+                      </div>
+                      {entry.notes && (
+                        <p className="text-[0.7rem] text-muted-foreground">
+                          {entry.notes}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {entry.vendor || "—"}
+                    </td>
+                    <td className="px-4 py-3 align-top text-right">
+                      {formatMoney(entry.cost)}
+                    </td>
+                    <td className="px-4 py-3 align-top text-right">
+                      {entry.markupAmount ? (
+                        <div>
+                          <div>{formatMoney(entry.markupAmount)}</div>
+                          {entry.markupPercent && (
+                            <div className="text-[0.65rem] text-muted-foreground">
+                              {Number(entry.markupPercent).toFixed(2)}%
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top text-right">
+                      {formatMoney(entry.amount)}
+                    </td>
+                    <td className="px-4 py-3 align-top">{entry.currency}</td>
+                    <td className="px-4 py-3 align-top">
+                      {entry.occurrenceDate
+                        ? new Date(entry.occurrenceDate).toLocaleDateString(
+                            "en-US"
+                          )
+                        : new Date(entry.createdAt).toLocaleDateString("en-US")}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {entry.createdBy?.user?.name ||
+                        entry.createdBy?.user?.email ||
+                        "—"}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {entry.receiptUrl ? (
+                        <a
+                          href={entry.receiptUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary underline"
+                        >
+                          View
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1"
+                          onClick={() =>
+                            handleFinanceDialogOpen(entry.entryType, entry)
+                          }
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 text-destructive"
+                          onClick={() => handleDeleteFinancialEntry(entry)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const handleEdit = () => {
     setIsEditProjectOpen(true);
@@ -482,6 +961,22 @@ export default function ProjectDetailPage() {
                 {notes.length}
               </Badge>
             </TabsTrigger>
+            {FINANCE_FEATURE_FLAG && (
+              <>
+                <TabsTrigger value="expenses">
+                  Expenses
+                  <Badge variant="secondary" className="ml-2">
+                    {financialEntries.EXPENSE.length}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="purchases">
+                  Purchases
+                  <Badge variant="secondary" className="ml-2">
+                    {financialEntries.PURCHASE.length}
+                  </Badge>
+                </TabsTrigger>
+              </>
+            )}
             <TabsTrigger value="activity">
               <Activity className="mr-2 h-4 w-4" />
               Activity
@@ -578,6 +1073,16 @@ export default function ProjectDetailPage() {
               currentUserId={user.email || ""}
             />
           </TabsContent>
+          {FINANCE_FEATURE_FLAG && (
+            <TabsContent value="expenses" className="space-y-4">
+              {renderFinancialTabContent("EXPENSE")}
+            </TabsContent>
+          )}
+          {FINANCE_FEATURE_FLAG && (
+            <TabsContent value="purchases" className="space-y-4">
+              {renderFinancialTabContent("PURCHASE")}
+            </TabsContent>
+          )}
           <TabsContent value="activity" className="space-y-4">
             <ProjectActivityTab
               projectId={project.id}
@@ -643,6 +1148,182 @@ export default function ProjectDetailPage() {
             }
           }}
         />
+
+        <Dialog
+          open={isFinanceDialogOpen}
+          onOpenChange={handleFinanceDialogOpenChange}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>
+                {isEditingFinancialEntry ? "Edit" : "Add"}{" "}
+                {labelForType(financeDialogType)}
+              </DialogTitle>
+              <DialogDescription>
+                Capture costs, markup, and supporting details for this{" "}
+                {labelForType(financeDialogType).toLowerCase()}.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleFinanceSave();
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={financeFormState.description}
+                  onChange={(event) =>
+                    handleFinanceFormChange("description", event.target.value)
+                  }
+                  className="min-h-[100px]"
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Vendor</Label>
+                  <Input
+                    value={financeFormState.vendor}
+                    onChange={(event) =>
+                      handleFinanceFormChange("vendor", event.target.value)
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Reference ID</Label>
+                  <Input
+                    value={financeFormState.referenceId}
+                    onChange={(event) =>
+                      handleFinanceFormChange("referenceId", event.target.value)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Cost</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={financeFormState.cost}
+                    onChange={(event) =>
+                      handleFinanceFormChange("cost", event.target.value)
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Markup Amount</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={financeFormState.markupAmount}
+                    onChange={(event) =>
+                      handleFinanceFormChange(
+                        "markupAmount",
+                        event.target.value
+                      )
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Markup Percent</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={financeFormState.markupPercent}
+                    onChange={(event) =>
+                      handleFinanceFormChange(
+                        "markupPercent",
+                        event.target.value
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Currency</Label>
+                  <Input
+                    value={financeFormState.currency}
+                    onChange={(event) =>
+                      handleFinanceFormChange("currency", event.target.value)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Occurrence Date</Label>
+                  <Input
+                    type="date"
+                    value={financeFormState.occurrenceDate}
+                    onChange={(event) =>
+                      handleFinanceFormChange(
+                        "occurrenceDate",
+                        event.target.value
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Receipt URL</Label>
+                  <Input
+                    type="url"
+                    value={financeFormState.receiptUrl}
+                    onChange={(event) =>
+                      handleFinanceFormChange("receiptUrl", event.target.value)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Notes</Label>
+                <Textarea
+                  value={financeFormState.notes}
+                  onChange={(event) =>
+                    handleFinanceFormChange("notes", event.target.value)
+                  }
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleFinanceDialogClose}
+                  disabled={financeSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={financeSubmitting}>
+                  {financeSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {isEditingFinancialEntry ? "Update" : "Create"}
+                  <span className="ml-2">
+                    {labelForType(financeDialogType)}
+                  </span>
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Project Dialog */}
         {project && (

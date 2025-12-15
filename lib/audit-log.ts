@@ -49,7 +49,10 @@ export async function createAuditLog(params: CreateAuditLogParams) {
           countryFlag = countryFlag ?? latestSession.sessionCountryFlag ?? null;
         }
       } catch (sessionError) {
-        console.error("Failed to load session geo for audit log:", sessionError);
+        console.error(
+          "Failed to load session geo for audit log:",
+          sessionError
+        );
       }
     }
 
@@ -193,6 +196,10 @@ export const AUDIT_ACTIONS = {
   PROJECT_TEAM_CHANGED: "PROJECT_TEAM_CHANGED",
   PROJECT_MANAGER_CHANGED: "PROJECT_MANAGER_CHANGED",
   PROJECT_LEAD_CHANGED: "PROJECT_LEAD_CHANGED",
+  PROJECT_FINANCIAL_ENTRIES_VIEWED: "PROJECT_FINANCIAL_ENTRIES_VIEWED",
+  PROJECT_FINANCIAL_ENTRY_CREATED: "PROJECT_FINANCIAL_ENTRY_CREATED",
+  PROJECT_FINANCIAL_ENTRY_UPDATED: "PROJECT_FINANCIAL_ENTRY_UPDATED",
+  PROJECT_FINANCIAL_ENTRY_DELETED: "PROJECT_FINANCIAL_ENTRY_DELETED",
 
   // Task actions
   TASK_CREATED: "TASK_CREATED",
