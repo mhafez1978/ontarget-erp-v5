@@ -373,6 +373,33 @@ export function DashboardLayout({
               </Avatar>
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="text-sm font-medium truncate">
+                  {displayName}
+                </span>
+                {user?.role && (
+                  <span className="text-xs text-muted-foreground truncate">
+                    {user.role.replace("_", " ")}
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <Avatar
+                className="h-9 w-9 mx-auto"
+                key={userImage || "no-image-collapsed"}
+              >
+                <AvatarImage
+                  src={getProxiedImageUrl(userImage)}
+                  alt={displayName}
+                />
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                  {getInitials(user?.name)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          )}
+        </div>
+
         {/* Collapse Toggle */}
         <div className="border-t p-2 hidden lg:block">
           <Button
