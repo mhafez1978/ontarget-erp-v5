@@ -70,14 +70,6 @@ RUN npm install -g prisma@6.19.0 && \
     chown -R nextjs:nodejs /usr/local/lib/node_modules && \
     chown -R nextjs:nodejs /usr/local/bin
 
-# 3. Create storage directory with proper permissions
-RUN mkdir -p /var/storage/cold/logos /var/storage/cold/uploads && \
-    chown -R nextjs:nodejs /var/storage
-
-# 3. Create storage directory with proper permissions
-RUN mkdir -p /var/storage/cold/logos /var/storage/cold/uploads && \
-    chown -R nextjs:nodejs /var/storage
-
 # Copy public folder with correct permissions
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 

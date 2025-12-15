@@ -1298,7 +1298,7 @@ export default function ProjectDetailPage() {
                   onChange={(event) =>
                     handleFinanceFormChange("notes", event.target.value)
                   }
-                  className="min-h-[80px]"
+                  className="min-h-20"
                 />
               </div>
 

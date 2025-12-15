@@ -1,8 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
-const { Decimal } = Prisma;
-
 const restrictedRoles = new Set(["MANAGER", "STAFF", "CONTRACTOR"]);
 
 type ProjectInfo = {
@@ -137,33 +135,33 @@ export async function loadProjectContext(options: {
 export function parseDecimalInput(
   value: unknown,
   fieldName: string
-): Decimal | undefined {
+): Prisma.Decimal | undefined {
   if (value === undefined || value === null || value === "") {
     return undefined;
   }
 
   try {
-    return new Decimal(value as Decimal.Value);
-  } catch (error) {
+    return new Prisma.Decimal(value as string | number);
+  } catch {
     throw new Error(`${fieldName} must be a valid number`);
   }
 }
 
 export function deriveFinancialTotalsForCreate(options: {
-  cost: Decimal;
-  markupAmount?: Decimal;
-  markupPercent?: Decimal;
+  cost: Prisma.Decimal;
+  markupAmount?: Prisma.Decimal;
+  markupPercent?: Prisma.Decimal;
 }): {
-  cost: Decimal;
-  markupAmount: Decimal;
-  markupPercent: Decimal;
-  amount: Decimal;
+  cost: Prisma.Decimal;
+  markupAmount: Prisma.Decimal;
+  markupPercent: Prisma.Decimal;
+  amount: Prisma.Decimal;
 } {
   const markupAmountProvided = options.markupAmount !== undefined;
   const markupPercentProvided = options.markupPercent !== undefined;
 
-  let markupAmount = options.markupAmount ?? new Decimal(0);
-  let markupPercent = options.markupPercent ?? new Decimal(0);
+  let markupAmount = options.markupAmount ?? new Prisma.Decimal(0);
+  let markupPercent = options.markupPercent ?? new Prisma.Decimal(0);
 
   if (markupPercentProvided && !markupAmountProvided) {
     markupAmount = options.cost.mul(markupPercent).div(100);
@@ -172,7 +170,7 @@ export function deriveFinancialTotalsForCreate(options: {
   if (markupAmountProvided && !markupPercentProvided) {
     markupPercent = options.cost.gt(0)
       ? markupAmount.div(options.cost).mul(100)
-      : new Decimal(0);
+      : new Prisma.Decimal(0);
   }
 
   const total = options.cost.add(markupAmount);
@@ -186,24 +184,28 @@ export function deriveFinancialTotalsForCreate(options: {
 }
 
 export function deriveFinancialTotalsForUpdate(options: {
-  baseCost: Decimal;
-  baseMarkupAmount: Decimal | null;
-  baseMarkupPercent: Decimal | null;
-  costInput?: Decimal;
-  markupAmountInput?: Decimal;
-  markupPercentInput?: Decimal;
+  baseCost: Prisma.Decimal;
+  baseMarkupAmount: Prisma.Decimal | null;
+  baseMarkupPercent: Prisma.Decimal | null;
+  costInput?: Prisma.Decimal;
+  markupAmountInput?: Prisma.Decimal;
+  markupPercentInput?: Prisma.Decimal;
 }): {
-  cost: Decimal;
-  markupAmount: Decimal;
-  markupPercent: Decimal;
-  amount: Decimal;
+  cost: Prisma.Decimal;
+  markupAmount: Prisma.Decimal;
+  markupPercent: Prisma.Decimal;
+  amount: Prisma.Decimal;
 } {
   const hasCostUpdate = options.costInput !== undefined;
   const cost = options.costInput ?? options.baseCost;
   let markupAmount =
-    options.markupAmountInput ?? options.baseMarkupAmount ?? new Decimal(0);
+    options.markupAmountInput ??
+    options.baseMarkupAmount ??
+    new Prisma.Decimal(0);
   let markupPercent =
-    options.markupPercentInput ?? options.baseMarkupPercent ?? new Decimal(0);
+    options.markupPercentInput ??
+    options.baseMarkupPercent ??
+    new Prisma.Decimal(0);
 
   if (
     options.markupPercentInput !== undefined &&
@@ -218,7 +220,7 @@ export function deriveFinancialTotalsForUpdate(options: {
   ) {
     markupPercent = cost.gt(0)
       ? markupAmount.div(cost).mul(100)
-      : new Decimal(0);
+      : new Prisma.Decimal(0);
   }
 
   if (

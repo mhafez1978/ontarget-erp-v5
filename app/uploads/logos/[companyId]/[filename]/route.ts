@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { db } from "@/lib/db";
+import { getStorageConfig } from "@/lib/storage-config";
 
 /**
  * GET - Serve logo files from cold storage or database base64
@@ -80,16 +81,10 @@ export async function GET(
       }
     }
 
-    // Get storage configuration
-    const storage = await db.storageProvider.findFirst({
-      where: {
-        scope: "GLOBAL",
-        isActive: true,
-        isConnected: true,
-      },
-    });
+    // Get storage configuration using the helper
+    const storageConfig = await getStorageConfig();
 
-    if (!storage) {
+    if (!storageConfig) {
       console.log(
         `[Logo Serve] No storage configured and no base64 logo found for ${companyId}/${filename}`
       );
@@ -99,9 +94,7 @@ export async function GET(
       );
     }
 
-    const config = JSON.parse(storage.config || "{}");
-    const basePath =
-      storage.provider === "LOCAL" ? config.path || "../var/storage/cold" : "";
+    const basePath = storageConfig.basePath;
 
     if (!basePath) {
       return NextResponse.json(

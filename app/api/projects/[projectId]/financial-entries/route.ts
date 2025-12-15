@@ -1,4 +1,4 @@
-import { Prisma, ProjectEntryType } from "@prisma/client";
+import { ProjectEntryType } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
@@ -8,8 +8,6 @@ import {
   loadProjectContext,
   parseDecimalInput,
 } from "./helpers";
-
-const { Decimal } = Prisma;
 const entryTypes = new Set<string>(["EXPENSE", "PURCHASE"]);
 
 function sanitizeCurrency(value: unknown) {
@@ -141,22 +139,11 @@ export async function POST(
       );
     }
 
-    let cost: Prisma.Decimal;
-    try {
-      const parsedCost = parseDecimalInput(body.cost, "cost");
-      if (!parsedCost) {
-        return NextResponse.json(
-          { error: "cost is required" },
-          { status: 400 }
-        );
-      }
-      cost = parsedCost;
-    } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 400 }
-      );
+    const parsedCost = parseDecimalInput(body.cost, "cost");
+    if (!parsedCost) {
+      return NextResponse.json({ error: "cost is required" }, { status: 400 });
     }
+    const cost = parsedCost;
 
     if (cost.lt(0)) {
       return NextResponse.json(
@@ -165,25 +152,11 @@ export async function POST(
       );
     }
 
-    let markupAmount: Prisma.Decimal | undefined;
-    try {
-      markupAmount = parseDecimalInput(body.markupAmount, "markupAmount");
-    } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 400 }
-      );
-    }
-
-    let markupPercent: Prisma.Decimal | undefined;
-    try {
-      markupPercent = parseDecimalInput(body.markupPercent, "markupPercent");
-    } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 400 }
-      );
-    }
+    const markupAmount = parseDecimalInput(body.markupAmount, "markupAmount");
+    const markupPercent = parseDecimalInput(
+      body.markupPercent,
+      "markupPercent"
+    );
 
     if (markupAmount && markupAmount.lt(0)) {
       return NextResponse.json(
@@ -279,7 +252,7 @@ export async function POST(
         entryType: entry.entryType,
         amount: entry.amount.toString(),
         cost: entry.cost.toString(),
-        markupAmount: entry.markupAmount.toString(),
+        markupAmount: entry.markupAmount?.toString() ?? "0",
         markupPercent: entry.markupPercent?.toString(),
       },
     });

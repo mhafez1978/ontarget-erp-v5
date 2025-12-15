@@ -8,8 +8,6 @@ import {
   loadProjectContext,
   parseDecimalInput,
 } from "../helpers";
-
-const { Decimal } = Prisma;
 const entryTypes = new Set<string>(["EXPENSE", "PURCHASE"]);
 
 function sanitizeCurrency(value: unknown) {
@@ -159,38 +157,15 @@ export async function PATCH(
       );
     }
 
-    let costInput: Prisma.Decimal | undefined;
-    try {
-      costInput = parseDecimalInput(body.cost, "cost");
-    } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 400 }
-      );
-    }
-
-    let markupAmountInput: Prisma.Decimal | undefined;
-    try {
-      markupAmountInput = parseDecimalInput(body.markupAmount, "markupAmount");
-    } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 400 }
-      );
-    }
-
-    let markupPercentInput: Prisma.Decimal | undefined;
-    try {
-      markupPercentInput = parseDecimalInput(
-        body.markupPercent,
-        "markupPercent"
-      );
-    } catch (error) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: 400 }
-      );
-    }
+    const costInput = parseDecimalInput(body.cost, "cost");
+    const markupAmountInput = parseDecimalInput(
+      body.markupAmount,
+      "markupAmount"
+    );
+    const markupPercentInput = parseDecimalInput(
+      body.markupPercent,
+      "markupPercent"
+    );
 
     if (costInput && costInput.lt(0)) {
       return NextResponse.json(
@@ -214,7 +189,7 @@ export async function PATCH(
     }
 
     const totals = deriveFinancialTotalsForUpdate({
-      baseCost: new Decimal(entry.cost),
+      baseCost: new Prisma.Decimal(entry.cost),
       baseMarkupAmount: entry.markupAmount,
       baseMarkupPercent: entry.markupPercent,
       costInput,
