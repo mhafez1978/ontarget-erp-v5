@@ -48,11 +48,27 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # 2. Create the non-root user and group
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
-# Install Prisma CLI globally for migrations/management in production
-RUN npm install -g prisma@6.19.0
+# Install sudo for privilege escalation
+RUN apk add --no-cache sudo shadow
+
+# Set root password from build arg (can be overridden via environment variable)
+ARG ROOT_PASSWORD=change-me-in-production
+RUN echo "root:${ROOT_PASSWORD}" | chpasswd
+
+# Allow nextjs user to use sudo
+RUN echo "nextjs ALL=(ALL) NOPASSWD: /usr/local/bin/node" > /etc/sudoers.d/nextjs && \
+    echo "nextjs ALL=(ALL) NOPASSWD: /usr/local/bin/npm" >> /etc/sudoers.d/nextjs && \
+    echo "nextjs ALL=(ALL) NOPASSWD: /usr/local/bin/npx" >> /etc/sudoers.d/nextjs && \
+    chmod 0440 /etc/sudoers.d/nextjs
+
+# FIX: Install Prisma CLI globally BUT with correct ownership
+RUN npm install -g prisma@6.19.0 && \
+    # Change ownership of global npm directories to nextjs user
+    chown -R nextjs:nodejs /usr/local/lib/node_modules && \
+    chown -R nextjs:nodejs /usr/local/bin
 
 # 3. Copy public folder with correct permissions
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
