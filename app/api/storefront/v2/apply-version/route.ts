@@ -50,14 +50,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
     let specToApply: any;
-    
+
     if (versionId) {
       // Load from database version
       const version = await db.storefrontSpecVersion.findUnique({
         where: { id: versionId },
       });
       if (!version || version.companyId !== companyId)
-        return NextResponse.json({ error: "Version not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Version not found" },
+          { status: 404 }
+        );
       specToApply = version.spec;
     } else {
       // Use spec directly from request
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
         data: {
           conversationId: conv.id,
           role: "system",
-          content: versionId 
+          content: versionId
             ? `Spec version ${versionId} applied by ${user.id}`
             : `Custom spec applied by ${user.id}`,
           isPreviewOnly: false,
@@ -127,7 +130,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true, message: "Design published successfully" });
+    return NextResponse.json({
+      success: true,
+      message: "Design published successfully",
+    });
   } catch (error) {
     console.error("Apply version error:", error);
     return NextResponse.json(

@@ -1060,7 +1060,8 @@ export default function FrontstoreV2Page() {
                         Generating Your Storefront
                       </h3>
                       <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                        AI is crafting your custom design... This may take 30-60 seconds.
+                        AI is crafting your custom design... This may take 30-60
+                        seconds.
                       </p>
                       {generationProgress > 0 && (
                         <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
