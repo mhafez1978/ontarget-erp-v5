@@ -3106,6 +3106,318 @@ export function BaseThemeRenderer({
           </footer>
         );
 
+      // V2 Section Types (for parity with AI Storefront V2)
+      case "product-grid":
+        // Alias for featured-products
+        if (featuredProducts.length === 0) return null;
+        return (
+          <section key={section.id} className={`py-16 ${bgClass} ${textClass}`}>
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold mb-4">
+                  {renderContent(content.heading || "Our Products")}
+                </h2>
+                {content.description && (
+                  <p className="text-lg opacity-80 max-w-2xl mx-auto">
+                    {renderContent(content.description)}
+                  </p>
+                )}
+              </div>
+              <ThemeProductLayout
+                products={featuredProducts}
+                themeId={themeId}
+              />
+            </div>
+          </section>
+        );
+
+      case "service-grid":
+        // Alias for featured-services
+        if (featuredServices.length === 0) return null;
+        return (
+          <section key={section.id} className={`py-16 ${bgClass} ${textClass}`}>
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold mb-4">
+                  {renderContent(content.heading || "Our Services")}
+                </h2>
+                {content.description && (
+                  <p className="text-lg opacity-80 max-w-2xl mx-auto">
+                    {renderContent(content.description)}
+                  </p>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {featuredServices.map((service) => (
+                  <Card key={service.id} className="overflow-hidden">
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-semibold mb-2">
+                        {service.name}
+                      </h3>
+                      {service.description && (
+                        <p className="text-sm opacity-80 mb-4">
+                          {service.description}
+                        </p>
+                      )}
+                      {service.price && (
+                        <p className="text-lg font-bold">
+                          ${Number(service.price).toFixed(2)}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      case "highlights":
+        // Feature/benefits highlights
+        const highlights = Array.isArray(content.items)
+          ? content.items
+          : [
+              {
+                title: "Quality",
+                description: "Premium products and services",
+                icon: "✨",
+              },
+              {
+                title: "Fast Delivery",
+                description: "Quick turnaround times",
+                icon: "🚀",
+              },
+              {
+                title: "Support",
+                description: "Expert customer support",
+                icon: "💬",
+              },
+            ];
+        return (
+          <section key={section.id} className={`py-16 ${bgClass} ${textClass}`}>
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold mb-4">
+                  {renderContent(content.heading || "Why Choose Us")}
+                </h2>
+                {content.description && (
+                  <p className="text-lg opacity-80 max-w-2xl mx-auto">
+                    {renderContent(content.description)}
+                  </p>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {highlights.map((item: any, idx: number) => (
+                  <Card key={idx}>
+                    <CardContent className="p-6 text-center">
+                      <div className="text-4xl mb-4">{item.icon || "✨"}</div>
+                      <h3 className="text-xl font-semibold mb-2">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm opacity-80">{item.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      case "portfolio":
+        // Portfolio/case studies section
+        const portfolioItems = Array.isArray(content.projects)
+          ? content.projects
+          : [];
+        if (portfolioItems.length === 0) return null;
+        return (
+          <section key={section.id} className={`py-16 ${bgClass} ${textClass}`}>
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold mb-4">
+                  {renderContent(content.heading || "Our Work")}
+                </h2>
+                {content.description && (
+                  <p className="text-lg opacity-80 max-w-2xl mx-auto">
+                    {renderContent(content.description)}
+                  </p>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {portfolioItems.map((project: any, idx: number) => (
+                  <Card key={idx} className="overflow-hidden group">
+                    {project.image && (
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={project.image}
+                          alt={project.title || "Project"}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    <CardContent className="p-6">
+                      {project.category && (
+                        <span className="text-xs font-semibold uppercase tracking-wider opacity-70">
+                          {project.category}
+                        </span>
+                      )}
+                      <h3 className="text-xl font-semibold mt-2 mb-2">
+                        {project.title}
+                      </h3>
+                      {project.client && (
+                        <p className="text-sm opacity-60 mb-2">
+                          Client: {project.client}
+                        </p>
+                      )}
+                      {project.description && (
+                        <p className="text-sm opacity-80">
+                          {project.description}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      case "testimonials":
+        // Alias for social-proof but with V2 structure
+        if (!testimonials || testimonials.length === 0) return null;
+        return (
+          <section key={section.id} className={`py-16 ${bgClass} ${textClass}`}>
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold mb-4">
+                  {renderContent(content.heading || "What Our Customers Say")}
+                </h2>
+                {content.description && (
+                  <p className="text-lg opacity-80 max-w-2xl mx-auto">
+                    {renderContent(content.description)}
+                  </p>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {testimonials.slice(0, 3).map((testimonial) => (
+                  <Card key={testimonial.id}>
+                    <CardContent className="p-6">
+                      <div className="flex mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-5 w-5 ${
+                              i < (testimonial.rating || 5)
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm opacity-90 mb-4 italic">
+                        &ldquo;{testimonial.testimonial}&rdquo;
+                      </p>
+                      <div className="font-semibold">
+                        {testimonial.customerName}
+                      </div>
+                      {testimonial.customerTitle && (
+                        <div className="text-sm opacity-60">
+                          {testimonial.customerTitle}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      case "faq":
+        // FAQ section
+        const faqItems = Array.isArray(content.items)
+          ? content.items
+          : [
+              {
+                question: "What are your business hours?",
+                answer: "We're open Monday-Friday, 9am-5pm",
+              },
+              {
+                question: "Do you offer refunds?",
+                answer: "Yes, we have a 30-day money-back guarantee",
+              },
+            ];
+        return (
+          <section key={section.id} className={`py-16 ${bgClass} ${textClass}`}>
+            <div className="container mx-auto px-4 max-w-3xl">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold mb-4">
+                  {renderContent(
+                    content.heading || "Frequently Asked Questions"
+                  )}
+                </h2>
+                {content.description && (
+                  <p className="text-lg opacity-80">
+                    {renderContent(content.description)}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-4">
+                {faqItems.map((item: any, idx: number) => (
+                  <Card key={idx}>
+                    <CardContent className="p-6">
+                      <h3 className="font-semibold text-lg mb-2">
+                        {item.question}
+                      </h3>
+                      <p className="opacity-80">{item.answer}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      case "cta-band":
+        // Call-to-action banner
+        return (
+          <section
+            key={section.id}
+            className={`py-20 ${bgClass} ${textClass}`}
+            style={{
+              backgroundImage: styling?.backgroundImage
+                ? `url(${styling.backgroundImage})`
+                : undefined,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            <div className="container mx-auto px-4 text-center">
+              <div className="max-w-3xl mx-auto">
+                <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                  {renderContent(content.heading || "Ready to Get Started?")}
+                </h2>
+                {content.description && (
+                  <p className="text-lg md:text-xl opacity-90 mb-8">
+                    {renderContent(content.description)}
+                  </p>
+                )}
+                <div className="flex gap-4 justify-center flex-wrap">
+                  {content.primaryButton && (
+                    <Button size="lg" variant="default">
+                      {renderContent(content.primaryButton)}
+                    </Button>
+                  )}
+                  {content.secondaryButton && (
+                    <Button size="lg" variant="outline">
+                      {renderContent(content.secondaryButton)}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+
       default:
         return null;
     }

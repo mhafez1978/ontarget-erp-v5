@@ -13,7 +13,15 @@ export interface ThemeSection {
     | "footer"
     | "promo-banner"
     | "video-section"
-    | "gallery";
+    | "gallery"
+    // V2 sections for parity
+    | "highlights"
+    | "product-grid"
+    | "service-grid"
+    | "portfolio"
+    | "testimonials"
+    | "faq"
+    | "cta-band";
   enabled: boolean;
   order: number;
   content: {

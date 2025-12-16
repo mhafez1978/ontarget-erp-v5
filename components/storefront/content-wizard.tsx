@@ -233,8 +233,10 @@ export function ContentWizard({
       case "social-proof":
         return "⭐";
       case "featured-products":
+      case "product-grid":
         return "📦";
       case "featured-services":
+      case "service-grid":
         return "🔧";
       case "about":
         return "ℹ️";
@@ -243,6 +245,7 @@ export function ContentWizard({
       case "footer":
         return "🦶";
       case "features":
+      case "highlights":
         return "✨";
       case "products":
         return "📦";
@@ -253,7 +256,22 @@ export function ContentWizard({
       case "testimonials":
         return "💬";
       case "cta":
+      case "cta-band":
         return "📢";
+      case "stats":
+        return "📊";
+      case "portfolio":
+        return "🎨";
+      case "faq":
+        return "❓";
+      case "posts":
+        return "📝";
+      case "promo-banner":
+        return "🎉";
+      case "video-section":
+        return "🎥";
+      case "gallery":
+        return "🖼️";
       default:
         return "📄";
     }

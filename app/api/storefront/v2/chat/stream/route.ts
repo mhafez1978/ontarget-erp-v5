@@ -126,12 +126,15 @@ export async function POST(request: NextRequest) {
         logoLight: true,
         logoDark: true,
         email: true,
+        salesEmail: true,
+        supportEmail: true,
         phone: true,
         addressLine1: true,
         addressLine2: true,
         city: true,
         state: true,
         country: true,
+        postalCode: true,
         website: true,
       },
     });
@@ -228,18 +231,47 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Staff and Post models don't exist yet in schema
-    const teamMembers: Array<{
-      user: { name: string | null; email: string; image: string | null };
-      role: string;
-      bio: string | null;
-    }> = [];
+    // Fetch team members (employees)
+    const teamMembers = await db.companyStaff.findMany({
+      where: {
+        companyId,
+        status: "ACTIVE",
+      },
+      take: 20,
+      orderBy: [{ isFeatured: "desc" }, { displayOrder: "asc" }],
+      select: {
+        id: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+        role: true,
+        jobTitle: true,
+        bio: true,
+        isFeatured: true,
+      },
+    });
 
-    const posts: Array<{
-      id: string;
-      title: string;
-      excerpt: string | null;
-    }> = [];
+    // Fetch blog posts
+    const posts = await db.storefrontPost.findMany({
+      where: {
+        companyId,
+        status: "PUBLISHED",
+      },
+      take: 10,
+      orderBy: { publishedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        heroImage: true,
+        publishedAt: true,
+      },
+    });
 
     // Fetch previous conversation messages for context
     const previousMessages = await db.storefrontMessage.findMany({
@@ -304,11 +336,15 @@ export async function POST(request: NextRequest) {
         logoLight: companyData?.logoLight,
         logoDark: companyData?.logoDark,
         email: companyData?.email,
+        salesEmail: companyData?.salesEmail,
+        supportEmail: companyData?.supportEmail,
         phone: companyData?.phone,
         address: companyData?.addressLine1 || null,
+        addressLine2: companyData?.addressLine2 || null,
         city: companyData?.city,
         state: companyData?.state,
         country: companyData?.country,
+        postalCode: companyData?.postalCode,
         website: companyData?.website,
       },
       products: cleanProducts.map((p) => ({
@@ -346,6 +382,13 @@ export async function POST(request: NextRequest) {
       })),
       team: teamMembers.map((m) => ({
         name: m.user.name,
+        email: m.user.email,
+        image: m.user.image,
+        role: m.role,
+        jobTitle: m.jobTitle,
+        bio: m.bio,
+        isFeatured: m.isFeatured,
+      })),
         role: m.role,
         bio: m.bio,
         image: m.user.image,
