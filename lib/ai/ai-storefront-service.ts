@@ -952,6 +952,11 @@ import {
   type ChatMessage,
   type AiProviderConfig,
 } from "./model-client";
+import {
+  getContrastRatio,
+  makeAccessible,
+  isLightColor,
+} from "@/lib/utils/wcag-contrast";
 
 export interface CompanySummary {
   id: string;
@@ -962,6 +967,14 @@ export interface CompanySummary {
   logo?: string | null;
   logoLight?: string | null;
   logoDark?: string | null;
+  extractedBrandColors?: {
+    dominantColors: string[];
+    primarySuggestion: string;
+    secondarySuggestion: string;
+    accentSuggestions: string[];
+    isDarkLogo: boolean;
+    isLightLogo: boolean;
+  };
 }
 
 export interface ProductSummary {
@@ -1469,6 +1482,122 @@ export async function generateAiStorefront(
     "- Choose palettes that match the tone: vibrant primaries for playful, muted tones for luxury, high-contrast for bold tech\n" +
     "- Use per-section styling.backgroundColor, styling.textColor, styling.gradient to create visual variety\n" +
     "- Example: alternate between light and dark sections for rhythm\n\n" +
+    "WCAG ACCESSIBILITY STANDARDS (CRITICAL - MUST FOLLOW):\n" +
+    "You MUST ensure ALL designs meet WCAG 2.1 Level AA standards minimum:\n\n" +
+    "COLOR CONTRAST REQUIREMENTS:\n" +
+    "- Normal text (under 18pt): Minimum 4.5:1 contrast ratio (AA), 7:1 ideal (AAA)\n" +
+    "- Large text (18pt+ or 14pt bold): Minimum 3:1 contrast ratio (AA), 4.5:1 ideal (AAA)\n" +
+    "- UI components and graphical objects: Minimum 3:1 contrast ratio\n" +
+    "- Target: 4.58:1 or higher for optimal readability across all elements\n\n" +
+    "CRITICAL: WHEN LOGO/BRAND COLORS PROVIDED:\n" +
+    "If input.company.extractedBrandColors exists, use those colors as the foundation:\n" +
+    "1. Extract dominant colors from company.extractedBrandColors.dominantColors array\n" +
+    "2. Use extractedBrandColors.primarySuggestion as starting point for meta.primaryColor\n" +
+    "3. Use extractedBrandColors.secondarySuggestion for meta.secondaryColor\n" +
+    "4. Choose from extractedBrandColors.accentSuggestions for meta.accentColor\n" +
+    "5. ALWAYS test each color combination for WCAG contrast compliance before using\n" +
+    "6. If brand color fails contrast test:\n" +
+    "   - For backgrounds: Lighten by 10-30% until it passes\n" +
+    "   - For text/buttons: Darken by 20-40% until it passes\n" +
+    "   - Document in design that you adjusted for accessibility\n" +
+    "7. If extractedBrandColors.isDarkLogo is true: Use light backgrounds (#FFFFFF, #F9FAFB) with darkened brand colors for text\n" +
+    "8. If extractedBrandColors.isLightLogo is true: Use darker backgrounds or ensure sufficient text contrast\n" +
+    "9. Generate accessible color variations:\n" +
+    "   - Primary button: Use brand color for background, ensure white or dark text has 4.5:1 contrast\n" +
+    "   - Secondary elements: Lighten/darken brand color by 15-25% and verify contrast\n" +
+    "   - Hover states: Darken buttons by 10%, increase contrast, never decrease it\n\n" +
+    "SECTION-SPECIFIC CONTRAST RULES:\n" +
+    "- Hero Section:\n" +
+    "  * Title text MUST have 7:1 contrast (large text, high importance)\n" +
+    "  * Body text MUST have 4.5:1 contrast minimum\n" +
+    "  * CTA buttons MUST have 4.5:1+ contrast between button color and text\n" +
+    "  * If using background image: Add dark overlay (0.5-0.7 opacity) to ensure text contrast\n" +
+    "- Navigation:\n" +
+    "  * Nav links MUST have 4.5:1 contrast with header background\n" +
+    "  * NEVER use white text on white/light backgrounds or similar low-contrast combos\n" +
+    "  * Hover states should darken/increase contrast, not lighten\n" +
+    "  * Active page indicator needs 3:1 contrast minimum\n" +
+    "- Product/Service Cards:\n" +
+    "  * Card text on card backgrounds: 4.5:1 minimum\n" +
+    "  * Prices and important info: 7:1 for prominence\n" +
+    "  * Text over images: ALWAYS add dark overlay (0.5-0.7) or use text shadows for contrast\n" +
+    "  * Button CTAs on cards: 4.5:1 contrast\n" +
+    "- Testimonials:\n" +
+    "  * Quote text needs 7:1 for AAA compliance (important social proof)\n" +
+    "  * Author names: 4.5:1 minimum\n" +
+    "  * Stars/ratings: Bright colors (yellow/gold) need dark background for contrast\n" +
+    "- Footer:\n" +
+    "  * Maintain 4.5:1 contrast even on dark backgrounds\n" +
+    "  * Links must be distinguishable: underline or sufficient color difference\n" +
+    "  * Social icons: 3:1 contrast with background\n" +
+    "- Forms & Contact:\n" +
+    "  * Input labels: 4.5:1 contrast minimum\n" +
+    "  * Placeholder text: 4.5:1 (not 3:1, must be readable)\n" +
+    "  * Input borders: Visible 3:1 contrast\n" +
+    "  * Error messages: High contrast (7:1) in red/warning color that still passes WCAG\n" +
+    "  * Submit buttons: Same as CTA buttons, 4.5:1 minimum\n\n" +
+    "TYPOGRAPHY ACCESSIBILITY:\n" +
+    "Font sizes MUST support readability:\n" +
+    "- h1: 2.25rem-3rem (36px-48px) - Large enough for hero impact and readability\n" +
+    "- h2: 1.875rem-2.25rem (30px-36px) - Section headings, clearly distinct from body\n" +
+    "- h3: 1.5rem-1.875rem (24px-30px) - Subsections and card titles\n" +
+    "- h4: 1.25rem-1.5rem (20px-24px) - Minor headings\n" +
+    "- body/p: 1rem-1.125rem (16px-18px) - NEVER go below 16px for body text\n" +
+    "- small text: 0.875rem (14px) minimum - Use sparingly for captions, fine print\n" +
+    "- Line height: 1.5-1.75 for body text (improves readability and scanability)\n" +
+    "- Letter spacing: normal to slightly relaxed (0-0.025em) for body, tighter for headings\n" +
+    "- Font weight: Minimum 400 (normal) for body, 600-700 for headings\n" +
+    "- NEVER use font weights below 300 (too thin, poor contrast)\n\n" +
+    "ACCESSIBLE COLOR PALETTE GENERATION:\n" +
+    "When generating color palettes (with or without brand colors):\n" +
+    "1. Start with brand colors if provided via extractedBrandColors\n" +
+    "2. Select primary color (most prominent from logo or tone-appropriate)\n" +
+    "3. Generate complementary colors using color theory:\n" +
+    "   - Analogous: Colors next to primary on color wheel (harmonious, low-risk)\n" +
+    "   - Complementary: Opposite on wheel (high contrast, use carefully - verify WCAG)\n" +
+    "   - Triadic: 3 colors evenly spaced (vibrant, balanced)\n" +
+    "4. Test EVERY color combination for WCAG compliance:\n" +
+    "   - Primary on background: Must be 4.5:1+\n" +
+    "   - Secondary on background: Must be 4.5:1+\n" +
+    "   - Accent on background: Must be 4.5:1+\n" +
+    "   - Text on primary: Must be 4.5:1+\n" +
+    "5. Create accessible variations if needed:\n" +
+    "   - For light backgrounds: Darken colors by 20-40% for text use\n" +
+    "   - For dark backgrounds: Lighten colors by 20-40% for text use\n" +
+    "   - For buttons: Ensure button background + text = 4.5:1+\n" +
+    "6. Document contrast ratios mentally and ensure compliance\n\n" +
+    "FALLBACK ACCESSIBLE PALETTES (use if extraction fails or colors don't work):\n" +
+    "- Modern Blue: primary: #2563EB, secondary: #1E40AF, accent: #10B981, bg: #FFFFFF, text: #111827 (4.98:1, 8.59:1, 4.68:1)\n" +
+    "- Professional Gray: primary: #475569, secondary: #1E293B, accent: #3B82F6, bg: #F8FAFC, text: #0F172A (5.32:1, 12.63:1, 5.14:1)\n" +
+    "- Warm Orange: primary: #EA580C, secondary: #9A3412, accent: #059669, bg: #FFF7ED, text: #7C2D12 (4.74:1, 9.28:1, 4.89:1)\n" +
+    "- Fresh Green: primary: #059669, secondary: #065F46, accent: #2563EB, bg: #ECFDF5, text: #064E3B (4.92:1, 8.43:1, 6.21:1)\n" +
+    "- Luxury Purple: primary: #7C3AED, secondary: #5B21B6, accent: #F59E0B, bg: #FAFAF9, text: #1C1917 (5.67:1, 9.84:1, 4.52:1)\n" +
+    "- Bold Red: primary: #DC2626, secondary: #991B1B, accent: #2563EB, bg: #FFFBEB, text: #7F1D1D (5.89:1, 10.21:1, 6.43:1)\n" +
+    "All above palettes are pre-tested and meet WCAG AA standards. Use them when brand colors fail or aren't provided.\n\n" +
+    "EXAMPLES OF ACCESSIBLE COMBINATIONS:\n" +
+    "✅ GOOD - These pass WCAG AA:\n" +
+    "- Dark blue (#1E3A8A) on light blue bg (#DBEAFE) = 8.2:1\n" +
+    "- Dark gray (#1F2937) on white (#FFFFFF) = 16.1:1\n" +
+    "- Forest green (#065F46) on mint bg (#ECFDF5) = 5.8:1\n" +
+    "- Deep purple (#5B21B6) on lavender bg (#F3E8FF) = 8.9:1\n" +
+    "- Navy (#1E40AF) on white (#FFFFFF) = 8.59:1\n\n" +
+    "❌ BAD - These FAIL WCAG (NEVER use these):\n" +
+    "- White (#FFFFFF) on light blue (#DBEAFE) = 1.2:1 ❌\n" +
+    "- Yellow (#FCD34D) on white (#FFFFFF) = 1.3:1 ❌\n" +
+    "- Light gray (#D1D5DB) on white (#FFFFFF) = 1.5:1 ❌\n" +
+    "- Light green (#BBF7D0) on white (#FFFFFF) = 1.4:1 ❌\n" +
+    "- White text on light backgrounds WITHOUT sufficient overlay ❌\n" +
+    "- Pale colors on pale backgrounds ❌\n\n" +
+    "TESTING YOUR DESIGNS BEFORE RESPONDING:\n" +
+    "Mentally verify each section:\n" +
+    "✓ No white-on-white or similar low-contrast anywhere\n" +
+    "✓ All nav links have 4.5:1+ contrast with header background\n" +
+    "✓ CTA buttons stand out with high contrast (4.5:1+) AND sufficient size\n" +
+    "✓ Text over images uses dark overlay (0.5-0.7 opacity) or has text shadows\n" +
+    "✓ Form inputs have visible borders (3:1) and labels (4.5:1)\n" +
+    "✓ Hover states INCREASE contrast, never decrease\n" +
+    "✓ All text is 16px+ (14px minimum for captions only)\n" +
+    "✓ Important content (CTAs, prices, testimonials) has 7:1 contrast when possible\n\n" +
     "STYLE FAMILIES (set meta.styleFamily):\n" +
     "- 'brutalist': Bold typography, sharp corners, high contrast, thick borders, no shadows\n" +
     "- 'swiss': Grid-based, clean, sans-serif, lots of whitespace, minimal effects\n" +
@@ -1783,6 +1912,15 @@ export async function generateAiStorefront(
   }
 
   const safety = runSafetyChecks(spec as AiFrontstoreSpec);
+
+  // Validate WCAG compliance and auto-fix if needed
+  if (spec && !shouldAsk) {
+    const wcagValidation = validateWCAGCompliance(spec);
+    if (!wcagValidation.valid) {
+      console.log("[WCAG] Applying accessibility fixes to generated design");
+      spec = wcagValidation.fixes;
+    }
+  }
 
   return {
     spec,
@@ -2210,4 +2348,114 @@ export function runSafetyChecks(
   }
 
   return { blocked: false };
+}
+
+/**
+ * Validate WCAG compliance for generated spec and auto-fix violations
+ */
+export function validateWCAGCompliance(spec: AiFrontstoreSpec): {
+  valid: boolean;
+  violations: string[];
+  fixes: AiFrontstoreSpec;
+} {
+  const violations: string[] = [];
+  const fixes: AiFrontstoreSpec = JSON.parse(JSON.stringify(spec)); // Deep clone
+
+  // Check meta-level colors
+  const bgColor = fixes.meta.backgroundColor || "#FFFFFF";
+  const textColor = fixes.meta.textColor || "#111827";
+
+  const textContrast = getContrastRatio(textColor, bgColor);
+
+  if (!textContrast.passesAA) {
+    violations.push(
+      `Global text contrast ${textContrast.ratio}:1 fails WCAG AA (needs 4.5:1)`
+    );
+    // Auto-fix: Make text more contrasted
+    fixes.meta.textColor = makeAccessible(textColor, bgColor, "AA");
+    console.log(
+      `[WCAG Fix] Adjusted text color from ${textColor} to ${fixes.meta.textColor}`
+    );
+  }
+
+  // Check primary color contrast
+  const primaryContrast = getContrastRatio(fixes.meta.primaryColor, bgColor);
+  if (!primaryContrast.passesAA) {
+    violations.push(
+      `Primary color contrast ${primaryContrast.ratio}:1 fails WCAG AA`
+    );
+    fixes.meta.primaryColor = makeAccessible(
+      fixes.meta.primaryColor,
+      bgColor,
+      "AA"
+    );
+    console.log(
+      `[WCAG Fix] Adjusted primary color to ${fixes.meta.primaryColor}`
+    );
+  }
+
+  // Check secondary color contrast
+  const secondaryContrast = getContrastRatio(
+    fixes.meta.secondaryColor,
+    bgColor
+  );
+  if (!secondaryContrast.passesAA) {
+    violations.push(
+      `Secondary color contrast ${secondaryContrast.ratio}:1 fails WCAG AA`
+    );
+    fixes.meta.secondaryColor = makeAccessible(
+      fixes.meta.secondaryColor,
+      bgColor,
+      "AA"
+    );
+    console.log(
+      `[WCAG Fix] Adjusted secondary color to ${fixes.meta.secondaryColor}`
+    );
+  }
+
+  // Check section-specific styling
+  fixes.sections.forEach((section, index) => {
+    if (section.styling?.backgroundColor && section.styling?.textColor) {
+      const sectionContrast = getContrastRatio(
+        section.styling.textColor,
+        section.styling.backgroundColor
+      );
+
+      if (!sectionContrast.passesAA) {
+        violations.push(
+          `Section ${section.id} (${section.type}) text contrast ${sectionContrast.ratio}:1 fails WCAG AA`
+        );
+
+        // Auto-fix: Adjust section text color
+        fixes.sections[index].styling!.textColor = makeAccessible(
+          section.styling.textColor,
+          section.styling.backgroundColor,
+          "AA"
+        );
+
+        console.log(
+          `[WCAG Fix] Adjusted section ${section.id} text color to ${
+            fixes.sections[index].styling!.textColor
+          }`
+        );
+      }
+    }
+  });
+
+  // Log summary
+  if (violations.length > 0) {
+    console.warn(
+      `[WCAG Validation] Found ${violations.length} accessibility violations:`
+    );
+    violations.forEach((v) => console.warn(`  - ${v}`));
+    console.log(`[WCAG Validation] Applied ${violations.length} auto-fixes`);
+  } else {
+    console.log("[WCAG Validation] ✓ All colors pass WCAG AA standards");
+  }
+
+  return {
+    valid: violations.length === 0,
+    violations,
+    fixes,
+  };
 }

@@ -6,6 +6,10 @@ import { generateAiStorefront } from "@/lib/ai/ai-storefront-service";
 import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
 import { decrypt } from "@/lib/crypto";
 import type { ChatRequestBody, ChatResponse } from "@/lib/storefront/v2-types";
+import {
+  extractColorsFromLogo,
+  canExtractColors,
+} from "@/lib/utils/color-extraction";
 
 export async function POST(request: NextRequest) {
   try {
@@ -218,6 +222,23 @@ export async function POST(request: NextRequest) {
       rating: t.rating,
     }));
 
+    // Extract logo colors if available
+    let extractedBrandColors = null;
+    if (company.logo && canExtractColors(company.logo)) {
+      try {
+        console.log("[AI Storefront] Extracting colors from logo...");
+        extractedBrandColors = await extractColorsFromLogo(company.logo);
+        console.log("[AI Storefront] Extracted colors:", {
+          primary: extractedBrandColors.primarySuggestion,
+          secondary: extractedBrandColors.secondarySuggestion,
+          isDark: extractedBrandColors.isDarkLogo,
+          isLight: extractedBrandColors.isLightLogo,
+        });
+      } catch (err) {
+        console.warn("[AI Storefront] Failed to extract logo colors:", err);
+      }
+    }
+
     // Prepare AI input
     const aiInput = {
       company: {
@@ -226,6 +247,8 @@ export async function POST(request: NextRequest) {
         slogan: company.slogan ?? null,
         description: company.description ?? null,
         industry: company.industry ?? null,
+        logo: company.logo,
+        extractedBrandColors: extractedBrandColors || undefined,
       },
       products: mappedProducts,
       services: mappedServices,
