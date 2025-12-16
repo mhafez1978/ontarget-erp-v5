@@ -239,11 +239,69 @@ async function getStoreData(slug?: string) {
     where: { companyId: company.id, user: { role: "COMPANY_CUSTOMER" } },
   });
 
+  // Get featured projects/portfolio items
+  const featuredProjectsPrimary = await db.project.findMany({
+    where: {
+      subscriberCompanyId: company.id,
+      isFeatured: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      featuredImage: true,
+      startDate: true,
+      endDate: true,
+      customer: {
+        select: {
+          name: true,
+        },
+      },
+      subscriberCompany: {
+        select: {
+          name: true,
+        },
+      },
+    },
+    take: 6,
+    orderBy: { startDate: "desc" },
+  });
+
+  const featuredProjects =
+    featuredProjectsPrimary.length > 0
+      ? featuredProjectsPrimary
+      : await db.project.findMany({
+          where: {
+            subscriberCompanyId: company.id,
+          },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            featuredImage: true,
+            startDate: true,
+            endDate: true,
+            customer: {
+              select: {
+                name: true,
+              },
+            },
+            subscriberCompany: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          take: 6,
+          orderBy: { startDate: "desc" },
+        });
+
   return {
     company,
     featuredProducts,
     featuredServices,
     featuredTeamMembers,
+    featuredProjects,
     testimonials,
     // Fetch some recent published storefront posts for homepage previews
     posts: await db.storefrontPost.findMany({
@@ -299,6 +357,7 @@ export default async function StorefrontPage({ params }: PageProps) {
     featuredProducts,
     featuredServices,
     featuredTeamMembers,
+    featuredProjects,
     testimonials,
     posts,
     customersCount,
@@ -325,6 +384,17 @@ export default async function StorefrontPage({ params }: PageProps) {
     jobTitle: member.jobTitle,
     bio: member.bio,
     displayOrder: member.displayOrder || 0,
+  }));
+
+  // Map projects to portfolio format expected by AI renderer
+  const portfolioProjects = featuredProjects.map((project) => ({
+    id: project.id,
+    title: project.name,
+    client: project.customer?.name || project.subscriberCompany?.name || null,
+    category: null, // Project model doesn't have category field
+    description: project.description || null,
+    image: project.featuredImage || null,
+    tags: [],
   }));
 
   let aiSpec: AiFrontstoreSpec | null = null;
@@ -441,6 +511,7 @@ export default async function StorefrontPage({ params }: PageProps) {
             featuredProducts={serializedProducts}
             featuredServices={serializedServices}
             featuredTeamMembers={serializedTeamMembers}
+            portfolioProjects={portfolioProjects}
             posts={data.posts}
             testimonials={testimonials}
             supportFaqs={data.faqs ?? []}
