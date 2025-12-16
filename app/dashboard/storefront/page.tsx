@@ -36,6 +36,7 @@ import {
   Upload,
   Trash2,
   Building,
+  AlertCircle,
 } from "lucide-react";
 import { ThemeGallery } from "@/components/storefront/theme-gallery";
 import { ContentWizard } from "@/components/storefront/content-wizard";
@@ -2583,7 +2584,6 @@ export default function StorefrontPage() {
                                         ).map((t) => ({
                                           customerName: t.name,
                                           testimonial: t.quote,
-                                          title: t.title,
                                           company: t.company,
                                           image: t.image,
                                           id: t.id,

@@ -4,23 +4,25 @@ import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { AiStorefrontRendererV2 } from "@/components/storefront/v2/ai-storefront-renderer-v2";
+import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
+import { ContentWizard } from "@/components/storefront/content-wizard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Sparkles, 
-  Send, 
-  Loader2, 
-  Smartphone, 
-  Monitor, 
+import { mapAiSpecToThemeSections as mapAiSpecToThemeSectionsShared } from "@/lib/storefront/ai-spec-mapper";
+import {
+  Sparkles,
+  Send,
+  Loader2,
+  Smartphone,
+  Monitor,
   Save,
   Wand2,
-  MessageSquare
+  MessageSquare,
 } from "lucide-react";
-import type {
-  AiFrontstoreSpec,
-} from "@/lib/ai/ai-storefront-types";
+import type { AiFrontstoreSpec } from "@/lib/ai/ai-storefront-types";
+import type { ThemeSection } from "@/lib/storefront-themes";
 
 export default function FrontstoreV2Page() {
   const [companyId, setCompanyId] = useState("");
@@ -34,8 +36,23 @@ export default function FrontstoreV2Page() {
   const [versionId, setVersionId] = useState<string | null>(null);
   const [providerUsed, setProviderUsed] = useState<boolean | null>(null);
   const [modelUsed, setModelUsed] = useState<boolean | null>(null);
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
-  const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">(
+    "desktop"
+  );
+  const [companies, setCompanies] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+  const [diffs, setDiffs] = useState<Array<{
+    action: string;
+    summary: string;
+  }> | null>(null);
+  const [diffSummary, setDiffSummary] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<"preview" | "diffs">(
+    "preview"
+  );
+  const [themeSections, setThemeSections] = useState<ThemeSection[] | null>(
+    null
+  );
 
   // Load user's companies
   useEffect(() => {
@@ -50,7 +67,19 @@ export default function FrontstoreV2Page() {
         }
       })
       .catch((err) => console.error("Failed to load companies:", err));
-  }, []);
+  }, [companyId]);
+
+  const send = async () => {
+    if (!companyId) return toast.error("Please enter company ID");
+    if (!prompt.trim()) return toast.error("Please enter a prompt");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/storefront/v2/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyId, prompt }),
+      });
+      if (!res.ok) throw new Error("Failed to generate");
 
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
@@ -118,10 +147,12 @@ export default function FrontstoreV2Page() {
                   .then((d) => {
                     if (d.success) {
                       setDiffs(
-                        (d.changes || []).map((c: any) => ({
-                          action: c.action,
-                          summary: c.summary,
-                        }))
+                        (d.changes || []).map(
+                          (c: { action: string; summary: string }) => ({
+                            action: c.action,
+                            summary: c.summary,
+                          })
+                        )
                       );
                       setDiffSummary(d.summary || null);
                       setPreviewMode("diffs");
@@ -210,7 +241,7 @@ export default function FrontstoreV2Page() {
         console.warn("Validation errors:", data.validation.errors);
       }
       setDiffs(
-        (data.changes || []).map((c: any) => ({
+        (data.changes || []).map((c: { action: string; summary: string }) => ({
           action: c.action,
           summary: c.summary,
         }))
@@ -253,7 +284,7 @@ export default function FrontstoreV2Page() {
 
     toast("Confirm apply this version to the live storefront?", {
       action: { label: "Apply", onClick: () => doApply() },
-      cancel: { label: "Cancel" },
+      cancel: { label: "Cancel", onClick: () => {} },
     });
   };
 
@@ -284,7 +315,7 @@ export default function FrontstoreV2Page() {
       "Export AI-generated sections to Content Wizard and save as draft? This will update company store metadata.",
       {
         action: { label: "Export", onClick: () => doExport() },
-        cancel: { label: "Cancel" },
+        cancel: { label: "Cancel", onClick: () => {} },
       }
     );
   };
@@ -292,265 +323,330 @@ export default function FrontstoreV2Page() {
   const mapAiSpecToThemeSections = mapAiSpecToThemeSectionsShared;
 
   return (
-    <div className="p-4 space-y-4">
-      <h2 className="text-xl font-semibold">AI Chat Builder (v2) - MVP</h2>
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-1">
-          <label className="block text-sm">Company ID</label>
-          <input
-            value={companyId}
-            onChange={(e) => setCompanyId(e.target.value)}
-            className="w-full border rounded p-2"
-          />
+    <DashboardLayout>
+      <div className="p-4 space-y-4">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
+          AI Chat Builder (v2) - MVP
+        </h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-1">
+            <label className="block text-sm font-medium mb-1">Company</label>
+            {companies.length > 0 ? (
+              <select
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+                className="w-full border rounded p-2"
+              >
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <Input
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+                placeholder="Enter company ID"
+              />
+            )}
 
-          <label className="block text-sm mt-3">Prompt</label>
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={6}
-            className="w-full border rounded p-2"
-          />
+            <Separator className="my-4" />
+            <label className="block text-sm font-medium mb-1">Prompt</label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={6}
+              placeholder="Describe your ideal storefront design..."
+              className="w-full border rounded p-2"
+            />
 
-          <button
-            disabled={loading}
-            onClick={send}
-            className="mt-3 px-4 py-2 bg-primary text-white rounded"
-          >
-            {loading ? "Generating..." : "Generate Preview"}
-          </button>
+            <Button disabled={loading} onClick={send} className="mt-3 w-full">
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Generate Preview
+                </>
+              )}
+            </Button>
 
-          <div className="mt-4">
-            <h3 className="font-medium text-lg mb-2">💬 Conversation</h3>
-            <div className="space-y-3 mt-2 max-h-96 overflow-y-auto">
-              {messages.length === 0 && (
-                <div className="p-4 border-2 border-dashed rounded-lg text-center text-muted-foreground">
-                  <p className="text-sm">
-                    👋 Start by entering your Company ID and describing what
-                    kind of design you'd like!
-                  </p>
-                  <p className="text-xs mt-1">
-                    The AI will ask clarifying questions and help you create the
-                    perfect storefront.
-                  </p>
+            <div className="mt-4">
+              <h3 className="font-medium text-lg mb-2 flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Conversation
+              </h3>
+              <ScrollArea className="h-96 pr-4">
+                <div className="space-y-3 mt-2">
+                  {messages.length === 0 && (
+                    <div className="p-4 border-2 border-dashed rounded-lg text-center text-muted-foreground">
+                      <p className="text-sm">
+                        👋 Start by entering your Company ID and describing what
+                        kind of design you&apos;d like!
+                      </p>
+                      <p className="text-xs mt-1">
+                        The AI will ask clarifying questions and help you create
+                        the perfect storefront.
+                      </p>
+                    </div>
+                  )}
+                  {messages.map((m, i) => (
+                    <div
+                      key={i}
+                      className={`p-3 rounded-lg ${
+                        m.role === "user"
+                          ? "bg-blue-50 border border-blue-200 ml-8"
+                          : "bg-purple-50 border border-purple-200 mr-8"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">
+                          {m.role === "user" ? "👤" : "🤖"}
+                        </span>
+                        <strong className="text-sm font-semibold capitalize">
+                          {m.role === "user" ? "You" : "AI Designer"}
+                        </strong>
+                      </div>
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {m.content}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <h4 className="text-sm font-semibold mb-2 text-amber-900 flex items-center gap-2">
+                  <Wand2 className="h-4 w-4" />
+                  Quick Suggestions
+                </h4>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    "Make it more bold and dramatic",
+                    "Switch to a minimal luxury style",
+                    "Emphasize our products more",
+                    "Add more testimonials",
+                    "Use warmer, friendlier colors",
+                  ].map((t) => (
+                    <button
+                      key={t}
+                      className="px-3 py-1 bg-white border border-amber-300 hover:border-amber-400 rounded-md text-xs transition-colors"
+                      onClick={() => continueConversation(t)}
+                      disabled={!conversationId || loading}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <Separator className="my-4" />
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    if (!previewSpec)
+                      return toast.error("Generate a preview first");
+                    const mapped = mapAiSpecToThemeSections(
+                      previewSpec,
+                      "default"
+                    );
+                    if (!mapped)
+                      return toast.error(
+                        "Unable to map spec to theme sections"
+                      );
+                    setThemeSections(mapped);
+                    toast(
+                      "Also persist these sections to company store metadata now?",
+                      {
+                        action: {
+                          label: "Persist",
+                          onClick: () => {
+                            // attempt server-side save (best-effort)
+                            fetch("/api/storefront/v2/export", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                companyId,
+                                sections: mapped,
+                              }),
+                            })
+                              .then((r) => r.json())
+                              .then((d) => {
+                                if (d.success)
+                                  toast.success(
+                                    "Exported to company store metadata"
+                                  );
+                                else
+                                  toast.success(
+                                    "Export succeeded (client-side only)"
+                                  );
+                              })
+                              .catch((e) => {
+                                console.warn("Export failed", e);
+                                toast.error(
+                                  "Export failed; content is available locally in Content Wizard"
+                                );
+                              });
+                          },
+                        },
+                        cancel: {
+                          label: "Skip",
+                          onClick: () =>
+                            toast(
+                              "AI content exported to Content Wizard. Edit below and click Save Draft."
+                            ),
+                        },
+                      }
+                    );
+                  }}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  Export to Content Wizard
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium">Live Preview</h3>
+              <div className="flex gap-2">
+                <Button
+                  variant={previewDevice === "desktop" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setPreviewDevice("desktop")}
+                >
+                  <Monitor className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={previewDevice === "mobile" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setPreviewDevice("mobile")}
+                >
+                  <Smartphone className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div
+              className={`border rounded p-3 mt-2 min-h-[400px] bg-muted/10 transition-all ${
+                previewDevice === "mobile" ? "max-w-md mx-auto" : ""
+              }`}
+            >
+              {previewSpec ? (
+                previewMode === "preview" ? (
+                  <AiStorefrontRendererV2
+                    spec={previewSpec}
+                    slug={companyId}
+                    companyName={companyId}
+                  />
+                ) : (
+                  <AiStorefrontRenderer
+                    spec={previewSpec}
+                    slug={companyId}
+                    companyName={companyId}
+                    enableCart={false}
+                  />
+                )
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  No preview yet. Generate a preview to see live rendering here.
                 </div>
               )}
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`p-3 rounded-lg ${
-                    m.role === "user"
-                      ? "bg-blue-50 border border-blue-200 ml-8"
-                      : "bg-purple-50 border border-purple-200 mr-8"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">
-                      {m.role === "user" ? "👤" : "🤖"}
-                    </span>
-                    <strong className="text-sm font-semibold capitalize">
-                      {m.role === "user" ? "You" : "AI Designer"}
-                    </strong>
+              {/* Diffs & apply controls */}
+              {diffSummary && (
+                <div className="mt-4 border rounded p-3 bg-white">
+                  <h3 className="font-medium mb-2">Proposed changes</h3>
+                  <div className="text-sm text-muted-foreground mb-2">
+                    {diffSummary}
                   </div>
-                  <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {m.content}
+                  <div className="text-xs text-muted-foreground mb-2">
+                    {providerUsed !== null && (
+                      <span className="mr-3">
+                        Provider config used: {providerUsed ? "yes" : "no"}
+                      </span>
+                    )}
+                    {modelUsed !== null && (
+                      <span>Remote model used: {modelUsed ? "yes" : "no"}</span>
+                    )}
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1 mb-3">
+                    {diffs?.map((d, i) => (
+                      <li key={i} className="text-sm">
+                        {d.summary}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={runDryRunApply}
+                      disabled={loading}
+                    >
+                      Apply (dry-run)
+                    </Button>
+                    <Button onClick={confirmApply} disabled={loading}>
+                      Confirm Apply
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={exportAndSaveDraft}
+                      disabled={loading}
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      Export & Save Draft
+                    </Button>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <h4 className="text-sm font-semibold mb-2 text-amber-900">
-                💡 Quick Suggestions
-              </h4>
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  "Make it more bold and dramatic",
-                  "Switch to a minimal luxury style",
-                  "Emphasize our products more",
-                  "Add more testimonials",
-                  "Use warmer, friendlier colors",
-                ].map((t) => (
-                  <button
-                    key={t}
-                    className="px-3 py-1 bg-white border border-amber-300 hover:border-amber-400 rounded-md text-xs transition-colors"
-                    onClick={() => continueConversation(t)}
-                    disabled={!conversationId || loading}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="mt-3">
-              <button
-                className="px-3 py-2 border rounded text-sm"
-                onClick={() => {
-                  if (!previewSpec)
-                    return toast.error("Generate a preview first");
-                  const mapped = mapAiSpecToThemeSections(
-                    previewSpec,
-                    "default"
-                  );
-                  if (!mapped)
-                    return toast.error("Unable to map spec to theme sections");
-                  setThemeSections(mapped);
-                  toast(
-                    "Also persist these sections to company store metadata now?",
-                    {
-                      action: {
-                        label: "Persist",
-                        onClick: () => {
-                          // attempt server-side save (best-effort)
-                          fetch("/api/storefront/v2/export", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              companyId,
-                              sections: mapped,
-                            }),
-                          })
-                            .then((r) => r.json())
-                            .then((d) => {
-                              if (d.success)
-                                toast.success(
-                                  "Exported to company store metadata"
-                                );
-                              else
-                                toast.success(
-                                  "Export succeeded (client-side only)"
-                                );
-                            })
-                            .catch((e) => {
-                              console.warn("Export failed", e);
-                              toast.error(
-                                "Export failed; content is available locally in Content Wizard"
-                              );
-                            });
-                        },
-                      },
-                      cancel: {
-                        label: "Skip",
-                        onClick: () =>
-                          toast(
-                            "AI content exported to Content Wizard. Edit below and click Save Draft."
-                          ),
-                      },
-                    }
-                  );
-                }}
-              >
-                Export to Content Wizard
-              </button>
-            </div>
-          </div>
-        </div>
 
-        <div className="col-span-2">
-          <h3 className="font-medium">Live Preview</h3>
-          <div className="border rounded p-3 mt-2 min-h-[400px] bg-muted/10">
-            {previewSpec ? (
-              <AiStorefrontRenderer
-                spec={previewSpec as any}
-                slug={companyId}
-                companyName={companyId}
-                enableCart={false}
-              />
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                No preview yet. Generate a preview to see live rendering here.
-              </div>
-            )}
-            {/* Diffs & apply controls */}
-            {diffSummary && (
+            {themeSections && (
               <div className="mt-4 border rounded p-3 bg-white">
-                <h3 className="font-medium mb-2">Proposed changes</h3>
-                <div className="text-sm text-muted-foreground mb-2">
-                  {diffSummary}
-                </div>
-                <div className="text-xs text-muted-foreground mb-2">
-                  {providerUsed !== null && (
-                    <span className="mr-3">
-                      Provider config used: {providerUsed ? "yes" : "no"}
-                    </span>
-                  )}
-                  {modelUsed !== null && (
-                    <span>Remote model used: {modelUsed ? "yes" : "no"}</span>
-                  )}
-                </div>
-                <ul className="list-disc pl-5 space-y-1 mb-3">
-                  {diffs?.map((d, i) => (
-                    <li key={i} className="text-sm">
-                      {d.summary}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="flex gap-2">
-                  <button
-                    className="btn"
-                    onClick={runDryRunApply}
-                    disabled={loading}
-                  >
-                    Apply (dry-run)
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={confirmApply}
-                    disabled={loading}
-                  >
-                    Confirm Apply
-                  </button>
-                  <button
-                    className="btn"
-                    onClick={exportAndSaveDraft}
-                    disabled={loading}
-                  >
-                    Export & Save Draft
-                  </button>
-                </div>
+                <h3 className="font-medium mb-2">
+                  Content Wizard (Edit AI output)
+                </h3>
+                <ContentWizard
+                  themeId="default"
+                  initialSections={themeSections}
+                  onContentChange={(sections) => setThemeSections(sections)}
+                  onSave={async () => {
+                    if (!companyId || !themeSections) return;
+                    try {
+                      const response = await fetch("/api/storefront/v2/specs", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          companyId,
+                          spec: {
+                            version: 1,
+                            meta: previewSpec?.meta || {},
+                            sections: themeSections,
+                          },
+                          title: "AI Draft",
+                          apply: false,
+                        }),
+                      });
+                      const data = await response.json();
+                      if (!response.ok)
+                        throw new Error(data.error || "Failed to save draft");
+                      toast.success("Draft saved as version " + data.versionId);
+                    } catch (err) {
+                      console.error(err);
+                      toast.error("Failed to save draft");
+                    }
+                  }}
+                />
               </div>
             )}
           </div>
-
-          {themeSections && (
-            <div className="mt-4 border rounded p-3 bg-white">
-              <h3 className="font-medium mb-2">
-                Content Wizard (Edit AI output)
-              </h3>
-              <ContentWizard
-                themeId="default"
-                initialSections={themeSections}
-                onContentChange={(sections) => setThemeSections(sections)}
-                onSave={async () => {
-                  if (!companyId || !themeSections) return;
-                  try {
-                    const response = await fetch("/api/storefront/v2/specs", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        companyId,
-                        spec: {
-                          version: 1,
-                          meta: previewSpec?.meta || {},
-                          sections: themeSections,
-                        },
-                        title: "AI Draft",
-                        apply: false,
-                      }),
-                    });
-                    const data = await response.json();
-                    if (!response.ok)
-                      throw new Error(data.error || "Failed to save draft");
-                    toast.success("Draft saved as version " + data.versionId);
-                  } catch (err) {
-                    console.error(err);
-                    toast.error("Failed to save draft");
-                  }
-                }}
-              />
-            </div>
-          )}
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
