@@ -54,120 +54,93 @@ export function checkStorefrontReadiness(
   const warnings: string[] = [];
   let score = 0;
 
-  // Scoring weights (total: 100 points)
-  const weights = {
-    products: 25, // Critical for e-commerce
-    services: 15, // Important for service businesses
-    banner: 15, // Visual impact
-    teamMembers: 10, // Trust building
-    testimonials: 15, // Social proof
-    logo: 10, // Branding
-    description: 5, // SEO/clarity
-    contact: 5, // Customer service
-  };
+  // Simplified scoring: 5 categories, 20 points each (total: 100 points)
+  const pointsPerCategory = 20;
 
-  // Check products (25 points max)
+  // Check products (20 points)
   if (data.productsCount === 0) {
     warnings.push("No products listed. Customers can't purchase anything.");
-    suggestions.push("Add at least 5-10 products to showcase your offerings");
-  } else if (data.productsCount < 3) {
-    score += weights.products * 0.3;
-    suggestions.push(
-      `Add more products (currently ${data.productsCount}). Aim for at least 5-10 products.`
-    );
-  } else if (data.productsCount < 5) {
-    score += weights.products * 0.6;
-    suggestions.push("Consider adding more product variety");
-  } else if (data.productsCount < 10) {
-    score += weights.products * 0.9;
+    suggestions.push("Add at least 1 product to showcase your offerings");
   } else {
-    score += weights.products;
+    score += pointsPerCategory;
+    if (data.productsCount < 3) {
+      suggestions.push(
+        `Add more products (currently ${data.productsCount}). Aim for at least 5-10 products.`
+      );
+    }
   }
 
-  // Check services (15 points max)
+  // Check services (20 points)
   if (data.servicesCount === 0) {
-    suggestions.push(
-      "Consider adding services to complement your product offerings"
-    );
-  } else if (data.servicesCount < 3) {
-    score += weights.services * 0.5;
-    suggestions.push(
-      `Add more services (currently ${data.servicesCount}). Aim for 3-5 services.`
-    );
-  } else if (data.servicesCount < 5) {
-    score += weights.services * 0.8;
+    suggestions.push("Add at least 1 service to complement your offerings");
   } else {
-    score += weights.services;
+    score += pointsPerCategory;
+    if (data.servicesCount < 3) {
+      suggestions.push(
+        `Add more services (currently ${data.servicesCount}). Aim for 3-5 services.`
+      );
+    }
   }
 
-  // Check banner (15 points)
-  if (!data.hasBanner) {
-    suggestions.push(
-      "Upload a banner image to make your storefront more visually appealing"
-    );
-  } else {
-    score += weights.banner;
-  }
-
-  // Check team members (10 points)
+  // Check team members (20 points)
   if (data.teamMembersCount === 0) {
     suggestions.push("Add team member profiles to build trust with customers");
-  } else if (data.teamMembersCount < 3) {
-    score += weights.teamMembers * 0.7;
-    suggestions.push("Feature more team members to strengthen customer trust");
   } else {
-    score += weights.teamMembers;
+    score += pointsPerCategory;
+    if (data.teamMembersCount < 3) {
+      suggestions.push(
+        "Feature more team members to strengthen customer trust"
+      );
+    }
   }
 
-  // Check testimonials (15 points)
+  // Check testimonials (20 points)
   if (data.testimonialsCount === 0) {
     warnings.push("No customer testimonials. Social proof is crucial.");
     suggestions.push(
       "Add customer testimonials to build credibility and trust"
     );
-  } else if (data.testimonialsCount < 3) {
-    score += weights.testimonials * 0.6;
-    suggestions.push(
-      `Add more testimonials (currently ${data.testimonialsCount}). Aim for at least 3-5.`
-    );
-  } else if (data.testimonialsCount < 5) {
-    score += weights.testimonials * 0.9;
   } else {
-    score += weights.testimonials;
+    score += pointsPerCategory;
+    if (data.testimonialsCount < 3) {
+      suggestions.push(
+        `Add more testimonials (currently ${data.testimonialsCount}). Aim for at least 3-5.`
+      );
+    }
   }
 
-  // Check logo (10 points)
+  // Check customers (20 points)
+  if ((data.customersCount ?? 0) === 0) {
+    suggestions.push(
+      "Build your customer base - encourage signups or import customer data"
+    );
+  } else {
+    score += pointsPerCategory;
+  }
+
+  // Additional helpful suggestions (not scored)
+  if (!data.hasBanner) {
+    suggestions.push(
+      "Upload a banner image to make your storefront more visually appealing"
+    );
+  }
+
   if (!data.hasLogo) {
     suggestions.push("Upload your company logo for better branding");
-  } else {
-    score += weights.logo;
   }
 
-  // Check description (5 points)
   if (!data.hasDescription) {
     suggestions.push("Add a company description for SEO and clarity");
-  } else {
-    score += weights.description;
   }
 
-  // Check contact info (5 points)
   if (!data.hasContactInfo) {
     suggestions.push(
       "Add contact information (email, phone) so customers can reach you"
     );
-  } else {
-    score += weights.contact;
-  }
-
-  // Customers (informational) — do not alter scoring but surface suggestions
-  if ((data.customersCount ?? 0) === 0) {
-    suggestions.push(
-      "Consider building an initial customer base — encourage signups or import customer data."
-    );
   }
 
   // Additional warnings
-  if (data.isStoreEnabled && score < 50) {
+  if (data.isStoreEnabled && score < 60) {
     warnings.push(
       "Your storefront is live but incomplete. Consider adding more content before promoting it."
     );
@@ -187,11 +160,9 @@ export function checkStorefrontReadiness(
   else if (score >= 60) grade = "D";
   else grade = "F";
 
-  // Ready threshold: score >= 70 and at least some products
+  // Ready threshold: score >= 60 and at least some products or services
   const isReady =
-    score >= 70 &&
-    (data.productsCount > 0 || data.servicesCount > 0) &&
-    data.hasBanner;
+    score >= 60 && (data.productsCount > 0 || data.servicesCount > 0);
 
   return {
     isReady,
