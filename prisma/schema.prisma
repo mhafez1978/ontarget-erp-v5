@@ -300,6 +300,9 @@ model Company {
   // Testimonial relations
   testimonials Testimonial[]
 
+  // Multi-location support
+  locations CompanyLocation[]
+
   // Support / Knowledge Base articles for this company
   supportArticles SupportArticle[]
 
@@ -475,6 +478,52 @@ enum SubscriptionStatus {
 enum BillingCycle {
   MONTHLY // Billed monthly
   ANNUAL // Billed annually (discounted)
+}
+
+// Location Type Enum
+enum LocationType {
+  HEADQUARTERS // Main office
+  BRANCH // Branch office
+  OFFICE // Additional office
+  WAREHOUSE // Warehouse/Distribution center
+}
+
+// Company Locations (multi-location support for branches, offices, etc.)
+model CompanyLocation {
+  id        String       @id @default(cuid())
+  companyId String
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // Location info
+  name          String // e.g., "Headquarters", "Los Angeles Branch"
+  type          LocationType @default(BRANCH) // Type of location
+  isMain        Boolean      @default(false) // Is this the main/primary location?
+  
+  // Address fields
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String?
+  country      String
+  postalCode   String?
+  
+  // Geolocation data (from Photon API or manual entry)
+  latitude     Float
+  longitude    Float
+  
+  // Metadata
+  phone        String?
+  email        String?
+  hours        String? @db.Text // Business hours (formatted text or JSON)
+  notes        String? @db.Text // Additional notes about this location
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([companyId])
+  @@index([isMain])
+  // Composite: quick lookup of main location for a company
+  @@index([companyId, isMain])
 }
 
 // Company Member (Junction table for User-Company relationship)

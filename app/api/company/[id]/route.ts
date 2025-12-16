@@ -126,6 +126,8 @@ export async function PATCH(
         country: address?.country,
         countryCode: address?.countryCode,
         postalCode: address?.postalCode,
+        latitude: address?.latitude || null,
+        longitude: address?.longitude || null,
       },
     });
 
