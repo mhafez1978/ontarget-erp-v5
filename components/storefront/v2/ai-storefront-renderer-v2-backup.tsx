@@ -3,7 +3,13 @@
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useInView,
+  type Variants,
+} from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Marquee } from "@/components/ui/marquee";
 import { ShoppingCart, Check, Star, ArrowRight, Play } from "lucide-react";
@@ -11,11 +17,17 @@ import { toast } from "sonner";
 import type {
   AiFrontstoreSpec,
   AiFrontstoreSection,
+  PortfolioProject,
 } from "@/lib/ai/ai-storefront-types";
 
 // ============================================================================
 // TYPES
 // ============================================================================
+
+// Type aliases for utility function return types
+type Typography = ReturnType<typeof getTypographyStyles>;
+type Spacing = ReturnType<typeof getSpacingStyles>;
+type Effects = ReturnType<typeof getEffectsStyles>;
 
 interface FeaturedImage {
   url: string;
@@ -77,6 +89,7 @@ interface AiStorefrontRendererV2Props {
     jobTitle?: string | null;
     bio?: string | null;
   }[];
+  portfolioProjects?: PortfolioProject[];
   contactEmail?: string | null;
   contactPhone?: string | null;
   storeBanner?: string | null;
@@ -310,51 +323,51 @@ function getEffectsStyles(spec: AiFrontstoreSpec) {
 // ANIMATION VARIANTS
 // ============================================================================
 
-const fadeInUp = {
+const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 60 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
+    transition: { duration: 0.6, ease: [0, 0, 0.58, 1] },
   },
 };
 
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { duration: 0.8, ease: "easeOut" },
+    transition: { duration: 0.8, ease: [0, 0, 0.58, 1] },
   },
 };
 
-const scaleIn = {
+const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.8 },
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.5, ease: "easeOut" },
+    transition: { duration: 0.5, ease: [0, 0, 0.58, 1] },
   },
 };
 
-const slideInLeft = {
+const slideInLeft: Variants = {
   hidden: { opacity: 0, x: -60 },
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
+    transition: { duration: 0.6, ease: [0, 0, 0.58, 1] },
   },
 };
 
-const slideInRight = {
+const slideInRight: Variants = {
   hidden: { opacity: 0, x: 60 },
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
+    transition: { duration: 0.6, ease: [0, 0, 0.58, 1] },
   },
 };
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -428,6 +441,10 @@ function HeroSectionV2({
   heroOverride: AiStorefrontRendererV2Props["heroOverride"];
   storeBanner: string | null;
 }) {
+  const { scrollY } = useScroll();
+  const y = useTransform(scrollY, [0, 500], [0, 150]);
+  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+
   const { content, styling } = section;
   const title =
     heroOverride?.title || readContentString(content, "title") || "Welcome";
@@ -463,7 +480,7 @@ function HeroSectionV2({
     >
       {/* Video Background */}
       {backgroundVideo?.url && (
-        <div className="absolute inset-0 z-0">
+        <motion.div className="absolute inset-0 z-0" style={{ y }}>
           <video
             autoPlay={backgroundVideo.autoplay ?? true}
             loop={backgroundVideo.loop ?? true}
@@ -475,12 +492,12 @@ function HeroSectionV2({
             <source src={backgroundVideo.url} type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/50" />
-        </div>
+        </motion.div>
       )}
 
       {/* Image Background */}
       {!backgroundVideo && backgroundImage?.url && (
-        <div className="absolute inset-0 z-0">
+        <motion.div className="absolute inset-0 z-0" style={{ y }}>
           <Image
             src={backgroundImage.url}
             alt={backgroundImage.alt || "Hero background"}
@@ -488,8 +505,8 @@ function HeroSectionV2({
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/30" />
-        </div>
+          <div className="absolute inset-0 bg-linear-to-b from-black/50 to-black/30" />
+        </motion.div>
       )}
 
       {/* Solid Background */}
@@ -505,8 +522,9 @@ function HeroSectionV2({
       )}
 
       {/* Content */}
-      <div
+      <motion.div
         className={`relative z-10 ${spacing.containerMaxWidth} mx-auto px-4 text-center`}
+        style={{ opacity }}
       >
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -514,6 +532,22 @@ function HeroSectionV2({
           transition={{ duration: 0.8, delay: 0.2 }}
           className={spacing.elementGap}
         >
+          {storeBanner && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mb-6 inline-block px-6 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20"
+            >
+              <p
+                className={`${typography.bodySize} font-semibold`}
+                style={{ color: textColor }}
+              >
+                {storeBanner}
+              </p>
+            </motion.div>
+          )}
+
           {subtitle && (
             <motion.p
               initial={{ opacity: 0 }}
@@ -578,7 +612,7 @@ function HeroSectionV2({
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
                 {effects.gradients && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                 )}
               </Button>
             )}
@@ -599,7 +633,7 @@ function HeroSectionV2({
             )}
           </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Scroll Indicator */}
       <motion.div
@@ -813,7 +847,12 @@ function TestimonialsSectionV2({
             >
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-primary text-primary" />
+                  <Star
+                    key={i}
+                    className="w-5 h-5"
+                    fill={spec.meta.primaryColor || "currentColor"}
+                    style={{ color: spec.meta.primaryColor }}
+                  />
                 ))}
               </div>
               <p
@@ -874,7 +913,7 @@ function ProductsSectionV2({
         >
           {readContentString(section.content, "title") || "Our Products"}
         </motion.h2>
-        {section.content.subtitle && (
+        {readContentString(section.content, "subtitle") && (
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -883,7 +922,7 @@ function ProductsSectionV2({
             className={`${typography.bodySize} text-muted-foreground max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
-            {String(section.content.subtitle)}
+            {readContentString(section.content, "subtitle")}
           </motion.p>
         )}
       </div>
@@ -1002,7 +1041,7 @@ function ServicesSectionV2({
         >
           {readContentString(section.content, "title") || "Our Services"}
         </motion.h2>
-        {section.content.subtitle && (
+        {readContentString(section.content, "subtitle") && (
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1011,7 +1050,7 @@ function ServicesSectionV2({
             className={`${typography.bodySize} text-muted-foreground max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
-            {String(section.content.subtitle)}
+            {readContentString(section.content, "subtitle")}
           </motion.p>
         )}
       </div>
@@ -1045,12 +1084,29 @@ function ServicesSectionV2({
               </h3>
               {service.description && (
                 <p
-                  className={`${typography.bodySize} text-muted-foreground mb-6`}
+                  className={`${typography.bodySize} text-muted-foreground mb-4`}
                   style={{ fontFamily: typography.bodyFont }}
                 >
                   {service.description}
                 </p>
               )}
+
+              {/* Service highlights */}
+              <div className="mb-6 space-y-2">
+                {["Quality guaranteed", "Fast delivery", "Expert support"].map(
+                  (feature, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-primary shrink-0" />
+                      <span
+                        className={`${typography.bodySize} text-sm text-muted-foreground`}
+                      >
+                        {feature}
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+
               <div className="flex items-center justify-between">
                 <span
                   className={`${typography.headingSize.h4} font-bold`}
@@ -1107,10 +1163,20 @@ function StatsSectionV2({
     { label: "Team Members", value: 25 },
   ];
 
+  const title = readContentString(section.content, "title") || "Our Impact";
+
   return (
     <AnimatedSection
       className={`${spacing.sectionGap} ${spacing.containerMaxWidth} mx-auto px-4`}
     >
+      {title && (
+        <h2
+          className={`${typography.headingSize.h2} ${typography.headingWeight} text-center mb-12`}
+          style={{ fontFamily: typography.headingFont }}
+        >
+          {title}
+        </h2>
+      )}
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
           <motion.div
@@ -1142,6 +1208,151 @@ function StatsSectionV2({
             </p>
           </motion.div>
         ))}
+      </div>
+    </AnimatedSection>
+  );
+}
+
+// ============================================================================
+// PORTFOLIO SECTION V2
+// ============================================================================
+
+function PortfolioSectionV2({
+  section,
+  spec,
+  typography,
+  spacing,
+  effects,
+  portfolioProjects,
+}: {
+  section: AiFrontstoreSection;
+  spec: AiFrontstoreSpec;
+  typography: Typography;
+  spacing: Spacing;
+  effects: Effects;
+  portfolioProjects: PortfolioProject[];
+}) {
+  const { content } = section;
+  const title = readContentString(content, "title") || "Our Portfolio";
+  const subtitle = readContentString(content, "subtitle");
+  const gapClass = "gap-8 md:gap-10";
+
+  return (
+    <AnimatedSection className={`${spacing.sectionGap} bg-background`}>
+      <div className={`${spacing.containerMaxWidth} mx-auto px-4`}>
+        {subtitle && (
+          <p
+            className={`${typography.bodySize} ${typography.bodyWeight} text-primary uppercase ${typography.letterSpacing} mb-4 text-center`}
+          >
+            {subtitle}
+          </p>
+        )}
+        {title && (
+          <h2
+            className={`${typography.headingSize.h2} ${typography.headingWeight} text-foreground mb-12 text-center`}
+            style={{
+              fontFamily: typography.headingFont,
+              letterSpacing: typography.letterSpacing,
+              lineHeight: typography.lineHeight,
+            }}
+          >
+            {title}
+          </h2>
+        )}
+
+        <div
+          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${gapClass}`}
+        >
+          {portfolioProjects && portfolioProjects.length > 0 ? (
+            portfolioProjects.map((project, index) => (
+              <Link key={project.id} href={`#project-${project.id}`}>
+                <motion.article
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="group relative overflow-hidden rounded-xl bg-card cursor-pointer"
+                  style={{
+                    boxShadow:
+                      effects.shadows === "soft"
+                        ? "0 4px 6px -1px rgb(0 0 0 / 0.1)"
+                        : effects.shadows === "hard"
+                        ? "8px 8px 0 rgb(0 0 0 / 0.1)"
+                        : "none",
+                    borderWidth: effects.borders ? "1px" : "0",
+                    borderColor: effects.borders ? "var(--border)" : undefined,
+                  }}
+                >
+                  <div className="aspect-4/3 overflow-hidden bg-muted">
+                    {project.image ? (
+                      <Image
+                        src={project.image}
+                        alt={project.title}
+                        width={600}
+                        height={450}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-muted to-muted-foreground/20">
+                        <span className="text-4xl font-bold text-muted-foreground/30">
+                          {project.title.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-linear-to-t from-card via-card/20 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-80" />
+                  </div>
+
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+                    <div className="translate-y-4 transition-transform duration-500 group-hover:translate-y-0">
+                      {project.category && (
+                        <span
+                          className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider"
+                          style={{
+                            backgroundColor: `${spec.meta.primaryColor}20`,
+                            color: spec.meta.primaryColor,
+                          }}
+                        >
+                          {project.category}
+                        </span>
+                      )}
+
+                      <h3
+                        className={`${typography.headingSize.h3} font-${typography.headingWeight} text-card-foreground`}
+                        style={{ fontFamily: typography.headingFont }}
+                      >
+                        {project.title}
+                      </h3>
+
+                      {project.client && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {project.client}
+                        </p>
+                      )}
+
+                      {project.description && (
+                        <p className="mt-4 max-h-0 overflow-hidden text-sm text-muted-foreground/80 transition-all duration-500 group-hover:max-h-24 line-clamp-3">
+                          {project.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div
+                      className="mt-4 flex items-center gap-2 opacity-0 transition-all duration-500 group-hover:opacity-100"
+                      style={{ color: spec.meta.primaryColor }}
+                    >
+                      <span className="text-sm font-medium">View Project</span>
+                      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </div>
+                  </div>
+                </motion.article>
+              </Link>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              No projects available
+            </div>
+          )}
+        </div>
       </div>
     </AnimatedSection>
   );
@@ -1279,6 +1490,7 @@ function ContactSectionV2({
   effects,
   contactEmail,
   contactPhone,
+  companyId,
 }: {
   section: AiFrontstoreSection;
   spec: AiFrontstoreSpec;
@@ -1287,6 +1499,7 @@ function ContactSectionV2({
   effects: ReturnType<typeof getEffectsStyles>;
   contactEmail?: string | null;
   contactPhone?: string | null;
+  companyId?: string;
 }) {
   const [formData, setFormData] = React.useState({
     name: "",
@@ -1296,6 +1509,8 @@ function ContactSectionV2({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // In production, send to API with companyId
+    console.log("Submitting contact form for company:", companyId, formData);
     toast.success("Message sent! We'll get back to you soon.");
     setFormData({ name: "", email: "", message: "" });
   };
@@ -1317,7 +1532,7 @@ function ContactSectionV2({
         >
           {readContentString(section.content, "title") || "Get In Touch"}
         </motion.h2>
-        {section.content.subtitle && (
+        {readContentString(section.content, "subtitle") && (
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1326,7 +1541,7 @@ function ContactSectionV2({
             className={`${typography.bodySize} text-muted-foreground max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
-            {String(section.content.subtitle)}
+            {readContentString(section.content, "subtitle")}
           </motion.p>
         )}
       </div>
@@ -1485,12 +1700,12 @@ function CTABandV2({
           {readContentString(section.content, "title") ||
             "Ready to Get Started?"}
         </h2>
-        {section.content.subtitle && (
+        {readContentString(section.content, "subtitle") && (
           <p
             className={`${typography.bodySize} text-muted-foreground mb-8 max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
-            {typeof section.content.subtitle === 'string' ? section.content.subtitle : String(section.content.subtitle)}
+            {readContentString(section.content, "subtitle")}
           </p>
         )}
         <div className="flex gap-4 justify-center flex-wrap">
@@ -1593,209 +1808,222 @@ function PostsSectionV2({
                   </p>
                 )}
                 <Button
-                              variant="link"
-                              className="p-0"
-                              style={{ color: spec.meta.primaryColor }}
-                            >
-                              Read More <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                          </div>
-                        </motion.article>
-                      ))
-                    ) : (
-                      <div className="col-span-full text-center py-12 text-muted-foreground">
-                        No posts available
-                      </div>
-                    )}
-                  </div>
-                </AnimatedSection>
-              );
-            }
-            
-            // ============================================================================
-            // MAIN RENDERER COMPONENT
-            // ============================================================================
-            
-            export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
-              const { spec } = props;
-            
-              // Extract design systems from spec
-              const typography = getTypographyStyles(spec);
-              const spacing = getSpacingStyles(spec);
-              const effects = getEffectsStyles(spec);
-            
-              // Apply global font families
-              useEffect(() => {
-                if (typography.headingFont !== "Inter") {
-                  const link = document.createElement("link");
-                  link.href = `https://fonts.googleapis.com/css2?family=${typography.headingFont.replace(
-                    " ",
-                    "+"
-                  )}:wght@300;400;500;600;700;800;900&display=swap`;
-                  link.rel = "stylesheet";
-                  document.head.appendChild(link);
-                }
-                if (
-                  typography.bodyFont !== "Inter" &&
-                  typography.bodyFont !== typography.headingFont
-                ) {
-                  const link = document.createElement("link");
-                  link.href = `https://fonts.googleapis.com/css2?family=${typography.bodyFont.replace(
-                    " ",
-                    "+"
-                  )}:wght@300;400;500;600;700&display=swap`;
-                  link.rel = "stylesheet";
-                  document.head.appendChild(link);
-                }
-              }, [typography.headingFont, typography.bodyFont]);
-            
-              const sections = spec.sections || [];
-            
-              return (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="min-h-screen"
-                  style={{ fontFamily: typography.bodyFont }}
+                  variant="link"
+                  className="p-0"
+                  style={{ color: spec.meta.primaryColor }}
                 >
-                  {sections.map((section) => {
-                    switch (section.type) {
-                      case "hero":
-                        return (
-                          <HeroSectionV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            effects={effects}
-                            heroOverride={props.heroOverride}
-                            storeBanner={props.storeBanner ?? null}
-                          />
-                        );
-            
-                      case "highlights":
-                        return (
-                          <FeaturesSectionV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            effects={effects}
-                          />
-                        );
-            
-                      case "testimonials":
-                        return (
-                          <TestimonialsSectionV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            effects={effects}
-                            testimonials={props.testimonials || []}
-                          />
-                        );
-            
-                      case "product-grid":
-                        return (
-                          <ProductsSectionV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            effects={effects}
-                            featuredProducts={props.featuredProducts || []}
-                          />
-                        );
-            
-                      case "service-grid":
-                        return (
-                          <ServicesSectionV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            effects={effects}
-                            featuredServices={props.featuredServices || []}
-                          />
-                        );
-            
-                      case "stats":
-                        return (
-                          <StatsSectionV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            customersCount={props.customersCount || 0}
-                            approvedTestimonialsCount={props.approvedTestimonialsCount || 0}
-                          />
-                        );
-            
-                      case "faq":
-                        return (
-                          <FAQSectionV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            effects={effects}
-                            supportFaqs={props.supportFaqs || []}
-                          />
-                        );
-            
-                      case "contact":
-                        return (
-                          <ContactSectionV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            effects={effects}
-                            contactEmail={props.contactEmail}
-                            contactPhone={props.contactPhone}
-                          />
-                        );
-            
-                      case "cta-band":
-                        return (
-                          <CTABandV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            effects={effects}
-                          />
-                        );
-            
-                      case "posts":
-                        return (
-                          <PostsSectionV2
-                            key={section.id}
-                            section={section}
-                            spec={spec}
-                            typography={typography}
-                            spacing={spacing}
-                            effects={effects}
-                            posts={props.posts || []}
-                          />
-                        );
-            
-                      default:
-                        return null;
-                    }
-                  })}
-                </motion.div>
-              );
-            }
-            
+                  Read More <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </motion.article>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12 text-muted-foreground">
+            No posts available
+          </div>
+        )}
+      </div>
+    </AnimatedSection>
+  );
+}
+
+// ============================================================================
+// MAIN RENDERER COMPONENT
+// ============================================================================
+
+export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
+  const { spec } = props;
+
+  // Extract design systems from spec
+  const typography = getTypographyStyles(spec);
+  const spacing = getSpacingStyles(spec);
+  const effects = getEffectsStyles(spec);
+
+  // Apply global font families
+  useEffect(() => {
+    if (typography.headingFont !== "Inter") {
+      const link = document.createElement("link");
+      link.href = `https://fonts.googleapis.com/css2?family=${typography.headingFont.replace(
+        " ",
+        "+"
+      )}:wght@300;400;500;600;700;800;900&display=swap`;
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+    }
+    if (
+      typography.bodyFont !== "Inter" &&
+      typography.bodyFont !== typography.headingFont
+    ) {
+      const link = document.createElement("link");
+      link.href = `https://fonts.googleapis.com/css2?family=${typography.bodyFont.replace(
+        " ",
+        "+"
+      )}:wght@300;400;500;600;700&display=swap`;
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+    }
+  }, [typography.headingFont, typography.bodyFont]);
+
+  const sections = spec.sections || [];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen"
+      style={{ fontFamily: typography.bodyFont }}
+    >
+      {sections.map((section) => {
+        switch (section.type) {
+          case "hero":
+            return (
+              <HeroSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+                heroOverride={props.heroOverride}
+                storeBanner={props.storeBanner ?? null}
+              />
+            );
+
+          case "highlights":
+            return (
+              <FeaturesSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+              />
+            );
+
+          case "testimonials":
+            return (
+              <TestimonialsSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+                testimonials={props.testimonials || []}
+              />
+            );
+
+          case "product-grid":
+            return (
+              <ProductsSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+                featuredProducts={props.featuredProducts || []}
+              />
+            );
+
+          case "service-grid":
+            return (
+              <ServicesSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+                featuredServices={props.featuredServices || []}
+              />
+            );
+
+          case "portfolio":
+            return (
+              <PortfolioSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+                portfolioProjects={props.portfolioProjects || []}
+              />
+            );
+
+          case "stats":
+            return (
+              <StatsSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                customersCount={props.customersCount || 0}
+                approvedTestimonialsCount={props.approvedTestimonialsCount || 0}
+              />
+            );
+
+          case "faq":
+            return (
+              <FAQSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+                supportFaqs={props.supportFaqs || []}
+              />
+            );
+
+          case "contact":
+            return (
+              <ContactSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+                contactEmail={props.contactEmail}
+                contactPhone={props.contactPhone}
+                companyId={props.companyId}
+              />
+            );
+
+          case "cta-band":
+            return (
+              <CTABandV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+              />
+            );
+
+          case "posts":
+            return (
+              <PostsSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+                posts={props.posts || []}
+              />
+            );
+
+          default:
+            return null;
+        }
+      })}
+    </motion.div>
+  );
+}
