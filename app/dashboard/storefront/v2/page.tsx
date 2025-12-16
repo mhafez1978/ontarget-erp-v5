@@ -503,8 +503,8 @@ export default function FrontstoreV2Page() {
   };
 
   const handlePublishToLive = async () => {
-    if (!versionId || !companyId) {
-      toast.error("No design version to publish");
+    if (!previewSpec || !companyId) {
+      toast.error("No design to publish. Please generate a design first.");
       return;
     }
 
@@ -542,7 +542,8 @@ export default function FrontstoreV2Page() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           companyId,
-          versionId,
+          versionId: versionId || undefined,
+          spec: versionId ? undefined : previewSpec,
         }),
       });
 
@@ -1050,7 +1051,27 @@ export default function FrontstoreV2Page() {
 
               <ScrollArea className="flex-1">
                 <div className="min-h-full flex items-center justify-center p-8">
-                  {!previewSpec ? (
+                  {loading && !previewSpec ? (
+                    <Card className="p-16 text-center max-w-lg border-dashed">
+                      <div className="relative mb-6">
+                        <Loader2 className="w-20 h-20 mx-auto text-primary animate-spin" />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-3">
+                        Generating Your Storefront
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                        AI is crafting your custom design... This may take 30-60 seconds.
+                      </p>
+                      {generationProgress > 0 && (
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-primary h-full transition-all duration-500"
+                            style={{ width: `${generationProgress}%` }}
+                          />
+                        </div>
+                      )}
+                    </Card>
+                  ) : !previewSpec ? (
                     <Card className="p-16 text-center max-w-lg border-dashed">
                       <div className="relative mb-6">
                         <div className="absolute inset-0 flex items-center justify-center">

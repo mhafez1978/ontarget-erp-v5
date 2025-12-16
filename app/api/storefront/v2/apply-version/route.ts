@@ -18,18 +18,20 @@ export async function POST(request: NextRequest) {
     const {
       companyId,
       versionId,
+      spec,
       dryRun = false,
       themeId = "default",
     } = body as {
       companyId?: string;
       versionId?: string;
+      spec?: any;
       dryRun?: boolean;
       themeId?: string;
     };
 
-    if (!companyId || !versionId)
+    if (!companyId || (!versionId && !spec))
       return NextResponse.json(
-        { error: "companyId and versionId required" },
+        { error: "companyId and (versionId or spec) required" },
         { status: 400 }
       );
 
@@ -47,16 +49,23 @@ export async function POST(request: NextRequest) {
     if (!isSuperAdmin && !ownsCompany)
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-    const version = await db.storefrontSpecVersion.findUnique({
-      where: { id: versionId },
-    });
-    if (!version || version.companyId !== companyId)
-      return NextResponse.json({ error: "Version not found" }, { status: 404 });
+    let specToApply: any;
+    
+    if (versionId) {
+      // Load from database version
+      const version = await db.storefrontSpecVersion.findUnique({
+        where: { id: versionId },
+      });
+      if (!version || version.companyId !== companyId)
+        return NextResponse.json({ error: "Version not found" }, { status: 404 });
+      specToApply = version.spec;
+    } else {
+      // Use spec directly from request
+      specToApply = spec;
+    }
 
     // Validate and compute diffs
-    const specValidation = aiFrontstoreSpecSchema.safeParse(
-      version.spec as any
-    );
+    const specValidation = aiFrontstoreSpecSchema.safeParse(specToApply);
     const company = await db.company.findUnique({
       where: { id: companyId },
       select: { storeMetadata: true },
@@ -66,7 +75,7 @@ export async function POST(request: NextRequest) {
     )
       ? (company?.storeMetadata as any).sections
       : [];
-    const mapped = mapAiSpecToThemeSections(version.spec as any, themeId);
+    const mapped = mapAiSpecToThemeSections(specToApply, themeId);
     const changes = mapped ? computeSectionDiffs(prevSections, mapped) : [];
     const summary = humanReadableSummary(changes);
 
@@ -85,14 +94,16 @@ export async function POST(request: NextRequest) {
     // Apply spec (save to company.aiStorefrontSpec and enable)
     await db.company.update({
       where: { id: companyId },
-      data: { aiStorefrontSpec: version.spec, aiStorefrontEnabled: true },
+      data: { aiStorefrontSpec: specToApply, aiStorefrontEnabled: true },
     });
 
-    // Mark appliedAt
-    await db.storefrontSpecVersion.update({
-      where: { id: versionId },
-      data: { appliedAt: new Date() },
-    });
+    // Mark appliedAt if using versionId
+    if (versionId) {
+      await db.storefrontSpecVersion.update({
+        where: { id: versionId },
+        data: { appliedAt: new Date() },
+      });
+    }
 
     // Create system message in latest open conversation (optional)
     const conv = await db.storefrontConversation.findFirst({
@@ -104,7 +115,9 @@ export async function POST(request: NextRequest) {
         data: {
           conversationId: conv.id,
           role: "system",
-          content: `Spec version ${versionId} applied by ${user.id}`,
+          content: versionId 
+            ? `Spec version ${versionId} applied by ${user.id}`
+            : `Custom spec applied by ${user.id}`,
           isPreviewOnly: false,
         },
       });
@@ -114,7 +127,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true, message: "Version applied" });
+    return NextResponse.json({ success: true, message: "Design published successfully" });
   } catch (error) {
     console.error("Apply version error:", error);
     return NextResponse.json(
