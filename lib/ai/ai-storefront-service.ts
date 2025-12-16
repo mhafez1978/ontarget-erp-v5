@@ -1175,6 +1175,115 @@ export async function generateAiStorefront(
     "headline: 'Featured Web Design & Development Projects'\n" +
     "intro: 'Explore our portfolio of responsive websites, e-commerce platforms, and custom web applications for clients across healthcare, finance, and technology sectors.'\n\n" +
     "REMEMBER: You have all the data you need - company info, products, services, projects, industry, location. Use it to create naturally SEO-optimized content that helps them rank while maintaining beautiful, persuasive copy!\n\n" +
+    "MARKETING & CONVERSION PRINCIPLES:\n" +
+    "Apply proven marketing psychology to drive conversions and engagement:\n\n" +
+    "1. VALUE PROPOSITION (Hero Section):\n" +
+    "   - Lead with the BENEFIT, not just features\n" +
+    "   - Answer: 'What's in it for me?' within 3 seconds\n" +
+    "   - Formula: [What you do] + [Who it's for] + [Unique benefit]\n" +
+    "   - Examples:\n" +
+    "     ❌ 'We Build Websites' (feature-focused)\n" +
+    "     ✅ 'Custom Websites That Convert Visitors Into Customers'\n" +
+    "     ✅ 'Handcrafted Furniture Built to Last Generations'\n" +
+    "     ✅ 'Get Your AC Fixed Today - 2-Hour Response Time'\n\n" +
+    "2. SOCIAL PROOF (Testimonials, Stats, Trust Signals):\n" +
+    "   - Place testimonials EARLY, not just at bottom\n" +
+    "   - Use specific numbers in stats: '847 Happy Clients' not 'Many Clients'\n" +
+    "   - Include credentials: 'Licensed', 'Certified', 'Award-Winning', '15 Years Experience'\n" +
+    "   - Show customer results when possible: 'Increased sales by 40%', 'Saved $10k annually'\n" +
+    "   - Position testimonials near related products/services for context\n\n" +
+    "3. SCARCITY & URGENCY (When Appropriate):\n" +
+    "   - For limited services: 'Limited Slots Available This Month'\n" +
+    "   - For seasonal: 'Holiday Special Offer', 'Summer Service Package'\n" +
+    "   - For booking: 'Book Now - Next Available: [Date]'\n" +
+    "   - Keep it honest - only use if genuinely applicable to business model\n\n" +
+    "4. CLEAR CALL-TO-ACTION HIERARCHY:\n" +
+    "   - Primary CTA in hero: Most important action (Shop, Book, Get Quote, Contact)\n" +
+    "   - Secondary CTA: Lower commitment (Learn More, View Portfolio, Browse Products)\n" +
+    "   - Repeat CTAs strategically: After benefits, after testimonials, after pricing\n" +
+    "   - Make CTAs action-specific and benefit-driven:\n" +
+    "     ✅ 'Get Your Free Estimate' (benefit: free, action: estimate)\n" +
+    "     ✅ 'Start Your 14-Day Trial' (benefit: trial, timeframe: 14 days)\n" +
+    "     ✅ 'Book Your First Massage - $20 Off' (benefit: discount, action: book)\n" +
+    "   - Use contrasting colors for primary CTAs (visibility!)\n\n" +
+    "5. BENEFITS OVER FEATURES:\n" +
+    "   - Translate features into customer outcomes\n" +
+    "   - Feature → Benefit translation:\n" +
+    "     • '24/7 Support' → 'Get Help Whenever You Need It'\n" +
+    "     • 'Organic Ingredients' → 'Better for Your Health & the Planet'\n" +
+    "     • 'Cloud-Based' → 'Access Your Data from Anywhere'\n" +
+    "   - Use highlights/features section to show benefit-driven points\n" +
+    "   - Include icons that represent benefits (shield=security, clock=fast, heart=quality)\n\n" +
+    "6. FRICTION REDUCTION:\n" +
+    "   - Clear pricing when possible (transparency builds trust)\n" +
+    "   - FAQ section addresses objections: cost, process, guarantees, returns\n" +
+    "   - Multiple contact methods: phone, email, form, chat\n" +
+    "   - Show process/steps: 'How It Works' for services\n" +
+    "   - Make next steps crystal clear: 'Book Online in 3 Easy Steps'\n\n" +
+    "7. EMOTIONAL TRIGGERS BY INDUSTRY:\n" +
+    "   - Healthcare/Wellness: Trust, care, transformation, peace of mind\n" +
+    "   - Luxury: Exclusivity, status, quality, craftsmanship\n" +
+    "   - B2B/SaaS: Efficiency, ROI, growth, time-savings\n" +
+    "   - E-commerce: Value, convenience, lifestyle, belonging\n" +
+    "   - Services: Reliability, expertise, results, stress-relief\n" +
+    "   - Use emotional language in subheadlines and descriptions\n\n" +
+    "8. STORYTELLING STRUCTURE:\n" +
+    "   - Hero: Strong opening that resonates with target audience\n" +
+    "   - Problem: Subtle acknowledgment of customer pain points\n" +
+    "   - Solution: How company solves it (products/services)\n" +
+    "   - Proof: Testimonials and case studies validate solution\n" +
+    "   - Action: Clear path forward with CTA\n\n" +
+    "9. VISUAL HIERARCHY FOR CONVERSION:\n" +
+    "   - F-pattern reading: Most important info top-left\n" +
+    "   - Use whitespace to guide eye to CTAs\n" +
+    "   - Size/color/position = importance\n" +
+    "   - Break up text with subheadings, bullets, highlighted stats\n" +
+    "   - Hero image/video should support message, not distract\n\n" +
+    "10. GOAL-BASED SECTION ORDERING:\n" +
+    "    SELL PRODUCTS goal:\n" +
+    "    hero → highlights → product-grid → testimonials → stats → faq → cta-band\n    \n" +
+    "    SELL SERVICES goal:\n" +
+    "    hero → service-grid → highlights (benefits) → portfolio/testimonials → faq → contact\n    \n" +
+    "    LEAD GENERATION goal:\n" +
+    "    hero → highlights → testimonials → stats → cta-band (form) → portfolio → contact\n    \n" +
+    "    BOOKINGS goal:\n" +
+    "    hero → service-grid → testimonials → faq → cta-band (book now) → contact\n\n" +
+    "11. TRUST BUILDING ELEMENTS:\n" +
+    "    - Include stats section with specific achievements\n" +
+    "    - Show team if available (humanizes brand)\n" +
+    "    - Display certifications, awards, partnerships\n" +
+    "    - Use customer company names in testimonials (with permission assumed)\n" +
+    "    - Include location/local presence for local businesses\n\n" +
+    "12. MOBILE-FIRST THINKING:\n" +
+    "    - Keep headlines punchy and scannable\n" +
+    "    - Primary CTA should be visible without scrolling\n" +
+    "    - Click-to-call for phone numbers prominent on mobile\n" +
+    "    - Simplified forms (fewer fields = more conversions)\n\n" +
+    "MARKETING COPY EXAMPLES:\n" +
+    "\n" +
+    "SaaS Hero (benefit-driven + social proof):\n" +
+    "headline: 'Manage Your Entire Business in One Platform'\n" +
+    "subheadline: 'Join 10,000+ growing companies using [CompanyName] to streamline operations, boost productivity, and increase revenue by an average of 35%.'\n" +
+    "primaryCTA: 'Start Free 14-Day Trial'\n" +
+    "secondaryCTA: 'Watch 2-Minute Demo'\n" +
+    "\n" +
+    "Local Service (urgency + trust):\n" +
+    "headline: 'Emergency Plumbing Services - 2-Hour Response Time'\n" +
+    "subheadline: 'Licensed & insured plumbers serving [City] for 20 years. Available 24/7 for your peace of mind.'\n" +
+    "primaryCTA: 'Call Now: [Phone]'\n" +
+    "secondaryCTA: 'Request Free Quote'\n" +
+    "\n" +
+    "E-commerce (value + lifestyle):\n" +
+    "headline: 'Sustainable Fashion That Doesn\\'t Cost the Earth'\n" +
+    "subheadline: 'Ethically-made clothing from organic materials. Look good, feel good, do good.'\n" +
+    "primaryCTA: 'Shop New Arrivals'\n" +
+    "secondaryCTA: 'Learn Our Story'\n" +
+    "\n" +
+    "Agency Portfolio (results-focused):\n" +
+    "headline: 'Web Design That Converts Visitors Into Customers'\n" +
+    "subheadline: 'We\\'ve helped 200+ businesses increase online revenue through strategic design and development.'\n" +
+    "primaryCTA: 'View Our Work'\n" +
+    "secondaryCTA: 'Get Your Free Proposal'\n\n" +
     "WHEN TO ASK QUESTIONS (set shouldAsk: true, provide assistantMessage):\n" +
     '- First interaction and their prompt is vague ("make me a website")\n' +
     '- They mention contradictory styles ("minimal but bold")\n' +
