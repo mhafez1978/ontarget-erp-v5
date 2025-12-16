@@ -11,6 +11,7 @@ export const aiFrontstoreSectionTypeSchema = z.enum([
   "stats",
   "faq",
   "contact",
+  "contact-map",
   "cta-band",
 ]);
 

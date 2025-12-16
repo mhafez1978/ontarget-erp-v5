@@ -18,6 +18,7 @@ import {
   AddressData,
 } from "@/components/address-autocomplete";
 import { toast } from "sonner";
+import LocationsManager from "@/components/locations-manager";
 
 interface Company {
   id: string;
@@ -314,6 +315,12 @@ export function EditCompanySheet({
               onChange={setAddressData}
             />
           </div>
+
+          {company && (
+            <div className="border-t pt-6">
+              <LocationsManager companyId={company.id} />
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button
