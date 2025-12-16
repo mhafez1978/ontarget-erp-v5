@@ -208,10 +208,15 @@ export async function POST(request: NextRequest) {
         id: true,
         name: true,
         description: true,
-        category: true,
         startDate: true,
         endDate: true,
-        client: {
+        featuredImage: true,
+        customer: {
+          select: {
+            name: true,
+          },
+        },
+        subscriberCompany: {
           select: {
             name: true,
           },
@@ -367,9 +372,10 @@ export async function POST(request: NextRequest) {
       projects: projects.map((proj) => ({
         id: proj.id,
         title: proj.name,
-        client: proj.client?.name ?? null,
-        category: proj.category ?? null,
+        client: proj.customer?.name || proj.subscriberCompany?.name || null,
+        category: null,
         description: proj.description ?? null,
+        image: proj.featuredImage ?? null,
         startDate: proj.startDate?.toISOString() ?? null,
         endDate: proj.endDate?.toISOString() ?? null,
       })),

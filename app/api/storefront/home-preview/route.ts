@@ -182,10 +182,18 @@ export async function GET(request: NextRequest) {
         companyId,
         isFeatured: true,
       },
-      include: {
-        client: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        featuredImage: true,
+        customer: {
           select: {
-            id: true,
+            name: true,
+          },
+        },
+        subscriberCompany: {
+          select: {
             name: true,
           },
         },
@@ -220,12 +228,12 @@ export async function GET(request: NextRequest) {
       featuredServices,
       portfolioProjects: portfolioProjects.map((proj) => ({
         id: proj.id,
-        title: proj.title,
-        client: proj.client?.name,
-        category: proj.category,
+        title: proj.name,
+        client: proj.customer?.name || proj.subscriberCompany?.name,
+        category: null,
         description: proj.description,
-        image: proj.heroImage,
-        tags: proj.tags || [],
+        image: proj.featuredImage,
+        tags: [],
       })),
       testimonials,
       featuredTeamMembers: featuredTeamMembers.map((member) => ({
