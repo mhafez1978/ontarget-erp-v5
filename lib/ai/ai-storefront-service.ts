@@ -1680,32 +1680,109 @@ export async function generateAiStorefront(
     "- 'brutalist': Bold typography, sharp corners, high contrast, thick borders, no shadows\n" +
     "- 'swiss': Grid-based, clean, sans-serif, lots of whitespace, minimal effects\n" +
     "- 'neo-tech': Glassmorphism, gradients, soft shadows, rounded corners, modern fonts\n" +
+    "- 'glassmorphic': Frosted glass effects, soft blurs, translucency, layered depth, modern\n" +
+    "- 'retro': Vintage typography, bold colors, nostalgic vibes, playful elements, 70s/80s/90s inspired\n" +
     "- 'warm-organic': Natural colors, soft shadows, rounded corners, generous spacing, friendly fonts\n" +
     "- 'editorial-magazine': Large serif headings, asymmetric layouts, image-driven, varied typography\n" +
     "- 'minimal-luxury': Lots of negative space, elegant serif, subtle effects, muted palette\n\n" +
-    "CONTENT STRUCTURE:\n" +
-    "Canonical sections (adapt order and emphasis based on goal): hero, highlights, product-grid, service-grid, portfolio, posts, testimonials, stats, faq, contact, contact-map, cta-band\n" +
-    "- CONTACT-MAP SECTION (type: 'contact-map'): Combines contact form with interactive map showing all company locations\n" +
-    "  - Perfect for: Multi-location businesses, service-based companies with multiple offices, franchises, real estate\n" +
-    "  - Include if: Company has multiple locations (locations array) or user requests 'contact-map', 'locations map', 'office map'\n" +
-    "  - Data: Use all company.locations[]; map displays markers for each location\n" +
-    "  - Main location (isMain: true) displayed prominently with contact info on the form side\n" +
-    "  - Layout: Horizontal on desktop (form left, map right), vertical on mobile (form top, map bottom)\n" +
-    "  - Features: Contact form with name/email/phone/message + interactive map with markers and popups\n" +
-    "  - Style with theme colors from spec.meta for form buttons, borders, backgrounds\n" +
-    "- PRODUCT-GRID/SERVICE-GRID SECTIONS: ALWAYS include the first product/service image if available in the images array. Images are crucial for visual appeal!\n" +
-    "  - For products: Use product.images[0] as the image field\n" +
-    "  - For services: If no service images exist, use generic placeholder URLs from Unsplash related to the service category\n" +
-    "- PORTFOLIO SECTION (type: 'portfolio'): Showcase featured projects, case studies, or completed work\n" +
-    "  - Perfect for agencies, consultants, designers, developers, freelancers\n" +
-    "  - Include if: company has featured projects, or user mentions 'portfolio', 'case studies', 'work', 'projects'\n" +
-    "  - Use project data: title (project name), client (client name), category, description\n" +
-    "  - Style with overlay cards, category badges, and engaging hover effects\n" +
-    "  - If no projects exist but business type suggests portfolio need, create 3-6 placeholder projects with relevant titles\n" +
-    "- POSTS/BLOG SECTION: When blogEnabled is true OR user requests it, include a 'posts' section to showcase blog articles, news, updates, or resources\n" +
-    "  - If blogHasPosts is true (they have actual posts), make it prominent and engaging with preview cards\n" +
-    "  - If blogHasPosts is false (placeholder), include it but style it as 'coming soon' with engaging copy\n" +
-    "  - Consider blog positioning based on business type: early for content-focused sites, mid-page for most businesses, or near bottom for product-focused stores\n\n" +
+    "INDUSTRY-AWARE COLOR INTELLIGENCE:\n" +
+    "CRITICAL: Choose colors that make sense for the business! Use common sense and designer intuition:\n" +
+    "- **Florists/Garden Centers**: Vibrant greens, pinks, purples, florals - NOT grayscale!\n" +
+    "- **Restaurants/Food**: Warm appetizing colors (reds, oranges, browns, creams)\n" +
+    "- **Health/Medical**: Clean blues, greens, whites - trustworthy and calming\n" +
+    "- **Kids/Toys**: Bright primary colors, playful pastels, fun and energetic\n" +
+    "- **Finance/Law**: Professional blues, grays, navy - credible and serious\n" +
+    "- **Creative Agencies**: Bold, vibrant, unexpected - showcase creativity\n" +
+    "- **Luxury Brands**: Gold, black, deep jewel tones - elegant and premium\n" +
+    "- **Tech/SaaS**: Modern blues, teals, purples - innovative and forward-thinking\n" +
+    "- **Fashion/Beauty**: Depends on brand personality - can be bold, minimal, or feminine\n" +
+    "If you extract brand colors from their logo, USE THEM as the foundation but expand intelligently!\n\n" +
+    "CONTENT STRUCTURE - REQUIRED SECTIONS:\n" +
+    "Every storefront MUST include these sections in order (adapt styling/emphasis based on goal):\n\n" +
+    "1. **ANNOUNCEMENT-BAR** (type: 'announcement-bar', order: 0)\n" +
+    "   - Appears at very top of EVERY page\n" +
+    "   - Use for: Promotions, sales, free shipping, limited offers, important announcements\n" +
+    "   - Make clickable if linking to promo page/product\n" +
+    "   - Content: { text: 'Your promo message', link: '/optional-link', dismissible: true/false }\n" +
+    "   - Style: Contrasting background (often accent color), white/light text, compact height\n" +
+    "   - Examples: '🎉 50% Off Spring Sale - Shop Now!', '✈️ Free Shipping on Orders $50+'\n\n" +
+    "2. **HEADER** (type: 'header', order: 1)\n" +
+    "   - Contains: Logo (if exists) OR company name text, navigation menu, Login, Register, Cart icons\n" +
+    "   - Logo: Use company.logoLight or company.logoDark if available, else company.name in beautiful font\n" +
+    "   - Navigation: Auto-generate links based on sections (Home, Products, Services, Blog, Team, Contact)\n" +
+    "   - Auth buttons: 'Login' and 'Register' styled as secondary buttons\n" +
+    "   - Cart icon: Include if products exist (show cart item count)\n" +
+    "   - Style: Choose from transparent-on-hero, solid, sticky, floating - match overall design aesthetic\n" +
+    "   - Content structure:\n" +
+    "     {\n" +
+    "       logo: company.logoLight || company.logoDark || null,\n" +
+    "       companyName: company.name,\n" +
+    "       navigation: [{ label: 'Home', href: '#hero' }, { label: 'Products', href: '#products' }, ...],\n" +
+    "       showAuth: true,\n" +
+    "       showCart: products.length > 0,\n" +
+    "       style: 'transparent' | 'solid' | 'sticky' | 'floating'\n" +
+    "     }\n\n" +
+    "3. **HERO** (type: 'hero', order: 2)\n" +
+    "   - Large impactful section with headline, subheadline, CTA buttons\n" +
+    "   - Image ratio: 1:1 (square) or 1:2 (wide landscape) - choose based on design style\n" +
+    "   - Background: Use backgroundImage or backgroundVideo for immersion\n" +
+    "   - CTAs: 1-2 prominent action buttons (e.g., 'Shop Now', 'Get Started', 'Learn More')\n\n" +
+    "4. **STATS/SOCIAL-PROOF** (type: 'stats', order: 3)\n" +
+    "   - Show impressive numbers: projects completed, happy customers, years in business, testimonials count\n" +
+    "   - Use actual data when available, or create realistic placeholders\n" +
+    "   - Content: [{ number: '500+', label: 'Happy Customers' }, { number: '1,200', label: 'Projects' }, ...]\n" +
+    "   - Style: Clean, prominent numbers with descriptive labels\n\n" +
+    "Then include relevant sections based on available data:\n" +
+    "- **PRODUCT-GRID** (type: 'product-grid') - if products exist\n" +
+    "- **SERVICE-GRID** (type: 'service-grid') - if services exist\n" +
+    "- **PORTFOLIO** (type: 'portfolio') - for agencies, designers, consultants\n" +
+    "- **POSTS** (type: 'posts') - if blogEnabled or blog posts exist\n" +
+    "- **TEAM** (type: 'team') - if team members exist (Meet the Team section)\n" +
+    "- **TESTIMONIALS** (type: 'testimonials') - use Magic UI styling (cards, animations, engaging layout)\n" +
+    "- **FAQ** (type: 'faq') - common questions\n" +
+    "- **CONTACT-MAP** (type: 'contact-map') - contact form + mapped locations\n" +
+    "- **CTA-BAND** (type: 'cta-band') - final conversion push before footer\n" +
+    "- **FOOTER** (type: 'footer', last section) - company info, quick links, social icons, copyright\n\n" +
+    "SECTION-SPECIFIC DETAILS:\n\n" +
+    "**CONTACT-MAP SECTION** (type: 'contact-map'):\n" +
+    "  - Combines contact form with interactive map showing all company locations\n" +
+    "  - Perfect for: Multi-location businesses, service companies, franchises, real estate\n" +
+    "  - Include if: Multiple locations exist OR user requests 'locations map'\n" +
+    "  - Data: Use all company.locations[] with markers for each\n" +
+    "  - Main location (isMain: true) shown prominently with contact info\n" +
+    "  - Layout: Form left + map right (desktop), stacked (mobile)\n\n" +
+    "**PRODUCT-GRID/SERVICE-GRID**:\n" +
+    "  - ALWAYS include product/service images! Images are crucial for visual appeal\n" +
+    "  - Products: Use product.images[0] as image field\n" +
+    "  - Services: Use Unsplash placeholders if no service images\n" +
+    "  - Grid layout: 2-4 columns depending on style, cards with hover effects\n\n" +
+    "**PORTFOLIO SECTION** (type: 'portfolio'):\n" +
+    "  - For agencies, consultants, designers, developers, freelancers\n" +
+    "  - Include if: Featured projects exist OR business suggests portfolio\n" +
+    "  - Data: Project title, client, category, description, images\n" +
+    "  - Style: Overlay cards, category badges, engaging hover effects\n" +
+    "  - Create 3-6 placeholder projects if none exist but needed\n\n" +
+    "**TEAM SECTION** (type: 'team'):\n" +
+    "  - Meet the Team - showcase employees with photos, names, roles\n" +
+    "  - Include if: Team members exist in company data\n" +
+    "  - Style: Photo cards with names, job titles, short bios\n" +
+    "  - Layout: Grid (2-4 per row) or carousel for large teams\n\n" +
+    "**TESTIMONIALS** (type: 'testimonials'):\n" +
+    "  - Use Magic UI styling - animated cards, engaging layouts, marquee effects\n" +
+    "  - Include customer quotes, names, companies, ratings\n" +
+    "  - Style: Cards with gradients, shadows, subtle animations\n" +
+    "  - Layout options: Grid, carousel, marquee scroll, masonry\n\n" +
+    "**POSTS/BLOG** (type: 'posts'):\n" +
+    "  - When blogEnabled OR user requests it\n" +
+    "  - If blog posts exist: Prominent engaging cards with excerpts\n" +
+    "  - If placeholder: Style as 'coming soon' with engaging copy\n" +
+    "  - Position: Early (content sites), mid-page (most), or bottom (product stores)\n\n" +
+    "**FOOTER** (type: 'footer'):\n" +
+    "  - MUST include in EVERY design as final section\n" +
+    "  - Content: Company name + tagline, quick nav links, contact info\n" +
+    "  - Social icons: Only include if metadata.socialLinks has values (Facebook, Twitter, Instagram, LinkedIn)\n" +
+    "  - Copyright: '© 2025 [Company Name]. All rights reserved.'\n" +
+    "  - Style: Multi-column layout on desktop, stacked on mobile, subtle background\n\n" +
     "SEO METADATA & PAGE HEAD:\n" +
     "The spec includes a 'seo' object in the root that you MUST populate for search engine optimization:\n" +
     "- seo.title: Page title for <title> tag (50-60 characters ideal)\n" +
