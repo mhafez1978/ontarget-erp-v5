@@ -20,6 +20,7 @@ import type {
   AiFrontstoreSection,
   PortfolioProject,
 } from "@/lib/ai/ai-storefront-types";
+import ContactMapSectionV2 from "./contact-map-section-v2";
 
 // ============================================================================
 // TYPES
@@ -89,6 +90,22 @@ interface AiStorefrontRendererV2Props {
   contactEmail?: string | null;
   contactPhone?: string | null;
   storeBanner?: string | null;
+  locations?: {
+    id: string;
+    name: string;
+    type: string;
+    isMain: boolean;
+    latitude: number;
+    longitude: number;
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    state?: string | null;
+    country: string;
+    postalCode?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  }[];
   heroOverride?: {
     title?: string;
     subtitle?: string;
@@ -2248,6 +2265,28 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                   contactEmail={props.contactEmail}
                   contactPhone={props.contactPhone}
                   companyId={props.companyId}
+                />
+              );
+
+            case "contact-map":
+              return (
+                <ContactMapSectionV2
+                  key={section.id}
+                  title={
+                    readContentString(section.content, "title") ||
+                    "Contact & Locations"
+                  }
+                  description={readContentString(
+                    section.content,
+                    "description"
+                  )}
+                  locations={props.locations || []}
+                  primaryEmail={props.contactEmail}
+                  backgroundColor={spec.meta.backgroundColor}
+                  textColor={spec.meta.textColor}
+                  buttonColor={spec.meta.primaryColor}
+                  accentColor={`${spec.meta.primaryColor}20`}
+                  layout="horizontal"
                 />
               );
 

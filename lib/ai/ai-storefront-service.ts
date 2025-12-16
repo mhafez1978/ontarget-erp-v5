@@ -1006,6 +1006,22 @@ export interface AiStorefrontInput {
     title: string;
     excerpt: string | null;
   }>;
+  locations?: Array<{
+    id: string;
+    name: string;
+    type: string;
+    isMain: boolean;
+    latitude: number;
+    longitude: number;
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    state?: string | null;
+    country: string;
+    postalCode?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  }>;
   brandColors?: {
     primary?: string;
     secondary?: string;
@@ -1037,6 +1053,7 @@ export interface AiStorefrontInput {
   includeFaq?: boolean;
   includeCta?: boolean;
   includeContact?: boolean;
+  includeContactMap?: boolean;
   heroSize?: "compact" | "full";
   prompt: string;
   goal: "sell-products" | "sell-services" | "lead-gen" | "bookings";
@@ -1460,7 +1477,15 @@ export async function generateAiStorefront(
     "- 'editorial-magazine': Large serif headings, asymmetric layouts, image-driven, varied typography\n" +
     "- 'minimal-luxury': Lots of negative space, elegant serif, subtle effects, muted palette\n\n" +
     "CONTENT STRUCTURE:\n" +
-    "Canonical sections (adapt order and emphasis based on goal): hero, highlights, product-grid, service-grid, portfolio, posts, testimonials, stats, faq, contact, cta-band\n" +
+    "Canonical sections (adapt order and emphasis based on goal): hero, highlights, product-grid, service-grid, portfolio, posts, testimonials, stats, faq, contact, contact-map, cta-band\n" +
+    "- CONTACT-MAP SECTION (type: 'contact-map'): Combines contact form with interactive map showing all company locations\n" +
+    "  - Perfect for: Multi-location businesses, service-based companies with multiple offices, franchises, real estate\n" +
+    "  - Include if: Company has multiple locations (locations array) or user requests 'contact-map', 'locations map', 'office map'\n" +
+    "  - Data: Use all company.locations[]; map displays markers for each location\n" +
+    "  - Main location (isMain: true) displayed prominently with contact info on the form side\n" +
+    "  - Layout: Horizontal on desktop (form left, map right), vertical on mobile (form top, map bottom)\n" +
+    "  - Features: Contact form with name/email/phone/message + interactive map with markers and popups\n" +
+    "  - Style with theme colors from spec.meta for form buttons, borders, backgrounds\n" +
     "- PRODUCT-GRID/SERVICE-GRID SECTIONS: ALWAYS include the first product/service image if available in the images array. Images are crucial for visual appeal!\n" +
     "  - For products: Use product.images[0] as the image field\n" +
     "  - For services: If no service images exist, use generic placeholder URLs from Unsplash related to the service category\n" +
@@ -1654,6 +1679,7 @@ export async function generateAiStorefront(
     testimonials: testimonials,
     team: input.team || [],
     posts: input.posts || [],
+    locations: input.locations || [],
     brandColors: input.brandColors,
     showLocation: input.showLocation ?? true,
     showTeam: input.showTeam ?? true,
