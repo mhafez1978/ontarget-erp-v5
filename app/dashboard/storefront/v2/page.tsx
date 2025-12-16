@@ -289,14 +289,20 @@ export default function FrontstoreV2Page() {
   };
 
   const runDryRunApply = async () => {
-    if (!companyId || !versionId)
-      return toast.error("No version available to apply");
+    if (!companyId) return toast.error("No company selected");
+    if (!versionId && !previewSpec)
+      return toast.error("No design available to preview");
     setLoading(true);
     try {
       const res = await fetch("/api/storefront/v2/apply-version", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyId, versionId, dryRun: true }),
+        body: JSON.stringify({
+          companyId,
+          versionId: versionId || undefined,
+          spec: !versionId ? previewSpec : undefined,
+          dryRun: true,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Dry-run failed");
@@ -324,8 +330,9 @@ export default function FrontstoreV2Page() {
   };
 
   const confirmApply = async () => {
-    if (!companyId || !versionId)
-      return toast.error("No version available to apply");
+    if (!companyId) return toast.error("No company selected");
+    if (!versionId && !previewSpec)
+      return toast.error("No design available to apply");
 
     const doApply = async () => {
       setLoading(true);
@@ -333,7 +340,11 @@ export default function FrontstoreV2Page() {
         const res = await fetch("/api/storefront/v2/apply-version", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ companyId, versionId }),
+          body: JSON.stringify({
+            companyId,
+            versionId: versionId || undefined,
+            spec: !versionId ? previewSpec : undefined,
+          }),
         });
 
         if (!res.ok) {
