@@ -58,6 +58,7 @@ interface AiStorefrontRendererV2Props {
   companyName: string;
   companyId?: string;
   enableCart?: boolean;
+  isPreview?: boolean; // Add preview mode flag
   featuredProducts?: FeaturedProduct[];
   featuredServices?: FeaturedService[];
   portfolioProjects?: PortfolioProject[];
@@ -451,11 +452,13 @@ function HeaderV2({
   companyName,
   slug,
   typography,
+  isPreview = false,
 }: {
   spec: AiFrontstoreSpec;
   companyName: string;
   slug: string;
   typography: ReturnType<typeof getTypographyStyles>;
+  isPreview?: boolean;
 }) {
   const navLinks = [
     { label: "Home", href: `/store/${slug}` },
@@ -474,17 +477,31 @@ function HeaderV2({
       }}
     >
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href={`/store/${slug}`} className="flex items-center gap-2">
-          <h1
-            className={`${typography.headingSize.h3} ${typography.headingWeight}`}
-            style={{
-              fontFamily: typography.headingFont,
-              color: spec.meta.primaryColor,
-            }}
-          >
-            {companyName}
-          </h1>
-        </Link>
+        {isPreview ? (
+          <div className="flex items-center gap-2">
+            <h1
+              className={`${typography.headingSize.h3} ${typography.headingWeight}`}
+              style={{
+                fontFamily: typography.headingFont,
+                color: spec.meta.primaryColor,
+              }}
+            >
+              {companyName}
+            </h1>
+          </div>
+        ) : (
+          <Link href={`/store/${slug}`} className="flex items-center gap-2">
+            <h1
+              className={`${typography.headingSize.h3} ${typography.headingWeight}`}
+              style={{
+                fontFamily: typography.headingFont,
+                color: spec.meta.primaryColor,
+              }}
+            >
+              {companyName}
+            </h1>
+          </Link>
+        )}
 
         <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
@@ -2138,6 +2155,7 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
         companyName={props.companyName}
         slug={props.slug}
         typography={typography}
+        isPreview={props.isPreview}
       />
       <motion.div
         initial={{ opacity: 0 }}
