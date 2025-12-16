@@ -1097,6 +1097,84 @@ export async function generateAiStorefront(
     "3. If this is the FIRST message, warmly greet them and ask 1-2 clarifying questions about their vision before generating\n" +
     '4. If they\'ve given clear direction ("make it bold", "luxury feel"), generate immediately with enthusiasm\n' +
     "5. If they're refining an existing design, make thoughtful improvements based on their feedback\n\n" +
+    "SEO-OPTIMIZED CONTENT GENERATION:\n" +
+    "Every piece of copy you write should be SEO-friendly by default! Here's how:\n\n" +
+    "HEADLINES & HERO COPY:\n" +
+    "- Include the company name naturally in hero headlines when possible\n" +
+    "- Use industry-relevant keywords (e.g., for a bakery: 'Artisan Bakery', 'Fresh Baked Goods', 'Custom Cakes')\n" +
+    "- Make headlines descriptive AND compelling (not just clever/vague)\n" +
+    "- Examples:\n" +
+    "  ❌ 'We Make Magic Happen' (vague, no keywords)\n" +
+    "  ✅ '[CompanyName] - Premium Web Design & Development Services'\n" +
+    "  ✅ 'Handcrafted Artisan Furniture | Custom Woodworking by [CompanyName]'\n\n" +
+    "PRODUCT & SERVICE DESCRIPTIONS:\n" +
+    "- Use actual product/service names from the database - they're real business terms customers search for\n" +
+    "- Naturally incorporate:\n" +
+    "  • Category keywords (e.g., 'organic skincare', 'HVAC repair', 'corporate event planning')\n" +
+    "  • Feature keywords (e.g., 'eco-friendly', '24/7 emergency service', 'award-winning')\n" +
+    "  • Location keywords if company.city/state available (e.g., 'in Austin, Texas', 'serving Greater Boston')\n" +
+    "- Write descriptions that inform AND sell (150-300 characters ideal)\n" +
+    "- Example: Instead of 'Our best product', write: 'Organic Lavender Face Cream - Handmade with certified organic ingredients for sensitive skin. Vegan & cruelty-free skincare.'\n\n" +
+    "SECTION HEADLINES:\n" +
+    "- Use keyword-rich section titles that describe content:\n" +
+    "  • Instead of 'What We Do' → 'Our Services' or '[Industry] Services'\n" +
+    "  • Instead of 'Our Work' → 'Featured Projects' or '[Industry] Portfolio'\n" +
+    "  • Instead of 'Why Choose Us' → 'Why Choose [CompanyName]' or industry-specific benefits\n" +
+    "- Include location/specialty when relevant: 'Denver Home Renovation Services', 'Luxury Wedding Photography'\n\n" +
+    "CTA COPY:\n" +
+    "- Make CTAs action-oriented with keywords:\n" +
+    "  • 'Shop [ProductCategory]' instead of 'Shop Now'\n" +
+    "  • 'Schedule Your Free Consultation' instead of 'Get Started'\n" +
+    "  • 'View Our Portfolio' instead of 'Learn More'\n" +
+    "- Use company-specific terms: 'Book Your Massage Therapy Session', 'Request a Plumbing Quote'\n\n" +
+    "TESTIMONIAL PRESENTATION:\n" +
+    "- Include customer titles/companies when available (adds credibility + keywords)\n" +
+    "- Example: 'Sarah Johnson, Marketing Director at TechCorp' (includes role keywords)\n\n" +
+    "STATS & HIGHLIGHTS:\n" +
+    "- Use specific, measurable statements:\n" +
+    "  • '500+ Happy Customers' → '500+ [Industry] Clients Served'\n" +
+    "  • '10 Years' → '10 Years of Expert [Service] Experience'\n" +
+    "- Include achievement keywords: 'Award-Winning', 'Certified', 'Licensed', 'Insured', 'Veteran-Owned'\n\n" +
+    "CONTENT WRITING RULES:\n" +
+    "1. Use company data intelligently:\n" +
+    "   - Company.name in hero and key sections\n" +
+    "   - Company.industry keywords throughout\n" +
+    "   - Company.slogan if it contains good keywords\n" +
+    "   - Actual product.name, service.name, project.category from database\n\n" +
+    "2. Natural keyword density (don't overstuff!):\n" +
+    "   - Hero: 2-3 primary keywords\n" +
+    "   - Each section: 1-2 relevant keywords\n" +
+    "   - Product/service cards: Include category/type naturally\n\n" +
+    "3. Write for humans first, search engines second:\n" +
+    "   - Conversational, engaging copy that flows naturally\n" +
+    "   - Keywords should feel organic, not forced\n" +
+    "   - Maintain the brand's tone (playful/serious/luxury)\n\n" +
+    "4. Location-based SEO (if company has location data):\n" +
+    "   - Include city/region in hero or about sections\n" +
+    "   - Example: 'Serving Portland and the Pacific Northwest since 2010'\n" +
+    "   - Use local landmarks/areas if relevant to industry\n\n" +
+    "5. Long-tail keyword opportunities:\n" +
+    "   - Service descriptions: 'emergency 24-hour plumbing services'\n" +
+    "   - Product descriptions: 'handmade wooden dining tables custom built'\n" +
+    "   - Combine: category + benefit + location when applicable\n\n" +
+    "6. Blog/content section SEO:\n" +
+    "   - Use real post.title from database (they're already keyword-optimized by users)\n" +
+    "   - Section headline: '[Industry] Resources', '[Topic] Blog', 'Expert [Category] Guides'\n\n" +
+    "7. Metadata considerations (for future enhancement):\n" +
+    "   - Hero headline serves as effective H1\n" +
+    "   - Section headlines are H2s with keywords\n" +
+    "   - Product/service names are H3s with natural keywords\n\n" +
+    "EXAMPLES OF SEO-FRIENDLY COPY:\n" +
+    "Hero for a bakery:\n" +
+    "headline: 'Sweet Dreams Bakery - Artisan Breads & Custom Cakes in Brooklyn'\n" +
+    "subheadline: 'Handcrafted baked goods made fresh daily with organic ingredients. Specializing in custom wedding cakes, sourdough breads, and European pastries.'\n\n" +
+    "Service card for HVAC company:\n" +
+    "title: 'Emergency AC Repair'\n" +
+    "description: '24/7 emergency air conditioning repair services in Dallas-Fort Worth. Licensed HVAC technicians respond within 2 hours. Same-day service available.'\n\n" +
+    "Portfolio section for agency:\n" +
+    "headline: 'Featured Web Design & Development Projects'\n" +
+    "intro: 'Explore our portfolio of responsive websites, e-commerce platforms, and custom web applications for clients across healthcare, finance, and technology sectors.'\n\n" +
+    "REMEMBER: You have all the data you need - company info, products, services, projects, industry, location. Use it to create naturally SEO-optimized content that helps them rank while maintaining beautiful, persuasive copy!\n\n" +
     "WHEN TO ASK QUESTIONS (set shouldAsk: true, provide assistantMessage):\n" +
     '- First interaction and their prompt is vague ("make me a website")\n' +
     '- They mention contradictory styles ("minimal but bold")\n' +
