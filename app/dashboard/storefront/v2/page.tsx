@@ -73,12 +73,40 @@ export default function FrontstoreV2Page() {
     if (!prompt.trim()) return toast.error("Please enter a prompt");
     setLoading(true);
     try {
-      const res = await fetch("/api/storefront/v2/generate", {
+      const res = await fetch("/api/storefront/v2/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyId, prompt }),
+        body: JSON.stringify({
+          companyId,
+          message: prompt,
+          conversationId: conversationId || undefined,
+        }),
       });
-      if (!res.ok) throw new Error("Failed to generate");
+
+      if (!res.ok) {
+        let errorMessage = `Failed to generate (${res.status} ${res.statusText})`;
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          console.error("API Error:", errorData);
+        } catch (e) {
+          // If response is not JSON, try to get text
+          try {
+            const errorText = await res.text();
+            if (errorText) {
+              console.error("API Error (text):", errorText);
+              errorMessage = `Failed to generate: ${errorText.substring(
+                0,
+                100
+              )}`;
+            }
+          } catch (textErr) {
+            console.error("Could not read error response");
+          }
+        }
+        console.error(`Generation failed: ${res.status} ${res.statusText}`);
+        throw new Error(errorMessage);
+      }
 
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
@@ -183,8 +211,10 @@ export default function FrontstoreV2Page() {
         processChunk(chunk);
       }
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to generate preview");
+      console.error("Generation error:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to generate preview";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -321,12 +351,55 @@ export default function FrontstoreV2Page() {
 
   const mapAiSpecToThemeSections = mapAiSpecToThemeSectionsShared;
 
+  const startNewDesign = () => {
+    setMessages([]);
+    setPrompt("");
+    setPreviewSpec(null);
+    setConversationId(null);
+    setVersionId(null);
+    setDiffs(null);
+    setDiffSummary(null);
+    setThemeSections(null);
+    toast.success("Started new design session");
+  };
+
   return (
     <div className="p-4 space-y-4">
-      <h2 className="text-xl font-semibold flex items-center gap-2">
-        <Sparkles className="h-5 w-5" />
-        AI Chat Builder (v2) - MVP
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
+          AI Chat Builder (v2) - MVP
+        </h2>
+        <div className="flex items-center gap-2">
+          {versionId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportAndSaveDraft}
+              disabled={loading}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Export to Content Wizard
+            </Button>
+          )}
+          {previewSpec && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={confirmApply}
+              disabled={loading}
+            >
+              <Wand2 className="mr-2 h-4 w-4" />
+              Apply to Live Site
+            </Button>
+          )}
+          {conversationId && (
+            <Button variant="outline" size="sm" onClick={startNewDesign}>
+              Start New Design
+            </Button>
+          )}
+        </div>
+      </div>
       <div className="grid grid-cols-3 gap-4">
         <div className="col-span-1">
           <label className="block text-sm font-medium mb-1">Company</label>
