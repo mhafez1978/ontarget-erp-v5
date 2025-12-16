@@ -2,10 +2,18 @@
 
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Marquee } from "@/components/ui/marquee";
-import { ShoppingCart, Star, ArrowRight, Play, Loader2 } from "lucide-react";
+import {
+  ShoppingCart,
+  Star,
+  ArrowRight,
+  Play,
+  Loader2,
+  Menu,
+} from "lucide-react";
 import { toast } from "sonner";
 import type {
   AiFrontstoreSpec,
@@ -414,6 +422,251 @@ function AnimatedSection({
     >
       {children}
     </motion.section>
+  );
+}
+
+// ============================================================================
+// HEADER COMPONENT V2
+// ============================================================================
+
+function HeaderV2({
+  spec,
+  companyName,
+  slug,
+  typography,
+}: {
+  spec: AiFrontstoreSpec;
+  companyName: string;
+  slug: string;
+  typography: ReturnType<typeof getTypographyStyles>;
+}) {
+  const navLinks = [
+    { label: "Home", href: `/store/${slug}` },
+    { label: "Products", href: `/store/${slug}/products` },
+    { label: "Services", href: `/store/${slug}/services` },
+    { label: "About", href: `#about` },
+    { label: "Contact", href: `#contact` },
+  ];
+
+  return (
+    <header
+      className="sticky top-0 z-50 w-full border-b backdrop-blur-sm"
+      style={{
+        backgroundColor: `${spec.meta.backgroundColor}ee`,
+        borderColor: `${spec.meta.primaryColor}20`,
+      }}
+    >
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <Link href={`/store/${slug}`} className="flex items-center gap-2">
+          <h1
+            className={`${typography.headingSize.h3} ${typography.headingWeight}`}
+            style={{
+              fontFamily: typography.headingFont,
+              color: spec.meta.primaryColor,
+            }}
+          >
+            {companyName}
+          </h1>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-6">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-sm font-medium transition-colors hover:opacity-80"
+              style={{
+                color: spec.meta.textColor,
+                fontFamily: typography.bodyFont,
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            style={{
+              borderColor: spec.meta.primaryColor,
+              color: spec.meta.primaryColor,
+            }}
+          >
+            <ShoppingCart className="h-4 w-4" />
+          </Button>
+          <button className="md:hidden">
+            <Menu className="h-6 w-6" style={{ color: spec.meta.textColor }} />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ============================================================================
+// FOOTER COMPONENT V2
+// ============================================================================
+
+function FooterV2({
+  spec,
+  companyName,
+  slug,
+  typography,
+  contactEmail,
+  contactPhone,
+}: {
+  spec: AiFrontstoreSpec;
+  companyName: string;
+  slug: string;
+  typography: ReturnType<typeof getTypographyStyles>;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+}) {
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <footer
+      className="border-t mt-16"
+      style={{
+        backgroundColor: spec.meta.backgroundColor,
+        borderColor: `${spec.meta.primaryColor}20`,
+      }}
+    >
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3
+              className={`${typography.headingSize.h4} ${typography.headingWeight} mb-4`}
+              style={{
+                fontFamily: typography.headingFont,
+                color: spec.meta.primaryColor,
+              }}
+            >
+              {companyName}
+            </h3>
+            <p
+              className="text-sm"
+              style={{
+                color: spec.meta.textColor,
+                opacity: 0.7,
+                fontFamily: typography.bodyFont,
+              }}
+            >
+              Your trusted partner for quality products and services.
+            </p>
+          </div>
+
+          <div>
+            <h4
+              className="font-semibold mb-4"
+              style={{
+                color: spec.meta.textColor,
+                fontFamily: typography.bodyFont,
+              }}
+            >
+              Quick Links
+            </h4>
+            <ul className="space-y-2">
+              {["Home", "Products", "Services", "About", "Contact"].map(
+                (link) => (
+                  <li key={link}>
+                    <Link
+                      href={`/store/${slug}/${link.toLowerCase()}`}
+                      className="text-sm transition-colors hover:opacity-80"
+                      style={{
+                        color: spec.meta.textColor,
+                        opacity: 0.7,
+                        fontFamily: typography.bodyFont,
+                      }}
+                    >
+                      {link}
+                    </Link>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
+
+          <div>
+            <h4
+              className="font-semibold mb-4"
+              style={{
+                color: spec.meta.textColor,
+                fontFamily: typography.bodyFont,
+              }}
+            >
+              Contact
+            </h4>
+            <ul className="space-y-2 text-sm">
+              {contactEmail && (
+                <li
+                  style={{
+                    color: spec.meta.textColor,
+                    opacity: 0.7,
+                    fontFamily: typography.bodyFont,
+                  }}
+                >
+                  {contactEmail}
+                </li>
+              )}
+              {contactPhone && (
+                <li
+                  style={{
+                    color: spec.meta.textColor,
+                    opacity: 0.7,
+                    fontFamily: typography.bodyFont,
+                  }}
+                >
+                  {contactPhone}
+                </li>
+              )}
+            </ul>
+          </div>
+
+          <div>
+            <h4
+              className="font-semibold mb-4"
+              style={{
+                color: spec.meta.textColor,
+                fontFamily: typography.bodyFont,
+              }}
+            >
+              Follow Us
+            </h4>
+            <div className="flex gap-4">
+              {["Facebook", "Twitter", "Instagram"].map((social) => (
+                <a
+                  key={social}
+                  href="#"
+                  className="text-sm transition-colors hover:opacity-80"
+                  style={{
+                    color: spec.meta.textColor,
+                    opacity: 0.7,
+                    fontFamily: typography.bodyFont,
+                  }}
+                >
+                  {social}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="mt-8 pt-8 border-t text-center text-sm"
+          style={{
+            borderColor: `${spec.meta.primaryColor}20`,
+            color: spec.meta.textColor,
+            opacity: 0.6,
+            fontFamily: typography.bodyFont,
+          }}
+        >
+          © {currentYear} {companyName}. All rights reserved.
+        </div>
+      </div>
+    </footer>
   );
 }
 
@@ -1862,162 +2115,180 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
   //const textColor = spec.meta?.textColor || "#111827";
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="min-h-screen"
-      style={{ fontFamily: typography.bodyFont }}
-    >
-      {sections.map((section) => {
-        switch (section.type) {
-          case "hero":
-            return (
-              <HeroSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-                heroOverride={props.heroOverride}
-              />
-            );
+    <>
+      <HeaderV2
+        spec={spec}
+        companyName={props.companyName}
+        slug={props.slug}
+        typography={typography}
+      />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen"
+        style={{ fontFamily: typography.bodyFont }}
+      >
+        {sections.map((section) => {
+          switch (section.type) {
+            case "hero":
+              return (
+                <HeroSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  heroOverride={props.heroOverride}
+                />
+              );
 
-          case "highlights":
-            return (
-              <FeaturesSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-              />
-            );
+            case "highlights":
+              return (
+                <FeaturesSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                />
+              );
 
-          case "testimonials":
-            return (
-              <TestimonialsSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-                testimonials={props.testimonials || []}
-              />
-            );
+            case "testimonials":
+              return (
+                <TestimonialsSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  testimonials={props.testimonials || []}
+                />
+              );
 
-          case "product-grid":
-            return (
-              <ProductsSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-                featuredProducts={props.featuredProducts || []}
-              />
-            );
+            case "product-grid":
+              return (
+                <ProductsSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  featuredProducts={props.featuredProducts || []}
+                />
+              );
 
-          case "service-grid":
-            return (
-              <ServicesSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-                featuredServices={props.featuredServices || []}
-              />
-            );
+            case "service-grid":
+              return (
+                <ServicesSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  featuredServices={props.featuredServices || []}
+                />
+              );
 
-          case "portfolio":
-            return (
-              <PortfolioSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-                portfolioProjects={props.portfolioProjects || []}
-              />
-            );
+            case "portfolio":
+              return (
+                <PortfolioSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  portfolioProjects={props.portfolioProjects || []}
+                />
+              );
 
-          case "stats":
-            return (
-              <StatsSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                customersCount={props.customersCount || 0}
-                approvedTestimonialsCount={props.approvedTestimonialsCount || 0}
-              />
-            );
+            case "stats":
+              return (
+                <StatsSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  customersCount={props.customersCount || 0}
+                  approvedTestimonialsCount={
+                    props.approvedTestimonialsCount || 0
+                  }
+                />
+              );
 
-          case "faq":
-            return (
-              <FAQSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-                supportFaqs={props.supportFaqs || []}
-              />
-            );
+            case "faq":
+              return (
+                <FAQSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  supportFaqs={props.supportFaqs || []}
+                />
+              );
 
-          case "contact":
-            return (
-              <ContactSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-                contactEmail={props.contactEmail}
-                contactPhone={props.contactPhone}
-                companyId={props.companyId}
-              />
-            );
+            case "contact":
+              return (
+                <ContactSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  contactEmail={props.contactEmail}
+                  contactPhone={props.contactPhone}
+                  companyId={props.companyId}
+                />
+              );
 
-          case "cta-band":
-            return (
-              <CTABandV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-              />
-            );
+            case "cta-band":
+              return (
+                <CTABandV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                />
+              );
 
-          case "posts":
-            return (
-              <PostsSectionV2
-                key={section.id}
-                section={section}
-                spec={spec}
-                typography={typography}
-                spacing={spacing}
-                effects={effects}
-                posts={props.posts || []}
-              />
-            );
+            case "posts":
+              return (
+                <PostsSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  posts={props.posts || []}
+                />
+              );
 
-          default:
-            return null;
-        }
-      })}
-    </motion.div>
+            default:
+              return null;
+          }
+        })}
+      </motion.div>
+      <FooterV2
+        spec={spec}
+        companyName={props.companyName}
+        slug={props.slug}
+        typography={typography}
+        contactEmail={props.contactEmail}
+        contactPhone={props.contactPhone}
+      />
+    </>
   );
 }
