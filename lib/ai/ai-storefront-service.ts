@@ -1158,7 +1158,16 @@ export async function generateAiStorefront(
     "- 'editorial-magazine': Large serif headings, asymmetric layouts, image-driven, varied typography\n" +
     "- 'minimal-luxury': Lots of negative space, elegant serif, subtle effects, muted palette\n\n" +
     "CONTENT STRUCTURE:\n" +
-    "Canonical sections (adapt order and emphasis based on goal): hero, highlights, product-grid, service-grid, posts, testimonials, stats, faq, contact, cta-band\n" +
+    "Canonical sections (adapt order and emphasis based on goal): hero, highlights, product-grid, service-grid, portfolio, posts, testimonials, stats, faq, contact, cta-band\n" +
+    "- PRODUCT-GRID/SERVICE-GRID SECTIONS: ALWAYS include the first product/service image if available in the images array. Images are crucial for visual appeal!\n" +
+    "  - For products: Use product.images[0] as the image field\n" +
+    "  - For services: If no service images exist, use generic placeholder URLs from Unsplash related to the service category\n" +
+    "- PORTFOLIO SECTION (type: 'portfolio'): Showcase featured projects, case studies, or completed work\n" +
+    "  - Perfect for agencies, consultants, designers, developers, freelancers\n" +
+    "  - Include if: company has featured projects, or user mentions 'portfolio', 'case studies', 'work', 'projects'\n" +
+    "  - Use project data: title (project name), client (client name), category, description\n" +
+    "  - Style with overlay cards, category badges, and engaging hover effects\n" +
+    "  - If no projects exist but business type suggests portfolio need, create 3-6 placeholder projects with relevant titles\n" +
     "- POSTS/BLOG SECTION: When blogEnabled is true OR user requests it, include a 'posts' section to showcase blog articles, news, updates, or resources\n" +
     "  - If blogHasPosts is true (they have actual posts), make it prominent and engaging with preview cards\n" +
     "  - If blogHasPosts is false (placeholder), include it but style it as 'coming soon' with engaging copy\n" +

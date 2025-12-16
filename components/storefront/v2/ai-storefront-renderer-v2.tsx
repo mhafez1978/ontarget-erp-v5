@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import type {
   AiFrontstoreSpec,
   AiFrontstoreSection,
+  PortfolioProject,
 } from "@/lib/ai/ai-storefront-types";
 
 // ============================================================================
@@ -58,6 +59,7 @@ interface AiStorefrontRendererV2Props {
   enableCart?: boolean;
   featuredProducts?: FeaturedProduct[];
   featuredServices?: FeaturedService[];
+  portfolioProjects?: PortfolioProject[];
   testimonials?: StorefrontTestimonial[];
   posts?: {
     id: string;
@@ -1086,6 +1088,177 @@ function ServicesSectionV2({
 }
 
 // ============================================================================
+// PORTFOLIO SECTION V2
+// ============================================================================
+
+function PortfolioSectionV2({
+  section,
+  spec,
+  typography,
+  spacing,
+  effects,
+  portfolioProjects,
+}: {
+  section: AiFrontstoreSection;
+  spec: AiFrontstoreSpec;
+  typography: Typography;
+  spacing: Spacing;
+  effects: Effects;
+  portfolioProjects: Array<{
+    id: string;
+    title: string;
+    client?: string;
+    category?: string;
+    description?: string;
+    image?: string;
+  }>;
+}) {
+  const gridColumns = section.styling?.grid?.columns || 3;
+  const gap = section.styling?.grid?.gap || "loose";
+  const gapClass =
+    gap === "tight"
+      ? "gap-4"
+      : gap === "comfortable"
+      ? "gap-6"
+      : "gap-8 md:gap-10";
+
+  return (
+    <AnimatedSection
+      section={section}
+      spec={spec}
+      typography={typography}
+      spacing={spacing}
+      effects={effects}
+    >
+      {section.content?.heading && (
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className={`${typography.headingSize.h2} font-${
+            typography.headingWeight
+          } text-foreground mb-${spacing.scale === "compact" ? "8" : "12"}`}
+          style={{
+            fontFamily: typography.headingFont,
+            letterSpacing: typography.letterSpacing,
+            lineHeight: typography.lineHeight,
+          }}
+        >
+          {section.content.heading}
+        </motion.h2>
+      )}
+      {section.content?.description && (
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className={`${typography.bodySize} text-muted-foreground mb-12 max-w-3xl`}
+          style={{ fontFamily: typography.bodyFont }}
+        >
+          {section.content.description}
+        </motion.p>
+      )}
+
+      <div
+        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${gridColumns} ${gapClass}`}
+      >
+        {portfolioProjects && portfolioProjects.length > 0 ? (
+          portfolioProjects.map((project, index) => (
+            <motion.article
+              key={project.id}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="group relative overflow-hidden rounded-xl bg-card cursor-pointer"
+              style={{
+                boxShadow:
+                  effects.shadows === "soft"
+                    ? "0 4px 6px -1px rgb(0 0 0 / 0.1)"
+                    : effects.shadows === "hard"
+                    ? "8px 8px 0 rgb(0 0 0 / 0.1)"
+                    : "none",
+                borderWidth: effects.borders === "thick" ? "3px" : "1px",
+                borderColor:
+                  effects.borders === "colorful"
+                    ? spec.meta.primaryColor
+                    : undefined,
+              }}
+            >
+              <div className="aspect-[4/3] overflow-hidden bg-muted">
+                {project.image ? (
+                  <img
+                    src={project.image}
+                    alt={project.title}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-muted to-muted-foreground/20">
+                    <span className="text-4xl font-bold text-muted-foreground/30">
+                      {project.title.charAt(0)}
+                    </span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-80" />
+              </div>
+
+              <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+                <div className="translate-y-4 transition-transform duration-500 group-hover:translate-y-0">
+                  {project.category && (
+                    <span
+                      className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider"
+                      style={{
+                        backgroundColor: `${spec.meta.primaryColor}20`,
+                        color: spec.meta.primaryColor,
+                      }}
+                    >
+                      {project.category}
+                    </span>
+                  )}
+
+                  <h3
+                    className={`${typography.headingSize.h3} font-${typography.headingWeight} text-card-foreground`}
+                    style={{ fontFamily: typography.headingFont }}
+                  >
+                    {project.title}
+                  </h3>
+
+                  {project.client && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {project.client}
+                    </p>
+                  )}
+
+                  {project.description && (
+                    <p className="mt-4 max-h-0 overflow-hidden text-sm text-muted-foreground/80 transition-all duration-500 group-hover:max-h-24 line-clamp-3">
+                      {project.description}
+                    </p>
+                  )}
+                </div>
+
+                <div
+                  className="mt-4 flex items-center gap-2 opacity-0 transition-all duration-500 group-hover:opacity-100"
+                  style={{ color: spec.meta.primaryColor }}
+                >
+                  <span className="text-sm font-medium">View Project</span>
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </div>
+              </div>
+            </motion.article>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12 text-muted-foreground">
+            No projects available
+          </div>
+        )}
+      </div>
+    </AnimatedSection>
+  );
+}
+
+// ============================================================================
 // STATS SECTION V2
 // ============================================================================
 
@@ -1669,7 +1842,7 @@ function PostsSectionV2({
 // ============================================================================
 
 export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
-  const { spec, companyName, slug } = props;
+  const { spec, companyName, slug, portfolioProjects } = props;
 
   // Extract design systems from spec
   const typography = getTypographyStyles(spec);
@@ -1863,6 +2036,19 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                 spacing={spacing}
                 effects={effects}
                 featuredServices={props.featuredServices || []}
+              />
+            );
+
+          case "portfolio":
+            return (
+              <PortfolioSectionV2
+                key={section.id}
+                section={section}
+                spec={spec}
+                typography={typography}
+                spacing={spacing}
+                effects={effects}
+                portfolioProjects={props.portfolioProjects || []}
               />
             );
 

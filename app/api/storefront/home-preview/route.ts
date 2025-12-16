@@ -177,6 +177,23 @@ export async function GET(request: NextRequest) {
       take: 6,
     });
 
+    const portfolioProjects = await db.project.findMany({
+      where: {
+        companyId,
+        isFeatured: true,
+      },
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    });
+
     const metadata = company.storeMetadata as {
       contactEmail?: string;
       contactPhone?: string;
@@ -201,6 +218,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       featuredProducts,
       featuredServices,
+      portfolioProjects: portfolioProjects.map((proj) => ({
+        id: proj.id,
+        title: proj.title,
+        client: proj.client?.name,
+        category: proj.category,
+        description: proj.description,
+        image: proj.heroImage,
+        tags: proj.tags || [],
+      })),
       testimonials,
       featuredTeamMembers: featuredTeamMembers.map((member) => ({
         id: member.id,

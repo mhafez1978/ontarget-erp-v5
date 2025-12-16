@@ -5,6 +5,7 @@ export const aiFrontstoreSectionTypeSchema = z.enum([
   "highlights",
   "product-grid",
   "service-grid",
+  "portfolio",
   "posts",
   "testimonials",
   "stats",
@@ -230,6 +231,16 @@ export const FeaturedTeamMemberSchema = z.object({
   image: z.string().url().optional(),
 });
 
+export const PortfolioProjectSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  client: z.string().optional(),
+  category: z.string().optional(),
+  description: z.string().optional(),
+  image: z.string().url().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
 export const FeaturedServiceSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -262,3 +273,5 @@ export type FeaturedTeamMember = z.infer<typeof FeaturedTeamMemberSchema>;
 export type FeaturedService = z.infer<typeof FeaturedServiceSchema>;
 
 export type FeaturedProduct = z.infer<typeof FeaturedProductSchema>;
+
+export type PortfolioProject = z.infer<typeof PortfolioProjectSchema>;

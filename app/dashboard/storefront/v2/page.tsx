@@ -108,6 +108,15 @@ export default function FrontstoreV2Page() {
       price: number;
       images?: Array<{ url: string }>;
     }>;
+    portfolioProjects: Array<{
+      id: string;
+      title: string;
+      client?: string;
+      category?: string;
+      description?: string;
+      image?: string;
+      tags?: string[];
+    }>;
     teamMembers: Array<{
       id: string;
       name: string;
@@ -125,6 +134,7 @@ export default function FrontstoreV2Page() {
   }>({
     products: [],
     services: [],
+    portfolioProjects: [],
     teamMembers: [],
     testimonials: [],
   });
@@ -216,6 +226,17 @@ export default function FrontstoreV2Page() {
               description: s.description,
               price: Number(s.price || 0),
               images: s.images || [],
+            })
+          ),
+          portfolioProjects: (data.portfolioProjects || []).map(
+            (proj: any) => ({
+              id: proj.id,
+              title: proj.title,
+              client: proj.client?.name || proj.client,
+              category: proj.category,
+              description: proj.description,
+              image: proj.heroImage || proj.image,
+              tags: proj.tags || [],
             })
           ),
           teamMembers: (data.teamMembers || []).map((t: any) => ({
@@ -1134,6 +1155,7 @@ export default function FrontstoreV2Page() {
                           companyId={companyId}
                           featuredProducts={companyData.products}
                           featuredServices={companyData.services}
+                          portfolioProjects={companyData.portfolioProjects}
                           featuredTeamMembers={companyData.teamMembers}
                           testimonials={companyData.testimonials}
                         />

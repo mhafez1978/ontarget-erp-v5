@@ -193,6 +193,28 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const projects = await db.project.findMany({
+      where: {
+        companyId,
+        isFeatured: true,
+      },
+      take: 12,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        category: true,
+        startDate: true,
+        endDate: true,
+        client: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
     const testimonials = await db.testimonial.findMany({
       where: { companyId, status: "APPROVED" },
       take: 15,
@@ -304,6 +326,15 @@ export async function POST(request: NextRequest) {
         price: 0,
         duration: null,
         category: s.category ?? null,
+      })),
+      projects: projects.map((proj) => ({
+        id: proj.id,
+        title: proj.name,
+        client: proj.client?.name ?? null,
+        category: proj.category ?? null,
+        description: proj.description ?? null,
+        startDate: proj.startDate?.toISOString() ?? null,
+        endDate: proj.endDate?.toISOString() ?? null,
       })),
       testimonials: testimonials.map((t) => ({
         id: t.id,
