@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
         country: true,
         postalCode: true,
         website: true,
+        storeMetadata: true,
       },
     });
 
@@ -389,15 +390,26 @@ export async function POST(request: NextRequest) {
         bio: m.bio,
         isFeatured: m.isFeatured,
       })),
-        role: m.role,
-        bio: m.bio,
-        image: m.user.image,
-      })),
       posts: posts.map((p) => ({
         id: p.id,
         title: p.title,
         excerpt: p.excerpt,
       })),
+      metadata: {
+        title: (companyData?.storeMetadata as any)?.title || null,
+        description: (companyData?.storeMetadata as any)?.description || null,
+        keywords: (companyData?.storeMetadata as any)?.keywords || [],
+        socialLinks: {
+          facebook:
+            (companyData?.storeMetadata as any)?.socialLinks?.facebook || null,
+          twitter:
+            (companyData?.storeMetadata as any)?.socialLinks?.twitter || null,
+          instagram:
+            (companyData?.storeMetadata as any)?.socialLinks?.instagram || null,
+          linkedin:
+            (companyData?.storeMetadata as any)?.socialLinks?.linkedin || null,
+        },
+      },
       blogEnabled: company.storeBlogEnabled,
       blogHasPosts: posts.length > 0,
       prompt: message,

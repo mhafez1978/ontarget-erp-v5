@@ -208,6 +208,7 @@ export const aiFrontstoreSpecSchema = z.object({
         metaTitle: z.string().optional(),
         metaDescription: z.string().optional(),
         keywords: z.array(z.string()).optional(),
+        ogImage: z.string().url().optional(),
       })
       .optional(),
   }),

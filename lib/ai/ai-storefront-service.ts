@@ -1474,6 +1474,62 @@ export async function generateAiStorefront(
     "  - If blogHasPosts is true (they have actual posts), make it prominent and engaging with preview cards\n" +
     "  - If blogHasPosts is false (placeholder), include it but style it as 'coming soon' with engaging copy\n" +
     "  - Consider blog positioning based on business type: early for content-focused sites, mid-page for most businesses, or near bottom for product-focused stores\n\n" +
+    "SEO METADATA & PAGE HEAD:\n" +
+    "The spec includes a 'seo' object in the root that you MUST populate for search engine optimization:\n" +
+    "- seo.title: Page title for <title> tag (50-60 characters ideal)\n" +
+    "  • Use format: '[Company Name] - [Primary Service/Product] | [Location if available]'\n" +
+    "  • Example: 'Sweet Dreams Bakery - Artisan Breads & Custom Cakes | Brooklyn'\n" +
+    "  • If metadata.title exists, use it; otherwise generate based on company data\n" +
+    "- seo.description: Meta description for search results (150-160 characters)\n" +
+    "  • Compelling summary of business with keywords and value proposition\n" +
+    "  • Example: 'Handcrafted artisan breads, custom wedding cakes, and European pastries made fresh daily in Brooklyn. Using organic ingredients since 2010.'\n" +
+    "  • If metadata.description exists, use it; otherwise generate based on company.description and industry\n" +
+    "- seo.keywords: Array of relevant keywords (8-15 keywords)\n" +
+    "  • If metadata.keywords exists and has items, use those\n" +
+    "  • Otherwise, intelligently generate based on:\n" +
+    "    * company.industry (e.g., 'bakery' → 'artisan bakery', 'custom cakes', 'fresh bread')\n" +
+    "    * product/service categories (extract from actual product.category, service.category)\n" +
+    "    * location (e.g., 'Brooklyn bakery', 'NYC pastries')\n" +
+    "    * business type (e.g., 'web design agency', 'HVAC repair', 'luxury spa')\n" +
+    "  • Mix short-tail (1-2 words) and long-tail (3-4 words) keywords\n" +
+    "  • Example for tech agency: ['web design', 'custom software', 'app development', 'UX design', 'responsive websites', 'mobile apps', 'e-commerce solutions']\n" +
+    "- seo.ogImage: Open Graph image for social sharing (use company.logo or hero background image)\n\n" +
+    "SOCIAL MEDIA LINKS & FOOTER:\n" +
+    "The metadata includes social links that MUST be incorporated into the design:\n" +
+    "- If metadata.socialLinks has any values (facebook, twitter, instagram, linkedin), include social icons\n" +
+    "- Add social icons in the FOOTER section (always include footer with social links)\n" +
+    "- Icon placement options:\n" +
+    "  • Footer: Most common - add a row of social icons with links\n" +
+    "  • Hero: Can also add small social icons in hero section for certain design styles (modern, creative)\n" +
+    "  • Contact section: Include social links alongside email/phone\n" +
+    "- Icon styling should match overall design aesthetic:\n" +
+    "  • Minimal designs: Simple outlined icons\n" +
+    "  • Bold designs: Filled icons with brand colors\n" +
+    "  • Playful designs: Icons with hover animations\n" +
+    "- Only include icons for platforms that have actual URLs in metadata.socialLinks\n" +
+    "- If no social links exist, still design footer but omit social icons section\n\n" +
+    "FOOTER STRUCTURE REQUIREMENTS:\n" +
+    "Every design MUST include a footer section with:\n" +
+    "1. Company name and brief description\n" +
+    "2. Quick navigation links (Home, Products, Services, Contact, etc.)\n" +
+    "3. Contact information (email, phone, address if available)\n" +
+    "4. Social media icons (if metadata.socialLinks has values)\n" +
+    "5. Copyright notice with company name and current year\n" +
+    "Example footer content structure:\n" +
+    "{\n" +
+    "  type: 'contact',  // or create a dedicated footer type\n" +
+    "  content: {\n" +
+    "    heading: 'Get In Touch',\n" +
+    "    email: company.email,\n" +
+    "    salesEmail: company.salesEmail,\n" +
+    "    supportEmail: company.supportEmail,\n" +
+    "    phone: company.phone,\n" +
+    "    address: [company.addressLine1, company.city, company.state].filter(Boolean).join(', '),\n" +
+    "    socialLinks: metadata.socialLinks,  // Include all available social links\n" +
+    "    showSocialIcons: true,\n" +
+    "    copyrightText: `© ${new Date().getFullYear()} ${company.name}. All rights reserved.`\n" +
+    "  }\n" +
+    "}\n\n" +
     "SAFETY:\n" +
     "You must NEVER generate adult, pornographic, gambling, weapons, illegal drugs, or any other unsafe/illegal content. " +
     "If the user asks for such content, ignore that and instead design a generic, professional, safe layout.\n\n" +
