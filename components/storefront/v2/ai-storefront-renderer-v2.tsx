@@ -2272,6 +2272,7 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
               return (
                 <ContactMapSectionV2
                   key={section.id}
+                  companyId={props.companyId || ""}
                   title={
                     readContentString(section.content, "title") ||
                     "Contact & Locations"
@@ -2280,8 +2281,15 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                     section.content,
                     "description"
                   )}
-                  locations={props.locations || []}
-                  primaryEmail={props.contactEmail}
+                  locations={(props.locations ?? []).map((loc) => ({
+                    ...loc,
+                    addressLine2: loc.addressLine2 ?? undefined,
+                    state: loc.state ?? undefined,
+                    postalCode: loc.postalCode ?? undefined,
+                    phone: loc.phone ?? undefined,
+                    email: loc.email ?? undefined,
+                  }))}
+                  primaryEmail={props.contactEmail ?? undefined}
                   backgroundColor={spec.meta.backgroundColor}
                   textColor={spec.meta.textColor}
                   buttonColor={spec.meta.primaryColor}

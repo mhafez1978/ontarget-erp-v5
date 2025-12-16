@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options";
-import prisma from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { LocationType } from "@prisma/client";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 // GET /api/company/[id]/locations - Fetch all locations for a company
 export async function GET(
@@ -10,16 +9,18 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Validate session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
+
+    const { user: sessionUser } = validation;
 
     const companyId = params.id;
 
     // Verify user owns this company
-    const company = await prisma.company.findUnique({
+    const company = await db.company.findUnique({
       where: { id: companyId },
       select: { ownerId: true },
     });
@@ -29,8 +30,8 @@ export async function GET(
     }
 
     // Get user
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const user = await db.user.findUnique({
+      where: { id: sessionUser.id },
       select: { id: true, role: true },
     });
 
@@ -39,7 +40,7 @@ export async function GET(
     }
 
     // Fetch all locations
-    const locations = await prisma.companyLocation.findMany({
+    const locations = await db.companyLocation.findMany({
       where: { companyId },
       orderBy: [{ isMain: "desc" }, { createdAt: "asc" }],
     });
@@ -63,11 +64,13 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Validate session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
+
+    const { user: sessionUser } = validation;
 
     const companyId = params.id;
     const body = await request.json();
@@ -109,7 +112,7 @@ export async function POST(
     }
 
     // Verify user owns this company
-    const company = await prisma.company.findUnique({
+    const company = await db.company.findUnique({
       where: { id: companyId },
       select: { ownerId: true },
     });
@@ -118,8 +121,8 @@ export async function POST(
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const user = await db.user.findUnique({
+      where: { id: sessionUser.id },
       select: { id: true, role: true },
     });
 
@@ -129,14 +132,14 @@ export async function POST(
 
     // If this is marked as main, unset any other main locations
     if (isMain) {
-      await prisma.companyLocation.updateMany({
+      await db.companyLocation.updateMany({
         where: { companyId, isMain: true },
         data: { isMain: false },
       });
     }
 
     // Create the location
-    const location = await prisma.companyLocation.create({
+    const location = await db.companyLocation.create({
       data: {
         companyId,
         name,

@@ -5,7 +5,6 @@ import L, { Map } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   createTileLayer,
-  DEFAULT_MAP_CENTER,
   DEFAULT_ZOOM,
   LOCATION_MARKER_ICON,
   MAIN_MARKER_ICON,
@@ -42,7 +41,6 @@ export default function MapSectionV2({
   height = getMapHeight("desktop"),
   zoom = DEFAULT_ZOOM,
   interactive = true,
-  pinColor = "red",
 }: MapSectionV2Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
@@ -135,7 +133,7 @@ export default function MapSectionV2({
         width: "100%",
         borderRadius: "1rem",
       }}
-      className="bg-gradient-to-br from-blue-50 to-slate-100 relative overflow-hidden shadow-lg"
+      className="bg-linear-to-br from-blue-50 to-slate-100 relative overflow-hidden shadow-lg"
     />
   );
 }

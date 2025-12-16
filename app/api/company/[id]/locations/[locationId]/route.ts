@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options";
-import prisma from "@/lib/prisma";
-import { LocationType } from "@prisma/client";
+import { db } from "@/lib/db";
+import { LocationType, Prisma } from "@prisma/client";
+import { validateSessionForAPI } from "@/lib/validate-session";
 
 // PATCH /api/company/[id]/locations/[locationId] - Update a location
 export async function PATCH(
@@ -10,18 +9,20 @@ export async function PATCH(
   { params }: { params: { id: string; locationId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Validate session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
+
+    const { user: sessionUser } = validation;
 
     const companyId = params.id;
     const locationId = params.locationId;
     const body = await request.json();
 
     // Verify company exists and user owns it
-    const company = await prisma.company.findUnique({
+    const company = await db.company.findUnique({
       where: { id: companyId },
       select: { ownerId: true },
     });
@@ -30,8 +31,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const user = await db.user.findUnique({
+      where: { id: sessionUser.id },
       select: { id: true, role: true },
     });
 
@@ -40,7 +41,7 @@ export async function PATCH(
     }
 
     // Verify location belongs to this company
-    const location = await prisma.companyLocation.findUnique({
+    const location = await db.companyLocation.findUnique({
       where: { id: locationId },
     });
 
@@ -53,14 +54,14 @@ export async function PATCH(
 
     // If marking as main, unset other main locations
     if (body.isMain === true && !location.isMain) {
-      await prisma.companyLocation.updateMany({
+      await db.companyLocation.updateMany({
         where: { companyId, isMain: true, id: { not: locationId } },
         data: { isMain: false },
       });
     }
 
     // Build update data
-    const updateData: any = {};
+    const updateData: Prisma.CompanyLocationUpdateInput = {};
 
     if (body.name !== undefined) updateData.name = body.name;
     if (body.type !== undefined) updateData.type = body.type as LocationType;
@@ -83,7 +84,7 @@ export async function PATCH(
     if (body.isMain !== undefined) updateData.isMain = body.isMain;
 
     // Update the location
-    const updatedLocation = await prisma.companyLocation.update({
+    const updatedLocation = await db.companyLocation.update({
       where: { id: locationId },
       data: updateData,
     });
@@ -107,17 +108,19 @@ export async function DELETE(
   { params }: { params: { id: string; locationId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Validate session
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
+
+    const { user: sessionUser } = validation;
 
     const companyId = params.id;
     const locationId = params.locationId;
 
     // Verify company exists and user owns it
-    const company = await prisma.company.findUnique({
+    const company = await db.company.findUnique({
       where: { id: companyId },
       select: { ownerId: true },
     });
@@ -126,8 +129,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const user = await db.user.findUnique({
+      where: { id: sessionUser.id },
       select: { id: true, role: true },
     });
 
@@ -136,7 +139,7 @@ export async function DELETE(
     }
 
     // Verify location belongs to this company
-    const location = await prisma.companyLocation.findUnique({
+    const location = await db.companyLocation.findUnique({
       where: { id: locationId },
     });
 
@@ -148,7 +151,7 @@ export async function DELETE(
     }
 
     // Check if this is the last location or main location
-    const locationCount = await prisma.companyLocation.count({
+    const locationCount = await db.companyLocation.count({
       where: { companyId },
     });
 
@@ -161,15 +164,20 @@ export async function DELETE(
 
     // If deleting main location, set another as main
     if (location.isMain) {
-      await prisma.companyLocation.updateMany({
+      const nextLocation = await db.companyLocation.findFirst({
         where: { companyId, id: { not: locationId } },
-        data: { isMain: true },
-        take: 1,
       });
+
+      if (nextLocation) {
+        await db.companyLocation.update({
+          where: { id: nextLocation.id },
+          data: { isMain: true },
+        });
+      }
     }
 
     // Delete the location
-    await prisma.companyLocation.delete({
+    await db.companyLocation.delete({
       where: { id: locationId },
     });
 

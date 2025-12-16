@@ -1,20 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import MapSectionV2 from "./map-section-v2";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Mail,
-  Phone,
-  Send,
-  CheckCircle2,
-  AlertCircle,
-  MapPin,
-} from "lucide-react";
+import { Mail, Phone, Send, CheckCircle2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 interface Location {
@@ -25,6 +18,7 @@ interface Location {
   latitude: number;
   longitude: number;
   addressLine1: string;
+  addressLine2?: string;
   city: string;
   state?: string;
   country: string;
@@ -37,6 +31,7 @@ interface ContactMapSectionV2Props {
   title: string;
   description?: string;
   locations: Location[];
+  companyId: string; // Required for API call
   primaryEmail?: string;
   backgroundColor?: string;
   textColor?: string;
@@ -50,6 +45,7 @@ export default function ContactMapSectionV2({
   title,
   description,
   locations,
+  companyId,
   primaryEmail,
   backgroundColor = "white",
   textColor = "text-gray-900",
@@ -79,12 +75,31 @@ export default function ContactMapSectionV2({
     setIsSubmitting(true);
 
     try {
-      // TODO: Integrate with actual contact form API
-      // For now, just show success toast
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Send to contact API with company ID
+      const response = await fetch("/api/storefront/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          companyId,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || undefined,
+          message: formData.message,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Contact form error:", data);
+        toast.error(data.error || "Failed to send message. Please try again.");
+        return;
+      }
 
       setFormSuccess(true);
-      toast.success("Thank you! We'll get back to you soon.");
+      toast.success(data.message || "Thank you! We'll get back to you soon.");
 
       // Reset form after success
       setTimeout(() => {
@@ -97,6 +112,7 @@ export default function ContactMapSectionV2({
         setFormSuccess(false);
       }, 2000);
     } catch (error) {
+      console.error("Contact form submission error:", error);
       toast.error("Failed to send message. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -186,7 +202,7 @@ export default function ContactMapSectionV2({
                   </motion.div>
                   <p className="text-lg font-semibold mb-2">Message Sent!</p>
                   <p className={`${textColor} opacity-75`}>
-                    Thank you for reaching out. We'll get back to you soon.
+                    Thank you for reaching out. We&apos;ll get back to you soon.
                   </p>
                 </motion.div>
               ) : (
@@ -425,7 +441,7 @@ export default function ContactMapSectionV2({
                   interactive={true}
                 />
               ) : (
-                <div className="h-96 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-500">
+                <div className="h-96 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-500">
                   <div className="text-center">
                     <MapPin className="h-12 w-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm font-medium">
@@ -463,7 +479,7 @@ export default function ContactMapSectionV2({
                       >
                         <div className="flex items-start gap-3">
                           <MapPin
-                            className="h-4 w-4 flex-shrink-0 mt-0.5"
+                            className="h-4 w-4 shrink-0 mt-0.5"
                             style={{ color: buttonColor }}
                           />
                           <div className="flex-1 min-w-0">
