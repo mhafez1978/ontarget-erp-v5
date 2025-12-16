@@ -133,9 +133,9 @@ export default function MapSectionV2({
       style={{
         height: `${height}px`,
         width: "100%",
-        borderRadius: "0.5rem",
+        borderRadius: "1rem",
       }}
-      className="bg-gray-100"
+      className="bg-gradient-to-br from-blue-50 to-slate-100 relative overflow-hidden shadow-lg"
     />
   );
 }

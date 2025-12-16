@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-// ... imports remain the same
 import {
   Plus,
   Trash2,
@@ -43,8 +42,7 @@ interface LocationsManagerProps {
   companyId: string;
 }
 
-// Helper function moved OUTSIDE the component since it doesn't need state.
-// This prevents it from being recreated on every render.
+// Helper function moved OUTSIDE the component to prevent recreation on render
 const getLocationTypeLabel = (type: LocationType) => {
   const labels: Record<LocationType, string> = {
     HEADQUARTERS: "Headquarters",
@@ -79,7 +77,7 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
     isMain: false,
   });
 
-  // 1. CRITICAL: Wrapped in useCallback to prevent infinite useEffect loop
+  // 1. Wrapped in useCallback to prevent infinite useEffect loop
   const fetchLocations = useCallback(async () => {
     try {
       setLoading(true);
@@ -98,7 +96,7 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
     } finally {
       setLoading(false);
     }
-  }, [companyId]); // Only recreate if companyId changes
+  }, [companyId]);
 
   // Fetch locations on mount
   useEffect(() => {
@@ -149,9 +147,7 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
     setDialogOpen(true);
   };
 
-  // 2. OPTIMIZATION: Wrapped in useCallback.
-  // This is passed to <AddressAutocomplete />, so keeping the reference stable
-  // prevents that child component from re-rendering unnecessarily.
+  // 2. This callback is now correctly used in the JSX below
   const handleAddressSelect = useCallback(
     (address: {
       addressLine1: string;
@@ -159,8 +155,8 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
       country: string;
       state?: string;
       postalCode?: string;
-      latitude: number;
-      longitude: number;
+      latitude?: number;
+      longitude?: number;
     }) => {
       setFormData((prev) => ({
         ...prev,
@@ -169,8 +165,8 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
         state: address.state || "",
         country: address.country,
         postalCode: address.postalCode || "",
-        latitude: address.latitude,
-        longitude: address.longitude,
+        latitude: address.latitude || 0,
+        longitude: address.longitude || 0,
       }));
     },
     []
@@ -254,9 +250,7 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
   }
 
   return (
-    // ... JSX remains exactly the same
     <div className="space-y-4">
-      {/* (Truncated for brevity, paste your previous JSX here) */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Company Locations</h3>
         <Button onClick={handleAddLocation} size="sm" className="gap-2">
@@ -416,23 +410,12 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
                   latitude: formData.latitude,
                   longitude: formData.longitude,
                 }}
-                onChange={(address) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    addressLine1: address.addressLine1,
-                    addressLine2: address.addressLine2 || "",
-                    city: address.city,
-                    country: address.country,
-                    state: address.state || "",
-                    postalCode: address.postalCode || "",
-                    latitude: address.latitude ?? 0,
-                    longitude: address.longitude ?? 0,
-                  }))
-                }
+                // FIX: Using the declared callback instead of inline function
+                onChange={handleAddressSelect}
               />
             </div>
 
-            {/* Rest of the dialog fields... */}
+            {/* Address Line 2 */}
             <div>
               <Label htmlFor="address-line2">Address Line 2</Label>
               <Input
