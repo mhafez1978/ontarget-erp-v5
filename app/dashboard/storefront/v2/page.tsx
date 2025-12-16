@@ -39,7 +39,7 @@ export default function FrontstoreV2Page() {
     "desktop"
   );
   const [companies, setCompanies] = useState<
-    Array<{ id: string; name: string }>
+    Array<{ id: string; name: string; slug: string | null }>
   >([]);
   const [diffs, setDiffs] = useState<Array<{
     action: string;
@@ -66,6 +66,41 @@ export default function FrontstoreV2Page() {
         }
       })
       .catch((err) => console.error("Failed to load companies:", err));
+  }, [companyId]);
+
+  // Load last conversation and applied spec when company changes
+  useEffect(() => {
+    if (!companyId) return;
+
+    // Load the currently applied spec from company
+    fetch(`/api/storefront/v2/current-spec?companyId=${companyId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.spec) {
+          setPreviewSpec(data.spec);
+        }
+        if (data.conversationId) {
+          setConversationId(data.conversationId);
+        }
+      })
+      .catch((err) => console.warn("Failed to load current spec:", err));
+
+    // Load last conversation messages
+    fetch(`/api/storefront/v2/conversation-history?companyId=${companyId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.messages && Array.isArray(data.messages)) {
+          setMessages(
+            data.messages.map((m: any) => ({
+              role: m.role,
+              content: m.content || undefined,
+            }))
+          );
+        }
+      })
+      .catch((err) =>
+        console.warn("Failed to load conversation history:", err)
+      );
   }, [companyId]);
 
   const send = async () => {
@@ -300,12 +335,47 @@ export default function FrontstoreV2Page() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ companyId, versionId }),
         });
+
+        if (!res.ok) {
+          let errorMessage = "Apply failed";
+          try {
+            const data = await res.json();
+            errorMessage = data.error || data.message || errorMessage;
+          } catch (e) {
+            const text = await res.text();
+            errorMessage = text || errorMessage;
+          }
+          throw new Error(errorMessage);
+        }
+
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Apply failed");
-        toast.success("Version applied successfully");
+
+        // Get company slug to show the store link
+        const selectedCompany = companies.find((c) => c.id === companyId);
+        const companySlug = selectedCompany?.slug;
+
+        if (companySlug) {
+          toast.success(
+            `Design applied successfully! Opening your store in a new tab...`
+          );
+          // Open store in new tab after a brief delay
+          setTimeout(() => {
+            window.open(`/store/${companySlug}`, "_blank");
+          }, 1000);
+        } else {
+          toast.success(
+            "Design applied successfully! Your store has been updated."
+          );
+        }
+
+        // Clear diffs after successful apply
+        setDiffs(null);
+        setDiffSummary(null);
+        setPreviewMode("preview");
       } catch (e) {
-        console.error(e);
-        toast.error("Apply failed");
+        console.error("Apply error:", e);
+        const errorMsg = e instanceof Error ? e.message : "Apply failed";
+        toast.error(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -455,15 +525,28 @@ export default function FrontstoreV2Page() {
             <ScrollArea className="h-96 pr-4">
               <div className="space-y-3 mt-2">
                 {messages.length === 0 && (
-                  <div className="p-4 border-2 border-dashed rounded-lg text-center text-muted-foreground">
-                    <p className="text-sm">
-                      👋 Start by entering your Company ID and describing what
-                      kind of design you&apos;d like!
-                    </p>
-                    <p className="text-xs mt-1">
-                      The AI will ask clarifying questions and help you create
-                      the perfect storefront.
-                    </p>
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <h4 className="text-sm font-semibold mb-2 text-amber-900 flex items-center gap-2">
+                      <Wand2 className="h-4 w-4" />
+                      Quick Suggestions
+                    </h4>
+                    <div className="flex gap-2 flex-wrap">
+                      {[
+                        "Make it more bold and dramatic",
+                        "Switch to a minimal luxury style",
+                        "Emphasize our products more",
+                        "Add more testimonials",
+                        "Use warmer, friendlier colors",
+                      ].map((t) => (
+                        <button
+                          key={t}
+                          className="px-3 py-1 bg-white border border-amber-300 hover:border-amber-400 rounded-md text-xs transition-colors"
+                          onClick={() => setPrompt(t)}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {messages.map((m, i) => (
@@ -490,30 +573,32 @@ export default function FrontstoreV2Page() {
                 ))}
               </div>
             </ScrollArea>
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <h4 className="text-sm font-semibold mb-2 text-amber-900 flex items-center gap-2">
-                <Wand2 className="h-4 w-4" />
-                Quick Suggestions
-              </h4>
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  "Make it more bold and dramatic",
-                  "Switch to a minimal luxury style",
-                  "Emphasize our products more",
-                  "Add more testimonials",
-                  "Use warmer, friendlier colors",
-                ].map((t) => (
-                  <button
-                    key={t}
-                    className="px-3 py-1 bg-white border border-amber-300 hover:border-amber-400 rounded-md text-xs transition-colors"
-                    onClick={() => continueConversation(t)}
-                    disabled={!conversationId || loading}
-                  >
-                    {t}
-                  </button>
-                ))}
+            {conversationId && messages.length > 0 && (
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <h4 className="text-sm font-semibold mb-2 text-amber-900 flex items-center gap-2">
+                  <Wand2 className="h-4 w-4" />
+                  Quick Suggestions
+                </h4>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    "Make it more bold and dramatic",
+                    "Switch to a minimal luxury style",
+                    "Emphasize our products more",
+                    "Add more testimonials",
+                    "Use warmer, friendlier colors",
+                  ].map((t) => (
+                    <button
+                      key={t}
+                      className="px-3 py-1 bg-white border border-amber-300 hover:border-amber-400 rounded-md text-xs transition-colors"
+                      onClick={() => continueConversation(t)}
+                      disabled={!conversationId || loading}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             <Separator className="my-4" />
             <div className="mt-3">
               <Button
@@ -611,13 +696,18 @@ export default function FrontstoreV2Page() {
                 <AiStorefrontRendererV2
                   spec={previewSpec}
                   slug={companyId}
-                  companyName={companyId}
+                  companyName={
+                    companies.find((c) => c.id === companyId)?.name || "Preview"
+                  }
+                  isPreview={true}
                 />
               ) : (
                 <AiStorefrontRenderer
                   spec={previewSpec}
                   slug={companyId}
-                  companyName={companyId}
+                  companyName={
+                    companies.find((c) => c.id === companyId)?.name || "Preview"
+                  }
                   enableCart={false}
                 />
               )
