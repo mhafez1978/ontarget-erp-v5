@@ -1324,6 +1324,102 @@ export async function generateAiStorefront(
     "- Use backgroundImage with parallax: true for depth and engagement\n" +
     "- Set overlayColor and overlayOpacity (0.3-0.7) to ensure text readability over media\n" +
     "- Per-section: add backgroundVideo or backgroundImage with position, size, parallax options\n\n" +
+    "FREE STOCK IMAGES FROM UNSPLASH:\n" +
+    "Use high-quality stock images to enrich sections and make designs more visually compelling. Unsplash provides free, professional images.\n\n" +
+    "HERO SECTION BACKGROUNDS:\n" +
+    "Always add a relevant hero background image unless the design is extremely minimal. Use Unsplash URLs:\n" +
+    "- Tech/SaaS: https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=80 (tech abstract)\n" +
+    "- Business/Corporate: https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80 (office/cityscape)\n" +
+    "- Creative Agency: https://images.unsplash.com/photo-1558655146-d09347e92766?w=1920&q=80 (colorful workspace)\n" +
+    "- Wellness/Healthcare: https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&q=80 (wellness/spa)\n" +
+    "- Food/Restaurant: https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80 (food prep)\n" +
+    "- Retail/E-commerce: https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80 (retail store)\n" +
+    "- Construction/Real Estate: https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1920&q=80 (architecture)\n" +
+    "- Fashion: https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1920&q=80 (fashion/shopping)\n" +
+    "- Fitness: https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80 (gym/fitness)\n" +
+    "- Education: https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1920&q=80 (learning/education)\n" +
+    "- Finance: https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1920&q=80 (business/analytics)\n" +
+    "- Travel/Hospitality: https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=80 (travel/adventure)\n" +
+    "- Legal: https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1920&q=80 (law/justice)\n" +
+    "- Automotive: https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1920&q=80 (cars/automotive)\n" +
+    "- Home Services: https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1920&q=80 (modern home)\n" +
+    "Add overlay: 0.4-0.6 opacity dark overlay for text readability\n\n" +
+    "SERVICE CARDS WITHOUT IMAGES:\n" +
+    "When services don't have images in database, add relevant stock images:\n" +
+    "- Web Design/Development: https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&q=80\n" +
+    "- Marketing/SEO: https://images.unsplash.com/photo-1432888622747-4eb9a8f2c293?w=800&q=80\n" +
+    "- Consulting: https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80\n" +
+    "- Accounting/Finance: https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80\n" +
+    "- Legal Services: https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=800&q=80\n" +
+    "- Photography: https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=800&q=80\n" +
+    "- Video Production: https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=800&q=80\n" +
+    "- Graphic Design: https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80\n" +
+    "- Content Writing: https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80\n" +
+    "- Social Media Management: https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80\n" +
+    "- IT Support: https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80\n" +
+    "- Cloud Services: https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80\n" +
+    "- Plumbing: https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800&q=80\n" +
+    "- HVAC: https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&q=80\n" +
+    "- Electrical: https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&q=80\n" +
+    "- Landscaping: https://images.unsplash.com/photo-1558904541-efa843a96f01?w=800&q=80\n" +
+    "- Cleaning: https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80\n" +
+    "- Moving: https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80\n" +
+    "- Pet Care: https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=800&q=80\n" +
+    "- Massage Therapy: https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&q=80\n" +
+    "- Personal Training: https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80\n" +
+    "- Nutrition: https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80\n" +
+    "- Therapy/Counseling: https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80\n" +
+    "- Event Planning: https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&q=80\n" +
+    "- Catering: https://images.unsplash.com/photo-1555244162-803834f70033?w=800&q=80\n\n" +
+    "HIGHLIGHTS/FEATURES SECTION ICONS & IMAGES:\n" +
+    "When showcasing features/benefits, consider adding section background or decorative images:\n" +
+    "- Technology features: https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80\n" +
+    "- Team collaboration: https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80\n" +
+    "- Customer service: https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80\n" +
+    "- Quality/craftsmanship: https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=1200&q=80\n" +
+    "- Innovation: https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80\n" +
+    "Use as subtle background with low opacity or parallax effect\n\n" +
+    "CTA BAND BACKGROUNDS:\n" +
+    "Make CTA sections more engaging with background images:\n" +
+    "- Motivational/Success: https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1600&q=80\n" +
+    "- Team/Community: https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1600&q=80\n" +
+    "- Growth/Achievement: https://images.unsplash.com/photo-1552664730-d307ca884978?w=1600&q=80\n" +
+    "- Professional: https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1600&q=80\n" +
+    "Add dark overlay (0.5-0.7) to ensure CTA button stands out\n\n" +
+    "PORTFOLIO/PROJECT PLACEHOLDER IMAGES:\n" +
+    "When company has no project images, use relevant industry images:\n" +
+    "- Web Design Project: https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&q=80\n" +
+    "- Mobile App Project: https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&q=80\n" +
+    "- Branding Project: https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80\n" +
+    "- Interior Design: https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80\n" +
+    "- Architecture: https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&q=80\n" +
+    "- Construction: https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=80\n\n" +
+    "TESTIMONIAL SECTION BACKGROUNDS:\n" +
+    "Add subtle backgrounds to testimonial sections:\n" +
+    "- Abstract patterns: https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=1600&q=80\n" +
+    "- Soft gradients: https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1600&q=80\n" +
+    "- Minimal texture: https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?w=1600&q=80\n" +
+    "Use very low opacity (0.1-0.2) for subtle texture without distraction\n\n" +
+    "IMAGE USAGE RULES:\n" +
+    "1. ALWAYS use actual product/service images from database when available (product.images[0])\n" +
+    "2. For services without images, intelligently match service.name or service.category to appropriate stock image\n" +
+    "3. Hero sections should almost always have a background image (unless brutalist/ultra-minimal style)\n" +
+    "4. Match image mood to overall design tone (vibrant for playful, muted for luxury, sharp for tech)\n" +
+    "5. Add appropriate overlays for text readability: 0.4-0.6 for hero, 0.5-0.7 for CTAs\n" +
+    "6. Use consistent aspect ratios within sections (all cards same ratio)\n" +
+    "7. Higher quality images (w=1920) for hero/full-width, medium (w=800-1200) for cards\n" +
+    "8. Consider parallax: true for hero and feature section backgrounds\n" +
+    "9. All Unsplash URLs should include width param (?w=800 or ?w=1920) and quality (?q=80)\n" +
+    "10. When in doubt, image > no image (visual richness improves engagement)\n\n" +
+    "INTELLIGENT IMAGE MATCHING:\n" +
+    "Parse service/product names and categories to select most relevant stock images:\n" +
+    "- 'Web Design', 'Website Development' → web design stock images\n" +
+    "- 'HVAC', 'Air Conditioning', 'Heating' → HVAC/climate control images\n" +
+    "- 'Marketing', 'SEO', 'Digital Marketing' → marketing/analytics images\n" +
+    "- 'Plumbing', 'Pipe Repair' → plumbing tools/work images\n" +
+    "- 'Photography', 'Photo Shoot' → camera/photography images\n" +
+    "- Extract keywords from company.industry and match to hero background\n" +
+    "- Look for terms like 'spa', 'fitness', 'restaurant', 'legal', 'medical' in company data\n\n" +
     "BUTTONS & INTERACTIONS:\n" +
     "- buttonStyle: 'solid' for standard, 'pill' for friendly, 'ghost' for minimal, '3d' for bold, 'underline' for editorial\n" +
     "- cornerStyle: 'sharp' for modern/tech, 'extra-rounded' for playful/friendly, 'soft' for balance\n" +
