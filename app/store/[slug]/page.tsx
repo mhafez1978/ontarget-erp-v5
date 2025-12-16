@@ -250,6 +250,8 @@ async function getStoreData(slug?: string) {
       name: true,
       description: true,
       featuredImage: true,
+      projectType: true,
+      category: true,
       startDate: true,
       endDate: true,
       customer: {
@@ -279,6 +281,8 @@ async function getStoreData(slug?: string) {
             name: true,
             description: true,
             featuredImage: true,
+            projectType: true,
+            category: true,
             startDate: true,
             endDate: true,
             customer: {
@@ -391,7 +395,10 @@ export default async function StorefrontPage({ params }: PageProps) {
     id: project.id,
     title: project.name,
     client: project.customer?.name || project.subscriberCompany?.name || null,
-    category: null, // Project model doesn't have category field
+    category: project.category
+      .split("_")
+      .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(" "),
     description: project.description || null,
     image: project.featuredImage || null,
     tags: [],

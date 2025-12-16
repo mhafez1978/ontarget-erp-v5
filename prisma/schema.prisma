@@ -1786,6 +1786,7 @@ model Project {
   status ProjectStatus @default(PLANNING)
 
   projectType ProjectType @default(INTERNAL)
+  category    ProjectCategory @default(INTERNAL)
   isFeatured  Boolean     @default(false)
   currency    String      @default("USD")
   estimatedCost   Decimal? @db.Decimal(13, 2)
@@ -2493,6 +2494,37 @@ enum ProjectStatus {
 enum ProjectType {
   INTERNAL
   COMPANY_CUSTOMER
+}
+
+enum ProjectCategory {
+  INTERNAL
+  WEB_DEVELOPMENT
+  MOBILE_APP
+  ECOMMERCE
+  BRANDING
+  MARKETING
+  SEO
+  SOCIAL_MEDIA
+  CONTENT_CREATION
+  VIDEO_PRODUCTION
+  GRAPHIC_DESIGN
+  UI_UX_DESIGN
+  SOFTWARE_DEVELOPMENT
+  CONSULTING
+  REAL_ESTATE
+  CONSTRUCTION
+  ARCHITECTURE
+  ENGINEERING
+  MANUFACTURING
+  HEALTHCARE
+  EDUCATION
+  FINANCE
+  LEGAL
+  HOSPITALITY
+  RETAIL
+  LOGISTICS
+  EVENT_PLANNING
+  OTHER
 }
 
 enum ProjectEntryType {

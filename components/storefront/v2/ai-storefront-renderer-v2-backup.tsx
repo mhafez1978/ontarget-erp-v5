@@ -1490,7 +1490,7 @@ function CTABandV2({
             className={`${typography.bodySize} text-muted-foreground mb-8 max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
-            {String(section.content.subtitle)}
+            {typeof section.content.subtitle === 'string' ? section.content.subtitle : String(section.content.subtitle)}
           </p>
         )}
         <div className="flex gap-4 justify-center flex-wrap">
@@ -1593,8 +1593,209 @@ function PostsSectionV2({
                   </p>
                 )}
                 <Button
-                  variant="link"
-                  className="p-0"
-                  style={{ color: spec.meta.primaryColor }}
+                              variant="link"
+                              className="p-0"
+                              style={{ color: spec.meta.primaryColor }}
+                            >
+                              Read More <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </div>
+                        </motion.article>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-center py-12 text-muted-foreground">
+                        No posts available
+                      </div>
+                    )}
+                  </div>
+                </AnimatedSection>
+              );
+            }
+            
+            // ============================================================================
+            // MAIN RENDERER COMPONENT
+            // ============================================================================
+            
+            export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
+              const { spec } = props;
+            
+              // Extract design systems from spec
+              const typography = getTypographyStyles(spec);
+              const spacing = getSpacingStyles(spec);
+              const effects = getEffectsStyles(spec);
+            
+              // Apply global font families
+              useEffect(() => {
+                if (typography.headingFont !== "Inter") {
+                  const link = document.createElement("link");
+                  link.href = `https://fonts.googleapis.com/css2?family=${typography.headingFont.replace(
+                    " ",
+                    "+"
+                  )}:wght@300;400;500;600;700;800;900&display=swap`;
+                  link.rel = "stylesheet";
+                  document.head.appendChild(link);
+                }
+                if (
+                  typography.bodyFont !== "Inter" &&
+                  typography.bodyFont !== typography.headingFont
+                ) {
+                  const link = document.createElement("link");
+                  link.href = `https://fonts.googleapis.com/css2?family=${typography.bodyFont.replace(
+                    " ",
+                    "+"
+                  )}:wght@300;400;500;600;700&display=swap`;
+                  link.rel = "stylesheet";
+                  document.head.appendChild(link);
+                }
+              }, [typography.headingFont, typography.bodyFont]);
+            
+              const sections = spec.sections || [];
+            
+              return (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="min-h-screen"
+                  style={{ fontFamily: typography.bodyFont }}
                 >
-                  Read More <ArrowRight className="w-4 h-4 ml-2" />
+                  {sections.map((section) => {
+                    switch (section.type) {
+                      case "hero":
+                        return (
+                          <HeroSectionV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            effects={effects}
+                            heroOverride={props.heroOverride}
+                            storeBanner={props.storeBanner ?? null}
+                          />
+                        );
+            
+                      case "highlights":
+                        return (
+                          <FeaturesSectionV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            effects={effects}
+                          />
+                        );
+            
+                      case "testimonials":
+                        return (
+                          <TestimonialsSectionV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            effects={effects}
+                            testimonials={props.testimonials || []}
+                          />
+                        );
+            
+                      case "product-grid":
+                        return (
+                          <ProductsSectionV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            effects={effects}
+                            featuredProducts={props.featuredProducts || []}
+                          />
+                        );
+            
+                      case "service-grid":
+                        return (
+                          <ServicesSectionV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            effects={effects}
+                            featuredServices={props.featuredServices || []}
+                          />
+                        );
+            
+                      case "stats":
+                        return (
+                          <StatsSectionV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            customersCount={props.customersCount || 0}
+                            approvedTestimonialsCount={props.approvedTestimonialsCount || 0}
+                          />
+                        );
+            
+                      case "faq":
+                        return (
+                          <FAQSectionV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            effects={effects}
+                            supportFaqs={props.supportFaqs || []}
+                          />
+                        );
+            
+                      case "contact":
+                        return (
+                          <ContactSectionV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            effects={effects}
+                            contactEmail={props.contactEmail}
+                            contactPhone={props.contactPhone}
+                          />
+                        );
+            
+                      case "cta-band":
+                        return (
+                          <CTABandV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            effects={effects}
+                          />
+                        );
+            
+                      case "posts":
+                        return (
+                          <PostsSectionV2
+                            key={section.id}
+                            section={section}
+                            spec={spec}
+                            typography={typography}
+                            spacing={spacing}
+                            effects={effects}
+                            posts={props.posts || []}
+                          />
+                        );
+            
+                      default:
+                        return null;
+                    }
+                  })}
+                </motion.div>
+              );
+            }
+            

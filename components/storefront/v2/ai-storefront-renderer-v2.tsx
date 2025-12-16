@@ -2,18 +2,10 @@
 
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Marquee } from "@/components/ui/marquee";
-import {
-  ShoppingCart,
-  Check,
-  Star,
-  ArrowRight,
-  Play,
-  Loader2,
-} from "lucide-react";
+import { ShoppingCart, Star, ArrowRight, Play, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type {
   AiFrontstoreSpec,
@@ -97,6 +89,14 @@ interface AiStorefrontRendererV2Props {
     secondaryCTA?: string;
   } | null;
 }
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
+
+type Typography = ReturnType<typeof getTypographyStyles>;
+type Spacing = ReturnType<typeof getSpacingStyles>;
+type Effects = ReturnType<typeof getEffectsStyles>;
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -408,7 +408,8 @@ function AnimatedSection({
       ref={ref}
       initial="hidden"
       animate={isInView ? "visible" : "hidden"}
-      variants={variants[animationType]}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      variants={variants[animationType] as any}
       className={className}
     >
       {children}
@@ -427,7 +428,6 @@ function HeroSectionV2({
   spacing,
   effects,
   heroOverride,
-  storeBanner,
 }: {
   section: AiFrontstoreSection;
   spec: AiFrontstoreSpec;
@@ -435,7 +435,6 @@ function HeroSectionV2({
   spacing: ReturnType<typeof getSpacingStyles>;
   effects: ReturnType<typeof getEffectsStyles>;
   heroOverride: AiStorefrontRendererV2Props["heroOverride"];
-  storeBanner: string | null;
 }) {
   const { content, styling } = section;
   const title =
@@ -497,7 +496,7 @@ function HeroSectionV2({
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/30" />
+          <div className="absolute inset-0 bg-linear-to-b from-black/50 to-black/30" />
         </div>
       )}
 
@@ -587,7 +586,7 @@ function HeroSectionV2({
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
                 {effects.gradients && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                 )}
               </Button>
             )}
@@ -682,14 +681,16 @@ function FeaturesSectionV2({
         >
           {subtitle && (
             <motion.p
-              variants={fadeInUp}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              variants={fadeInUp as any}
               className={`${typography.bodySize} ${typography.bodyWeight} text-primary uppercase ${typography.letterSpacing} mb-4`}
             >
               {subtitle}
             </motion.p>
           )}
           <motion.h2
-            variants={fadeInUp}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            variants={fadeInUp as any}
             className={`${typography.headingSize.h2} ${typography.headingWeight} ${typography.lineHeight}`}
             style={{ fontFamily: typography.headingFont }}
           >
@@ -709,7 +710,8 @@ function FeaturesSectionV2({
           {items.map((item, index) => (
             <motion.div
               key={index}
-              variants={fadeInUp}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              variants={fadeInUp as any}
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
               className={`p-6 rounded-lg ${effects.borders} ${
                 effects.shadows
@@ -758,7 +760,6 @@ function FeaturesSectionV2({
 
 function TestimonialsSectionV2({
   section,
-  spec,
   typography,
   spacing,
   effects,
@@ -789,14 +790,16 @@ function TestimonialsSectionV2({
         >
           {subtitle && (
             <motion.p
-              variants={fadeInUp}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              variants={fadeInUp as any}
               className={`${typography.bodySize} ${typography.bodyWeight} text-primary uppercase ${typography.letterSpacing} mb-4`}
             >
               {subtitle}
             </motion.p>
           )}
           <motion.h2
-            variants={fadeInUp}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            variants={fadeInUp as any}
             className={`${typography.headingSize.h2} ${typography.headingWeight} ${typography.lineHeight}`}
             style={{ fontFamily: typography.headingFont }}
           >
@@ -883,7 +886,7 @@ function ProductsSectionV2({
         >
           {readContentString(section.content, "title") || "Our Products"}
         </motion.h2>
-        {section.content.subtitle && (
+        {readContentString(section.content, "subtitle") && (
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -892,7 +895,7 @@ function ProductsSectionV2({
             className={`${typography.bodySize} text-muted-foreground max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
-            {String(section.content.subtitle)}
+            {readContentString(section.content, "subtitle")}
           </motion.p>
         )}
       </div>
@@ -1011,7 +1014,7 @@ function ServicesSectionV2({
         >
           {readContentString(section.content, "title") || "Our Services"}
         </motion.h2>
-        {section.content.subtitle && (
+        {readContentString(section.content, "subtitle") && (
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1020,7 +1023,7 @@ function ServicesSectionV2({
             className={`${typography.bodySize} text-muted-foreground max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
-            {String(section.content.subtitle)}
+            {readContentString(section.content, "subtitle")}
           </motion.p>
         )}
       </div>
@@ -1104,155 +1107,128 @@ function PortfolioSectionV2({
   typography: Typography;
   spacing: Spacing;
   effects: Effects;
-  portfolioProjects: Array<{
-    id: string;
-    title: string;
-    client?: string;
-    category?: string;
-    description?: string;
-    image?: string;
-  }>;
+  portfolioProjects: PortfolioProject[];
 }) {
-  const gridColumns = section.styling?.grid?.columns || 3;
-  const gap = section.styling?.grid?.gap || "loose";
-  const gapClass =
-    gap === "tight"
-      ? "gap-4"
-      : gap === "comfortable"
-      ? "gap-6"
-      : "gap-8 md:gap-10";
+  const { content } = section;
+  const title = readContentString(content, "title") || "Our Portfolio";
+  const subtitle = readContentString(content, "subtitle");
+  const gapClass = "gap-8 md:gap-10";
 
   return (
-    <AnimatedSection
-      section={section}
-      spec={spec}
-      typography={typography}
-      spacing={spacing}
-      effects={effects}
-    >
-      {section.content?.heading && (
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className={`${typography.headingSize.h2} font-${
-            typography.headingWeight
-          } text-foreground mb-${spacing.scale === "compact" ? "8" : "12"}`}
-          style={{
-            fontFamily: typography.headingFont,
-            letterSpacing: typography.letterSpacing,
-            lineHeight: typography.lineHeight,
-          }}
-        >
-          {section.content.heading}
-        </motion.h2>
-      )}
-      {section.content?.description && (
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className={`${typography.bodySize} text-muted-foreground mb-12 max-w-3xl`}
-          style={{ fontFamily: typography.bodyFont }}
-        >
-          {section.content.description}
-        </motion.p>
-      )}
-
-      <div
-        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${gridColumns} ${gapClass}`}
-      >
-        {portfolioProjects && portfolioProjects.length > 0 ? (
-          portfolioProjects.map((project, index) => (
-            <motion.article
-              key={project.id}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group relative overflow-hidden rounded-xl bg-card cursor-pointer"
-              style={{
-                boxShadow:
-                  effects.shadows === "soft"
-                    ? "0 4px 6px -1px rgb(0 0 0 / 0.1)"
-                    : effects.shadows === "hard"
-                    ? "8px 8px 0 rgb(0 0 0 / 0.1)"
-                    : "none",
-                borderWidth: effects.borders === "thick" ? "3px" : "1px",
-                borderColor:
-                  effects.borders === "colorful"
-                    ? spec.meta.primaryColor
-                    : undefined,
-              }}
-            >
-              <div className="aspect-[4/3] overflow-hidden bg-muted">
-                {project.image ? (
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-muted to-muted-foreground/20">
-                    <span className="text-4xl font-bold text-muted-foreground/30">
-                      {project.title.charAt(0)}
-                    </span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-80" />
-              </div>
-
-              <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
-                <div className="translate-y-4 transition-transform duration-500 group-hover:translate-y-0">
-                  {project.category && (
-                    <span
-                      className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider"
-                      style={{
-                        backgroundColor: `${spec.meta.primaryColor}20`,
-                        color: spec.meta.primaryColor,
-                      }}
-                    >
-                      {project.category}
-                    </span>
-                  )}
-
-                  <h3
-                    className={`${typography.headingSize.h3} font-${typography.headingWeight} text-card-foreground`}
-                    style={{ fontFamily: typography.headingFont }}
-                  >
-                    {project.title}
-                  </h3>
-
-                  {project.client && (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {project.client}
-                    </p>
-                  )}
-
-                  {project.description && (
-                    <p className="mt-4 max-h-0 overflow-hidden text-sm text-muted-foreground/80 transition-all duration-500 group-hover:max-h-24 line-clamp-3">
-                      {project.description}
-                    </p>
-                  )}
-                </div>
-
-                <div
-                  className="mt-4 flex items-center gap-2 opacity-0 transition-all duration-500 group-hover:opacity-100"
-                  style={{ color: spec.meta.primaryColor }}
-                >
-                  <span className="text-sm font-medium">View Project</span>
-                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </div>
-              </div>
-            </motion.article>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            No projects available
-          </div>
+    <AnimatedSection className={`${spacing.sectionGap} bg-background`}>
+      <div className={`${spacing.containerMaxWidth} mx-auto px-4`}>
+        {subtitle && (
+          <p
+            className={`${typography.bodySize} ${typography.bodyWeight} text-primary uppercase ${typography.letterSpacing} mb-4 text-center`}
+          >
+            {subtitle}
+          </p>
         )}
+        {title && (
+          <h2
+            className={`${typography.headingSize.h2} ${typography.headingWeight} text-foreground mb-12 text-center`}
+            style={{
+              fontFamily: typography.headingFont,
+              letterSpacing: typography.letterSpacing,
+              lineHeight: typography.lineHeight,
+            }}
+          >
+            {title}
+          </h2>
+        )}
+
+        <div
+          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${gapClass}`}
+        >
+          {portfolioProjects && portfolioProjects.length > 0 ? (
+            portfolioProjects.map((project, index) => (
+              <motion.article
+                key={project.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="group relative overflow-hidden rounded-xl bg-card cursor-pointer"
+                style={{
+                  boxShadow:
+                    effects.shadows === "soft"
+                      ? "0 4px 6px -1px rgb(0 0 0 / 0.1)"
+                      : effects.shadows === "hard"
+                      ? "8px 8px 0 rgb(0 0 0 / 0.1)"
+                      : "none",
+                  borderWidth: effects.borders ? "1px" : "0",
+                  borderColor: effects.borders ? "var(--border)" : undefined,
+                }}
+              >
+                <div className="aspect-4/3 overflow-hidden bg-muted">
+                  {project.image ? (
+                    <Image
+                      src={project.image}
+                      alt={project.title}
+                      width={600}
+                      height={450}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-muted to-muted-foreground/20">
+                      <span className="text-4xl font-bold text-muted-foreground/30">
+                        {project.title.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-linear-to-t from-card via-card/20 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-80" />
+                </div>
+
+                <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+                  <div className="translate-y-4 transition-transform duration-500 group-hover:translate-y-0">
+                    {project.category && (
+                      <span
+                        className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider"
+                        style={{
+                          backgroundColor: `${spec.meta.primaryColor}20`,
+                          color: spec.meta.primaryColor,
+                        }}
+                      >
+                        {project.category}
+                      </span>
+                    )}
+
+                    <h3
+                      className={`${typography.headingSize.h3} font-${typography.headingWeight} text-card-foreground`}
+                      style={{ fontFamily: typography.headingFont }}
+                    >
+                      {project.title}
+                    </h3>
+
+                    {project.client && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {project.client}
+                      </p>
+                    )}
+
+                    {project.description && (
+                      <p className="mt-4 max-h-0 overflow-hidden text-sm text-muted-foreground/80 transition-all duration-500 group-hover:max-h-24 line-clamp-3">
+                        {project.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div
+                    className="mt-4 flex items-center gap-2 opacity-0 transition-all duration-500 group-hover:opacity-100"
+                    style={{ color: spec.meta.primaryColor }}
+                  >
+                    <span className="text-sm font-medium">View Project</span>
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </motion.article>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              No projects available
+            </div>
+          )}
+        </div>
       </div>
     </AnimatedSection>
   );
@@ -1263,7 +1239,6 @@ function PortfolioSectionV2({
 // ============================================================================
 
 function StatsSectionV2({
-  section,
   spec,
   typography,
   spacing,
@@ -1536,7 +1511,7 @@ function ContactSectionV2({
         >
           {readContentString(section.content, "title") || "Get In Touch"}
         </motion.h2>
-        {section.content.subtitle && (
+        {readContentString(section.content, "subtitle") && (
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1545,7 +1520,7 @@ function ContactSectionV2({
             className={`${typography.bodySize} text-muted-foreground max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
-            {String(section.content.subtitle)}
+            {readContentString(section.content, "subtitle")}
           </motion.p>
         )}
       </div>
@@ -1712,12 +1687,12 @@ function CTABandV2({
           {readContentString(section.content, "title") ||
             "Ready to Get Started?"}
         </h2>
-        {section.content.subtitle && (
+        {readContentString(section.content, "subtitle") && (
           <p
             className={`${typography.bodySize} text-muted-foreground mb-8 max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
-            {String(section.content.subtitle)}
+            {readContentString(section.content, "subtitle")}
           </p>
         )}
         <div className="flex gap-4 justify-center flex-wrap">
@@ -1842,7 +1817,7 @@ function PostsSectionV2({
 // ============================================================================
 
 export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
-  const { spec, companyName, slug, portfolioProjects } = props;
+  const { spec } = props;
 
   // Extract design systems from spec
   const typography = getTypographyStyles(spec);
@@ -1850,9 +1825,9 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
   const effects = getEffectsStyles(spec);
 
   // Get company logo if available
-  const selectedCompany = props.companyId
-    ? { name: companyName, logo: null }
-    : null;
+  // const selectedCompany = props.companyId
+  //   ? { name: companyName, logo: null }
+  //   : null;
 
   // Apply global font families
   useEffect(() => {
@@ -1882,9 +1857,9 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
   const sections = spec.sections || [];
 
   // Get primary color from spec meta
-  const primaryColor = spec.meta?.primaryColor || "#2563EB";
-  const backgroundColor = spec.meta?.backgroundColor || "#FFFFFF";
-  const textColor = spec.meta?.textColor || "#111827";
+  //const primaryColor = spec.meta?.primaryColor || "#2563EB";
+  //const backgroundColor = spec.meta?.backgroundColor || "#FFFFFF";
+  //const textColor = spec.meta?.textColor || "#111827";
 
   return (
     <motion.div
@@ -1894,84 +1869,6 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
       className="min-h-screen"
       style={{ fontFamily: typography.bodyFont }}
     >
-      {/* Header Navigation */}
-      <header
-        className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-        style={{
-          backgroundColor: `${backgroundColor}ee`,
-          borderColor: `${primaryColor}20`,
-        }}
-      >
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link href={`/store/${slug}`} className="flex items-center gap-3">
-              <h2
-                className="text-lg font-semibold truncate"
-                style={{ color: textColor }}
-              >
-                {companyName}
-              </h2>
-            </Link>
-          </div>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link
-              href={`/store/${slug}`}
-              className="transition-colors hover:opacity-80"
-              style={{ color: textColor }}
-            >
-              Home
-            </Link>
-            <Link
-              href={`/store/${slug}/products`}
-              className="transition-colors hover:opacity-80"
-              style={{ color: textColor }}
-            >
-              Products
-            </Link>
-            <Link
-              href={`/store/${slug}/services`}
-              className="transition-colors hover:opacity-80"
-              style={{ color: textColor }}
-            >
-              Services
-            </Link>
-            <Link
-              href={`/store/${slug}/login`}
-              className="transition-colors hover:opacity-80"
-              style={{ color: textColor }}
-            >
-              Login
-            </Link>
-            <Button
-              size="sm"
-              variant="outline"
-              style={{
-                borderColor: primaryColor,
-                color: textColor,
-              }}
-              asChild
-            >
-              <Link href={`/store/${slug}/register`}>Register</Link>
-            </Button>
-            {props.enableCart && (
-              <Button
-                size="sm"
-                style={{
-                  backgroundColor: primaryColor,
-                  color: "#ffffff",
-                }}
-                asChild
-              >
-                <Link href={`/store/${slug}/cart`}>
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Cart
-                </Link>
-              </Button>
-            )}
-          </nav>
-        </div>
-      </header>
-
       {sections.map((section) => {
         switch (section.type) {
           case "hero":
@@ -1984,7 +1881,6 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                 spacing={spacing}
                 effects={effects}
                 heroOverride={props.heroOverride}
-                storeBanner={props.storeBanner || null}
               />
             );
 
@@ -2122,131 +2018,6 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
             return null;
         }
       })}
-
-      {/* Footer */}
-      <footer
-        className="border-t mt-16 py-12"
-        style={{
-          backgroundColor: spec.meta?.backgroundColor || "#FFFFFF",
-          color: spec.meta?.textColor || "#111827",
-          borderColor: `${primaryColor}20`,
-        }}
-      >
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            {/* Company Info */}
-            <div className="space-y-4">
-              <h3
-                className="text-lg font-bold"
-                style={{ fontFamily: typography.headingFont }}
-              >
-                {companyName}
-              </h3>
-              <p className="text-sm opacity-75">
-                Powered by AI-driven innovation
-              </p>
-            </div>
-
-            {/* Quick Links */}
-            <div className="space-y-4">
-              <h4
-                className="text-sm font-semibold uppercase tracking-wider"
-                style={{ fontFamily: typography.headingFont }}
-              >
-                Quick Links
-              </h4>
-              <nav className="flex flex-col gap-2 text-sm">
-                <Link
-                  href={`/store/${slug}`}
-                  className="hover:opacity-75 transition-opacity"
-                >
-                  Home
-                </Link>
-                <Link
-                  href={`/store/${slug}/products`}
-                  className="hover:opacity-75 transition-opacity"
-                >
-                  Products
-                </Link>
-                <Link
-                  href={`/store/${slug}/services`}
-                  className="hover:opacity-75 transition-opacity"
-                >
-                  Services
-                </Link>
-              </nav>
-            </div>
-
-            {/* Support */}
-            <div className="space-y-4">
-              <h4
-                className="text-sm font-semibold uppercase tracking-wider"
-                style={{ fontFamily: typography.headingFont }}
-              >
-                Support
-              </h4>
-              <nav className="flex flex-col gap-2 text-sm">
-                <Link
-                  href={`/store/${slug}/login`}
-                  className="hover:opacity-75 transition-opacity"
-                >
-                  Login
-                </Link>
-                <Link
-                  href={`/store/${slug}/register`}
-                  className="hover:opacity-75 transition-opacity"
-                >
-                  Register
-                </Link>
-                {props.contactEmail && (
-                  <a
-                    href={`mailto:${props.contactEmail}`}
-                    className="hover:opacity-75 transition-opacity"
-                  >
-                    Contact Us
-                  </a>
-                )}
-              </nav>
-            </div>
-
-            {/* Contact Info */}
-            <div className="space-y-4">
-              <h4
-                className="text-sm font-semibold uppercase tracking-wider"
-                style={{ fontFamily: typography.headingFont }}
-              >
-                Get in Touch
-              </h4>
-              <div className="flex flex-col gap-2 text-sm">
-                {props.contactEmail && (
-                  <a
-                    href={`mailto:${props.contactEmail}`}
-                    className="hover:opacity-75 transition-opacity"
-                  >
-                    {props.contactEmail}
-                  </a>
-                )}
-                {props.contactPhone && (
-                  <a
-                    href={`tel:${props.contactPhone}`}
-                    className="hover:opacity-75 transition-opacity"
-                  >
-                    {props.contactPhone}
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="pt-8 border-t border-current/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm opacity-75">
-            <p>
-              © {new Date().getFullYear()} {companyName}. All rights reserved.
-            </p>
-            <p className="text-xs">Powered by OnTarget Brands AI Storefront</p>
-          </div>
-        </div>
-      </footer>
     </motion.div>
   );
 }
