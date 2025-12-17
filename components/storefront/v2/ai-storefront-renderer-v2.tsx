@@ -90,20 +90,6 @@ interface AiStorefrontRendererV2Props {
   }[];
   contactEmail?: string | null;
   contactPhone?: string | null;
-  locations?: {
-    id: string;
-    name: string;
-    addressLine1: string;
-    addressLine2?: string | null;
-    city: string;
-    state?: string | null;
-    postalCode?: string | null;
-    country: string;
-    latitude?: number | null;
-    longitude?: number | null;
-    phone?: string | null;
-    isMain: boolean;
-  }[];
   storeBanner?: string | null;
   locations?: {
     id: string;
@@ -1752,143 +1738,6 @@ function HeaderSectionV2({
 }
 
 // ============================================================================
-// TEAM SECTION V2
-// ============================================================================
-
-function TeamSectionV2({
-  section,
-  spec,
-  typography,
-  spacing,
-  effects,
-  featuredTeamMembers = [],
-}: {
-  section: AiFrontstoreSection;
-  spec: AiFrontstoreSpec;
-  typography: ReturnType<typeof getTypographyStyles>;
-  spacing: ReturnType<typeof getSpacingStyles>;
-  effects: ReturnType<typeof getEffectsStyles>;
-  featuredTeamMembers: Array<{
-    id: string;
-    name: string;
-    role?: string | null;
-    jobTitle?: string | null;
-    bio?: string | null;
-    image?: string | null;
-  }>;
-}) {
-  const content = section.content as Record<string, unknown>;
-  const heading = content.heading as string | undefined;
-  const subheading = content.subheading as string | undefined;
-  const membersFromContent = content.members as
-    | Array<{
-        id: string;
-        name: string;
-        role?: string;
-        image?: string;
-        bio?: string;
-      }>
-    | undefined;
-
-  const members = membersFromContent || featuredTeamMembers;
-
-  const layout = section.layout || {};
-  const itemsPerRow = (layout.itemsPerRow as number) || 3;
-
-  return (
-    <AnimatedSection
-      className={`${spacing.sectionGap} ${spacing.containerMaxWidth} mx-auto px-4`}
-    >
-      {heading && (
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className={`${typography.headingSize.h2} font-bold text-center mb-4`}
-          style={{
-            fontFamily: typography.headingFont,
-            color: spec.meta.primaryColor,
-          }}
-        >
-          {heading}
-        </motion.h2>
-      )}
-      {subheading && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className={`${typography.bodySize} text-center text-muted-foreground mb-12`}
-          style={{ fontFamily: typography.bodyFont }}
-        >
-          {subheading}
-        </motion.p>
-      )}
-
-      <div
-        className={`grid gap-8 ${
-          itemsPerRow === 2
-            ? "md:grid-cols-2"
-            : itemsPerRow === 4
-            ? "md:grid-cols-2 lg:grid-cols-4"
-            : "md:grid-cols-2 lg:grid-cols-3"
-        }`}
-      >
-        {members.map((member, index) => (
-          <motion.div
-            key={member.id}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.1 }}
-            className={`text-center ${effects.borders} rounded-lg p-6 ${effects.shadows} hover:scale-105 transition-transform`}
-            style={{
-              backgroundColor: section.styling?.backgroundColor || "#FFFFFF",
-            }}
-          >
-            {member.image && (
-              <div className="mb-4 mx-auto w-32 h-32 relative rounded-full overflow-hidden">
-                <Image
-                  src={member.image}
-                  alt={member.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            )}
-            <h3
-              className={`${typography.headingSize.h4} font-semibold mb-1`}
-              style={{
-                fontFamily: typography.headingFont,
-                color: spec.meta.primaryColor,
-              }}
-            >
-              {member.name}
-            </h3>
-            {(member.role || (member as any).jobTitle) && (
-              <p
-                className={`${typography.bodySize} text-muted-foreground mb-2`}
-                style={{ fontFamily: typography.bodyFont }}
-              >
-                {member.role || (member as any).jobTitle}
-              </p>
-            )}
-            {member.bio && (
-              <p
-                className={`${typography.bodySize} text-sm text-muted-foreground`}
-                style={{ fontFamily: typography.bodyFont }}
-              >
-                {member.bio}
-              </p>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    </AnimatedSection>
-  );
-}
-
-// ============================================================================
 // STATS SECTION V2
 // ============================================================================
 
@@ -2688,119 +2537,6 @@ function InteractiveMap({
 }
 
 // ============================================================================
-// CONTACT MAP SECTION
-// ============================================================================
-
-function ContactMapSectionV2({
-  title,
-  description,
-  locations,
-}: {
-  companyId: string;
-  title: string;
-  description?: string;
-  locations: Array<{
-    id: string;
-    name: string;
-    addressLine1: string;
-    addressLine2?: string;
-    city: string;
-    state?: string;
-    postalCode?: string;
-    country: string;
-    latitude: number;
-    longitude: number;
-    phone?: string;
-    email?: string;
-  }>;
-}) {
-  const [isMounted, setIsMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  return (
-    <section className="py-16 bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">{title}</h2>
-          {description && (
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {description}
-            </p>
-          )}
-        </div>
-
-        {locations.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>No locations available</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Interactive Leaflet Map */}
-            <div className="bg-gray-200 dark:bg-gray-800 rounded-lg h-[400px] overflow-hidden">
-              {isMounted && <InteractiveMap locations={locations} />}
-            </div>
-
-            {/* Location cards */}
-            <div className="space-y-4">
-              {locations.map((location) => (
-                <div
-                  key={location.id}
-                  className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm"
-                >
-                  <h3 className="font-semibold text-lg mb-2">
-                    {location.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {location.addressLine1}
-                    {location.addressLine2 && (
-                      <>
-                        <br />
-                        {location.addressLine2}
-                      </>
-                    )}
-                    <br />
-                    {location.city}
-                    {location.state && `, ${location.state}`}{" "}
-                    {location.postalCode}
-                    <br />
-                    {location.country}
-                  </p>
-                  {location.phone && (
-                    <p className="text-sm mt-2">
-                      <strong>Phone:</strong>{" "}
-                      <a
-                        href={`tel:${location.phone}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {location.phone}
-                      </a>
-                    </p>
-                  )}
-                  {location.email && (
-                    <p className="text-sm">
-                      <strong>Email:</strong>{" "}
-                      <a
-                        href={`mailto:${location.email}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {location.email}
-                      </a>
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
 // MAIN RENDERER COMPONENT
 // ============================================================================
 
@@ -3026,10 +2762,18 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                     section.content,
                     "description"
                   )}
-                  locations={(props.locations ?? []).map((loc) => ({
-                    ...loc,
+                  locations={(props.locations ?? []).map((loc, index) => ({
+                    id: loc.id,
+                    name: loc.name,
+                    type: loc.type || "office",
+                    isMain: loc.isMain,
+                    latitude: loc.latitude,
+                    longitude: loc.longitude,
+                    addressLine1: loc.addressLine1,
                     addressLine2: loc.addressLine2 ?? undefined,
+                    city: loc.city,
                     state: loc.state ?? undefined,
+                    country: loc.country,
                     postalCode: loc.postalCode ?? undefined,
                     phone: loc.phone ?? undefined,
                     email: loc.email ?? undefined,
@@ -3076,45 +2820,6 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                   typography={typography}
                   spacing={spacing}
                   effects={effects}
-                />
-              );
-
-            case "contact-map":
-              return (
-                <ContactMapSectionV2
-                  key={section.id}
-                  companyId={props.companyId || ""}
-                  title={
-                    readContentString(section.content, "heading") ||
-                    readContentString(section.content, "title") ||
-                    "Contact & Locations"
-                  }
-                  description={
-                    readContentString(section.content, "description") ||
-                    readContentString(section.content, "subheading")
-                  }
-                  locations={(props.locations ?? [])
-                    .filter(
-                      (loc) => loc.latitude != null && loc.longitude != null
-                    )
-                    .map((loc) => ({
-                      id: loc.id,
-                      name: loc.name,
-                      addressLine1: loc.addressLine1,
-                      addressLine2: loc.addressLine2 ?? undefined,
-                      city: loc.city,
-                      state: loc.state ?? undefined,
-                      postalCode: loc.postalCode ?? undefined,
-                      country: loc.country,
-                      latitude: loc.latitude!,
-                      longitude: loc.longitude!,
-                      phone: loc.phone ?? undefined,
-                    }))}
-                  spec={spec}
-                  typography={typography}
-                  spacing={spacing}
-                  effects={effects}
-                  featuredTeamMembers={props.featuredTeamMembers || []}
                 />
               );
 
