@@ -20,6 +20,7 @@ import type {
   AiFrontstoreSection,
   PortfolioProject,
 } from "@/lib/ai/ai-storefront-types";
+import ContactMapSectionV2 from "./contact-map-section-v2";
 
 // ============================================================================
 // TYPES
@@ -88,6 +89,20 @@ interface AiStorefrontRendererV2Props {
   }[];
   contactEmail?: string | null;
   contactPhone?: string | null;
+  locations?: {
+    id: string;
+    name: string;
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    state?: string | null;
+    postalCode?: string | null;
+    country: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    phone?: string | null;
+    isMain: boolean;
+  }[];
   storeBanner?: string | null;
   heroOverride?: {
     title?: string;
@@ -2066,6 +2081,123 @@ function PostsSectionV2({
 }
 
 // ============================================================================
+// TEAM SECTION
+// ============================================================================
+
+function TeamSectionV2({
+  section,
+  typography,
+  spacing,
+  effects,
+}: {
+  section: AiStorefrontSection;
+  typography: ReturnType<typeof getTypographyStyles>;
+  spacing: ReturnType<typeof getSpacingStyles>;
+  effects: ReturnType<typeof getEffectsStyles>;
+}) {
+  if (section.type !== "team") return null;
+
+  const backgroundColor =
+    section.styling?.backgroundColor || "bg-gray-50 dark:bg-gray-900";
+  const textColor =
+    section.styling?.textColor || "text-gray-900 dark:text-gray-50";
+
+  const teamMembers = section.content?.teamMembers || [];
+
+  return (
+    <section
+      className={`py-${spacing.sectionPadding} ${backgroundColor} ${textColor}`}
+    >
+      <div className={`container mx-auto px-${spacing.containerPadding}`}>
+        {section.content?.heading && (
+          <h2
+            className="text-center mb-4"
+            style={{
+              fontFamily: typography.headingFont,
+              fontSize: typography.h2Size,
+              fontWeight: typography.headingWeight,
+            }}
+          >
+            {section.content.heading}
+          </h2>
+        )}
+
+        {section.content?.subheading && (
+          <p
+            className="text-center mb-12 max-w-2xl mx-auto opacity-80"
+            style={{
+              fontFamily: typography.bodyFont,
+              fontSize: typography.bodySize,
+            }}
+          >
+            {section.content.subheading}
+          </p>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {teamMembers.map((member: any, index: number) => (
+            <div
+              key={index}
+              className={`text-center group ${effects.cardShadow} ${effects.cardRounded} overflow-hidden bg-white dark:bg-gray-800 transition-transform duration-300 hover:scale-105`}
+            >
+              {member.photo && (
+                <div className="aspect-square overflow-hidden">
+                  <Image
+                    src={member.photo}
+                    alt={member.name || "Team member"}
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                </div>
+              )}
+
+              <div className="p-6">
+                {member.name && (
+                  <h3
+                    className="mb-1"
+                    style={{
+                      fontFamily: typography.headingFont,
+                      fontSize: typography.h4Size,
+                      fontWeight: typography.headingWeight,
+                    }}
+                  >
+                    {member.name}
+                  </h3>
+                )}
+
+                {member.role && (
+                  <p
+                    className="text-sm opacity-70 mb-3"
+                    style={{
+                      fontFamily: typography.bodyFont,
+                    }}
+                  >
+                    {member.role}
+                  </p>
+                )}
+
+                {member.bio && (
+                  <p
+                    className="text-sm opacity-80"
+                    style={{
+                      fontFamily: typography.bodyFont,
+                      fontSize: typography.bodySize,
+                    }}
+                  >
+                    {member.bio}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
 // MAIN RENDERER COMPONENT
 // ============================================================================
 
@@ -2131,6 +2263,14 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
       >
         {sections.map((section) => {
           switch (section.type) {
+            case "announcement-bar":
+              // Skip rendering - handled in HeaderV2
+              return null;
+
+            case "header":
+              // Skip rendering - handled in HeaderV2
+              return null;
+
             case "hero":
               return (
                 <HeroSectionV2
@@ -2273,6 +2413,43 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                   spacing={spacing}
                   effects={effects}
                   posts={props.posts || []}
+                />
+              );
+
+            case "team":
+              return (
+                <TeamSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  featuredTeamMembers={props.featuredTeamMembers || []}
+                />
+              );
+
+            case "contact-map":
+              return (
+                <ContactMapSectionV2
+                  key={section.id}
+                  companyId={props.companyId || ""}
+                  title={
+                    readContentString(section.content, "heading") ||
+                    readContentString(section.content, "title") ||
+                    "Contact & Locations"
+                  }
+                  description={
+                    readContentString(section.content, "description") ||
+                    readContentString(section.content, "subheading")
+                  }
+                  locations={(props.locations ?? []).map((loc: any) => ({
+                    ...loc,
+                    addressLine2: loc.addressLine2 ?? undefined,
+                    state: loc.state ?? undefined,
+                    postalCode: loc.postalCode ?? undefined,
+                    phone: loc.phone ?? undefined,
+                  }))}
                 />
               );
 
