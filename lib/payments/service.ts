@@ -39,6 +39,19 @@ export function getPriceIdForPlan(gateway: any, plan: string) {
   }
 }
 
+export function getPlanFromPriceId(gateway: any, priceId: string) {
+  try {
+    const cfg = gateway.config || {};
+    const prices = cfg.prices || {};
+    for (const [plan, entry] of Object.entries(prices)) {
+      if ((entry as any)?.priceId === priceId) return plan;
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
 export async function getRootPriceId(plan: string) {
   const gateway = await getRootGateway();
   if (!gateway) return null;

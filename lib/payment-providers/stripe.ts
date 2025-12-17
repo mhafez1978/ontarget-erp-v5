@@ -208,7 +208,10 @@ export class StripeProvider extends PaymentProvider {
       return { success: true, customerId: customer.id };
     } catch (error) {
       const err = error as Error;
-      return { success: false, error: err.message || "Failed to create customer" };
+      return {
+        success: false,
+        error: err.message || "Failed to create customer",
+      };
     }
   }
 
@@ -226,7 +229,10 @@ export class StripeProvider extends PaymentProvider {
       return { success: true, clientSecret: si.client_secret || undefined };
     } catch (error) {
       const err = error as Error;
-      return { success: false, error: err.message || "Failed to create setup intent" };
+      return {
+        success: false,
+        error: err.message || "Failed to create setup intent",
+      };
     }
   }
 
@@ -236,9 +242,14 @@ export class StripeProvider extends PaymentProvider {
     priceId: string;
     trialDays?: number;
     defaultPaymentMethod?: string;
-  }): Promise<{ success: boolean; subscriptionId?: string; status?: string; error?: string }> {
+  }): Promise<{
+    success: boolean;
+    subscriptionId?: string;
+    status?: string;
+    error?: string;
+  }> {
     try {
-      const params: Stripe.SubscriptionsCreateParams = {
+      const params: Stripe.SubscriptionCreateParams = {
         customer: options.customerId,
         items: [{ price: options.priceId }],
         expand: ["latest_invoice.payment_intent"],
@@ -254,10 +265,17 @@ export class StripeProvider extends PaymentProvider {
 
       const subscription = await this.stripe.subscriptions.create(params);
 
-      return { success: true, subscriptionId: subscription.id, status: subscription.status };
+      return {
+        success: true,
+        subscriptionId: subscription.id,
+        status: subscription.status,
+      };
     } catch (error) {
       const err = error as Error;
-      return { success: false, error: err.message || "Failed to create subscription" };
+      return {
+        success: false,
+        error: err.message || "Failed to create subscription",
+      };
     }
   }
 }
