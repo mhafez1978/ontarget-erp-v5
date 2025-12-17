@@ -100,20 +100,25 @@ async function getStoreData(slug?: string) {
 
   const company = await db.company.findUnique({
     where: { slug },
-    select: {
-      id: true,
-      name: true,
-      logo: true,
-      logoLight: true,
-      logoDark: true,
-      slug: true,
-      isStoreEnabled: true,
-      storeTheme: true,
-      storeBlogEnabled: true,
-      storeBanner: true,
-      storeMetadata: true,
-      aiStorefrontEnabled: true,
-      aiStorefrontSpec: true,
+    include: {
+      locations: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          isMain: true,
+          latitude: true,
+          longitude: true,
+          addressLine1: true,
+          addressLine2: true,
+          city: true,
+          state: true,
+          country: true,
+          postalCode: true,
+          phone: true,
+          email: true,
+        },
+      },
     },
   });
 
@@ -340,6 +345,28 @@ async function getStoreData(slug?: string) {
       orderBy: [{ createdAt: "desc" }],
       take: 10,
     }),
+
+    // Fetch company locations (multi-location support)
+    locations: await db.companyLocation.findMany({
+      where: { companyId: company.id },
+      orderBy: [{ isMain: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        isMain: true,
+        latitude: true,
+        longitude: true,
+        addressLine1: true,
+        addressLine2: true,
+        city: true,
+        state: true,
+        country: true,
+        postalCode: true,
+        phone: true,
+        email: true,
+      },
+    }),
   };
 }
 
@@ -394,13 +421,15 @@ export default async function StorefrontPage({ params }: PageProps) {
   const portfolioProjects = featuredProjects.map((project) => ({
     id: project.id,
     title: project.name,
-    client: project.customer?.name || project.subscriberCompany?.name || null,
+    // zod schema expects optional string (undefined) rather than explicit null
+    client:
+      project.customer?.name ?? project.subscriberCompany?.name ?? undefined,
     category: project.category
       .split("_")
       .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
       .join(" "),
-    description: project.description || null,
-    image: project.featuredImage || null,
+    description: project.description ?? undefined,
+    image: project.featuredImage ?? undefined,
     tags: [],
   }));
 
@@ -534,6 +563,7 @@ export default async function StorefrontPage({ params }: PageProps) {
             customersCount={customersCount}
             approvedTestimonialsCount={approvedTestimonialsCount}
             heroOverride={heroOverride}
+            locations={company.locations ?? []}
           />
         </>
       );
@@ -548,7 +578,7 @@ export default async function StorefrontPage({ params }: PageProps) {
         logoLight={company.logoLight}
         logoDark={company.logoDark}
         storeBanner={company.storeBanner}
-        storeMetadata={company.storeMetadata}
+        storeMetadata={company.storeMetadata as unknown as StoreMetadata | null}
         aiMeta={aiMeta}
         isStoreEnabled={company.isStoreEnabled}
         storeBlogEnabled={company.storeBlogEnabled}
@@ -616,6 +646,7 @@ export default async function StorefrontPage({ params }: PageProps) {
           customersCount={customersCount}
           approvedTestimonialsCount={approvedTestimonialsCount}
           heroOverride={heroOverride}
+          locations={data.locations}
         />
       </StorefrontLayout>
     );
@@ -653,7 +684,7 @@ export default async function StorefrontPage({ params }: PageProps) {
       logoLight={company.logoLight}
       logoDark={company.logoDark}
       storeBanner={company.storeBanner}
-      storeMetadata={company.storeMetadata}
+      storeMetadata={company.storeMetadata as unknown as StoreMetadata | null}
       aiMeta={aiMeta}
       isStoreEnabled={company.isStoreEnabled}
       storeBlogEnabled={company.storeBlogEnabled}
@@ -688,7 +719,7 @@ export default async function StorefrontPage({ params }: PageProps) {
         approvedTestimonialsCount={approvedTestimonialsCount}
         themeId={selectedTheme.id}
         storeBanner={company.storeBanner}
-        storeMetadata={company.storeMetadata as StoreMetadata}
+        storeMetadata={company.storeMetadata as unknown as StoreMetadata | null}
         posts={posts}
       />
     </StorefrontLayout>

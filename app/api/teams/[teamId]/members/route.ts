@@ -70,18 +70,9 @@ export async function POST(
   { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
-    const sessionToken = req.cookies.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(req);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -240,18 +231,9 @@ export async function DELETE(
   { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
-    const sessionToken = req.cookies.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(req);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -369,18 +351,9 @@ export async function PATCH(
   { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
-    const sessionToken = req.cookies.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(req);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const userId = validation.user.id;

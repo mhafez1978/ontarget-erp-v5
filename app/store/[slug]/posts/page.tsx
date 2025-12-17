@@ -61,7 +61,7 @@ export default async function StorePostsPage({ params }: PageProps) {
       logoLight={company.logoLight}
       logoDark={company.logoDark}
       storeBanner={company.storeBanner}
-      storeMetadata={company.storeMetadata}
+      storeMetadata={company.storeMetadata as unknown as any}
       aiMeta={
         company.aiStorefrontEnabled && company.aiStorefrontSpec
           ? typeof company.aiStorefrontSpec === "string"

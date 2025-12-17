@@ -151,7 +151,7 @@ export interface ValidateSessionResult {
  */
 export async function createSession(
   options: CreateSessionOptions
-): Promise<SessionData> {
+): Promise<import("@prisma/client").Session> {
   const { userId, userAgent, expiresInDays = 7 } = options;
 
   let sessionGeo = options.geoLocation;

@@ -4,10 +4,8 @@ import { LocationType, Prisma } from "@prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
 // PATCH /api/company/[id]/locations/[locationId] - Update a location
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string; locationId: string } }
-) {
+export async function PATCH(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);
@@ -103,10 +101,8 @@ export async function PATCH(
 }
 
 // DELETE /api/company/[id]/locations/[locationId] - Delete a location
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string; locationId: string } }
-) {
+export async function DELETE(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);

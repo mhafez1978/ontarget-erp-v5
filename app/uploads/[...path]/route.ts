@@ -22,12 +22,10 @@ function getContentType(filePath: string): string {
   return MIME_TYPES[ext] || "application/octet-stream";
 }
 
-export async function GET(
-  request: NextRequest,
-  context: { params: { path?: string[] } }
-) {
+export async function GET(request: NextRequest, context: any) {
+  const { params } = context;
   try {
-    const segments = context.params.path || [];
+    const segments = params?.path || [];
     if (segments.length === 0) {
       return new NextResponse("Not found", { status: 404 });
     }
@@ -52,4 +50,3 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 }
-

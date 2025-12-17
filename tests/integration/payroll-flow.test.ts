@@ -19,10 +19,20 @@ describe("Integration: Payroll end-to-end flow", function () {
     await startNext();
 
     // Create test company and users in DB
+    const ownerUser = await db.user.create({
+      data: {
+        name: `E2E Owner ${Date.now()}`,
+        email: `owner+${Date.now()}@example.test`,
+        role: "ADMIN",
+        isActive: true,
+      },
+    });
+
     company = await db.company.create({
       data: {
         name: `Test Company - payroll e2e ${Date.now()}`,
         slug: `test-payroll-e2e-${Date.now()}`,
+        owner: { connect: { id: ownerUser.id } },
       },
     });
 

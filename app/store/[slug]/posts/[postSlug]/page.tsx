@@ -66,7 +66,7 @@ export default async function StorePostDetailPage({ params }: PageProps) {
     try {
       aiSpec =
         typeof aiSpecRaw === "string" ? JSON.parse(aiSpecRaw) : aiSpecRaw;
-      aiMeta = aiSpec?.meta ?? null;
+      aiMeta = (aiSpec?.meta as Record<string, unknown>) ?? null;
     } catch {
       // swallow parse errors — treat as not present
       aiSpec = null;
@@ -106,7 +106,7 @@ export default async function StorePostDetailPage({ params }: PageProps) {
       logoLight={company.logoLight}
       logoDark={company.logoDark}
       storeBanner={company.storeBanner}
-      storeMetadata={company.storeMetadata}
+      storeMetadata={company.storeMetadata as unknown as any}
       aiMeta={aiMeta}
       isStoreEnabled={company.isStoreEnabled}
       storeBlogEnabled={company.storeBlogEnabled}

@@ -15,7 +15,6 @@ export const aiFrontstoreSectionTypeSchema = z.enum([
   "faq",
   "contact",
   "contact-map",
-  "team",
   "cta-band",
   "footer",
 ]);
@@ -79,10 +78,16 @@ export const aiFrontstoreSectionSchema = z.object({
         })
         .optional(),
       shadow: z.string().optional(), // CSS box-shadow value
+      // Optional positioning hint for top/bottom bands (e.g. sticky headers)
+      position: z
+        .enum(["static", "sticky", "fixed", "relative", "absolute"])
+        .optional(),
       // Per-section animation hints (e.g. "fade-up", "slide-in", "parallax")
       animations: z.array(z.string()).optional(),
       // Hover effects for interactive sections
       hoverEffect: z.enum(["none", "lift", "scale", "glow", "tilt"]).optional(),
+      // Optional layout hint for hero/section (center, split, full-width, etc)
+      layout: z.enum(["center", "split", "full", "left", "right"]).optional(),
     })
     .optional(),
 });
@@ -267,10 +272,6 @@ export type AiFrontstoreSectionType = z.infer<
   typeof aiFrontstoreSectionTypeSchema
 >;
 export type AiFrontstoreSection = z.infer<typeof aiFrontstoreSectionSchema>;
-
-export type AiFrontstoreSpec = z.infer<typeof aiFrontstoreSpecSchema>;
-export type AiFrontstoreSection = z.infer<typeof aiFrontstoreSectionSchema>;
-
 export type AiFrontstoreSpec = z.infer<typeof aiFrontstoreSpecSchema>;
 
 export type StorefrontTestimonial = z.infer<typeof StorefrontTestimonialSchema>;

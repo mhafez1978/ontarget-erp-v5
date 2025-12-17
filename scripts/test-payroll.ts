@@ -107,7 +107,7 @@ async function testPayrollSystem() {
       caJurisdiction,
       new Decimal(80.0),
       staff.company,
-      staff.user
+      { name: staff.user.name ?? "Unknown" }
     );
   } else {
     console.log(`⏰ Found time entry: ${timeEntry.id}`);
@@ -123,7 +123,7 @@ async function testPayrollSystem() {
       caJurisdiction,
       hoursWorked,
       staff.company,
-      staff.user
+      { name: staff.user.name ?? "Unknown" }
     );
   }
 }
@@ -132,9 +132,9 @@ async function calculateAndCreatePayroll(
   staff: {
     id: string;
     companyId: string;
-    payRate: Decimal;
-    currency: string;
-    employmentClassification: string;
+    payRate: Decimal | null;
+    currency: string | null;
+    employmentClassification: string | null;
     taxWithholdingConfig: unknown;
   },
   timeEntry: { id: string },
@@ -146,7 +146,7 @@ async function calculateAndCreatePayroll(
   console.log("💰 Calculating Payroll...\n");
 
   // Calculate gross pay
-  const payRate = new Decimal(staff.payRate);
+  const payRate = new Decimal(staff.payRate ?? 0);
   const grossPay = payRate.mul(hoursWorked);
 
   console.log(`📊 Gross Pay Calculation:`);
@@ -155,11 +155,13 @@ async function calculateAndCreatePayroll(
   console.log(`   Gross: $${grossPay.toFixed(2)}\n`);
 
   // Get tax configuration
-  const taxConfig = jurisdiction.taxConfig as Record<string, unknown>;
+  const taxConfig =
+    jurisdiction.taxConfig as unknown as import("../lib/payroll/tax-calculator").TaxConfig;
 
   // Calculate taxes using TaxCalculator
   const taxBreakdown = TaxCalculator.calculatePayroll(grossPay, taxConfig, {
-    withholding: staff.taxWithholdingConfig as Record<string, unknown>,
+    withholding:
+      staff.taxWithholdingConfig as unknown as import("../lib/payroll/tax-calculator").TaxWithholdingConfig,
     yearToDateGross: 0, // Assuming first paycheck
   });
 
@@ -229,12 +231,13 @@ async function calculateAndCreatePayroll(
       periodStart: new Date("2025-01-01"),
       periodEnd: new Date("2025-01-15"),
       payDate: new Date("2025-01-20"),
-      currency: staff.currency,
+      currency: staff.currency ?? "USD",
       hoursWorked: hoursWorked,
       overtimeHours: new Decimal(0),
       grossAmount: grossPay,
       netAmount: new Decimal(taxBreakdown.totals.netPay),
-      taxBreakdown: taxBreakdown as unknown,
+      taxBreakdown:
+        taxBreakdown as unknown as import("@prisma/client").Prisma.InputJsonValue,
       status: "PENDING",
     },
   });

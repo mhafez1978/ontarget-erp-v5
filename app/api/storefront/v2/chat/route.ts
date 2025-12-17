@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { aiFrontstoreSpecSchema } from "@/lib/ai/ai-storefront-types";
 import { canUseAiStorefront } from "@/lib/billing/plan-gating";
 import { generateAiStorefront } from "@/lib/ai/ai-storefront-service";
 import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       userPlan = userWithCompanies?.plan;
 
       // Plan gating: only allowed plans can use AI storefront (unless SUPER_ADMIN)
-      if (!isSuperAdmin && !canUseAiStorefront(userPlan)) {
+      if (!isSuperAdmin && !canUseAiStorefront(userPlan as any)) {
         return NextResponse.json(
           { error: "AI Storefront is not available for your plan" },
           { status: 403 }
@@ -212,7 +213,7 @@ export async function POST(request: NextRequest) {
       description: s.description ?? null,
       price: Number((s as any).price ?? 0),
       category: s.category ?? null,
-      duration: s.duration ?? null,
+      duration: s.duration ? Number(s.duration) : null,
     }));
     const mappedTestimonials = testimonials.map((t) => ({
       id: t.id,
@@ -240,6 +241,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare AI input
+    const heroLayout: "center" | "left" | undefined =
+      intentHints?.style === "center" ? "center" : "left";
+
     const aiInput = {
       company: {
         id: company.id,
@@ -254,7 +258,7 @@ export async function POST(request: NextRequest) {
       services: mappedServices,
       testimonials: mappedTestimonials,
       brandColors: undefined,
-      heroLayout: intentHints?.style === "center" ? "center" : "left",
+      heroLayout,
       showLocation: true,
       showTeam: true,
       showTestimonials: true,
@@ -262,8 +266,15 @@ export async function POST(request: NextRequest) {
       blogHasPosts: postsCount > 0,
       contact: {},
       prompt: message,
-      goal: (intentHints?.goal as any) ?? "lead-gen",
-      tone: (intentHints?.style === "playful" ? "playful" : "serious") as any,
+      goal:
+        (intentHints?.goal as
+          | "sell-products"
+          | "sell-services"
+          | "lead-gen"
+          | "bookings") ?? "lead-gen",
+      tone: ((): "minimal" | "playful" | "serious" | "luxury" => {
+        return intentHints?.style === "playful" ? "playful" : "serious";
+      })(),
       includeProducts: intentHints?.emphasis === "products" || true,
       includeServices: intentHints?.emphasis === "services" || true,
       includePosts: !!company.storeBlogEnabled,
@@ -318,7 +329,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call AI service to generate preview spec (pass provider config so admin setting is honored)
-    const result = await generateAiStorefront(aiInput as any, providerConfig);
+    const result = await generateAiStorefront(aiInput, providerConfig);
 
     if (result.safety && result.safety.blocked) {
       // Persist AI blocked message
@@ -331,10 +342,38 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return NextResponse.json({
-        messages: [userMessage, blockedMessage],
+      // Ensure the response matches ChatResponse shape (createdAt as ISO string, typed fields)
+      const messages = [userMessage, blockedMessage].map((m) => ({
+        id: m.id,
+        conversationId: m.conversationId,
+        role: m.role as "user" | "ai" | "system",
+        content: m.content ?? null,
+        toolsUsed:
+          (m as { toolsUsed?: Record<string, unknown> | null }).toolsUsed ??
+          null,
+        specVersionId:
+          (m as { specVersionId?: string | null }).specVersionId ?? null,
+        isApplied: (m as { isApplied?: boolean }).isApplied ?? false,
+        isPreviewOnly:
+          (m as { isPreviewOnly?: boolean }).isPreviewOnly ?? false,
+        createdAt: (m as { createdAt: Date }).createdAt.toISOString(),
+      }));
+
+      const response: ChatResponse = {
+        messages,
         specDelta: null,
-      } as ChatResponse);
+        previewSpec: null,
+        versionId: null,
+        conversationId: conversation.id,
+        actions: [],
+      };
+
+      const debugExt = {
+        modelUsed: !!result.usedModel,
+        providerUsed: !!providerConfig,
+      };
+
+      return NextResponse.json({ ...response, ...debugExt });
     }
     // If the model wants to ask a clarifying question, return it as an AI message
     if (result.shouldAsk && result.assistantMessage) {
@@ -357,11 +396,15 @@ export async function POST(request: NextRequest) {
         conversationId: m.conversationId,
         role: m.role as "user" | "ai" | "system",
         content: m.content ?? null,
-        toolsUsed: null,
-        specVersionId: (m as any).specVersionId ?? null,
-        isApplied: m.isApplied,
-        isPreviewOnly: m.isPreviewOnly,
-        createdAt: m.createdAt.toISOString(),
+        toolsUsed:
+          (m as { toolsUsed?: Record<string, unknown> | null }).toolsUsed ??
+          null,
+        specVersionId:
+          (m as { specVersionId?: string | null }).specVersionId ?? null,
+        isApplied: (m as { isApplied?: boolean }).isApplied ?? false,
+        isPreviewOnly:
+          (m as { isPreviewOnly?: boolean }).isPreviewOnly ?? false,
+        createdAt: (m as { createdAt: Date }).createdAt.toISOString(),
       }));
 
       const response: ChatResponse = {
@@ -373,17 +416,30 @@ export async function POST(request: NextRequest) {
         actions: [],
       };
 
-      (response as any).modelUsed = !!(result as any).usedModel;
-      (response as any).providerUsed = !!providerConfig;
+      const debugExt = {
+        modelUsed: !!result.usedModel,
+        providerUsed: !!providerConfig,
+      };
 
-      return NextResponse.json(response);
+      return NextResponse.json({ ...response, ...debugExt });
     }
 
-    // Persist spec version (preview)
+    // Validate generated spec against schema and persist as a preview version
+    const parsedSpec = aiFrontstoreSpecSchema.safeParse(result.spec);
+    if (!parsedSpec.success) {
+      console.warn("AI generated spec failed validation:", parsedSpec.error);
+      return NextResponse.json(
+        { error: "AI generated an invalid storefront spec" },
+        { status: 500 }
+      );
+    }
+
+    const validatedSpec = parsedSpec.data;
+
     const specVersion = await db.storefrontSpecVersion.create({
       data: {
         companyId,
-        spec: result.spec as any,
+        spec: validatedSpec as unknown as import("@prisma/client").Prisma.InputJsonValue,
         createdBy: user.id,
         messageId: null,
       },
@@ -411,27 +467,31 @@ export async function POST(request: NextRequest) {
       conversationId: m.conversationId,
       role: m.role as "user" | "ai" | "system",
       content: m.content ?? null,
-      toolsUsed: null,
-      specVersionId: (m as any).specVersionId ?? null,
-      isApplied: m.isApplied,
-      isPreviewOnly: m.isPreviewOnly,
-      createdAt: m.createdAt.toISOString(),
+      toolsUsed:
+        (m as { toolsUsed?: Record<string, unknown> | null }).toolsUsed ?? null,
+      specVersionId:
+        (m as { specVersionId?: string | null }).specVersionId ?? null,
+      isApplied: (m as { isApplied?: boolean }).isApplied ?? false,
+      isPreviewOnly: (m as { isPreviewOnly?: boolean }).isPreviewOnly ?? false,
+      createdAt: (m as { createdAt: Date }).createdAt.toISOString(),
     }));
 
     const response: ChatResponse = {
       messages,
-      specDelta: result.spec,
-      previewSpec: result.spec,
+      specDelta: validatedSpec,
+      previewSpec: validatedSpec,
       versionId: specVersion.id,
       conversationId: conversation.id,
       actions: ["apply", "export"],
     };
 
     // Include debug info so UI can surface whether a remote model was used
-    (response as any).modelUsed = !!result.usedModel;
-    (response as any).providerUsed = !!providerConfig;
+    const debugExt = {
+      modelUsed: !!result.usedModel,
+      providerUsed: !!providerConfig,
+    };
 
-    return NextResponse.json(response);
+    return NextResponse.json({ ...response, ...debugExt });
   } catch (error) {
     console.error("Chat endpoint error:", error);
     return NextResponse.json(

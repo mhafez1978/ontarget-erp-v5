@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { promises as fs } from "fs";
 import path from "path";
+import { getMimeTypeFromExtension } from "@/lib/file-utils";
 
 // ============================================================================
 // HYBRID STORAGE SERVICE - Subscription-Based Architecture
@@ -351,12 +352,16 @@ export async function uploadDocument(
   companyId: string,
   category: "HR-Docs" | "Invoices" | "Contracts" | "Other",
   fileName: string,
-  fileBuffer: Buffer
+  fileBuffer: Buffer,
+  mimeType?: string
 ): Promise<{
   primaryPath: string;
   backupPath?: string;
   storageProvider: string;
 }> {
+  // mimeType is accepted so callers can provide the file's content-type (used by UI icons or downstream
+  // processors). It's optional to avoid forcing callers that don't have a value.
+
   const storage = await getCompanyStorage(companyId);
   const company = await db.company.findUnique({
     where: { id: companyId },
@@ -487,7 +492,7 @@ export async function listCompanyFiles(
     return filteredFiles.map((file) => ({
       name: file.name,
       size: file.size,
-      type: "", // TODO: Detect MIME type
+      type: getMimeTypeFromExtension(file.name),
       path: `${basePath}/${file.name}`,
       uploadedAt: file.mtime,
       category: category === "All" ? "Other" : category, // TODO: Detect from path

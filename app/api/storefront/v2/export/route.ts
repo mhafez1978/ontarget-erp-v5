@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     await db.company.update({
       where: { id: companyId },
-      data: { storeMetadata: newMeta },
+      data: { storeMetadata: newMeta as any },
     });
 
     return NextResponse.json({

@@ -17,6 +17,7 @@ describe("AI storefront service fallback generation", () => {
     };
 
     const result = await generateAiStorefront(input);
+    if (!result.spec) throw new Error("AI did not return a spec");
     const statsSection = result.spec.sections.find((s) => s.type === "stats");
     void expect(statsSection).to.exist;
     void expect(statsSection).to.not.be.undefined;
@@ -55,6 +56,7 @@ describe("AI storefront service fallback generation", () => {
     };
 
     const result = await generateAiStorefront(input);
+    if (!result.spec) throw new Error("AI did not return a spec");
     const testimonials = result.spec.sections.find(
       (s) => s.type === "testimonials"
     );
@@ -84,6 +86,7 @@ describe("AI storefront service fallback generation", () => {
     };
 
     const result = await generateAiStorefront(input);
+    if (!result.spec) throw new Error("AI did not return a spec");
     void expect(result.spec.meta).to.exist;
     void expect(result.spec.meta).to.not.be.undefined;
     void expect(result.spec.meta.seo).to.exist;

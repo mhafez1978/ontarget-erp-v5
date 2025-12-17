@@ -43,7 +43,10 @@ export async function POST(request: NextRequest) {
     // Rollback by setting company spec to the provided version (MVP: same as apply but marked as rollback action)
     await db.company.update({
       where: { id: companyId },
-      data: { aiStorefrontSpec: version.spec, aiStorefrontEnabled: true },
+      data: {
+        aiStorefrontSpec: version.spec as any,
+        aiStorefrontEnabled: true,
+      },
     });
 
     await db.storefrontSpecVersion.update({

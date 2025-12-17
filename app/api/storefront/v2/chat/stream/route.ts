@@ -587,7 +587,7 @@ export async function POST(request: NextRequest) {
             }
 
             const specVersion = await db.storefrontSpecVersion.create({
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               
               data: {
                 companyId,
                 spec: (resultSpec || {}) as any,
@@ -657,7 +657,7 @@ export async function POST(request: NextRequest) {
           }
 
           const specVersion = await db.storefrontSpecVersion.create({
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             data: {
               companyId,
               spec: (result.spec || {}) as any,
