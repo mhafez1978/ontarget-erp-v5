@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email-service";
+import { LocationType } from "@prisma/client";
 
 /**
  * E2E Tests for Contact Map Feature
@@ -15,7 +16,7 @@ import { sendEmail } from "@/lib/email-service";
 describe("Contact Map Feature E2E", () => {
   let testUser: any;
   let testCompany: any;
-  let testLocations: any[] = [];
+  const testLocations: any[] = [];
   let emailProvider: any;
 
   before(async () => {
@@ -26,7 +27,7 @@ describe("Contact Map Feature E2E", () => {
       data: {
         name: "Contact Map E2E Test User",
         email: `e2e-test-${Date.now()}@example.com`,
-        role: "USER",
+        role: "ERP_CUSTOMER",
       },
     });
     console.log(`✓ Created test user: ${testUser.id}`);
@@ -49,7 +50,7 @@ describe("Contact Map Feature E2E", () => {
     const locationData = [
       {
         name: "HQ - New York",
-        type: "HEADQUARTERS",
+        type: LocationType.HEADQUARTERS,
         isMain: true,
         latitude: 40.7128,
         longitude: -74.006,
@@ -62,7 +63,7 @@ describe("Contact Map Feature E2E", () => {
       },
       {
         name: "Office - Los Angeles",
-        type: "OFFICE",
+        type: LocationType.OFFICE,
         isMain: false,
         latitude: 34.0522,
         longitude: -118.2437,
@@ -75,7 +76,7 @@ describe("Contact Map Feature E2E", () => {
       },
       {
         name: "Office - Chicago",
-        type: "OFFICE",
+        type: LocationType.OFFICE,
         isMain: false,
         latitude: 41.8781,
         longitude: -87.6298,
@@ -91,7 +92,7 @@ describe("Contact Map Feature E2E", () => {
     for (const loc of locationData) {
       const created = await db.companyLocation.create({
         data: {
-          companyId: testCompany.id,
+          company: { connect: { id: testCompany.id } },
           ...loc,
         },
       });
@@ -214,7 +215,7 @@ describe("Contact Map Feature E2E", () => {
         data: {
           name: "Test User 2",
           email: `fallback-test-${Date.now()}@example.com`,
-          role: "USER",
+          role: "ERP_CUSTOMER",
         },
       });
 
@@ -245,7 +246,7 @@ describe("Contact Map Feature E2E", () => {
         data: {
           name: "Test User 3",
           email: `general-test-${Date.now()}@example.com`,
-          role: "USER",
+          role: "ERP_CUSTOMER",
         },
       });
 
@@ -275,7 +276,7 @@ describe("Contact Map Feature E2E", () => {
         data: {
           name: "Test User 4",
           email: `owner-test-${Date.now()}@example.com`,
-          role: "USER",
+          role: "ERP_CUSTOMER",
         },
       });
 
@@ -344,7 +345,7 @@ describe("Contact Map Feature E2E", () => {
 
       // Note: This would require the app to be running
       // For unit test context, we verify the validation logic
-      const formData = {
+      const formData: any = {
         companyId: testCompany.id,
         name: "Test User",
       };
@@ -389,8 +390,8 @@ describe("Contact Map Feature E2E", () => {
       });
 
       expect(spec).to.exist;
-      expect(spec.spec.sections).to.have.lengthOf(1);
-      expect(spec.spec.sections[0].type).to.equal("contact-map");
+      expect((spec.spec as any).sections).to.have.lengthOf(1);
+      expect((spec.spec as any).sections[0].type).to.equal("contact-map");
 
       // Cleanup
       await db.storefrontSpecVersion.delete({
@@ -408,9 +409,11 @@ describe("Contact Map Feature E2E", () => {
         },
       });
 
-      expect(company?.owner?.email).to.exist;
-      expect(company?.salesEmail || company?.supportEmail || company?.email).to
-        .exist;
+      const companyAny: any = company;
+      expect(companyAny.owner?.email).to.exist;
+      expect(
+        companyAny.salesEmail || companyAny.supportEmail || companyAny.email
+      ).to.exist;
     });
   });
 
@@ -440,7 +443,7 @@ describe("Contact Map Feature E2E", () => {
         !!company?.salesEmail ||
         !!company?.supportEmail ||
         !!company?.email ||
-        !!company?.owner;
+        !!company?.ownerId;
 
       expect(hasContactEmail).to.be.true;
     });

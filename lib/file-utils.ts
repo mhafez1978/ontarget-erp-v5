@@ -181,6 +181,129 @@ export function getFileExtension(fileName: string): string {
 }
 
 /**
+ * Infer MIME type from file extension for common file types.
+ * Prefer the `mime-types` package for broader coverage, with a
+ * small local fallback mapping for edge cases.
+ */
+import { lookup as mimeLookup } from "mime-types";
+
+export function getMimeTypeFromExtension(fileName: string): string {
+  // Try mime-types lookup first (supports filenames or extensions)
+  const fromLib = mimeLookup(fileName);
+  if (typeof fromLib === "string") return fromLib;
+
+  // Local fallback mapping for commonly used extensions
+  const ext = getFileExtension(fileName);
+  switch (ext) {
+    case "pdf":
+      return "application/pdf";
+    case "doc":
+    case "dot":
+      return "application/msword";
+    case "docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case "xls":
+    case "xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    case "csv":
+      return "text/csv";
+    case "ppt":
+    case "pptx":
+      return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    case "gif":
+      return "image/gif";
+    case "webp":
+      return "image/webp";
+    case "svg":
+      return "image/svg+xml";
+    case "mp4":
+      return "video/mp4";
+    case "mov":
+    case "qt":
+      return "video/quicktime";
+    case "mp3":
+      return "audio/mpeg";
+    case "wav":
+      return "audio/wav";
+    case "zip":
+      return "application/zip";
+    case "7z":
+      return "application/x-7z-compressed";
+    case "tar":
+    case "gz":
+      return "application/gzip";
+    case "json":
+      return "application/json";
+    case "xml":
+      return "application/xml";
+    case "txt":
+      return "text/plain";
+    case "rtf":
+      return "application/rtf";
+
+    // CAD and 3D model formats
+    case "dwg":
+      return "application/acad"; // common non-standard mime used for DWG
+    case "dxf":
+      return "application/dxf";
+    case "stl":
+      return "model/stl";
+    case "stp":
+    case "step":
+      return "application/step";
+    case "iges":
+    case "igs":
+      return "application/iges";
+    case "obj":
+      return "text/plain"; // OBJ is plain text geometry
+    case "dwf":
+      return "model/vnd.dwf";
+    case "cad":
+      return "application/cad";
+
+    // Design and creative files
+    case "psd":
+      return "image/vnd.adobe.photoshop";
+    case "ai":
+      return "application/postscript";
+    case "indd":
+      return "application/x-indesign";
+    case "svgz":
+      return "image/svg+xml";
+
+    // Microsoft/Apple business formats
+    case "xlsb":
+      return "application/vnd.ms-excel.sheet.binary.macroEnabled.12";
+    case "xlsm":
+      return "application/vnd.ms-excel.sheet.macroEnabled.12";
+    case "pptm":
+      return "application/vnd.ms-powerpoint.presentation.macroEnabled.12";
+    case "vsd":
+    case "vsdx":
+      return "application/vnd.visio";
+    case "qbw":
+    case "qbb":
+      return "application/x-quickbooks";
+    case "numbers":
+      return "application/vnd.apple.numbers";
+    case "pub":
+      return "application/x-mspublisher";
+
+    // email archive
+    case "eml":
+      return "message/rfc822";
+
+    default:
+      return "application/octet-stream";
+  }
+}
+
+/**
  * Validate file before upload
  */
 export function validateFile(

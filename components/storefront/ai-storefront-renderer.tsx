@@ -88,6 +88,22 @@ interface AiStorefrontRendererProps {
     primaryCTA?: string;
     secondaryCTA?: string;
   } | null;
+  locations?: {
+    id: string;
+    name: string;
+    type: string;
+    isMain: boolean;
+    latitude: number;
+    longitude: number;
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    state?: string | null;
+    country: string;
+    postalCode?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  }[];
 }
 
 function readContentString(

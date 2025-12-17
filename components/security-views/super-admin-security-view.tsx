@@ -861,10 +861,7 @@ export function SuperAdminSecurityView({
       {/* Active Sessions */}
       {activeTab === "sessions" && (
         <div className="space-y-6">
-          <SessionManager
-            userRole="SUPER_ADMIN"
-            currentUserId={userName || ""}
-          />
+          <SessionManager userRole="SUPER_ADMIN" />
         </div>
       )}
     </div>

@@ -25,6 +25,7 @@ export async function PATCH(
       jobTitle,
       employmentType,
       status,
+      payRate,
       isFeatured,
       bio,
       displayOrder,
@@ -99,6 +100,12 @@ export async function PATCH(
         role: role || undefined,
         jobTitle: jobTitle || undefined,
         employmentType: employmentType || undefined,
+        payRate:
+          payRate !== undefined
+            ? payRate === "" || payRate === null
+              ? null
+              : parseFloat(payRate as any)
+            : undefined,
         status: status || undefined,
         isFeatured: isFeatured !== undefined ? isFeatured : undefined,
         bio: bio !== undefined ? bio : undefined,

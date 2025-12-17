@@ -36,7 +36,7 @@ function filenameFromUrl(url?: string | null): string | null {
     // Fallback: path-like url
     const parts = url.split("/");
     return parts.pop() || null;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }

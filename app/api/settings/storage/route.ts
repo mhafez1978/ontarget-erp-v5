@@ -190,26 +190,13 @@ export async function POST(request: NextRequest) {
 // PATCH - Activate/deactivate storage provider
 export async function PATCH(request: NextRequest) {
   try {
-    const sessionToken = request.cookies.get("sessionToken")?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const validation = await validateSession(sessionToken);
-    if (!validation.valid || !validation.user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session" },
-        { status: 401 }
-      );
+    const validation = await validateSessionForAPI(request);
+    if (!validation.valid) {
+      return validation.response;
     }
 
     const user = validation.user;
     const userId = validation.user.id;
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
 
     const body = await request.json();
     const { providerId, isActive } = body;

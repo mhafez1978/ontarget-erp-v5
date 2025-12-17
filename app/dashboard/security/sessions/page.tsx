@@ -27,10 +27,7 @@ export default async function SessionsPage() {
         </p>
       </div>
 
-      <SessionManager
-        userRole={validation.user.role}
-        currentUserId={validation.user.id}
-      />
+      <SessionManager userRole={validation.user.role} />
     </div>
   );
 }

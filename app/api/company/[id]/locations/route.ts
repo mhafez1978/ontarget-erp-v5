@@ -4,10 +4,8 @@ import { LocationType } from "@prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
 // GET /api/company/[id]/locations - Fetch all locations for a company
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);
@@ -59,10 +57,8 @@ export async function GET(
 }
 
 // POST /api/company/[id]/locations - Create a new location
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);

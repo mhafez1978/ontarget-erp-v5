@@ -79,6 +79,7 @@ interface StaffMember {
   state: string | null;
   country: string | null;
   countryFlag: string | null;
+  payRate?: number | null;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -156,6 +157,7 @@ export function AdminWorkforceView() {
     isFeatured: false,
     bio: "",
     displayOrder: 0,
+    payRate: "",
   };
 
   const initialAddressData: AddressData = {
@@ -185,6 +187,7 @@ export function AdminWorkforceView() {
     isFeatured: false,
     bio: "",
     displayOrder: 0,
+    payRate: "",
   };
 
   const initialEditAddressData: AddressData = {
@@ -222,6 +225,10 @@ export function AdminWorkforceView() {
       isFeatured: member.isFeatured || false,
       bio: member.bio || "",
       displayOrder: member.displayOrder || 0,
+      payRate:
+        (member as any).payRate !== undefined
+          ? String((member as any).payRate)
+          : "",
     });
     setEditAddressData({
       addressLine1: member.user.addressLine1 || "",
@@ -1062,6 +1069,36 @@ export function AdminWorkforceView() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editPayRate">Pay Rate (hourly)</Label>
+                  <Input
+                    id="editPayRate"
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g., 25.00"
+                    value={editFormData.payRate}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        payRate: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="payRate">Pay Rate (hourly)</Label>
+                  <Input
+                    id="payRate"
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g., 25.00"
+                    value={formData.payRate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, payRate: e.target.value })
+                    }
+                  />
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="employmentType">Employment Type *</Label>
@@ -1172,6 +1209,7 @@ export function AdminWorkforceView() {
                     isFeatured: false,
                     bio: "",
                     displayOrder: 0,
+                    payRate: "",
                   });
                   setAddressData({
                     addressLine1: "",
@@ -1217,6 +1255,10 @@ export function AdminWorkforceView() {
                         companyId: selectedCompanyId,
                         ...formData,
                         ...addressData,
+                        payRate:
+                          formData.payRate !== ""
+                            ? Number(formData.payRate)
+                            : undefined,
                       }),
                     });
 
@@ -1271,6 +1313,7 @@ export function AdminWorkforceView() {
                         isFeatured: false,
                         bio: "",
                         displayOrder: 0,
+                        payRate: "",
                       });
                       setAddressData({
                         addressLine1: "",
@@ -1623,6 +1666,10 @@ export function AdminWorkforceView() {
                         body: JSON.stringify({
                           ...editFormData,
                           ...editAddressData,
+                          payRate:
+                            editFormData.payRate !== ""
+                              ? Number(editFormData.payRate)
+                              : null,
                         }),
                       }
                     );

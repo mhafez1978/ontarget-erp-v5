@@ -196,13 +196,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Upload to storage service
+    // Upload to storage service (derive mime type when missing)
+    const detectedMime =
+      file.type ||
+      (await import("@/lib/file-utils")).getMimeTypeFromExtension(file.name);
     const uploadResult = await uploadDocument(
       companyId,
       category,
       file.name,
       buffer,
-      file.type || "application/octet-stream"
+      detectedMime
     );
 
     // Create file record in database

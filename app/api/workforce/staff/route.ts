@@ -106,6 +106,7 @@ export async function POST(request: NextRequest) {
       role,
       jobTitle,
       employmentType,
+      payRate,
       isFeatured,
       bio,
       displayOrder,
@@ -233,6 +234,10 @@ export async function POST(request: NextRequest) {
         role, // Company role (ADMIN, MANAGER, STAFF, CONTRACTOR)
         jobTitle, // Job title (SALES_REP, CUSTOMER_SERVICE, etc.)
         employmentType,
+        payRate:
+          payRate !== undefined && payRate !== ""
+            ? parseFloat(payRate as any)
+            : undefined,
         status: "ACTIVE",
         hireDate: new Date(),
         isFeatured: isFeatured || false,

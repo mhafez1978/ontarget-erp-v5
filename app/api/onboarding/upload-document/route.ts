@@ -143,7 +143,9 @@ export async function POST(request: Request) {
     }
 
     // Enforce sequential uploads for required document types
-    const uploaded = onboardingToken.staff.employmentDocuments.map((d) => d.docType);
+    const uploaded = onboardingToken.staff.employmentDocuments.map(
+      (d) => d.docType
+    );
     const check = checkSequentialUpload(docType, uploaded);
 
     if (!check.ok) {
@@ -161,7 +163,9 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "Upload out of order",
-          message: `Please upload the following required documents first: ${check.missingPrereqs?.join(", ")}`,
+          message: `Please upload the following required documents first: ${check.missingPrereqs?.join(
+            ", "
+          )}`,
           missingPrereqs: check.missingPrereqs,
         },
         { status: 400 }
@@ -177,13 +181,16 @@ export async function POST(request: Request) {
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const fileName = `${docType}_${timestamp}_${sanitizedName}`;
 
-    // Upload document
+    // Upload document (derive mime type when missing)
+    const detectedMime =
+      file.type ||
+      (await import("@/lib/file-utils")).getMimeTypeFromExtension(fileName);
     const { primaryPath, backupPath, storageProvider } = await uploadDocument(
       onboardingToken.staff.companyId,
       "HR-Docs",
       fileName,
       buffer,
-      file.type
+      detectedMime
     );
 
     // Create employment document record
@@ -207,7 +214,7 @@ export async function POST(request: Request) {
           | "OTHER",
         fileName: fileName,
         fileSize: file.size,
-        mimeType: file.type,
+        mimeType: detectedMime,
         primaryPath,
         backupPath,
         storageProvider,
@@ -223,7 +230,12 @@ export async function POST(request: Request) {
       entityType: ENTITY_TYPES.STAFF_MEMBER,
       entityId: onboardingToken.staffId,
       description: `Uploaded onboarding document: ${docType}`,
-      metadata: { docId: employmentDoc.id, docType: employmentDoc.docType, fileName: employmentDoc.fileName, status: employmentDoc.status },
+      metadata: {
+        docId: employmentDoc.id,
+        docType: employmentDoc.docType,
+        fileName: employmentDoc.fileName,
+        status: employmentDoc.status,
+      },
     });
 
     return NextResponse.json({

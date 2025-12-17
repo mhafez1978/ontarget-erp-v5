@@ -1,4 +1,4 @@
-import nodemailer, { type TransportOptions } from "nodemailer";
+import nodemailer from "nodemailer";
 import { decrypt } from "./encryption";
 import { db } from "./db";
 

@@ -78,6 +78,7 @@ interface StaffMember {
   state: string | null;
   country: string | null;
   countryFlag: string | null;
+  payRate?: number | null;
 }
 
 const EMPLOYMENT_TYPE_LABELS = {
@@ -146,6 +147,7 @@ export function SuperAdminWorkforceView() {
     isFeatured: false,
     bio: "",
     displayOrder: 0,
+    payRate: "",
   };
 
   const initialAddressData: AddressData = {
@@ -175,6 +177,7 @@ export function SuperAdminWorkforceView() {
     isFeatured: false,
     bio: "",
     displayOrder: 0,
+    payRate: "",
   };
 
   const initialEditAddressData: AddressData = {
@@ -208,9 +211,13 @@ export function SuperAdminWorkforceView() {
       employmentType: member.employmentType,
       status: member.status,
       canSetupPersonalEmail: member.user.canSetupPersonalEmail || false,
-      isFeatured: member.isFeatured || false,
-      bio: member.bio || "",
-      displayOrder: member.displayOrder || 0,
+      isFeatured: (member as any).isFeatured || false,
+      bio: (member as any).bio || "",
+      displayOrder: (member as any).displayOrder || 0,
+      payRate:
+        (member as any).payRate !== undefined
+          ? String((member as any).payRate)
+          : "",
     });
     setEditAddressData({
       addressLine1: member.user.addressLine1 || "",
@@ -1048,6 +1055,20 @@ export function SuperAdminWorkforceView() {
                   Lower numbers appear first in the team section
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payRate">Pay Rate (hourly)</Label>
+                <Input
+                  id="payRate"
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g., 25.00"
+                  value={formData.payRate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, payRate: e.target.value })
+                  }
+                />
+              </div>
             </div>
 
             {/* Address Information */}
@@ -1102,6 +1123,10 @@ export function SuperAdminWorkforceView() {
                         companyId: selectedCompanyId,
                         ...formData,
                         ...addressData,
+                        payRate:
+                          formData.payRate !== ""
+                            ? Number(formData.payRate)
+                            : undefined,
                       }),
                     });
 
@@ -1470,6 +1495,23 @@ export function SuperAdminWorkforceView() {
                   Lower numbers appear first in the team section
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editPayRate">Pay Rate (hourly)</Label>
+                <Input
+                  id="editPayRate"
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g., 25.00"
+                  value={editFormData.payRate}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      payRate: e.target.value,
+                    })
+                  }
+                />
+              </div>
             </div>
 
             {/* Address Information */}
@@ -1516,6 +1558,10 @@ export function SuperAdminWorkforceView() {
                         body: JSON.stringify({
                           ...editFormData,
                           ...editAddressData,
+                          payRate:
+                            editFormData.payRate !== ""
+                              ? Number(editFormData.payRate)
+                              : null,
                         }),
                       }
                     );

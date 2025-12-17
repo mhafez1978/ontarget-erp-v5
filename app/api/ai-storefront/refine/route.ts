@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
     const userPlan = validation.user.plan as SubscriptionPlan | null;
 
     // Enforce plan gating for AI storefront refine, except for SUPER_ADMIN.
-    if (userRole !== "SUPER_ADMIN" && !canUseAiStorefront(userPlan)) {
+    if (userRole !== "SUPER_ADMIN" && !canUseAiStorefront(userPlan as any)) {
       return NextResponse.json(
         {
           error:
@@ -591,7 +591,7 @@ export async function POST(request: NextRequest) {
             );
           }
 
-          spec = result.spec;
+          if (result.spec) spec = result.spec;
         } catch (regenError) {
           console.error(
             "[AI Storefront Refine] Full regenerate fallback failed:",
@@ -641,10 +641,10 @@ export async function POST(request: NextRequest) {
       spec.meta.tone = tone;
 
       // Derive buttonStyle and cornerStyle from tone (matching normalizeModelOutputToSpec)
-      let buttonStyle: "solid" | "outline" | "pill" =
-        spec.meta.buttonStyle || "solid";
-      let cornerStyle: "rounded" | "soft" | "sharp" =
-        spec.meta.cornerStyle || "soft";
+      // Use broader string types here to avoid mismatches with the narrower
+      // zod-defined union when model outputs unexpected values.
+      let buttonStyle = (spec.meta.buttonStyle || "solid") as string;
+      let cornerStyle = (spec.meta.cornerStyle || "soft") as string;
 
       switch (tone) {
         case "playful":
@@ -666,8 +666,8 @@ export async function POST(request: NextRequest) {
           break;
       }
 
-      spec.meta.buttonStyle = buttonStyle;
-      spec.meta.cornerStyle = cornerStyle;
+      spec.meta.buttonStyle = buttonStyle as any;
+      spec.meta.cornerStyle = cornerStyle as any;
     }
 
     // Emphasis tweak: lightweight reordering of sections

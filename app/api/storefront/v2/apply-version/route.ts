@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         dryRun: true,
         validation: specValidation.success
           ? { valid: true }
-          : { valid: false, errors: specValidation.error.errors },
+          : { valid: false, errors: specValidation.error.issues },
         changes,
         summary,
       });

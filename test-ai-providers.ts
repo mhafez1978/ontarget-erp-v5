@@ -12,6 +12,7 @@ import {
   type AiStorefrontInput,
 } from "./lib/ai/ai-storefront-service";
 import type { AiProviderConfig } from "./lib/ai/model-client";
+import type { AiFrontstoreSpec } from "./lib/ai/ai-storefront-types";
 
 const prisma = new PrismaClient();
 
@@ -118,14 +119,18 @@ async function loadProvidersFromDb() {
           });
         } catch (error) {
           console.warn(
-            `⚠️  Failed to decrypt API key for ${provider.provider}: ${error.message}`
+            `⚠️  Failed to decrypt API key for ${provider.provider}: ${
+              error instanceof Error ? error.message : String(error)
+            }`
           );
         }
       }
     }
   } catch (error) {
     console.warn(
-      `⚠️  Failed to load providers from database: ${error.message}`
+      `⚠️  Failed to load providers from database: ${
+        error instanceof Error ? error.message : String(error)
+      }`
     );
   }
 
@@ -133,18 +138,14 @@ async function loadProvidersFromDb() {
 }
 
 // Validate that mandatory sections exist
-function validateMandatorySections(spec) {
-  const mandatorySections = [
-    "announcement-bar",
-    "header",
-    "hero",
-    "stats",
-    "footer",
-  ];
+function validateMandatorySections(spec: AiFrontstoreSpec) {
+  const mandatorySections: import("./lib/ai/ai-storefront-types").AiFrontstoreSectionType[] =
+    ["announcement-bar", "header", "hero", "stats", "footer"];
   const existingSectionTypes = new Set(spec.sections.map((s) => s.type));
 
   const missing = mandatorySections.filter(
-    (type) => !existingSectionTypes.has(type)
+    (type: import("./lib/ai/ai-storefront-types").AiFrontstoreSectionType) =>
+      !existingSectionTypes.has(type)
   );
   return {
     valid: missing.length === 0,
@@ -155,7 +156,15 @@ function validateMandatorySections(spec) {
 }
 
 // Test with a single provider
-async function testProvider(providerInfo) {
+async function testProvider(providerInfo: {
+  name: string;
+  config: {
+    provider?: string;
+    apiKey?: string | null;
+    model?: string | undefined;
+    apiBase?: string | undefined;
+  };
+}) {
   console.log(`\n${"=".repeat(60)}`);
   console.log(`Testing: ${providerInfo.name}`);
   console.log(`${"=".repeat(60)}`);
@@ -189,7 +198,26 @@ async function testProvider(providerInfo) {
 
     console.log(`⏳ Generating storefront...`);
     const startTime = Date.now();
-    const result = await generateAiStorefront(input, providerInfo.config);
+
+    // Normalize provider config into AiProviderConfig (safe runtime check for provider type)
+    const providerStr = providerInfo.config.provider as string | undefined;
+    const allowedProviders = ["openai", "anthropic", "deepseek"] as const;
+    const providerTyped = (
+      allowedProviders.includes(providerStr as any)
+        ? (providerStr as import("./lib/ai/model-client").AiProviderType)
+        : undefined
+    ) as import("./lib/ai/model-client").AiProviderType | undefined;
+
+    const providerConfig = providerInfo.config.apiKey
+      ? {
+          provider: providerTyped,
+          apiKey: providerInfo.config.apiKey ?? undefined,
+          model: providerInfo.config.model || undefined,
+          apiBase: providerInfo.config.apiBase || undefined,
+        }
+      : undefined;
+
+    const result = await generateAiStorefront(input, providerConfig);
     const duration = Date.now() - startTime;
 
     if (!result.spec) {
@@ -309,14 +337,16 @@ async function testProvider(providerInfo) {
       spec: result.spec,
     };
   } catch (error) {
-    console.log(`\n❌ Error: ${error.message}`);
-    if (error.stack) {
+    console.log(
+      `\n❌ Error: ${error instanceof Error ? error.message : String(error)}`
+    );
+    if (error instanceof Error && error.stack) {
       console.log(`   ${error.stack.split("\n")[1]?.trim()}`);
     }
     return {
       provider: providerInfo.name,
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -366,6 +396,10 @@ async function runTests() {
   if (successful.length > 0) {
     console.log(`\n📊 Validation Results:`);
     successful.forEach((result) => {
+      if (!result.validation) {
+        console.log(`   ⚠️ ${result.provider}: No validation available`);
+        return;
+      }
       const status = result.validation.valid ? "✅" : "❌";
       console.log(`   ${status} ${result.provider}:`);
       console.log(`      Sections: ${result.validation.total}`);
@@ -380,21 +414,23 @@ async function runTests() {
   // Consistency check
   if (successful.length > 1) {
     console.log(`\n🔍 Consistency Check:`);
-    const allValid = successful.every((r) => r.validation.valid);
+    const allValid = successful.every((r) => !!r.validation?.valid);
     if (allValid) {
       console.log(`   ✅ All providers generated mandatory sections`);
     } else {
       console.log(`   ⚠️  Inconsistent results across providers`);
     }
 
-    const sectionCounts = successful.map((r) => r.validation.total);
+    const sectionCounts = successful.map((r) => r.validation?.total ?? 0);
     const minSections = Math.min(...sectionCounts);
     const maxSections = Math.max(...sectionCounts);
     console.log(`   Section range: ${minSections}-${maxSections}`);
 
-    const imageCounts = successful.map((r) => r.imagesFound);
-    const minImages = Math.min(...imageCounts);
-    const maxImages = Math.max(...imageCounts);
+    const imageCounts = successful
+      .map((r) => r.imagesFound)
+      .filter((n): n is number => typeof n === "number");
+    const minImages = imageCounts.length > 0 ? Math.min(...imageCounts) : 0;
+    const maxImages = imageCounts.length > 0 ? Math.max(...imageCounts) : 0;
     console.log(`   Image range: ${minImages}-${maxImages}`);
   }
 

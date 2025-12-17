@@ -347,7 +347,7 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
       {/* Active Sessions */}
       {activeTab === "sessions" && (
         <div className="space-y-6">
-          <SessionManager userRole="ADMIN" currentUserId={userName || ""} />
+          <SessionManager userRole="ADMIN" />
         </div>
       )}
     </div>

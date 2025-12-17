@@ -1195,8 +1195,9 @@ function ensureMandatorySections(
             },
             styling: {
               layout: "center",
-              backgroundImage:
-                "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80",
+              backgroundImage: {
+                url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80",
+              },
             },
           });
           break;
