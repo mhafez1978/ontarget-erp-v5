@@ -1112,6 +1112,24 @@ export async function generateAiStorefront(
   const { company, products, services, testimonials, prompt, goal, tone } =
     input;
 
+  // Detect regenerate intent - if user wants completely new design
+  const regenerateKeywords = [
+    "regenerate",
+    "start fresh",
+    "new design",
+    "completely different",
+    "start over",
+    "create new",
+  ];
+  const isRegenerateIntent =
+    prompt &&
+    regenerateKeywords.some((keyword) =>
+      prompt.toLowerCase().includes(keyword)
+    );
+
+  // If regenerating, ignore previous spec to get fresh design
+  const effectivePreviousSpec = isRegenerateIntent ? null : input.previousSpec;
+
   const systemPrompt =
     "You are a friendly, enthusiastic AI design consultant who LOVES helping people create amazing websites! 🎨\n\n" +
     "YOUR PERSONALITY:\n" +
@@ -1980,7 +1998,7 @@ export async function generateAiStorefront(
     contact: input.contact,
     seo: input.seo,
     adminPrompt: prompt,
-    previousSpec: input.previousSpec || null,
+    previousSpec: effectivePreviousSpec || null,
     isFirstMessage:
       !input.conversationHistory || input.conversationHistory.length === 0,
   };
@@ -1990,9 +2008,11 @@ export async function generateAiStorefront(
       role: "system",
       content:
         systemPrompt +
-        (input.previousSpec
+        (effectivePreviousSpec
           ? "\n\nIMPORTANT: This is a continuation of an existing conversation. The user has a previous spec (included in the context). Build upon it and make incremental changes based on their new request, rather than starting from scratch."
-          : ""),
+          : isRegenerateIntent
+            ? "\n\nREGENERATE MODE: The user wants a COMPLETELY NEW design. Create something dramatically different with fresh creativity. Use a different style family, color palette, layout, and visual approach. DO NOT reference or build upon any previous design."
+            : ""),
     },
   ];
 
@@ -2018,6 +2038,13 @@ export async function generateAiStorefront(
   let assistantMessage: string | null = null;
   let shouldAsk = false;
   let raw: unknown = null;
+
+  // Log regenerate mode if active
+  if (isRegenerateIntent) {
+    console.log(
+      "[AI Storefront] REGENERATE MODE: Creating fresh design, ignoring previous spec"
+    );
+  }
 
   try {
     // Use unknown instead of any to force type checking later

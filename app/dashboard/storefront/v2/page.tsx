@@ -585,29 +585,40 @@ export default function FrontstoreV2Page() {
               </div>
             </ScrollArea>
             {conversationId && messages.length > 0 && (
-              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <h4 className="text-sm font-semibold mb-2 text-amber-900 flex items-center gap-2">
-                  <Wand2 className="h-4 w-4" />
-                  Quick Suggestions
-                </h4>
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    "Make it more bold and dramatic",
-                    "Switch to a minimal luxury style",
-                    "Emphasize our products more",
-                    "Add more testimonials",
-                    "Use warmer, friendlier colors",
-                  ].map((t) => (
-                    <button
-                      key={t}
-                      className="px-3 py-1 bg-white border border-amber-300 hover:border-amber-400 rounded-md text-xs transition-colors"
-                      onClick={() => continueConversation(t)}
-                      disabled={!conversationId || loading}
-                    >
-                      {t}
-                    </button>
-                  ))}
+              <div className="mt-4 space-y-3">
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <h4 className="text-sm font-semibold mb-2 text-amber-900 flex items-center gap-2">
+                    <Wand2 className="h-4 w-4" />
+                    Quick Suggestions
+                  </h4>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      "Make it more bold and dramatic",
+                      "Switch to a minimal luxury style",
+                      "Emphasize our products more",
+                      "Add more testimonials",
+                      "Use warmer, friendlier colors",
+                    ].map((t) => (
+                      <button
+                        key={t}
+                        className="px-3 py-1 bg-white border border-amber-300 hover:border-amber-400 rounded-md text-xs transition-colors"
+                        onClick={() => continueConversation(t)}
+                        disabled={!conversationId || loading}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => continueConversation("Create a completely new design with a different style and fresh approach")}
+                  disabled={!conversationId || loading}
+                >
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Start Fresh Design
+                </Button>
               </div>
             )}
             <Separator className="my-4" />
