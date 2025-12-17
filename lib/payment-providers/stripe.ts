@@ -193,4 +193,71 @@ export class StripeProvider extends PaymentProvider {
       };
     }
   }
+
+  // Create a Stripe Customer
+  async createCustomer(
+    email?: string,
+    name?: string
+  ): Promise<{ success: boolean; customerId?: string; error?: string }> {
+    try {
+      const customer = await this.stripe.customers.create({
+        email,
+        name,
+      });
+
+      return { success: true, customerId: customer.id };
+    } catch (error) {
+      const err = error as Error;
+      return { success: false, error: err.message || "Failed to create customer" };
+    }
+  }
+
+  // Create a SetupIntent to collect and attach a payment method for future payments
+  async createSetupIntent(
+    customerId: string
+  ): Promise<{ success: boolean; clientSecret?: string; error?: string }> {
+    try {
+      const si = await this.stripe.setupIntents.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        usage: "off_session",
+      });
+
+      return { success: true, clientSecret: si.client_secret || undefined };
+    } catch (error) {
+      const err = error as Error;
+      return { success: false, error: err.message || "Failed to create setup intent" };
+    }
+  }
+
+  // Create a Subscription with optional trial days and default payment method
+  async createSubscription(options: {
+    customerId: string;
+    priceId: string;
+    trialDays?: number;
+    defaultPaymentMethod?: string;
+  }): Promise<{ success: boolean; subscriptionId?: string; status?: string; error?: string }> {
+    try {
+      const params: Stripe.SubscriptionsCreateParams = {
+        customer: options.customerId,
+        items: [{ price: options.priceId }],
+        expand: ["latest_invoice.payment_intent"],
+      };
+
+      if (options.trialDays && options.trialDays > 0) {
+        params.trial_period_days = options.trialDays;
+      }
+
+      if (options.defaultPaymentMethod) {
+        params.default_payment_method = options.defaultPaymentMethod;
+      }
+
+      const subscription = await this.stripe.subscriptions.create(params);
+
+      return { success: true, subscriptionId: subscription.id, status: subscription.status };
+    } catch (error) {
+      const err = error as Error;
+      return { success: false, error: err.message || "Failed to create subscription" };
+    }
+  }
 }

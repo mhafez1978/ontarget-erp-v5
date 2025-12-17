@@ -448,6 +448,9 @@ model Subscription {
   trialEndsAt       DateTime? // 30 days from creation by default
   billingCycleStart DateTime? // When active subscription starts
   billingCycleEnd   DateTime? // Next billing date
+  
+  // External provider reference (Stripe subscription id, etc.)
+  externalSubscriptionId String?
 
   // Metadata
   notes String? @db.Text
