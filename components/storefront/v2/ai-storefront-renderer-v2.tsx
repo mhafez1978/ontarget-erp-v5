@@ -1522,6 +1522,359 @@ function PortfolioSectionV2({
 }
 
 // ============================================================================
+// ANNOUNCEMENT BAR V2
+// ============================================================================
+
+function AnnouncementBarV2({
+  section,
+  spec,
+}: {
+  section: AiFrontstoreSection;
+  spec: AiFrontstoreSpec;
+}) {
+  const content = section.content as Record<string, unknown>;
+  const text = content.text as string;
+  const link = content.link as string | undefined;
+  const dismissible = content.dismissible as boolean | undefined;
+  const [dismissed, setDismissed] = React.useState(false);
+
+  if (dismissed) return null;
+
+  const barContent = (
+    <div className="flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium">
+      <span>{text}</span>
+      {link && <ArrowRight className="h-4 w-4" />}
+      {dismissible && (
+        <button
+          onClick={() => setDismissed(true)}
+          className="ml-auto hover:opacity-70"
+          aria-label="Dismiss"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+
+  const backgroundColor =
+    section.styling?.backgroundColor || spec.meta.accentColor;
+  const textColor = section.styling?.textColor || "#FFFFFF";
+
+  return (
+    <div
+      className="w-full relative z-50"
+      style={{
+        backgroundColor,
+        color: textColor,
+      }}
+    >
+      {link ? (
+        <Link href={link} className="block hover:opacity-90 transition-opacity">
+          {barContent}
+        </Link>
+      ) : (
+        barContent
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// HEADER SECTION V2
+// ============================================================================
+
+function HeaderSectionV2({
+  section,
+  spec,
+  companyName,
+  slug,
+}: {
+  section: AiFrontstoreSection;
+  spec: AiFrontstoreSpec;
+  companyName: string;
+  slug: string;
+}) {
+  const content = section.content as Record<string, unknown>;
+  const logo = content.logo as string | null;
+  const navigation =
+    (content.navigation as Array<{ label: string; href: string }>) || [];
+  const showAuth = content.showAuth !== false;
+  const showCart = content.showCart === true;
+  const headerStyle = (content.style as string) || "sticky";
+
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  const backgroundColor = section.styling?.backgroundColor || "#FFFFFF";
+  const textColor = section.styling?.textColor || spec.meta.textColor;
+
+  return (
+    <header
+      className={`w-full z-40 ${
+        headerStyle === "sticky"
+          ? "sticky top-0"
+          : headerStyle === "floating"
+          ? "fixed top-4 left-0 right-0 mx-auto max-w-7xl rounded-lg shadow-lg"
+          : ""
+      }`}
+      style={{
+        backgroundColor,
+        color: textColor,
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Logo / Company Name */}
+        <Link
+          href={`/store/${slug}`}
+          className="flex items-center gap-2 font-bold text-xl"
+        >
+          {logo ? (
+            <Image
+              src={logo}
+              alt={companyName}
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+          ) : (
+            <span style={{ fontFamily: spec.meta.typography?.headingFont }}>
+              {companyName}
+            </span>
+          )}
+        </Link>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-6">
+          {navigation.map((item, idx) => (
+            <Link
+              key={idx}
+              href={item.href}
+              className="hover:opacity-70 transition-opacity"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Auth & Cart */}
+        <div className="hidden md:flex items-center gap-4">
+          {showAuth && (
+            <>
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button
+                  size="sm"
+                  style={{
+                    backgroundColor: spec.meta.primaryColor,
+                    color: "#FFFFFF",
+                  }}
+                >
+                  Register
+                </Button>
+              </Link>
+            </>
+          )}
+          {showCart && (
+            <Link href={`/store/${slug}/cart`}>
+              <Button variant="ghost" size="icon">
+                <ShoppingCart className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div
+          className="md:hidden border-t"
+          style={{ borderColor: `${textColor}20` }}
+        >
+          <nav className="flex flex-col px-4 py-4 gap-3">
+            {navigation.map((item, idx) => (
+              <Link
+                key={idx}
+                href={item.href}
+                className="py-2 hover:opacity-70"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+            {showAuth && (
+              <>
+                <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="w-full">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+                  <Button
+                    className="w-full"
+                    style={{ backgroundColor: spec.meta.primaryColor }}
+                  >
+                    Register
+                  </Button>
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
+
+// ============================================================================
+// TEAM SECTION V2
+// ============================================================================
+
+function TeamSectionV2({
+  section,
+  spec,
+  typography,
+  spacing,
+  effects,
+  featuredTeamMembers = [],
+}: {
+  section: AiFrontstoreSection;
+  spec: AiFrontstoreSpec;
+  typography: ReturnType<typeof getTypographyStyles>;
+  spacing: ReturnType<typeof getSpacingStyles>;
+  effects: ReturnType<typeof getEffectsStyles>;
+  featuredTeamMembers: Array<{
+    id: string;
+    name: string;
+    role?: string | null;
+    jobTitle?: string | null;
+    bio?: string | null;
+    image?: string | null;
+  }>;
+}) {
+  const content = section.content as Record<string, unknown>;
+  const heading = content.heading as string | undefined;
+  const subheading = content.subheading as string | undefined;
+  const membersFromContent = content.members as
+    | Array<{
+        id: string;
+        name: string;
+        role?: string;
+        image?: string;
+        bio?: string;
+      }>
+    | undefined;
+
+  const members = membersFromContent || featuredTeamMembers;
+
+  const layout = section.layout || {};
+  const itemsPerRow = (layout.itemsPerRow as number) || 3;
+
+  return (
+    <AnimatedSection
+      className={`${spacing.sectionGap} ${spacing.containerMaxWidth} mx-auto px-4`}
+    >
+      {heading && (
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className={`${typography.headingSize.h2} font-bold text-center mb-4`}
+          style={{
+            fontFamily: typography.headingFont,
+            color: spec.meta.primaryColor,
+          }}
+        >
+          {heading}
+        </motion.h2>
+      )}
+      {subheading && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className={`${typography.bodySize} text-center text-muted-foreground mb-12`}
+          style={{ fontFamily: typography.bodyFont }}
+        >
+          {subheading}
+        </motion.p>
+      )}
+
+      <div
+        className={`grid gap-8 ${
+          itemsPerRow === 2
+            ? "md:grid-cols-2"
+            : itemsPerRow === 4
+            ? "md:grid-cols-2 lg:grid-cols-4"
+            : "md:grid-cols-2 lg:grid-cols-3"
+        }`}
+      >
+        {members.map((member, index) => (
+          <motion.div
+            key={member.id}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: index * 0.1 }}
+            className={`text-center ${effects.borders} rounded-lg p-6 ${effects.shadows} hover:scale-105 transition-transform`}
+            style={{
+              backgroundColor: section.styling?.backgroundColor || "#FFFFFF",
+            }}
+          >
+            {member.image && (
+              <div className="mb-4 mx-auto w-32 h-32 relative rounded-full overflow-hidden">
+                <Image
+                  src={member.image}
+                  alt={member.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+            <h3
+              className={`${typography.headingSize.h4} font-semibold mb-1`}
+              style={{
+                fontFamily: typography.headingFont,
+                color: spec.meta.primaryColor,
+              }}
+            >
+              {member.name}
+            </h3>
+            {(member.role || (member as any).jobTitle) && (
+              <p
+                className={`${typography.bodySize} text-muted-foreground mb-2`}
+                style={{ fontFamily: typography.bodyFont }}
+              >
+                {member.role || (member as any).jobTitle}
+              </p>
+            )}
+            {member.bio && (
+              <p
+                className={`${typography.bodySize} text-sm text-muted-foreground`}
+                style={{ fontFamily: typography.bodyFont }}
+              >
+                {member.bio}
+              </p>
+            )}
+          </motion.div>
+        ))}
+      </div>
+    </AnimatedSection>
+  );
+}
+
+// ============================================================================
 // STATS SECTION V2
 // ============================================================================
 
@@ -2166,6 +2519,26 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
       >
         {sections.map((section) => {
           switch (section.type) {
+            case "announcement-bar":
+              return (
+                <AnnouncementBarV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                />
+              );
+
+            case "header":
+              return (
+                <HeaderSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  companyName={props.companyName}
+                  slug={props.slug}
+                />
+              );
+
             case "hero":
               return (
                 <HeroSectionV2
@@ -2338,6 +2711,19 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                   spacing={spacing}
                   effects={effects}
                   posts={props.posts || []}
+                />
+              );
+
+            case "team":
+              return (
+                <TeamSectionV2
+                  key={section.id}
+                  section={section}
+                  spec={spec}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                  featuredTeamMembers={props.featuredTeamMembers || []}
                 />
               );
 
