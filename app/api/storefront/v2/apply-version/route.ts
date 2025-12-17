@@ -108,6 +108,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Revalidate the store page cache so changes appear immediately
+    try {
+      const companyForSlug = await db.company.findUnique({
+        where: { id: companyId },
+        select: { slug: true },
+      });
+      if (companyForSlug?.slug) {
+        const { revalidatePath } = await import("next/cache");
+        revalidatePath(`/store/${companyForSlug.slug}`, "page");
+      }
+    } catch (e) {
+      console.warn("Cache revalidation failed:", e);
+    }
+
     // Create system message in latest open conversation (optional)
     const conv = await db.storefrontConversation.findFirst({
       where: { companyId },

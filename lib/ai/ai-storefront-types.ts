@@ -9,6 +9,7 @@ export const aiFrontstoreSectionTypeSchema = z.enum([
   "service-grid",
   "portfolio",
   "posts",
+  "team",
   "testimonials",
   "stats",
   "faq",
@@ -16,6 +17,7 @@ export const aiFrontstoreSectionTypeSchema = z.enum([
   "contact-map",
   "team",
   "cta-band",
+  "footer",
 ]);
 
 export const aiFrontstoreSectionSchema = z.object({
@@ -169,7 +171,7 @@ export const aiFrontstoreSpecSchema = z.object({
         animations: z.enum(["none", "subtle", "moderate", "bold"]).optional(),
       })
       .optional(),
-    styleFamily: z.string().optional(), // e.g., "brutalist", "swiss", "neo-tech", "warm-organic", "glassmorphic"
+    styleFamily: z.string().optional(), // e.g., "brutalist", "swiss", "neo-tech", "warm-organic", "glassmorphic", "retro", "minimalist", "editorial"
     // Optional high-level hero/background image
     backgroundImage: z
       .object({

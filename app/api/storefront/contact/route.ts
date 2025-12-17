@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get company info
+    // Get company info with owner for fallback chain
     const company = await db.company.findUnique({
       where: { id: companyId },
       select: {
@@ -30,6 +30,11 @@ export async function POST(request: NextRequest) {
         email: true,
         salesEmail: true,
         supportEmail: true,
+        owner: {
+          select: {
+            email: true,
+          },
+        },
       },
     });
 
@@ -37,9 +42,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    // Determine recipient email (prefer salesEmail, then supportEmail, then general email)
+    // Determine recipient email using fallback chain:
+    // 1. salesEmail (primary)
+    // 2. supportEmail (secondary)
+    // 3. general email (tertiary)
+    // 4. owner email (fallback)
     const recipientEmail =
-      company.salesEmail || company.supportEmail || company.email;
+      company.salesEmail ||
+      company.supportEmail ||
+      company.email ||
+      company.owner?.email;
 
     if (!recipientEmail) {
       console.error(

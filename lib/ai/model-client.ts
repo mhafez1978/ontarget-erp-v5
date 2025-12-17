@@ -126,37 +126,88 @@ export async function callStorefrontModel<T>(
     }
 
     let parsed: unknown;
+
+    // Trim any whitespace from content first
+    const trimmedContent = content.trim();
+
     try {
       // First try direct parsing
-      parsed = JSON.parse(content);
-    } catch {
+      parsed = JSON.parse(trimmedContent);
+      console.log(
+        "[AI Storefront] Successfully parsed Anthropic JSON directly"
+      );
+    } catch (directParseError) {
+      console.log(
+        "[AI Storefront] Direct JSON parse failed, trying extraction..."
+      );
+      console.log(
+        "[AI Storefront] Content starts with:",
+        trimmedContent.substring(0, 100)
+      );
+      console.log("[AI Storefront] Parse error:", directParseError);
+
       // If direct parsing fails, try extracting JSON from markdown or text
       try {
         // Try to extract JSON from markdown code blocks
-        const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+        const jsonMatch = trimmedContent.match(/```(?:json)?\s*([\s\S]*?)```/);
         if (jsonMatch) {
           parsed = JSON.parse(jsonMatch[1].trim());
+          console.log(
+            "[AI Storefront] Extracted JSON from markdown code block"
+          );
         } else {
           // Try to find JSON object in text (between { and })
-          const jsonStart = content.indexOf("{");
-          const jsonEnd = content.lastIndexOf("}");
+          const jsonStart = trimmedContent.indexOf("{");
+          const jsonEnd = trimmedContent.lastIndexOf("}");
           if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-            const jsonStr = content.substring(jsonStart, jsonEnd + 1);
+            let jsonStr = trimmedContent.substring(jsonStart, jsonEnd + 1);
+
+            // Sanitize control characters by removing/replacing them
+            // This is necessary because Claude sometimes includes raw newlines in explanation strings
+            jsonStr = jsonStr.replace(
+              /[\u0000-\u001F\u007F-\u009F]/g,
+              (char) => {
+                const code = char.charCodeAt(0);
+                // Convert actual control characters to escaped versions
+                if (code === 0x0a || code === 0x0d) return " "; // Replace newlines with spaces
+                if (code === 0x09) return " "; // Replace tabs with spaces
+                return ""; // Remove other control chars
+              }
+            );
+
             parsed = JSON.parse(jsonStr);
+            console.log(
+              "[AI Storefront] Extracted and sanitized JSON from text"
+            );
           } else {
-            throw new Error("No JSON found");
+            throw new Error("No JSON found in content");
           }
         }
       } catch (parseError) {
         console.error(
-          "[AI Storefront] Failed to parse Anthropic JSON content:",
-          content
+          "[AI Storefront] Failed to parse Anthropic JSON content (first 500 chars):",
+          trimmedContent.substring(0, 500)
         );
         throw new Error("[AI Storefront] Failed to parse model JSON output");
       }
     }
 
-    return schema.parse(parsed);
+    // Validate with schema - z.unknown() will accept anything
+    try {
+      const validated = schema.parse(parsed);
+      console.log("[AI Storefront] Schema validation passed");
+      return validated;
+    } catch (validationError) {
+      console.error(
+        "[AI Storefront] Schema validation failed:",
+        validationError
+      );
+      console.error(
+        "[AI Storefront] Parsed content keys:",
+        Object.keys(parsed as object)
+      );
+      throw validationError;
+    }
   }
 
   // DeepSeek API (OpenAI-compatible)
