@@ -90,6 +90,20 @@ interface AiStorefrontRendererV2Props {
   }[];
   contactEmail?: string | null;
   contactPhone?: string | null;
+  locations?: {
+    id: string;
+    name: string;
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    state?: string | null;
+    postalCode?: string | null;
+    country: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    phone?: string | null;
+    isMain: boolean;
+  }[];
   storeBanner?: string | null;
   locations?: {
     id: string;
@@ -2453,6 +2467,340 @@ function PostsSectionV2({
 }
 
 // ============================================================================
+// TEAM SECTION
+// ============================================================================
+
+function TeamSectionV2({
+  section,
+  typography,
+  spacing,
+}: {
+  section: AiFrontstoreSection;
+  typography: ReturnType<typeof getTypographyStyles>;
+  spacing: ReturnType<typeof getSpacingStyles>;
+  effects: ReturnType<typeof getEffectsStyles>;
+}) {
+  if (section.type !== "team") return null;
+
+  const backgroundColor = section.styling?.backgroundColor || "transparent";
+  const textColor = section.styling?.textColor || "inherit";
+
+  // Type assertion for team section content
+  const content = section.content as {
+    heading?: string;
+    subheading?: string;
+    teamMembers?: Array<{
+      name?: string;
+      photo?: string;
+      role?: string;
+      bio?: string;
+    }>;
+  };
+
+  const teamMembers = content?.teamMembers || [];
+
+  return (
+    <section className="py-16" style={{ backgroundColor, color: textColor }}>
+      <div className={`${spacing.containerMaxWidth} mx-auto px-4`}>
+        {content?.heading && (
+          <h2
+            className="text-center mb-4"
+            style={{
+              fontFamily: typography.headingFont,
+              fontSize: typography.headingSize.h2,
+              fontWeight: typography.headingWeight,
+            }}
+          >
+            {content.heading}
+          </h2>
+        )}
+
+        {content?.subheading && (
+          <p
+            className="text-center mb-12 max-w-2xl mx-auto opacity-80"
+            style={{
+              fontFamily: typography.bodyFont,
+              fontSize: typography.bodySize,
+            }}
+          >
+            {content.subheading}
+          </p>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {teamMembers.map(
+            (
+              member: {
+                name?: string;
+                photo?: string;
+                role?: string;
+                bio?: string;
+              },
+              index: number
+            ) => (
+              <div
+                key={index}
+                className="text-center group shadow-lg rounded-lg overflow-hidden bg-white dark:bg-gray-800 transition-transform duration-300 hover:scale-105"
+              >
+                {member.photo && (
+                  <div className="aspect-square overflow-hidden">
+                    <Image
+                      src={member.photo}
+                      alt={member.name || "Team member"}
+                      width={300}
+                      height={300}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+
+                <div className="p-6">
+                  {member.name && (
+                    <h3
+                      className="mb-1"
+                      style={{
+                        fontFamily: typography.headingFont,
+                        fontSize: typography.headingSize.h4,
+                        fontWeight: typography.headingWeight,
+                      }}
+                    >
+                      {member.name}
+                    </h3>
+                  )}
+
+                  {member.role && (
+                    <p
+                      className="text-sm opacity-70 mb-3"
+                      style={{
+                        fontFamily: typography.bodyFont,
+                      }}
+                    >
+                      {member.role}
+                    </p>
+                  )}
+
+                  {member.bio && (
+                    <p
+                      className="text-sm opacity-80"
+                      style={{
+                        fontFamily: typography.bodyFont,
+                        fontSize: typography.bodySize,
+                      }}
+                    >
+                      {member.bio}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
+// INTERACTIVE MAP COMPONENT (Leaflet)
+// ============================================================================
+
+function InteractiveMap({
+  locations,
+}: {
+  locations: Array<{
+    id: string;
+    name: string;
+    addressLine1: string;
+    city: string;
+    state?: string;
+    latitude: number;
+    longitude: number;
+  }>;
+}) {
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !mapRef.current) return;
+
+    // Dynamically import Leaflet to avoid SSR issues
+    import("leaflet").then((L) => {
+      // Import Leaflet CSS
+      if (!document.querySelector('link[href*="leaflet.css"]')) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+      }
+
+      // Calculate center point
+      const centerLat =
+        locations.reduce((sum, loc) => sum + loc.latitude, 0) /
+        locations.length;
+      const centerLng =
+        locations.reduce((sum, loc) => sum + loc.longitude, 0) /
+        locations.length;
+
+      // Create map
+      const map = L.map(mapRef.current!).setView(
+        [centerLat, centerLng],
+        locations.length === 1 ? 13 : 10
+      );
+
+      // Add tile layer
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      // Add markers
+      locations.forEach((location) => {
+        const marker = L.marker([location.latitude, location.longitude]).addTo(
+          map
+        );
+
+        marker.bindPopup(`
+          <div style="font-family: system-ui; padding: 4px;">
+            <strong style="font-size: 14px;">${location.name}</strong><br/>
+            <span style="font-size: 12px; color: #666;">
+              ${location.addressLine1}<br/>
+              ${location.city}${location.state ? `, ${location.state}` : ""}
+            </span>
+          </div>
+        `);
+      });
+
+      // Fit bounds if multiple locations
+      if (locations.length > 1) {
+        const bounds = L.latLngBounds(
+          locations.map((loc) => [loc.latitude, loc.longitude])
+        );
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+
+      // Cleanup
+      return () => {
+        map.remove();
+      };
+    });
+  }, [locations]);
+
+  return <div ref={mapRef} className="w-full h-full" />;
+}
+
+// ============================================================================
+// CONTACT MAP SECTION
+// ============================================================================
+
+function ContactMapSectionV2({
+  title,
+  description,
+  locations,
+}: {
+  companyId: string;
+  title: string;
+  description?: string;
+  locations: Array<{
+    id: string;
+    name: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country: string;
+    latitude: number;
+    longitude: number;
+    phone?: string;
+    email?: string;
+  }>;
+}) {
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  return (
+    <section className="py-16 bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold mb-4">{title}</h2>
+          {description && (
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              {description}
+            </p>
+          )}
+        </div>
+
+        {locations.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No locations available</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Interactive Leaflet Map */}
+            <div className="bg-gray-200 dark:bg-gray-800 rounded-lg h-[400px] overflow-hidden">
+              {isMounted && <InteractiveMap locations={locations} />}
+            </div>
+
+            {/* Location cards */}
+            <div className="space-y-4">
+              {locations.map((location) => (
+                <div
+                  key={location.id}
+                  className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm"
+                >
+                  <h3 className="font-semibold text-lg mb-2">
+                    {location.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {location.addressLine1}
+                    {location.addressLine2 && (
+                      <>
+                        <br />
+                        {location.addressLine2}
+                      </>
+                    )}
+                    <br />
+                    {location.city}
+                    {location.state && `, ${location.state}`}{" "}
+                    {location.postalCode}
+                    <br />
+                    {location.country}
+                  </p>
+                  {location.phone && (
+                    <p className="text-sm mt-2">
+                      <strong>Phone:</strong>{" "}
+                      <a
+                        href={`tel:${location.phone}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {location.phone}
+                      </a>
+                    </p>
+                  )}
+                  {location.email && (
+                    <p className="text-sm">
+                      <strong>Email:</strong>{" "}
+                      <a
+                        href={`mailto:${location.email}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {location.email}
+                      </a>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
 // MAIN RENDERER COMPONENT
 // ============================================================================
 
@@ -2520,6 +2868,12 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
         {sections.map((section) => {
           switch (section.type) {
             case "announcement-bar":
+              // Skip rendering - handled in HeaderV2
+              return null;
+
+            case "header":
+              // Skip rendering - handled in HeaderV2
+              return null;
               return (
                 <AnnouncementBarV2
                   key={section.id}
@@ -2719,6 +3073,43 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                 <TeamSectionV2
                   key={section.id}
                   section={section}
+                  typography={typography}
+                  spacing={spacing}
+                  effects={effects}
+                />
+              );
+
+            case "contact-map":
+              return (
+                <ContactMapSectionV2
+                  key={section.id}
+                  companyId={props.companyId || ""}
+                  title={
+                    readContentString(section.content, "heading") ||
+                    readContentString(section.content, "title") ||
+                    "Contact & Locations"
+                  }
+                  description={
+                    readContentString(section.content, "description") ||
+                    readContentString(section.content, "subheading")
+                  }
+                  locations={(props.locations ?? [])
+                    .filter(
+                      (loc) => loc.latitude != null && loc.longitude != null
+                    )
+                    .map((loc) => ({
+                      id: loc.id,
+                      name: loc.name,
+                      addressLine1: loc.addressLine1,
+                      addressLine2: loc.addressLine2 ?? undefined,
+                      city: loc.city,
+                      state: loc.state ?? undefined,
+                      postalCode: loc.postalCode ?? undefined,
+                      country: loc.country,
+                      latitude: loc.latitude!,
+                      longitude: loc.longitude!,
+                      phone: loc.phone ?? undefined,
+                    }))}
                   spec={spec}
                   typography={typography}
                   spacing={spacing}
