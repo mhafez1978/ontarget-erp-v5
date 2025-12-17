@@ -2202,6 +2202,93 @@ function TeamSectionV2({
 }
 
 // ============================================================================
+// INTERACTIVE MAP COMPONENT (Leaflet)
+// ============================================================================
+
+function InteractiveMap({
+  locations,
+}: {
+  locations: Array<{
+    id: string;
+    name: string;
+    addressLine1: string;
+    city: string;
+    state?: string;
+    latitude: number;
+    longitude: number;
+  }>;
+}) {
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !mapRef.current) return;
+
+    // Dynamically import Leaflet to avoid SSR issues
+    import("leaflet").then((L) => {
+      // Import Leaflet CSS
+      if (!document.querySelector('link[href*="leaflet.css"]')) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+      }
+
+      // Calculate center point
+      const centerLat =
+        locations.reduce((sum, loc) => sum + loc.latitude, 0) /
+        locations.length;
+      const centerLng =
+        locations.reduce((sum, loc) => sum + loc.longitude, 0) /
+        locations.length;
+
+      // Create map
+      const map = L.map(mapRef.current!).setView(
+        [centerLat, centerLng],
+        locations.length === 1 ? 13 : 10
+      );
+
+      // Add tile layer
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      // Add markers
+      locations.forEach((location) => {
+        const marker = L.marker([location.latitude, location.longitude]).addTo(
+          map
+        );
+
+        marker.bindPopup(`
+          <div style="font-family: system-ui; padding: 4px;">
+            <strong style="font-size: 14px;">${location.name}</strong><br/>
+            <span style="font-size: 12px; color: #666;">
+              ${location.addressLine1}<br/>
+              ${location.city}${location.state ? `, ${location.state}` : ""}
+            </span>
+          </div>
+        `);
+      });
+
+      // Fit bounds if multiple locations
+      if (locations.length > 1) {
+        const bounds = L.latLngBounds(
+          locations.map((loc) => [loc.latitude, loc.longitude])
+        );
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+
+      // Cleanup
+      return () => {
+        map.remove();
+      };
+    });
+  }, [locations]);
+
+  return <div ref={mapRef} className="w-full h-full" />;
+}
+
+// ============================================================================
 // CONTACT MAP SECTION
 // ============================================================================
 
@@ -2228,6 +2315,12 @@ function ContactMapSectionV2({
     email?: string;
   }>;
 }) {
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <section className="py-16 bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4">
@@ -2246,11 +2339,9 @@ function ContactMapSectionV2({
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Map placeholder - requires Leaflet integration */}
-            <div className="bg-gray-200 dark:bg-gray-800 rounded-lg h-[400px] flex items-center justify-center">
-              <p className="text-muted-foreground">
-                Map integration coming soon
-              </p>
+            {/* Interactive Leaflet Map */}
+            <div className="bg-gray-200 dark:bg-gray-800 rounded-lg h-[400px] overflow-hidden">
+              {isMounted && <InteractiveMap locations={locations} />}
             </div>
 
             {/* Location cards */}
