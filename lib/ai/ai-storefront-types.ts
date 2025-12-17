@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const aiFrontstoreSectionTypeSchema = z.enum([
+  "announcement-bar",
+  "header",
   "hero",
   "highlights",
   "product-grid",
@@ -11,6 +13,8 @@ export const aiFrontstoreSectionTypeSchema = z.enum([
   "stats",
   "faq",
   "contact",
+  "contact-map",
+  "team",
   "cta-band",
 ]);
 
