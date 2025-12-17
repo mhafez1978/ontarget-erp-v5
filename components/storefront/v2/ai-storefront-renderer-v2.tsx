@@ -2098,12 +2098,24 @@ function TeamSectionV2({
   const backgroundColor = section.styling?.backgroundColor || "transparent";
   const textColor = section.styling?.textColor || "inherit";
 
-  const teamMembers = section.content?.teamMembers || [];
+  // Type assertion for team section content
+  const content = section.content as {
+    heading?: string;
+    subheading?: string;
+    teamMembers?: Array<{
+      name?: string;
+      photo?: string;
+      role?: string;
+      bio?: string;
+    }>;
+  };
+
+  const teamMembers = content?.teamMembers || [];
 
   return (
     <section className="py-16" style={{ backgroundColor, color: textColor }}>
       <div className={`${spacing.containerMaxWidth} mx-auto px-4`}>
-        {section.content?.heading && (
+        {content?.heading && (
           <h2
             className="text-center mb-4"
             style={{
@@ -2112,11 +2124,11 @@ function TeamSectionV2({
               fontWeight: typography.headingWeight,
             }}
           >
-            {section.content.heading}
+            {content.heading}
           </h2>
         )}
 
-        {section.content?.subheading && (
+        {content?.subheading && (
           <p
             className="text-center mb-12 max-w-2xl mx-auto opacity-80"
             style={{
@@ -2124,7 +2136,7 @@ function TeamSectionV2({
               fontSize: typography.bodySize,
             }}
           >
-            {section.content.subheading}
+            {content.subheading}
           </p>
         )}
 
@@ -2625,11 +2637,9 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                 <TeamSectionV2
                   key={section.id}
                   section={section}
-                  spec={spec}
                   typography={typography}
                   spacing={spacing}
                   effects={effects}
-                  featuredTeamMembers={props.featuredTeamMembers || []}
                 />
               );
 
@@ -2647,13 +2657,23 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                     readContentString(section.content, "description") ||
                     readContentString(section.content, "subheading")
                   }
-                  locations={(props.locations ?? []).map((loc: any) => ({
-                    ...loc,
-                    addressLine2: loc.addressLine2 ?? undefined,
-                    state: loc.state ?? undefined,
-                    postalCode: loc.postalCode ?? undefined,
-                    phone: loc.phone ?? undefined,
-                  }))}
+                  locations={(props.locations ?? [])
+                    .filter(
+                      (loc) => loc.latitude != null && loc.longitude != null
+                    )
+                    .map((loc) => ({
+                      id: loc.id,
+                      name: loc.name,
+                      addressLine1: loc.addressLine1,
+                      addressLine2: loc.addressLine2 ?? undefined,
+                      city: loc.city,
+                      state: loc.state ?? undefined,
+                      postalCode: loc.postalCode ?? undefined,
+                      country: loc.country,
+                      latitude: loc.latitude!,
+                      longitude: loc.longitude!,
+                      phone: loc.phone ?? undefined,
+                    }))}
                 />
               );
 
