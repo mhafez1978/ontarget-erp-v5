@@ -613,7 +613,11 @@ export default function FrontstoreV2Page() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => continueConversation("Create a completely new design with a different style and fresh approach")}
+                  onClick={() =>
+                    continueConversation(
+                      "Create a completely new design with a different style and fresh approach"
+                    )
+                  }
                   disabled={!conversationId || loading}
                 >
                   <Wand2 className="mr-2 h-4 w-4" />
