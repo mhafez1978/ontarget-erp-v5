@@ -1105,6 +1105,187 @@ const FORBIDDEN_KEYWORDS = [
   "firearms",
 ];
 
+/**
+ * Provider-agnostic validation: ensures all mandatory sections exist
+ * regardless of which AI model generated the content.
+ * Adds missing sections with sensible defaults if they're not present.
+ */
+function ensureMandatorySections(
+  spec: AiFrontstoreSpec,
+  input: AiStorefrontInput
+): AiFrontstoreSpec {
+  const { company } = input;
+  const existingSectionTypes = new Set(spec.sections.map((s) => s.type));
+  const missingSections: AiFrontstoreSpec["sections"] = [];
+
+  // Define mandatory sections that MUST always exist
+  const mandatorySections = [
+    "announcement-bar",
+    "header",
+    "hero",
+    "stats",
+    "footer",
+  ];
+
+  let nextOrder = spec.sections.length;
+
+  // Check each mandatory section
+  mandatorySections.forEach((sectionType) => {
+    if (!existingSectionTypes.has(sectionType as any)) {
+      console.warn(
+        `[Provider Validation] Missing mandatory section: ${sectionType}. Adding default.`
+      );
+
+      // Add default section based on type
+      switch (sectionType) {
+        case "announcement-bar":
+          missingSections.push({
+            id: "announcement-bar",
+            type: "announcement-bar",
+            order: 0, // Always first
+            content: {
+              text: `Welcome to ${company.name}`,
+              link: "#contact",
+              dismissible: true,
+            },
+            styling: {
+              backgroundColor: spec.meta.accentColor || "#0066CC",
+              textColor: "#FFFFFF",
+            },
+          });
+          break;
+
+        case "header":
+          missingSections.push({
+            id: "header",
+            type: "header",
+            order: 1, // Always second
+            content: {
+              logoText: company.name,
+              navigationItems: [
+                { label: "Home", href: "#hero" },
+                { label: "Services", href: "#services" },
+                { label: "Contact", href: "#contact" },
+              ],
+              ctaLabel: "Get Started",
+              ctaHref: "#contact",
+            },
+            styling: {
+              position: "sticky",
+              backgroundColor: "#FFFFFF",
+              textColor: spec.meta.primaryColor || "#000000",
+            },
+          });
+          break;
+
+        case "hero":
+          missingSections.push({
+            id: "hero",
+            type: "hero",
+            order: 2,
+            content: {
+              headline: company.slogan || `Welcome to ${company.name}`,
+              subheadline:
+                company.description ||
+                `Discover what makes ${company.name} special`,
+              ctaLabel: "Learn More",
+              ctaHref: "#contact",
+              imageUrl:
+                "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80",
+            },
+            styling: {
+              layout: "center",
+              backgroundImage:
+                "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80",
+            },
+          });
+          break;
+
+        case "stats":
+          missingSections.push({
+            id: "stats",
+            type: "stats",
+            order: nextOrder++,
+            content: {
+              heading: `Why Choose ${company.name}`,
+              items: [
+                {
+                  label: "Experience",
+                  value: "10+",
+                  suffix: "Years",
+                },
+                {
+                  label: "Clients",
+                  value: "500",
+                  suffix: "+",
+                },
+                {
+                  label: "Satisfaction",
+                  value: "99",
+                  suffix: "%",
+                },
+              ],
+            },
+          });
+          break;
+
+        case "footer":
+          missingSections.push({
+            id: "footer",
+            type: "footer",
+            order: 999, // Always last
+            content: {
+              companyName: company.name,
+              description: company.description || undefined,
+              columns: [
+                {
+                  title: "Quick Links",
+                  links: [
+                    { label: "Home", href: "#hero" },
+                    { label: "Services", href: "#services" },
+                    { label: "Contact", href: "#contact" },
+                  ],
+                },
+              ],
+              socialLinks: [],
+              legalLinks: [
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Terms of Service", href: "/terms" },
+              ],
+            },
+            styling: {
+              backgroundColor: spec.meta.primaryColor || "#1A1A1A",
+              textColor: "#FFFFFF",
+            },
+          });
+          break;
+      }
+    }
+  });
+
+  // If we added any missing sections, merge them and re-sort by order
+  if (missingSections.length > 0) {
+    console.log(
+      `[Provider Validation] Added ${missingSections.length} missing mandatory sections`
+    );
+
+    const allSections = [...spec.sections, ...missingSections];
+
+    // Re-sort by order and ensure sequential ordering
+    allSections.sort((a, b) => a.order - b.order);
+    allSections.forEach((section, index) => {
+      section.order = index;
+    });
+
+    return {
+      ...spec,
+      sections: allSections,
+    };
+  }
+
+  return spec;
+}
+
 export async function generateAiStorefront(
   input: AiStorefrontInput,
   providerConfig?: AiProviderConfig
@@ -1715,60 +1896,89 @@ export async function generateAiStorefront(
     "- **Tech/SaaS**: Modern blues, teals, purples - innovative and forward-thinking\n" +
     "- **Fashion/Beauty**: Depends on brand personality - can be bold, minimal, or feminine\n" +
     "If you extract brand colors from their logo, USE THEM as the foundation but expand intelligently!\n\n" +
-    "CONTENT STRUCTURE - REQUIRED SECTIONS:\n" +
-    "Every storefront MUST include these sections in order (adapt styling/emphasis based on goal):\n\n" +
-    "1. **ANNOUNCEMENT-BAR** (type: 'announcement-bar', order: 0)\n" +
+    "CONTENT STRUCTURE - MANDATORY SECTIONS:\n" +
+    "🚨 CRITICAL: EVERY design MUST include these core sections in this exact order:\n\n" +
+    "1. **ANNOUNCEMENT-BAR** (type: 'announcement-bar', order: 0) - REQUIRED\n" +
+    "   - MUST be included in every design, no exceptions\n" +
     "   - Appears at very top of EVERY page\n" +
     "   - Use for: Promotions, sales, free shipping, limited offers, important announcements\n" +
-    "   - Make clickable if linking to promo page/product\n" +
-    "   - Content: { text: 'Your promo message', link: '/optional-link', dismissible: true/false }\n" +
-    "   - Style: Contrasting background (often accent color), white/light text, compact height\n" +
-    "   - Examples: '🎉 50% Off Spring Sale - Shop Now!', '✈️ Free Shipping on Orders $50+'\n\n" +
-    "2. **HEADER** (type: 'header', order: 1)\n" +
-    "   - Contains: Logo (if exists) OR company name text, navigation menu, Login, Register, Cart icons\n" +
-    "   - Logo: Use company.logoLight or company.logoDark if available, else company.name in beautiful font\n" +
-    "   - Navigation: Auto-generate links based on sections (Home, Products, Services, Blog, Team, Contact)\n" +
-    "   - Auth buttons: 'Login' and 'Register' styled as secondary buttons\n" +
-    "   - Cart icon: Include if products exist (show cart item count)\n" +
-    "   - Style: Choose from transparent-on-hero, solid, sticky, floating - match overall design aesthetic\n" +
-    "   - Content structure:\n" +
-    "     {\n" +
-    "       logo: company.logoLight || company.logoDark || null,\n" +
-    "       companyName: company.name,\n" +
-    "       navigation: [{ label: 'Home', href: '#hero' }, { label: 'Products', href: '#products' }, ...],\n" +
-    "       showAuth: true,\n" +
-    "       showCart: products.length > 0,\n" +
-    "       style: 'transparent' | 'solid' | 'sticky' | 'floating'\n" +
-    "     }\n\n" +
-    "3. **HERO** (type: 'hero', order: 2)\n" +
+    "   - If no promo exists, create a welcoming message like 'Welcome to [CompanyName]!'\n" +
+    "   - Content: { text: string, link?: string, dismissible: boolean }\n" +
+    "   - Style: Contrasting background (accent color), white/light text\n" +
+    "   - Examples: '🎉 50% Off Spring Sale!', '✈️ Free Shipping $50+', '👋 Welcome to [Company]!'\n\n" +
+    "2. **HEADER** (type: 'header', order: 1) - REQUIRED\n" +
+    "   - MUST be included in every design, no exceptions\n" +
+    "   - Contains: Logo OR company name, navigation, Login, Register, Cart\n" +
+    "   - Logo: Use company.logoLight/logoDark if exists, else company.name in beautiful font\n" +
+    "   - Navigation: Auto-generate from sections (Home, Products, Services, Blog, Team, Contact)\n" +
+    "   - Auth buttons: Always include 'Login' and 'Register' buttons\n" +
+    "   - Cart icon: Include if products.length > 0\n" +
+    "   - Style: sticky (most common), solid, transparent, or floating\n" +
+    "   - Content: { logo, companyName, navigation[], showAuth: true, showCart, style }\n\n" +
+    "3. **HERO** (type: 'hero', order: 2) - REQUIRED\n" +
+    "   - MUST be included in every design, no exceptions\n" +
     "   - Large impactful section with headline, subheadline, CTA buttons\n" +
-    "   - Image ratio: 1:1 (square) or 1:2 (wide landscape) - choose based on design style\n" +
-    "   - Background: Use backgroundImage or backgroundVideo for immersion\n" +
-    "   - CTAs: 1-2 prominent action buttons (e.g., 'Shop Now', 'Get Started', 'Learn More')\n\n" +
-    "4. **STATS/SOCIAL-PROOF** (type: 'stats', order: 3)\n" +
-    "   - Show impressive numbers: projects completed, happy customers, years in business, testimonials count\n" +
-    "   - Use actual data when available, or create realistic placeholders\n" +
-    "   - Content: [{ number: '500+', label: 'Happy Customers' }, { number: '1,200', label: 'Projects' }, ...]\n" +
+    "   - ALWAYS include a background image from Unsplash (unless brutalist/minimal)\n" +
+    "   - Image ratio: 1:1 (square) or 1:2 (wide landscape)\n" +
+    "   - CTAs: 1-2 prominent action buttons\n" +
+    "   - Content: { title, subtitle, description, primaryCTA, primaryHref, secondaryCTA, secondaryHref }\n" +
+    "   - Styling: MUST include backgroundImage with overlay for text readability\n\n" +
+    "4. **STATS/SOCIAL-PROOF** (type: 'stats', order: 3) - REQUIRED\n" +
+    "   - MUST be included in every design, no exceptions\n" +
+    "   - Show impressive numbers: projects, customers, satisfaction, years\n" +
+    "   - If no real data: Create realistic placeholders ('500+ Clients', '98% Satisfaction')\n" +
+    "   - Content: { stats: [{ number, label }] } - minimum 3-4 stats\n" +
     "   - Style: Clean, prominent numbers with descriptive labels\n\n" +
-    "Then include relevant sections based on available data:\n" +
-    "- **PRODUCT-GRID** (type: 'product-grid') - if products exist\n" +
-    "- **SERVICE-GRID** (type: 'service-grid') - if services exist\n" +
-    "- **PORTFOLIO** (type: 'portfolio') - for agencies, designers, consultants\n" +
-    "- **POSTS** (type: 'posts') - if blogEnabled or blog posts exist\n" +
-    "- **TEAM** (type: 'team') - if team members exist (Meet the Team section)\n" +
-    "- **TESTIMONIALS** (type: 'testimonials') - use Magic UI styling (cards, animations, engaging layout)\n" +
-    "- **FAQ** (type: 'faq') - common questions\n" +
-    "- **CONTACT-MAP** (type: 'contact-map') - contact form + mapped locations\n" +
-    "- **CTA-BAND** (type: 'cta-band') - final conversion push before footer\n" +
-    "- **FOOTER** (type: 'footer', last section) - company info, quick links, social icons, copyright\n\n" +
+    "5. **DYNAMIC CONTENT SECTIONS** (orders 4+) - Include based on available data:\n" +
+    "   - **PRODUCT-GRID** (type: 'product-grid') - if products.length > 0\n" +
+    "     * MUST use product.images[0] when available\n" +
+    "     * Grid with 2-4 columns, cards with hover effects\n" +
+    "   - **SERVICE-GRID** (type: 'service-grid') - if services.length > 0\n" +
+    "     * MUST use Unsplash images matching service names/categories\n" +
+    "     * Example: 'Web Design' → web design stock image\n" +
+    "   - **PORTFOLIO** (type: 'portfolio') - for agencies/consultants\n" +
+    "     * Include if business type suggests it\n" +
+    "     * Use Unsplash project images if no real projects\n" +
+    "   - **POSTS** (type: 'posts') - if blogEnabled OR user requests\n" +
+    "     * Show blog preview cards\n" +
+    "   - **TEAM** (type: 'team') - if team.length > 0\n" +
+    "     * MUST include when team members exist\n" +
+    "     * Use member images or Unsplash person placeholders\n" +
+    "     * Layout: Grid 2-4 per row with photo cards\n" +
+    "   - **TESTIMONIALS** (type: 'testimonials') - if testimonials.length > 0\n" +
+    "     * Magic UI styling - animated cards, engaging layouts\n" +
+    "     * Include customer quotes, names, ratings\n" +
+    "   - **FAQ** (type: 'faq') - optional, include for complex services\n" +
+    "   - **CONTACT-MAP** (type: 'contact-map') - RECOMMENDED when showLocation is true\n" +
+    "     * Split view: Contact form + interactive map with company location\n" +
+    "     * Even single location benefits from map visual!\n" +
+    "     * Shows professionalism, helps customers find you\n" +
+    "   - **CTA-BAND** (type: 'cta-band') - HIGHLY RECOMMENDED before footer\n" +
+    "     * Final conversion push with strong CTA\n" +
+    "     * Use Unsplash background with overlay\n\n" +
+    "6. **FOOTER** (type: 'footer', order: 999) - REQUIRED\n" +
+    "   - MUST be included in every design, no exceptions\n" +
+    "   - Content: Company name, tagline, quick links, contact, social icons, copyright\n" +
+    "   - Social icons: Include if metadata.socialLinks exists\n" +
+    "   - Copyright: '© 2025 [CompanyName]. All rights reserved.'\n" +
+    "   - Style: Multi-column desktop, stacked mobile, dark background\n\n" +
+    "🚨 SECTION GENERATION RULES:\n" +
+    "- Minimum 6 sections: announcement-bar, header, hero, stats, [1+ content], footer\n" +
+    "- Maximum 12 sections for optimal performance\n" +
+    "- Order must be sequential: 0, 1, 2, 3, 4, 5...\n" +
+    "- NEVER skip announcement-bar, header, hero, stats, or footer\n" +
+    "- Include ALL available content sections (products, services, team, testimonials)\n" +
+    "- PREFER 'contact-map' over plain 'contact' section when showLocation is true\n" +
+    "- Use Unsplash images when database images not available\n\n" +
     "SECTION-SPECIFIC DETAILS:\n\n" +
     "**CONTACT-MAP SECTION** (type: 'contact-map'):\n" +
-    "  - Combines contact form with interactive map showing all company locations\n" +
-    "  - Perfect for: Multi-location businesses, service companies, franchises, real estate\n" +
-    "  - Include if: Multiple locations exist OR user requests 'locations map'\n" +
-    "  - Data: Use all company.locations[] with markers for each\n" +
-    "  - Main location (isMain: true) shown prominently with contact info\n" +
-    "  - Layout: Form left + map right (desktop), stacked (mobile)\n\n" +
+    "  - Combines contact form with interactive Leaflet map showing company location\n" +
+    "  - Perfect for: ANY business with physical location (retail, restaurants, offices, services)\n" +
+    "  - Include if: showLocation is true (which it usually is!)\n" +
+    "  - IMPORTANT: Place contact-map BEFORE plain 'contact' section, or use instead of it\n" +
+    "  - Data: Uses company address/lat/long to render map with marker\n" +
+    "  - Layout: Split view - contact form left, interactive map right (desktop), stacked (mobile)\n" +
+    "  - Benefits: Helps customers find you, visualizes location, builds trust\n\n" +
     "**PRODUCT-GRID/SERVICE-GRID**:\n" +
     "  - ALWAYS include product/service images! Images are crucial for visual appeal\n" +
     "  - Products: Use product.images[0] as image field\n" +
@@ -1888,22 +2098,22 @@ export async function generateAiStorefront(
       null,
       2
     ) +
-    "\n\nEXAMPLE OUTPUT for generating a design:\n" +
+    "\n\nEXAMPLE OUTPUT for generating a design (MUST include ALL required sections with proper images):\n" +
     JSON.stringify(
       {
         shouldAsk: false,
         explanation:
-          "I've created a bold, high-impact design perfect for a creative agency! The brutalist style features sharp corners, thick borders, and extra-large headings to command attention. The dark scheme with vibrant accents creates energy. Does this bold direction work for you? I can always adjust!",
+          "I've created a bold, modern design for your creative agency! Deep Navy (#1E40AF) as primary conveys professionalism with 7.2:1 contrast - perfect for accessibility. The vibrant Coral accent (#FF6B6B) adds energy to CTAs. I've included ALL sections with real product images and Unsplash backgrounds for maximum visual impact. The brutalist style with sharp edges and bold typography commands attention. Notice how each section flows with varied layouts and rich imagery!",
         spec: {
           version: 1,
           meta: {
             layoutStyle: "bold",
             tone: "serious",
-            primaryColor: "#000000",
-            secondaryColor: "#FF3366",
-            accentColor: "#00FF88",
+            primaryColor: "#1E40AF",
+            secondaryColor: "#FF6B6B",
+            accentColor: "#10B981",
             backgroundColor: "#FFFFFF",
-            textColor: "#000000",
+            textColor: "#111827",
             heroSize: "extra-large",
             buttonStyle: "3d",
             cornerStyle: "sharp",
@@ -1914,7 +2124,7 @@ export async function generateAiStorefront(
               bodyWeight: "normal",
               headingSize: "extra-large",
               bodySize: "medium",
-              lineHeight: "tight",
+              lineHeight: "normal",
               letterSpacing: "tight",
             },
             spacing: {
@@ -1936,26 +2146,54 @@ export async function generateAiStorefront(
               animations: "bold",
             },
             styleFamily: "brutalist",
-            backgroundVideo: {
-              url: "https://example.com/video.mp4",
-              poster: "https://example.com/poster.jpg",
-              loop: true,
-              muted: true,
-              autoplay: true,
-            },
-            overlayColor: "#000000",
-            overlayOpacity: 0.5,
           },
           sections: [
             {
-              id: "hero",
-              type: "hero",
+              id: "announcement-bar-1",
+              type: "announcement-bar",
               order: 0,
+              content: {
+                text: "🎉 50% Off All Services This Month - Limited Time!",
+                link: "#services",
+                dismissible: true,
+              },
+              styling: {
+                backgroundColor: "#FF6B6B",
+                textColor: "#FFFFFF",
+              },
+            },
+            {
+              id: "header-1",
+              type: "header",
+              order: 1,
+              content: {
+                logo: null,
+                companyName: "Creative Studios",
+                navigation: [
+                  { label: "Home", href: "#hero" },
+                  { label: "Services", href: "#services" },
+                  { label: "Portfolio", href: "#portfolio" },
+                  { label: "Team", href: "#team" },
+                  { label: "Contact", href: "#contact" },
+                ],
+                showAuth: true,
+                showCart: false,
+                style: "sticky",
+              },
+              styling: {
+                backgroundColor: "#FFFFFF",
+                textColor: "#111827",
+              },
+            },
+            {
+              id: "hero-1",
+              type: "hero",
+              order: 2,
               content: {
                 title: "Bold Creative Agency",
                 subtitle: "We Make Brands Unforgettable",
                 description:
-                  "Transform your vision into reality with cutting-edge design and strategy.",
+                  "Transform your vision into reality with cutting-edge design and strategy that drives results.",
                 primaryCTA: "View Our Work",
                 primaryHref: "#portfolio",
                 secondaryCTA: "Get in Touch",
@@ -1967,8 +2205,172 @@ export async function generateAiStorefront(
                 verticalPadding: "extra-large",
               },
               styling: {
+                backgroundImage: {
+                  url: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=1920&q=80",
+                  alt: "Creative workspace",
+                  position: "center",
+                  size: "cover",
+                  parallax: true,
+                },
+                overlayColor: "#000000",
+                overlayOpacity: 0.6,
                 textColor: "#FFFFFF",
-                gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              },
+            },
+            {
+              id: "stats-1",
+              type: "stats",
+              order: 3,
+              content: {
+                stats: [
+                  { number: "500+", label: "Happy Clients" },
+                  { number: "1,200", label: "Projects Completed" },
+                  { number: "98%", label: "Client Satisfaction" },
+                  { number: "15+", label: "Years Experience" },
+                ],
+              },
+              layout: {
+                contentWidth: "wide",
+                verticalPadding: "large",
+              },
+            },
+            {
+              id: "services-1",
+              type: "service-grid",
+              order: 4,
+              content: {
+                heading: "Our Services",
+                subheading: "Comprehensive solutions for your brand",
+                services: [
+                  {
+                    id: "svc-1",
+                    name: "Web Design",
+                    description: "Beautiful, responsive websites",
+                    image:
+                      "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&q=80",
+                    price: 2500,
+                  },
+                  {
+                    id: "svc-2",
+                    name: "Branding",
+                    description: "Complete brand identity packages",
+                    image:
+                      "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80",
+                    price: 3500,
+                  },
+                  {
+                    id: "svc-3",
+                    name: "Marketing",
+                    description: "Data-driven marketing campaigns",
+                    image:
+                      "https://images.unsplash.com/photo-1432888622747-4eb9a8f2c293?w=800&q=80",
+                    price: 1500,
+                  },
+                ],
+              },
+              layout: {
+                contentWidth: "wide",
+                itemsPerRow: 3,
+                itemSpacing: "normal",
+                verticalPadding: "large",
+              },
+            },
+            {
+              id: "team-1",
+              type: "team",
+              order: 5,
+              content: {
+                heading: "Meet Our Team",
+                subheading: "Creative minds behind your success",
+                members: [
+                  {
+                    id: "team-1",
+                    name: "Sarah Johnson",
+                    role: "Creative Director",
+                    image:
+                      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
+                    bio: "15+ years crafting memorable brand experiences",
+                  },
+                  {
+                    id: "team-2",
+                    name: "Mike Chen",
+                    role: "Lead Developer",
+                    image:
+                      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+                    bio: "Full-stack wizard specializing in React & Node",
+                  },
+                ],
+              },
+              layout: {
+                contentWidth: "wide",
+                itemsPerRow: 2,
+                verticalPadding: "large",
+              },
+            },
+            {
+              id: "testimonials-1",
+              type: "testimonials",
+              order: 6,
+              content: {
+                heading: "Client Success Stories",
+                subheading: "Hear what our clients say",
+                testimonials: [
+                  {
+                    id: "test-1",
+                    name: "John Smith",
+                    company: "Tech Startup Inc",
+                    quote:
+                      "They transformed our brand and doubled our conversion rate!",
+                    rating: 5,
+                  },
+                ],
+              },
+              layout: {
+                contentWidth: "wide",
+                verticalPadding: "large",
+              },
+              styling: {
+                backgroundColor: "#F9FAFB",
+              },
+            },
+            {
+              id: "contact-map-1",
+              type: "contact-map",
+              order: 7,
+              content: {
+                heading: "Let's Create Something Amazing",
+                subheading: "Visit our studio or get in touch",
+                description: "We're here to help bring your vision to life",
+              },
+              layout: {
+                contentWidth: "wide",
+                verticalPadding: "extra-large",
+              },
+            },
+            {
+              id: "footer-1",
+              type: "footer",
+              order: 8,
+              content: {
+                companyName: "Creative Studios",
+                tagline: "Making brands unforgettable since 2010",
+                quickLinks: [
+                  { label: "About", href: "/about" },
+                  { label: "Services", href: "#services" },
+                  { label: "Portfolio", href: "#portfolio" },
+                  { label: "Contact", href: "#contact" },
+                ],
+                socialLinks: {
+                  facebook: "https://facebook.com/creativestudios",
+                  twitter: "https://twitter.com/creativestudios",
+                  instagram: "https://instagram.com/creativestudios",
+                  linkedin: "https://linkedin.com/company/creativestudios",
+                },
+                copyright: "© 2025 Creative Studios. All rights reserved.",
+              },
+              styling: {
+                backgroundColor: "#111827",
+                textColor: "#F9FAFB",
               },
             },
           ],
@@ -1977,7 +2379,13 @@ export async function generateAiStorefront(
       null,
       2
     ) +
-    "\n\nIMPORTANT: Always populate typography, spacing, grid, effects fields. Do NOT leave them null or empty.";
+    "\n\nCRITICAL REQUIREMENTS:\n" +
+    "1. ALWAYS include ALL sections: announcement-bar, header, hero, stats, [content sections], footer\n" +
+    "2. ALWAYS use Unsplash images for hero backgrounds, service cards, team placeholders\n" +
+    "3. ALWAYS use real product.images[0] when products have images in database\n" +
+    "4. ALWAYS populate typography, spacing, grid, effects - never leave null\n" +
+    "5. ALWAYS include image URLs with proper params (?w=800&q=80)\n" +
+    "6. EVERY section must have proper content structure with all required fields";
 
   const userContext = {
     company,
@@ -2011,8 +2419,8 @@ export async function generateAiStorefront(
         (effectivePreviousSpec
           ? "\n\nIMPORTANT: This is a continuation of an existing conversation. The user has a previous spec (included in the context). Build upon it and make incremental changes based on their new request, rather than starting from scratch."
           : isRegenerateIntent
-            ? "\n\nREGENERATE MODE: The user wants a COMPLETELY NEW design. Create something dramatically different with fresh creativity. Use a different style family, color palette, layout, and visual approach. DO NOT reference or build upon any previous design."
-            : ""),
+          ? "\n\nREGENERATE MODE: The user wants a COMPLETELY NEW design. Create something dramatically different with fresh creativity. Use a different style family, color palette, layout, and visual approach. DO NOT reference or build upon any previous design."
+          : ""),
     },
   ];
 
@@ -2109,6 +2517,11 @@ export async function generateAiStorefront(
       console.log("[WCAG] Applying accessibility fixes to generated design");
       spec = wcagValidation.fixes;
     }
+  }
+
+  // Provider-agnostic validation: ensure all mandatory sections exist
+  if (spec && !shouldAsk) {
+    spec = ensureMandatorySections(spec, input);
   }
 
   return {
