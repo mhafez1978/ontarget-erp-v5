@@ -63,7 +63,10 @@ export async function POST(request: NextRequest) {
                   entityType: "Subscription",
                   entityId: subscriptionId,
                   description: `Invoice ${invoice.id} paid for subscription ${subscriptionId}`,
-                  metadata: JSON.stringify({ invoiceId: invoice.id, amount: invoice.amount_paid }),
+                  metadata: JSON.stringify({
+                    invoiceId: invoice.id,
+                    amount: invoice.amount_paid,
+                  }),
                 },
               });
             }
@@ -98,7 +101,10 @@ export async function POST(request: NextRequest) {
             });
           }
         } catch (err) {
-          console.error("Failed to update subscription on payment_failed:", err);
+          console.error(
+            "Failed to update subscription on payment_failed:",
+            err
+          );
         }
         break;
       }
