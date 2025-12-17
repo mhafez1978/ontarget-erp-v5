@@ -1362,6 +1362,7 @@ export async function generateAiStorefront(
     "1. COMPANY BASICS: name, slogan, description, industry - use these to create personalized, relevant content\n" +
     "2. CONTACT INFO: email, salesEmail, supportEmail, phone - include appropriate contact methods throughout\n" +
     "3. LOCATION: addressLine1, addressLine2, city, state, country, postalCode - use for local SEO and contact sections\n" +
+    "   🚨 CRITICAL: Check if locations array contains latitude/longitude coordinates - if YES, 'contact-map' section is MANDATORY\n" +
     "4. PRODUCTS: Check product names, descriptions, prices, categories, images - showcase their actual offerings\n" +
     "5. SERVICES: Review service names, descriptions, categories - highlight what they provide\n" +
     "6. PROJECTS: Look at featured projects with clients, categories, descriptions - perfect for portfolio sections\n" +
@@ -1949,10 +1950,12 @@ export async function generateAiStorefront(
     "     * Magic UI styling - animated cards, engaging layouts\n" +
     "     * Include customer quotes, names, ratings\n" +
     "   - **FAQ** (type: 'faq') - optional, include for complex services\n" +
-    "   - **CONTACT-MAP** (type: 'contact-map') - RECOMMENDED when showLocation is true\n" +
+    "   - **CONTACT-MAP** (type: 'contact-map') - 🚨 REQUIRED when locations have latitude/longitude coordinates\n" +
+    "     * MANDATORY: If any location has valid coordinates, you MUST include this section\n" +
     "     * Split view: Contact form + interactive map with company location\n" +
     "     * Even single location benefits from map visual!\n" +
     "     * Shows professionalism, helps customers find you\n" +
+    "     * DO NOT use plain 'contact' section if coordinates exist - always use 'contact-map' instead\n" +
     "   - **CTA-BAND** (type: 'cta-band') - HIGHLY RECOMMENDED before footer\n" +
     "     * Final conversion push with strong CTA\n" +
     "     * Use Unsplash background with overlay\n\n" +
@@ -1968,14 +1971,16 @@ export async function generateAiStorefront(
     "- Order must be sequential: 0, 1, 2, 3, 4, 5...\n" +
     "- NEVER skip announcement-bar, header, hero, stats, or footer\n" +
     "- Include ALL available content sections (products, services, team, testimonials)\n" +
-    "- PREFER 'contact-map' over plain 'contact' section when showLocation is true\n" +
+    "- 🚨 MANDATORY: If locations array contains ANY entry with valid latitude/longitude coordinates, you MUST include 'contact-map' section\n" +
+    "- NEVER use plain 'contact' section when coordinates are available - always use 'contact-map' instead\n" +
     "- Use Unsplash images when database images not available\n\n" +
     "SECTION-SPECIFIC DETAILS:\n\n" +
     "**CONTACT-MAP SECTION** (type: 'contact-map'):\n" +
+    "  - 🚨 MANDATORY when ANY location has valid latitude/longitude coordinates\n" +
     "  - Combines contact form with interactive Leaflet map showing company location\n" +
     "  - Perfect for: ANY business with physical location (retail, restaurants, offices, services)\n" +
-    "  - Include if: showLocation is true (which it usually is!)\n" +
-    "  - IMPORTANT: Place contact-map BEFORE plain 'contact' section, or use instead of it\n" +
+    "  - CRITICAL: Check locations array - if ANY location has latitude AND longitude values, this section is REQUIRED\n" +
+    "  - NEVER use plain 'contact' section as substitute when coordinates exist\n" +
     "  - Data: Uses company address/lat/long to render map with marker\n" +
     "  - Layout: Split view - contact form left, interactive map right (desktop), stacked (mobile)\n" +
     "  - Benefits: Helps customers find you, visualizes location, builds trust\n\n" +

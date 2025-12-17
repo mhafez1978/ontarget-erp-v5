@@ -2762,7 +2762,7 @@ export function AiStorefrontRendererV2(props: AiStorefrontRendererV2Props) {
                     section.content,
                     "description"
                   )}
-                  locations={(props.locations ?? []).map((loc, index) => ({
+                  locations={(props.locations ?? []).map((loc) => ({
                     id: loc.id,
                     name: loc.name,
                     type: loc.type || "office",
