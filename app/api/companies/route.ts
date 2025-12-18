@@ -104,6 +104,16 @@ export async function GET(request: NextRequest) {
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
       });
+
+      // Ensure root company is always available to SUPER_ADMIN/ADMIN even if
+      // they are not the owner or member. This ensures the UI (Payments/settings)
+      // can target the root/global company for configuration.
+      const rootCompany = await db.company.findFirst({
+        where: { isRoot: true },
+      });
+      if (rootCompany && !companies.some((c: any) => c.id === rootCompany.id)) {
+        companies.unshift(rootCompany);
+      }
     } else if (
       user.role === "MANAGER" ||
       user.role === "STAFF" ||

@@ -3,93 +3,116 @@ import { db } from "@/lib/db";
 import { PLAN_LIMITS } from "@/lib/plan-limits";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
+// Single consolidated GET handler for /api/companies/my-owned
+// Returns companies the current user can manage/see and some optional plan info
 export async function GET(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) {
-      return validation.response;
-    }
+    if (!validation.valid) return validation.response;
 
-    const { user: sessionUser } = validation;
-    const userId = sessionUser.id;
+    const { user } = validation;
 
-    // Get user with plan info
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        plan: true,
-        role: true,
-      },
-    });
+    let companies: any[] = [];
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Fetch ONLY companies owned by this user (regardless of role)
-    // "My Personal Companies" means companies I own, not all companies in system
-    const companies = await db.company.findMany({
-      where: {
-        ownerId: userId, // Everyone sees only companies they own
-      },
-      include: {
-        _count: {
-          select: {
-            members: true,
+    // SUPER_ADMIN / ADMIN: aggregate owned, memberships, and staff companies
+    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+      const userWithCompanies = await db.user.findUnique({
+        where: { id: user.id },
+        include: {
+          ownedCompanies: {
+            select: { id: true, name: true, isRoot: true, createdAt: true },
+            orderBy: { createdAt: "asc" },
+          },
+          companyMemberships: {
+            include: {
+              company: {
+                select: { id: true, name: true, isRoot: true, createdAt: true },
+              },
+            },
+          },
+          companyStaff: {
+            include: {
+              company: {
+                select: { id: true, name: true, isRoot: true, createdAt: true },
+              },
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      });
+
+      if (userWithCompanies) {
+        const map = new Map<string, any>();
+        userWithCompanies.ownedCompanies.forEach((c) => map.set(c.id, c));
+        userWithCompanies.companyMemberships.forEach((m: any) =>
+          map.set(m.company.id, m.company)
+        );
+        userWithCompanies.companyStaff.forEach((s: any) =>
+          map.set(s.company.id, s.company)
+        );
+        companies = Array.from(map.values());
+
+        // ensure root company present and sorted first
+        const root = await db.company.findFirst({ where: { isRoot: true } });
+        if (root && !companies.some((c) => c.id === root.id))
+          companies.unshift(root);
+        companies.sort((a, b) =>
+          a.isRoot && !b.isRoot
+            ? -1
+            : !a.isRoot && b.isRoot
+            ? 1
+            : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      }
+
+      // Manager/Staff/Contractor: companies via companyStaff
+    } else if (["MANAGER", "STAFF", "CONTRACTOR"].includes(user.role)) {
+      const staff = await db.companyStaff.findMany({
+        where: { userId: user.id },
+        include: {
+          company: {
+            select: { id: true, name: true, isRoot: true, createdAt: true },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+      companies = staff.map((s) => s.company);
+
+      // Default: companies owned by the user
+    } else {
+      companies = await db.company.findMany({
+        where: { ownerId: user.id },
+        select: { id: true, name: true, isRoot: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      });
+    }
+
+    // Attach basic plan limits info where available
+    const dbUser = await db.user.findUnique({
+      where: { id: user.id },
+      select: { plan: true },
     });
-
-    const formattedCompanies = companies.map((company) => ({
-      id: company.id,
-      name: company.name,
-      slug: company.slug,
-      slogan: company.slogan,
-      description: company.description,
-      logo: company.logo,
-      email: company.email,
-      salesEmail: company.salesEmail,
-      supportEmail: company.supportEmail,
-      phone: company.phone,
-      website: company.website,
-      addressLine1: company.addressLine1,
-      addressLine2: company.addressLine2,
-      city: company.city,
-      state: company.state,
-      country: company.country,
-      countryCode: company.countryCode,
-      postalCode: company.postalCode,
-      memberCount: company._count.members,
-      createdAt: company.createdAt,
-    }));
-
-    const companyCount = formattedCompanies.length;
-
-    // Get plan limits
-    // SUPER_USER plan has unlimited companies (like ENTERPRISE)
-    const planLimits = PLAN_LIMITS[user.plan as keyof typeof PLAN_LIMITS];
-    const limit = planLimits?.companies ?? 0;
-    const canCreateMore = companyCount < limit;
+    const plan = dbUser?.plan || "FREE";
+    const planLimits = PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] ?? {
+      companies: 0,
+    };
+    const companyCount = companies.length;
+    const limit = planLimits.companies ?? 0;
 
     return NextResponse.json({
       success: true,
-      companies: formattedCompanies,
-      count: formattedCompanies.length,
+      companies,
+      count: companies.length,
       userPlan: {
-        plan: user.plan,
+        plan,
         companyCount,
-        canCreateMore,
         limit: limit === Infinity ? "Unlimited" : limit,
+        canCreateMore: limit === Infinity ? true : companyCount < limit,
       },
     });
   } catch (error) {
-    console.error("Error fetching owned companies:", error);
+    console.error("GET /api/companies/my-owned error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch owned companies" },
+      { success: false, companies: [], error: "Failed to fetch companies" },
       { status: 500 }
     );
   }

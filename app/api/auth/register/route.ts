@@ -33,6 +33,19 @@ const registerSchema = z.object({
     .optional()
     .default("ESSENTIAL"),
   billingCycle: z.enum(["MONTHLY", "ANNUAL"]).optional().default("MONTHLY"),
+  paymentMethodId: z.string().optional(), // Payment method from Stripe
+  stripeCustomerId: z.string().optional(), // Stripe customer ID from setup intent
+  billingAddress: z
+    .object({
+      addressLine1: z.string(),
+      addressLine2: z.string().optional(),
+      city: z.string(),
+      state: z.string(),
+      country: z.string(),
+      countryCode: z.string(),
+      postalCode: z.string(),
+    })
+    .optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -54,7 +67,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, password, plan, billingCycle } = validationResult.data;
+    const {
+      name,
+      email,
+      password,
+      plan,
+      billingCycle,
+      paymentMethodId,
+      stripeCustomerId,
+      billingAddress,
+    } = validationResult.data;
 
     // Check if user already exists
     const existingUser = await db.user.findUnique({
@@ -91,6 +113,16 @@ export async function POST(request: NextRequest) {
         trialEndsAt: trialEndsAt,
         verificationToken,
         verificationTokenExpires,
+        stripeCustomerId: stripeCustomerId || null, // Store Stripe customer ID if payment method was added
+        // Store billing address if provided
+        ...(billingAddress && {
+          addressLine1: billingAddress.addressLine1,
+          addressLine2: billingAddress.addressLine2,
+          city: billingAddress.city,
+          state: billingAddress.state,
+          country: billingAddress.country,
+          postalCode: billingAddress.postalCode,
+        }),
       },
       select: {
         id: true,
@@ -100,6 +132,7 @@ export async function POST(request: NextRequest) {
         plan: true,
         billingCycle: true,
         createdAt: true,
+        stripeCustomerId: true,
       },
     });
 
@@ -135,6 +168,7 @@ export async function POST(request: NextRequest) {
           userEmail: email,
           plan: plan,
           billingCycle: billingCycle,
+          hasPaymentMethod: !!stripeCustomerId || !!paymentMethodId,
         },
         ipAddress: geoData?.ip || null,
         ipv4: geoData?.ipv4 || null,

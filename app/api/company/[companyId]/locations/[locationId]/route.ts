@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { LocationType, Prisma } from "@prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
-// PATCH /api/company/[id]/locations/[locationId] - Update a location
+// PATCH /api/company/[companyId]/locations/[locationId] - Update a location
 export async function PATCH(request: NextRequest, context: any) {
   const { params } = context;
   try {
@@ -15,7 +15,7 @@ export async function PATCH(request: NextRequest, context: any) {
 
     const { user: sessionUser } = validation;
 
-    const companyId = params.id;
+    const companyId = params.companyId;
     const locationId = params.locationId;
     const body = await request.json();
 
@@ -100,7 +100,7 @@ export async function PATCH(request: NextRequest, context: any) {
   }
 }
 
-// DELETE /api/company/[id]/locations/[locationId] - Delete a location
+// DELETE /api/company/[companyId]/locations/[locationId] - Delete a location
 export async function DELETE(request: NextRequest, context: any) {
   const { params } = context;
   try {
@@ -112,7 +112,7 @@ export async function DELETE(request: NextRequest, context: any) {
 
     const { user: sessionUser } = validation;
 
-    const companyId = params.id;
+    const companyId = params.companyId;
     const locationId = params.locationId;
 
     // Verify company exists and user owns it
@@ -173,9 +173,7 @@ export async function DELETE(request: NextRequest, context: any) {
     }
 
     // Delete the location
-    await db.companyLocation.delete({
-      where: { id: locationId },
-    });
+    await db.companyLocation.delete({ where: { id: locationId } });
 
     return NextResponse.json({
       success: true,

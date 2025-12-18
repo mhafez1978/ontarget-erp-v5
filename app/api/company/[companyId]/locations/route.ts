@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { LocationType } from "@prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
-// GET /api/company/[id]/locations - Fetch all locations for a company
+// GET /api/company/[companyId]/locations - Fetch all locations for a company
 export async function GET(request: NextRequest, context: any) {
   const { params } = context;
   try {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, context: any) {
 
     const { user: sessionUser } = validation;
 
-    const companyId = params.id;
+    const companyId = params.companyId;
 
     // Verify user owns this company
     const company = await db.company.findUnique({
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest, context: any) {
   }
 }
 
-// POST /api/company/[id]/locations - Create a new location
+// POST /api/company/[companyId]/locations - Create a new location
 export async function POST(request: NextRequest, context: any) {
   const { params } = context;
   try {
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest, context: any) {
 
     const { user: sessionUser } = validation;
 
-    const companyId = params.id;
+    const companyId = params.companyId;
     const body = await request.json();
 
     // Validate required fields

@@ -30,7 +30,15 @@ export async function POST(request: NextRequest) {
     const provider =
       paymentsService.instantiateStripeProviderFromGateway(gateway);
 
-    const custRes = await (provider as any).createCustomer(email, name);
+    // Type guard to ensure provider has required methods
+    if (!("createCustomer" in provider) || !("createSetupIntent" in provider)) {
+      return NextResponse.json(
+        { error: "Provider does not support required methods" },
+        { status: 400 }
+      );
+    }
+
+    const custRes = await provider.createCustomer(email, name);
     if (!custRes.success || !custRes.customerId) {
       return NextResponse.json(
         { error: custRes.error || "Failed to create customer" },
@@ -38,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const siRes = await (provider as any).createSetupIntent(custRes.customerId);
+    const siRes = await provider.createSetupIntent(custRes.customerId);
     if (!siRes.success || !siRes.clientSecret) {
       return NextResponse.json(
         { error: siRes.error || "Failed to create setup intent" },

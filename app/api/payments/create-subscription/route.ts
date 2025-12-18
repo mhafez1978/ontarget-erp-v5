@@ -31,12 +31,22 @@ export async function POST(request: NextRequest) {
     const provider =
       paymentsService.instantiateStripeProviderFromGateway(gateway);
 
+    // Type guard to ensure we have a Stripe provider with required methods
+    if (!("stripe" in provider) || !("createSubscription" in provider)) {
+      return NextResponse.json(
+        { error: "Provider does not support subscriptions" },
+        { status: 400 }
+      );
+    }
+
+    const stripeProvider = provider as any;
+
     // Attach payment method to customer and set as default
     try {
-      await (provider as any).stripe.paymentMethods.attach(paymentMethodId, {
+      await stripeProvider.stripe.paymentMethods.attach(paymentMethodId, {
         customer: customerId,
       });
-      await (provider as any).stripe.customers.update(customerId, {
+      await stripeProvider.stripe.customers.update(customerId, {
         invoice_settings: { default_payment_method: paymentMethodId },
       });
     } catch (err) {
@@ -47,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const subRes = await (provider as any).createSubscription({
+    const subRes = await stripeProvider.createSubscription({
       customerId,
       priceId,
       trialDays: 30,

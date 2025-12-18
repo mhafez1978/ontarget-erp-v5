@@ -1160,6 +1160,11 @@ model Invoice {
   invoiceNumber String  @unique // "INV-2024-001234"
   companyId     String // Company issuing the invoice
   userId        String? // User/customer receiving the invoice (NULL for external customers)
+  
+  // External provider linkage
+  externalInvoiceId String? // External provider invoice id (Stripe invoice id)
+  @@unique([externalInvoiceId])
+  externalInvoiceUrl String? // Hosted invoice URL or PDF
 
   // Invoice type and status
   type   InvoiceType   @default(CUSTOM)

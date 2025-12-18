@@ -4,7 +4,11 @@ import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Loader2 } from "lucide-react";
 
-export default function CompanyBillingPage({ params }: { params: { companyId: string } }) {
+export default function CompanyBillingPage({
+  params,
+}: {
+  params: { companyId: string };
+}) {
   const { companyId } = params;
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -35,14 +39,21 @@ export default function CompanyBillingPage({ params }: { params: { companyId: st
     load();
   }, [companyId]);
 
-  if (loading) return (
-    <DashboardLayout user={{ name: null, email: null, image: null, role: "GUEST" }}>
-      <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
-    </DashboardLayout>
-  );
+  if (loading)
+    return (
+      <DashboardLayout
+        user={{ name: null, email: null, image: null, role: "GUEST" }}
+      >
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
 
   return (
-    <DashboardLayout user={{ name: null, email: null, image: null, role: "GUEST" }}>
+    <DashboardLayout
+      user={{ name: null, email: null, image: null, role: "GUEST" }}
+    >
       <div className="container mx-auto py-10">
         <h1 className="text-2xl font-bold mb-4">Billing</h1>
 
@@ -64,10 +75,18 @@ export default function CompanyBillingPage({ params }: { params: { companyId: st
                     <td className="p-2">{inv.invoiceNumber}</td>
                     <td className="p-2">{inv.status}</td>
                     <td className="p-2">{inv.total}</td>
-                    <td className="p-2">{new Date(inv.issueDate).toLocaleDateString()}</td>
+                    <td className="p-2">
+                      {new Date(inv.issueDate).toLocaleDateString()}
+                    </td>
                   </tr>
                 ))}
-                {invoices.length === 0 && <tr><td className="p-4" colSpan={4}>No invoices found.</td></tr>}
+                {invoices.length === 0 && (
+                  <tr>
+                    <td className="p-4" colSpan={4}>
+                      No invoices found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -90,11 +109,21 @@ export default function CompanyBillingPage({ params }: { params: { companyId: st
                   <tr key={p.id} className="border-t">
                     <td className="p-2">{p.gatewayReference || p.id}</td>
                     <td className="p-2">{p.status}</td>
-                    <td className="p-2">{p.amount} {p.currency}</td>
-                    <td className="p-2">{new Date(p.createdAt).toLocaleDateString()}</td>
+                    <td className="p-2">
+                      {p.amount} {p.currency}
+                    </td>
+                    <td className="p-2">
+                      {new Date(p.createdAt).toLocaleDateString()}
+                    </td>
                   </tr>
                 ))}
-                {payments.length === 0 && <tr><td className="p-4" colSpan={4}>No payments found.</td></tr>}
+                {payments.length === 0 && (
+                  <tr>
+                    <td className="p-4" colSpan={4}>
+                      No payments found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

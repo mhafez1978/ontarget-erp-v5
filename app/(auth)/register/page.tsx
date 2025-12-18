@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -23,24 +22,38 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Check,
 } from "lucide-react";
-import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
+import { loadStripe, type Stripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { CreditCardDisplay } from "@/components/credit-card-display";
+import { PaymentForm } from "@/components/payment-form";
 import {
-  PLAN_PRICING,
-  PLAN_LIMITS,
-  getTotalUserLimit,
-} from "@/lib/plan-limits";
+  AddressAutocomplete,
+  AddressData,
+} from "@/components/address-autocomplete";
 
 type SubscriptionPlan = "ESSENTIAL" | "GROWTH" | "ENTERPRISE";
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [publishableKey, setPublishableKey] = useState<string>("");
+  const [stripePromise, setStripePromise] =
+    useState<Promise<Stripe | null> | null>(null);
+  const [isLoadingPublishableKey, setIsLoadingPublishableKey] = useState(true);
+  const [publishableKeyError, setPublishableKeyError] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingSetupIntent, setIsCreatingSetupIntent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [setupIntentError, setSetupIntentError] = useState("");
 
-  // Get plan from URL or default to ESSENTIAL
+  // Step 1: Plan Selection
   const urlPlan = searchParams
     .get("plan")
     ?.toUpperCase() as SubscriptionPlan | null;
@@ -49,29 +62,42 @@ function RegisterForm() {
       ? urlPlan
       : "ESSENTIAL"
   );
-
-  const initialFormData = {
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  };
-
-  const [formData, setFormData] = useState(initialFormData);
-  const [error, setError] = useState("");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly"
   );
 
-  // Track if form is dirty
-  const isFormDirty = useFormDirty(initialFormData, formData);
+  // Step 2: Payment & Billing
+  const [clientSecret, setClientSecret] = useState<string>("");
+  const [customerId, setCustomerId] = useState<string>("");
+  const [paymentMethodId, setPaymentMethodId] = useState<string>("");
+  const [paymentSummary, setPaymentSummary] = useState<{
+    brand?: string;
+    last4?: string;
+  }>({});
+  const [cardData, setCardData] = useState({
+    cardNumber: "",
+    cardHolder: "",
+    expiryDate: "",
+    cvv: "",
+    cardBrand: "visa" as "visa" | "mastercard" | "amex" | "discover",
+  });
+  const [isPaymentValid, setIsPaymentValid] = useState(false);
+  const [billingAddress, setBillingAddress] = useState<AddressData>({
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    country: "United States",
+    countryCode: "US",
+    postalCode: "",
+  });
 
-  const [enabledProviders, setEnabledProviders] = useState<{
-    google: boolean;
-    microsoft: boolean;
-  }>({
-    google: false,
-    microsoft: false,
+  // Step 3: Account Details
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   // Function to capitalize each word in a name
@@ -85,29 +111,211 @@ function RegisterForm() {
       .join(" ");
   };
 
-  // Fetch enabled OAuth providers on mount
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+  const isStrongPassword = (password: string) =>
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
+
+  // Fetch publishable key from backend (root gateway)
   useEffect(() => {
-    const fetchEnabledProviders = async () => {
+    const controller = new AbortController();
+
+    const loadKey = async () => {
+      setIsLoadingPublishableKey(true);
+      setPublishableKeyError("");
+
       try {
-        const response = await fetch("/api/auth/enabled-providers");
-        if (response.ok) {
-          const data = await response.json();
-          const providers = data.providers || [];
-          setEnabledProviders({
-            google: providers.some(
-              (p: { provider: string }) => p.provider === "google"
-            ),
-            microsoft: providers.some(
-              (p: { provider: string }) => p.provider === "microsoft"
-            ),
-          });
+        const res = await fetch("/api/payments/public-key", {
+          method: "GET",
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Payment provider is not configured");
         }
-      } catch (error) {
-        console.error("Failed to fetch enabled providers:", error);
+
+        const data = (await res.json()) as {
+          publishableKey?: string;
+          provider?: string;
+          isTestMode?: boolean;
+        };
+
+        if (!data.publishableKey) {
+          throw new Error("Payment provider is missing a publishable key");
+        }
+
+        setPublishableKey(data.publishableKey);
+        setStripePromise(loadStripe(data.publishableKey));
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        setPublishableKeyError(
+          err instanceof Error ? err.message : "Failed to load payment provider"
+        );
+      } finally {
+        setIsLoadingPublishableKey(false);
       }
     };
-    fetchEnabledProviders();
+
+    loadKey();
+    return () => controller.abort();
   }, []);
+
+  const createSetupIntent = useCallback(async () => {
+    if (isCreatingSetupIntent || clientSecret) return;
+    if (!formData.name || !formData.email) return;
+    if (!publishableKey || publishableKeyError) return;
+
+    setIsCreatingSetupIntent(true);
+    setSetupIntentError("");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const response = await fetch("/api/payments/create-setup-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          name: formData.name,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Unable to initialize payment form.");
+      }
+
+      const data = await response.json();
+      setClientSecret(data.clientSecret);
+      setCustomerId(data.customerId);
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        setSetupIntentError("Payment form timed out. Please retry.");
+      } else {
+        setSetupIntentError(
+          err instanceof Error
+            ? err.message
+            : "Failed to initialize payment form. Please retry."
+        );
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      setIsCreatingSetupIntent(false);
+    }
+  }, [
+    clientSecret,
+    formData.email,
+    formData.name,
+    isCreatingSetupIntent,
+    publishableKey,
+    publishableKeyError,
+  ]);
+
+  // Create setup intent when moving to step 2
+  useEffect(() => {
+    if (
+      currentStep === 2 &&
+      !clientSecret &&
+      !setupIntentError &&
+      !isLoadingPublishableKey &&
+      !publishableKeyError &&
+      formData.name &&
+      formData.email
+    ) {
+      createSetupIntent();
+    }
+  }, [
+    currentStep,
+    clientSecret,
+    createSetupIntent,
+    setupIntentError,
+    isLoadingPublishableKey,
+    publishableKeyError,
+    formData.name,
+    formData.email,
+  ]);
+
+  const planDetails = {
+    ESSENTIAL: {
+      name: "Essential",
+      monthlyPrice: "$49.99",
+      annualPrice: "$42.49",
+      annualTotal: "$509.88",
+      features: ["Up to 10 users", "5GB storage", "Email support"],
+    },
+    GROWTH: {
+      name: "Growth",
+      monthlyPrice: "$149.99",
+      annualPrice: "$127.49",
+      annualTotal: "$1,529.88",
+      features: [
+        "Up to 50 users",
+        "50GB storage",
+        "Priority support",
+        "Advanced analytics",
+      ],
+    },
+    ENTERPRISE: {
+      name: "Enterprise",
+      monthlyPrice: "$349.99",
+      annualPrice: "$297.49",
+      annualTotal: "$3,569.88",
+      features: [
+        "Unlimited users",
+        "Unlimited storage",
+        "24/7 phone support",
+        "Custom integrations",
+        "Dedicated account manager",
+      ],
+    },
+  };
+
+  const handleNextStep = () => {
+    setError("");
+
+    if (currentStep === 1) {
+      if (!formData.name.trim() || formData.name.trim().length < 2) {
+        setError("Please enter your full name");
+        return;
+      }
+
+      if (!isValidEmail(formData.email)) {
+        setError("Please enter a valid email address");
+        return;
+      }
+
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      // Validate payment info
+      if (!isPaymentValid) {
+        setError("Please complete your payment information");
+        return;
+      }
+      if (!paymentMethodId) {
+        setError("Payment method is required");
+        return;
+      }
+      if (
+        !billingAddress.addressLine1 ||
+        !billingAddress.city ||
+        !billingAddress.state ||
+        !billingAddress.postalCode
+      ) {
+        setError("Please complete your billing address");
+        return;
+      }
+      setCurrentStep(3);
+    }
+  };
+
+  const handlePreviousStep = () => {
+    setError("");
+    setCurrentStep(currentStep - 1);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,8 +328,8 @@ function RegisterForm() {
     }
 
     // Validate password strength
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
+    if (!isStrongPassword(formData.password)) {
+      setError("Password must include upper, lower, number, and be 8+ chars");
       return;
     }
 
@@ -136,7 +344,10 @@ function RegisterForm() {
           email: formData.email,
           password: formData.password,
           plan: selectedPlan,
-          billingCycle: billingCycle.toUpperCase(), // "MONTHLY" or "ANNUAL"
+          billingCycle: billingCycle.toUpperCase(),
+          paymentMethodId,
+          stripeCustomerId: customerId,
+          billingAddress,
         }),
       });
 
@@ -146,7 +357,6 @@ function RegisterForm() {
         throw new Error(data.error || "Registration failed");
       }
 
-      // Redirect to success page
       router.push("/register/success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -155,58 +365,517 @@ function RegisterForm() {
     }
   };
 
-  const planDetails = {
-    ESSENTIAL: {
-      name: "Essential",
-      monthlyPrice: PLAN_PRICING.ESSENTIAL.monthlyPromoPrice
-        ? `$${PLAN_PRICING.ESSENTIAL.monthlyPromoPrice}`
-        : `$${PLAN_PRICING.ESSENTIAL.monthlyPrice}`,
-      monthlyOriginalPrice: PLAN_PRICING.ESSENTIAL.monthlyPromoPrice
-        ? `$${PLAN_PRICING.ESSENTIAL.monthlyPrice}`
-        : null,
-      annualPrice: `$${PLAN_PRICING.ESSENTIAL.annualPriceMonthly}`,
-      annualTotal: `$${PLAN_PRICING.ESSENTIAL.annualPrice}`,
-      isPromo: !!PLAN_PRICING.ESSENTIAL.monthlyPromoPrice,
-      features: [
-        `${PLAN_LIMITS.ESSENTIAL.companies} company`,
-        `${getTotalUserLimit("ESSENTIAL")} users`,
-        `${PLAN_LIMITS.ESSENTIAL.customers} customers`,
-        `${PLAN_LIMITS.ESSENTIAL.storageGB} GB storage`,
-      ],
-    },
-    GROWTH: {
-      name: "Growth",
-      monthlyPrice: `$${PLAN_PRICING.GROWTH.monthlyPrice}`,
-      monthlyOriginalPrice: null,
-      annualPrice: `$${PLAN_PRICING.GROWTH.annualPriceMonthly}`,
-      annualTotal: `$${PLAN_PRICING.GROWTH.annualPrice}`,
-      isPromo: false,
-      features: [
-        `Up to ${PLAN_LIMITS.GROWTH.companies} companies`,
-        `${getTotalUserLimit("GROWTH")} users`,
-        `${PLAN_LIMITS.GROWTH.customers} customers`,
-        `${PLAN_LIMITS.GROWTH.storageGB} GB storage`,
-      ],
-    },
-    ENTERPRISE: {
-      name: "Enterprise",
-      monthlyPrice: `$${PLAN_PRICING.ENTERPRISE.monthlyPrice}`,
-      monthlyOriginalPrice: null,
-      annualPrice: `$${PLAN_PRICING.ENTERPRISE.annualPriceMonthly}`,
-      annualTotal: `$${PLAN_PRICING.ENTERPRISE.annualPrice}`,
-      isPromo: false,
-      features: [
-        "Unlimited companies",
-        "Unlimited users",
-        "Unlimited customers",
-        `${PLAN_LIMITS.ENTERPRISE.storageGB} GB storage`,
-      ],
-    },
-  };
+  // Render step indicator
+  const StepIndicator = () => (
+    <div className="flex items-center justify-center mb-8">
+      {[1, 2, 3].map((step) => (
+        <div key={step} className="flex items-center">
+          <div
+            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
+              currentStep >= step
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-muted-foreground text-muted-foreground"
+            }`}
+          >
+            {currentStep > step ? (
+              <Check className="h-5 w-5" />
+            ) : (
+              <span className="text-sm font-semibold">{step}</span>
+            )}
+          </div>
+          {step < 3 && (
+            <div
+              className={`w-16 h-0.5 mx-2 transition-all ${
+                currentStep > step ? "bg-primary" : "bg-muted-foreground"
+              }`}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
+  // Step 1: Plan Selection
+  const renderPlanSelection = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-2">Choose Your Plan</h2>
+        <p className="text-muted-foreground text-sm">
+          Start with a 30-day free trial • Cancel anytime
+        </p>
+      </div>
+
+      {/* Contact Information (needed for setup intent) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="name-step1">Full Name</Label>
+          <div className="relative">
+            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="name-step1"
+              type="text"
+              placeholder="John Doe"
+              className="pl-10"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  name: capitalizeName(e.target.value),
+                })
+              }
+              required
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email-step1">Email</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="email-step1"
+              type="email"
+              placeholder="you@example.com"
+              className="pl-10"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              required
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            We'll use this to create your account and initialize billing.
+          </p>
+        </div>
+      </div>
+
+      {/* Billing Cycle Toggle */}
+      <div className="flex items-center justify-center gap-3 p-1 bg-muted rounded-lg w-fit mx-auto">
+        <button
+          type="button"
+          onClick={() => setBillingCycle("monthly")}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            billingCycle === "monthly"
+              ? "bg-background shadow-sm"
+              : "hover:bg-background/50"
+          }`}
+        >
+          Monthly
+        </button>
+        <button
+          type="button"
+          onClick={() => setBillingCycle("annual")}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            billingCycle === "annual"
+              ? "bg-background shadow-sm"
+              : "hover:bg-background/50"
+          }`}
+        >
+          Annual
+          <span className="ml-2 text-xs text-green-600 font-semibold">
+            Save 15%
+          </span>
+        </button>
+      </div>
+
+      {/* Plan Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {(["ESSENTIAL", "GROWTH", "ENTERPRISE"] as const).map((plan) => (
+          <button
+            key={plan}
+            type="button"
+            onClick={() => setSelectedPlan(plan)}
+            className={`text-left p-4 rounded-lg border-2 transition-all hover:shadow-lg ${
+              selectedPlan === plan
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border hover:border-primary/50"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold">{planDetails[plan].name}</h3>
+              {selectedPlan === plan && (
+                <Check className="h-5 w-5 text-primary" />
+              )}
+            </div>
+            {billingCycle === "monthly" ? (
+              <div className="text-2xl font-bold text-primary mb-2">
+                {planDetails[plan].monthlyPrice}
+                <span className="text-sm font-normal text-muted-foreground">
+                  /mo
+                </span>
+              </div>
+            ) : (
+              <div className="mb-2">
+                <div className="text-2xl font-bold text-primary">
+                  {planDetails[plan].annualPrice}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    /mo
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {planDetails[plan].annualTotal} billed annually
+                </p>
+              </div>
+            )}
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              {planDetails[plan].features.map((feature, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 shrink-0" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex justify-center">
+        <Button
+          type="button"
+          onClick={handleNextStep}
+          className="w-full max-w-md"
+          size="lg"
+        >
+          Continue to Payment
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Step 2: Payment & Billing
+  const renderPaymentStep = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-4">
+        <h2 className="text-2xl font-bold mb-2">Payment Information</h2>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
+          <CheckCircle2 className="h-5 w-5 text-green-600" />
+          <p className="text-sm font-medium text-green-800 dark:text-green-200">
+            30-day free trial • Cancel anytime • No charge until trial ends
+          </p>
+        </div>
+      </div>
+
+      {publishableKeyError && (
+        <div className="p-4 border border-destructive rounded-lg bg-destructive/10 text-destructive text-sm">
+          {publishableKeyError}
+        </div>
+      )}
+
+      {setupIntentError && (
+        <div className="p-4 border border-destructive rounded-lg bg-destructive/10 text-sm flex flex-col gap-3">
+          <span className="text-destructive">{setupIntentError}</span>
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={createSetupIntent}
+              disabled={isCreatingSetupIntent}
+            >
+              {isCreatingSetupIntent ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying...
+                </>
+              ) : (
+                "Retry"
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Left Column: Credit Card Display */}
+        <div className="space-y-4">
+          <CreditCardDisplay
+            cardNumber={cardData.cardNumber}
+            cardHolder={cardData.cardHolder}
+            expiryDate={cardData.expiryDate}
+            cvv={cardData.cvv}
+          />
+        </div>
+
+        {/* Right Column: Payment Form */}
+        <div className="space-y-4">
+          {clientSecret && stripePromise ? (
+            <Elements
+              stripe={stripePromise}
+              options={{
+                clientSecret,
+                appearance: {
+                  theme: "stripe",
+                  variables: {
+                    colorPrimary: "#0066ff",
+                  },
+                },
+              }}
+            >
+              <PaymentForm
+                onCardDataChange={setCardData}
+                onValidationChange={setIsPaymentValid}
+                onPaymentMethodCreated={(id, details) => {
+                  setPaymentMethodId(id);
+                  setPaymentSummary({
+                    brand: details?.brand,
+                    last4: details?.last4,
+                  });
+                }}
+              />
+            </Elements>
+          ) : (
+            <div className="flex items-center justify-center p-8 bg-muted/50 rounded-lg min-h-[300px]">
+              <div className="text-center space-y-1">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
+                <span className="text-sm text-muted-foreground">
+                  {isLoadingPublishableKey
+                    ? "Loading payment provider..."
+                    : isCreatingSetupIntent
+                    ? "Preparing payment form..."
+                    : "Waiting to initialize payment form"}
+                </span>
+                {publishableKeyError && (
+                  <p className="text-xs text-destructive">
+                    {publishableKeyError}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Billing Address */}
+      <div className="border-t pt-6 mt-6">
+        <h3 className="text-lg font-semibold mb-4">Billing Address</h3>
+        <AddressAutocomplete
+          label="Billing Address"
+          value={billingAddress}
+          onChange={setBillingAddress}
+          required
+        />
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex gap-3 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handlePreviousStep}
+          className="flex-1"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Plan
+        </Button>
+        <Button
+          type="button"
+          onClick={handleNextStep}
+          className="flex-1"
+          disabled={
+            !clientSecret ||
+            !isPaymentValid ||
+            !paymentMethodId ||
+            isCreatingSetupIntent ||
+            isLoadingPublishableKey ||
+            !!publishableKeyError
+          }
+        >
+          Continue to Account
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Step 3: Account Details
+  const renderAccountStep = () => (
+    <div className="space-y-6 max-w-md mx-auto">
+      <div className="text-center mb-4">
+        <h2 className="text-2xl font-bold mb-2">Account Details</h2>
+        <p className="text-sm text-muted-foreground">
+          Create your login credentials
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Full Name</Label>
+          <div className="relative">
+            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="name"
+              type="text"
+              placeholder="John Doe"
+              className="pl-10"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  name: capitalizeName(e.target.value),
+                })
+              }
+              required
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              className="pl-10"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              required
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              className="pl-10 pr-10"
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+              required
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Use 8+ chars with upper, lower, and a number
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="••••••••"
+              className="pl-10 pr-10"
+              value={formData.confirmPassword}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  confirmPassword: e.target.value,
+                })
+              }
+              required
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+        <h3 className="font-semibold text-sm">Registration Summary</h3>
+        <div className="text-sm text-muted-foreground space-y-1">
+          <p>
+            <span className="font-medium">Plan:</span>{" "}
+            {planDetails[selectedPlan].name} (
+            {billingCycle === "monthly" ? "Monthly" : "Annual"})
+          </p>
+          <p>
+            <span className="font-medium">Payment:</span>{" "}
+            {paymentSummary.last4
+              ? `${(paymentSummary.brand || "Card").toUpperCase()} ending in ${
+                  paymentSummary.last4
+                }`
+              : "Payment method pending"}
+          </p>
+          <p>
+            <span className="font-medium">Trial:</span> 30 days free, then{" "}
+            {billingCycle === "monthly"
+              ? planDetails[selectedPlan].monthlyPrice
+              : planDetails[selectedPlan].annualPrice}
+            /month
+          </p>
+        </div>
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handlePreviousStep}
+          disabled={isLoading}
+          className="flex-1"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <Button type="submit" disabled={isLoading} className="flex-1">
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating Account...
+            </>
+          ) : (
+            <>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Create Account
+            </>
+          )}
+        </Button>
+      </div>
+
+      <p className="text-xs text-center text-muted-foreground mt-4">
+        By creating an account, you agree to our{" "}
+        <Link href="/terms" className="underline hover:text-primary">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="underline hover:text-primary">
+          Privacy Policy
+        </Link>
+      </p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <Card className="w-full max-w-4xl">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
             <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
@@ -214,356 +883,30 @@ function RegisterForm() {
             </div>
           </div>
           <CardTitle className="text-2xl text-center">
-            Create an account
+            Create Your Account
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your details to get started with your 30-day free trial
+            {currentStep === 1 && "Select your plan to get started"}
+            {currentStep === 2 && "Enter your payment information"}
+            {currentStep === 3 && "Complete your account details"}
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-md border border-red-200 dark:border-red-900">
-                {error}
-              </div>
-            )}
 
-            {/* Plan Selection */}
-            <div className="space-y-3">
-              <Label>Select Your Plan</Label>
+        <CardContent>
+          <StepIndicator />
 
-              {/* Billing Cycle Toggle */}
-              <div className="flex justify-center mb-4">
-                <div className="inline-flex rounded-lg border border-border p-1 bg-muted/50">
-                  <button
-                    type="button"
-                    onClick={() => setBillingCycle("monthly")}
-                    className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
-                      billingCycle === "monthly"
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBillingCycle("annual")}
-                    className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
-                      billingCycle === "annual"
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Annual
-                    <span className="ml-1.5 text-xs bg-green-500 text-white px-1.5 py-0.5 rounded">
-                      Save
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {(["ESSENTIAL", "GROWTH", "ENTERPRISE"] as const).map(
-                  (plan) => (
-                    <button
-                      key={plan}
-                      type="button"
-                      onClick={() => setSelectedPlan(plan)}
-                      className={`relative p-4 rounded-lg border-2 transition-all text-left ${
-                        selectedPlan === plan
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      {selectedPlan === plan && (
-                        <CheckCircle2 className="absolute top-2 right-2 h-5 w-5 text-primary" />
-                      )}
-                      {/* {planDetails[plan].isPromo && (
-                        <div className="absolute top-8 left-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
-                          PROMO
-                        </div>
-                      )} */}
-                      <div className="font-semibold text-base mb-1">
-                        {planDetails[plan].name}
-                      </div>
-                      {billingCycle === "monthly" ? (
-                        // Monthly Pricing Display
-                        planDetails[plan].isPromo &&
-                        planDetails[plan].monthlyOriginalPrice ? (
-                          <div className="mb-2">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-sm text-orange-500 line-through font-semibold">
-                                {planDetails[plan].monthlyOriginalPrice}
-                              </span>
-                              <span className="text-lg font-bold text-primary">
-                                {planDetails[plan].monthlyPrice}
-                              </span>
-                              <span className="text-xs font-normal text-muted-foreground">
-                                /mo
-                              </span>
-                            </div>
-                            <p className="text-xs text-primary font-medium mt-0.5">
-                              Limited offer!
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="text-lg font-bold text-primary mb-2">
-                            {planDetails[plan].monthlyPrice}
-                            <span className="text-xs font-normal text-muted-foreground">
-                              /mo
-                            </span>
-                          </div>
-                        )
-                      ) : (
-                        // Annual Pricing Display
-                        <div className="mb-2">
-                          <div className="text-lg font-bold text-primary">
-                            {planDetails[plan].annualPrice}
-                            <span className="text-xs font-normal text-muted-foreground">
-                              /mo
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {planDetails[plan].annualTotal} billed annually
-                          </p>
-                        </div>
-                      )}
-                      <ul className="space-y-1 text-xs text-muted-foreground">
-                        {planDetails[plan].features.map((feature, idx) => (
-                          <li key={idx}>• {feature}</li>
-                        ))}
-                      </ul>
-                    </button>
-                  )
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-green-600" />
-                30-day free trial • No credit card required
-              </p>
+          {error && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-lg text-sm">
+              {error}
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  className="pl-10"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      name: capitalizeName(e.target.value),
-                    })
-                  }
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  className="pl-10"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  required
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Must be at least 8 characters long
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
-                  required
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4 mt-6">
-            <Button
-              type="submit"
-              className={`w-full ${getPulsateClassName(isFormDirty)}`}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Create Account
-                </>
-              )}
-            </Button>
-
-            <div className="text-sm text-center text-muted-foreground">
-              Already have an account?{" "}
-              <Link href="/login" className="text-primary hover:underline">
-                Sign in
-              </Link>
-            </div>
-
-            {(enabledProviders.google || enabledProviders.microsoft) && (
-              <>
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
-                  </div>
-                </div>
-
-                <div
-                  className={`grid ${
-                    enabledProviders.google && enabledProviders.microsoft
-                      ? "grid-cols-2"
-                      : "grid-cols-1"
-                  } gap-4`}
-                >
-                  {enabledProviders.google && (
-                    <Button
-                      variant="outline"
-                      type="button"
-                      disabled={isLoading}
-                      onClick={() => {
-                        setIsLoading(true);
-                        window.location.href = `/api/auth/google/login?plan=${selectedPlan}`;
-                      }}
-                    >
-                      <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                        <path
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                          fill="#4285F4"
-                        />
-                        <path
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                          fill="#34A853"
-                        />
-                        <path
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                          fill="#FBBC05"
-                        />
-                        <path
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                          fill="#EA4335"
-                        />
-                      </svg>
-                      Google
-                    </Button>
-                  )}
-                  {enabledProviders.microsoft && (
-                    <Button
-                      variant="outline"
-                      type="button"
-                      disabled={isLoading}
-                      onClick={() => {
-                        setIsLoading(true);
-                        window.location.href = `/api/auth/microsoft/login?plan=${selectedPlan}`;
-                      }}
-                    >
-                      <svg
-                        className="mr-2 h-4 w-4"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z" />
-                      </svg>
-                      Microsoft
-                    </Button>
-                  )}
-                </div>
-              </>
-            )}
-
-            <p className="text-xs text-center text-muted-foreground">
-              By creating an account, you agree to our{" "}
-              <Link href="/terms" className="underline hover:text-primary">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="/privacy" className="underline hover:text-primary">
-                Privacy Policy
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
+          <form onSubmit={handleSubmit}>
+            {currentStep === 1 && renderPlanSelection()}
+            {currentStep === 2 && renderPaymentStep()}
+            {currentStep === 3 && renderAccountStep()}
+          </form>
+        </CardContent>
       </Card>
     </div>
   );
@@ -573,20 +916,15 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">
-          <Card className="w-full max-w-2xl">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+          <Card className="w-full max-w-4xl">
             <CardHeader className="space-y-1">
               <div className="flex items-center justify-center mb-4">
                 <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
-                  <UserPlus className="h-6 w-6 text-primary-foreground" />
+                  <Loader2 className="h-6 w-6 text-primary-foreground animate-spin" />
                 </div>
               </div>
-              <CardTitle className="text-2xl text-center">
-                Create an account
-              </CardTitle>
-              <CardDescription className="text-center">
-                Loading...
-              </CardDescription>
+              <CardTitle className="text-2xl text-center">Loading...</CardTitle>
             </CardHeader>
           </Card>
         </div>
