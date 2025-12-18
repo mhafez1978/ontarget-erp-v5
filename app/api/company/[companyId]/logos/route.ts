@@ -52,10 +52,10 @@ function bufferToDataURL(buffer: Buffer, mimeType: string): string {
 // POST - Upload multiple logos
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { companyId: id } = await params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
       return validation.response;
@@ -266,10 +266,10 @@ export async function POST(
 // GET - List all uploaded logos for a company
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { companyId: id } = await params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
       return validation.response;
@@ -403,280 +403,21 @@ export async function GET(
           });
         }
       };
-      const companyRecord = await db.company.findUnique({
+      const companyFallback = await db.company.findUnique({
         where: { id },
         select: { logo: true, logoLight: true, logoDark: true },
       });
-      addLogoIfMissing(companyRecord?.logo, "logo");
-      addLogoIfMissing(companyRecord?.logoLight, "logoLight");
-      addLogoIfMissing(companyRecord?.logoDark, "logoDark");
+      addLogoIfMissing(companyFallback?.logo, "logo");
+      addLogoIfMissing(companyFallback?.logoLight, "logoLight");
+      addLogoIfMissing(companyFallback?.logoDark, "logoDark");
     }
 
-    console.log("[GET Logos] Returning logos:", logos);
-
-    return NextResponse.json({
-      success: true,
-      logos,
-    });
+    return NextResponse.json({ success: true, logos });
   } catch (error) {
-    console.error("List logos error:", error);
+    console.error("GET logos failed:", error);
     return NextResponse.json(
       { error: "Failed to list logos" },
       { status: 500 }
     );
-  }
-}
-
-// DELETE - Delete a specific logo
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const validation = await validateSessionForAPI(request);
-    if (!validation.valid) {
-      return validation.response;
-    }
-
-    const userId = validation.user.id;
-
-    // Get user role and check ownership
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        role: true,
-        ownedCompanies: {
-          where: { id },
-          select: { id: true },
-        },
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Check authorization: SUPER_ADMIN can delete logos from any company
-    const isSuperAdmin = user.role === "SUPER_ADMIN";
-    const ownsCompany = user.ownedCompanies.length > 0;
-
-    if (!isSuperAdmin && !ownsCompany) {
-      return NextResponse.json(
-        {
-          error:
-            "Unauthorized. You can only delete logos for companies you own.",
-        },
-        { status: 403 }
-      );
-    }
-
-    // SUPER_ADMIN bypass: no further ownership check needed
-    // Non-super-admins must own the company (already verified above)
-
-    const { searchParams } = new URL(request.url);
-    let logoUrl = searchParams.get("url");
-
-    // If no url param was provided (or it's a very long base64), accept JSON body { url }
-    if (!logoUrl) {
-      try {
-        const body = await request.json();
-        logoUrl = body?.url;
-        console.log("[DELETE Logos] Read logo URL from request body");
-      } catch (err) {
-        console.log(
-          "[DELETE Logos] No URL in query params and failed to parse request body",
-          err
-        );
-      }
-    }
-
-    if (!logoUrl) {
-      return NextResponse.json(
-        { error: "Logo URL is required" },
-        { status: 400 }
-      );
-    }
-
-    // Check if storage is configured
-    const storageConfig = await hasStorageConfigured();
-    const isBase64Logo = logoUrl.startsWith("data:");
-    let filename = "base64-logo";
-
-    // Try to delete from storage (prefer cold storage if configured), then
-    // always clear any references from the DB uploadedLogos JSON field so the
-    // UI no longer shows the logo.
-    const storageBasePath = storageConfig?.basePath ?? "";
-    const isFilenameUrl = !isBase64Logo;
-    let fileDeletedFromStorage = false;
-    let dbRemovedFromUploadedLogos = false;
-
-    if (isFilenameUrl) {
-      // Extract filename safely
-      try {
-        const extractedFilename = filenameFromUrl(logoUrl);
-        filename = extractedFilename || filename;
-
-        // Prefer deletion from configured storage base path
-        if (storageBasePath) {
-          const filepath = join(storageBasePath, "logos", id, filename);
-          try {
-            await unlink(filepath);
-            fileDeletedFromStorage = true;
-            console.log(
-              "[DELETE Logos] Removed file from storage basePath:",
-              filepath
-            );
-          } catch (error) {
-            console.log(
-              "[DELETE Logos] Failed to delete from storage basePath:",
-              filepath,
-              error
-            );
-          }
-        }
-
-        // Fallback to public uploads path (if it exists)
-        if (!fileDeletedFromStorage) {
-          const publicPath = resolve(
-            process.cwd(),
-            "public",
-            "uploads",
-            "logos",
-            id,
-            filename
-          );
-          try {
-            await unlink(publicPath);
-            fileDeletedFromStorage = true;
-            console.log(
-              "[DELETE Logos] Removed file from public uploads path:",
-              publicPath
-            );
-          } catch (error) {
-            console.log(
-              "[DELETE Logos] Failed to delete from public path:",
-              publicPath,
-              error
-            );
-          }
-        }
-      } catch (err) {
-        console.error("[DELETE Logos] Error extracting filename:", err);
-      }
-    }
-
-    // Always remove any references from the uploadedLogos DB JSON field, this
-    // works both for base64 data urls and for path urls recorded in the DB.
-    try {
-      const company = await db.company.findUnique({
-        where: { id },
-        select: { uploadedLogos: true },
-      });
-      const existingLogos =
-        (company?.uploadedLogos as Array<{ url: string; filename: string }>) ||
-        [];
-      const updatedLogos = existingLogos.filter((l) => l.url !== logoUrl);
-
-      dbRemovedFromUploadedLogos = updatedLogos.length !== existingLogos.length;
-      if (dbRemovedFromUploadedLogos) {
-        await db.company.update({
-          where: { id },
-          data: { uploadedLogos: updatedLogos },
-        });
-        console.log(
-          "[DELETE Logos] Removed logo entry from DB uploadedLogos field for company:",
-          id
-        );
-      }
-    } catch (err) {
-      console.error(
-        "[DELETE Logos] Error removing logo from DB uploadedLogos field:",
-        err
-      );
-    }
-
-    // Check if this logo is assigned to any company and unassign it
-    console.log(
-      "[DELETE Logos] Unassigning theme logo if present for URL:",
-      logoUrl
-    );
-    const companies = await db.company.findMany({
-      where: {
-        OR: [{ logoLight: logoUrl }, { logoDark: logoUrl }, { logo: logoUrl }],
-      },
-    });
-
-    for (const company of companies) {
-      const updateData: {
-        logoLight?: null;
-        logoDark?: null;
-        logo?: null;
-      } = {};
-
-      if (company.logoLight === logoUrl) updateData.logoLight = null;
-      if (company.logoDark === logoUrl) updateData.logoDark = null;
-      if (company.logo === logoUrl) updateData.logo = null;
-
-      await db.company.update({
-        where: { id: company.id },
-        data: updateData,
-      });
-      console.log(
-        "[DELETE Logos] Unassigned logo fields for company:",
-        company.id,
-        updateData
-      );
-    }
-
-    // Create audit log
-    await createAuditLog({
-      userId,
-      action: "DELETE",
-      entityType: "COMPANY",
-      entityId: companies[0]?.id || id,
-      metadata: {
-        field: "logo",
-        action: "delete",
-        filename,
-        deletedFromStorage: fileDeletedFromStorage,
-        removedFromUploadedLogos: dbRemovedFromUploadedLogos,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: "Logo deleted successfully",
-    });
-  } catch (error) {
-    console.error("Delete logo error:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to delete logo";
-    return NextResponse.json(
-      { error: "Failed to delete logo", details: errorMessage },
-      { status: 500 }
-    );
-  }
-}
-
-// OPTIONS - CORS preflight for cross-origin DELETE requests (if deployed behind cross-origin frontends)
-export async function OPTIONS(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Useful to log the request origin for debugging CORS issues
-    console.log("[OPTIONS Logos] Received CORS preflight for:", request.url);
-    const headers = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Credentials": "true",
-    };
-
-    return NextResponse.json({ success: true }, { headers });
-  } catch (err) {
-    console.error("[OPTIONS Logos] Error handling preflight:", err);
-    return NextResponse.json({ error: "Preflight failed" }, { status: 500 });
   }
 }

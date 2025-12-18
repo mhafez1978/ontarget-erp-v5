@@ -7,7 +7,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
     const validation = await validateSessionForAPI(request);
@@ -18,7 +18,7 @@ export async function POST(
     const user = validation.user;
     const userId = user.id;
 
-    const { id: companyId } = await params;
+    const { companyId } = await params;
 
     // Check if user owns the company or is super admin
     const company = await db.company.findFirst({

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
-// GET /api/company/[id]
+// GET /api/company/[companyId]
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
     const validation = await validateSessionForAPI(request);
@@ -16,7 +16,7 @@ export async function GET(
     const user = validation.user;
     const userId = validation.user.id;
 
-    const { id: companyId } = await params;
+    const { companyId } = await params;
 
     // Check access rights
     const company = await db.company.findFirst({
@@ -47,10 +47,10 @@ export async function GET(
   }
 }
 
-// PATCH /api/company/[id]
+// PATCH /api/company/[companyId]
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
     const validation = await validateSessionForAPI(request);
@@ -61,7 +61,7 @@ export async function PATCH(
     const user = validation.user;
     const userId = user.id;
 
-    const { id: companyId } = await params;
+    const { companyId } = await params;
 
     // Check if user owns the company or is super admin
     const company = await db.company.findFirst({
@@ -141,10 +141,10 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/company/[id]
+// DELETE /api/company/[companyId]
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   try {
     const validation = await validateSessionForAPI(request);
@@ -155,7 +155,7 @@ export async function DELETE(
     const user = validation.user;
     const userId = user.id;
 
-    const { id: companyId } = await params;
+    const { companyId } = await params;
 
     // Check if user owns the company or is super admin
     const company = await db.company.findFirst({

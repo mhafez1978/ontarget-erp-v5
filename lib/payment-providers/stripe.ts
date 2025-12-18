@@ -12,6 +12,8 @@ import {
   RefundResult,
   WebhookVerification,
 } from "./base";
+import { CENTS_PER_DOLLAR, PaymentProviderName } from "./constants";
+import { logger } from "@/lib/payments/logger";
 
 export class StripeProvider extends PaymentProvider {
   private stripe: Stripe;
@@ -45,7 +47,7 @@ export class StripeProvider extends PaymentProvider {
   async processPayment(intent: PaymentIntent): Promise<PaymentResult> {
     try {
       const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: Math.round(intent.amount * 100), // Convert to cents
+        amount: Math.round(intent.amount * CENTS_PER_DOLLAR), // Convert to cents
         currency: intent.currency.toLowerCase(),
         description: intent.description,
         metadata: intent.metadata || {},
@@ -63,7 +65,7 @@ export class StripeProvider extends PaymentProvider {
             : paymentIntent.status === "processing"
             ? "pending"
             : "failed",
-        amount: paymentIntent.amount / 100,
+        amount: paymentIntent.amount / CENTS_PER_DOLLAR,
         currency: paymentIntent.currency.toUpperCase(),
         providerResponse: paymentIntent,
       };
@@ -72,7 +74,7 @@ export class StripeProvider extends PaymentProvider {
       return {
         success: false,
         status: "failed",
-        errorMessage: err.message || "Payment processing failed",
+        errorMessage: err.message || "Failed to process payment",
         providerResponse: err.raw || error,
       };
     }
@@ -82,21 +84,25 @@ export class StripeProvider extends PaymentProvider {
     try {
       const stripeRefund = await this.stripe.refunds.create({
         payment_intent: refund.transactionId,
-        amount: refund.amount ? Math.round(refund.amount * 100) : undefined,
-        reason: refund.reason as Stripe.RefundCreateParams.Reason | undefined,
+        amount: refund.amount
+          ? Math.round(refund.amount * CENTS_PER_DOLLAR)
+          : undefined,
+        reason: refund.reason as Stripe.RefundCreateParams.Reason,
       });
 
       return {
         success: stripeRefund.status === "succeeded",
         refundId: stripeRefund.id,
-        amount: stripeRefund.amount ? stripeRefund.amount / 100 : undefined,
+        amount: stripeRefund.amount
+          ? stripeRefund.amount / CENTS_PER_DOLLAR
+          : undefined,
         providerResponse: stripeRefund,
       };
     } catch (error) {
       const err = error as Error;
       return {
         success: false,
-        errorMessage: err.message || "Refund processing failed",
+        errorMessage: err.message || "Failed to process refund",
         providerResponse: error,
       };
     }
@@ -150,7 +156,7 @@ export class StripeProvider extends PaymentProvider {
             : paymentIntent.status === "processing"
             ? "pending"
             : "failed",
-        amount: paymentIntent.amount / 100,
+        amount: paymentIntent.amount / CENTS_PER_DOLLAR,
         currency: paymentIntent.currency.toUpperCase(),
         providerResponse: paymentIntent,
       };
@@ -173,7 +179,7 @@ export class StripeProvider extends PaymentProvider {
   ): Promise<{ success: boolean; clientSecret?: string; error?: string }> {
     try {
       const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: Math.round(intent.amount * 100),
+        amount: Math.round(intent.amount * CENTS_PER_DOLLAR),
         currency: intent.currency.toLowerCase(),
         description: intent.description,
         metadata: intent.metadata || {},
@@ -190,6 +196,91 @@ export class StripeProvider extends PaymentProvider {
       return {
         success: false,
         error: err.message || "Failed to create payment intent",
+      };
+    }
+  }
+
+  // Create a Stripe Customer
+  async createCustomer(
+    email?: string,
+    name?: string
+  ): Promise<{ success: boolean; customerId?: string; error?: string }> {
+    try {
+      const customer = await this.stripe.customers.create({
+        email,
+        name,
+      });
+
+      return { success: true, customerId: customer.id };
+    } catch (error) {
+      const err = error as Error;
+      return {
+        success: false,
+        error: err.message || "Failed to create customer",
+      };
+    }
+  }
+
+  // Create a SetupIntent to collect and attach a payment method for future payments
+  async createSetupIntent(
+    customerId: string
+  ): Promise<{ success: boolean; clientSecret?: string; error?: string }> {
+    try {
+      const si = await this.stripe.setupIntents.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        usage: "off_session",
+      });
+
+      return { success: true, clientSecret: si.client_secret || undefined };
+    } catch (error) {
+      const err = error as Error;
+      return {
+        success: false,
+        error: err.message || "Failed to create setup intent",
+      };
+    }
+  }
+
+  // Create a Subscription with optional trial days and default payment method
+  async createSubscription(options: {
+    customerId: string;
+    priceId: string;
+    trialDays?: number;
+    defaultPaymentMethod?: string;
+  }): Promise<{
+    success: boolean;
+    subscriptionId?: string;
+    status?: string;
+    error?: string;
+  }> {
+    try {
+      const params: Stripe.SubscriptionCreateParams = {
+        customer: options.customerId,
+        items: [{ price: options.priceId }],
+        expand: ["latest_invoice.payment_intent"],
+      };
+
+      if (options.trialDays && options.trialDays > 0) {
+        params.trial_period_days = options.trialDays;
+      }
+
+      if (options.defaultPaymentMethod) {
+        params.default_payment_method = options.defaultPaymentMethod;
+      }
+
+      const subscription = await this.stripe.subscriptions.create(params);
+
+      return {
+        success: true,
+        subscriptionId: subscription.id,
+        status: subscription.status,
+      };
+    } catch (error) {
+      const err = error as Error;
+      return {
+        success: false,
+        error: err.message || "Failed to create subscription",
       };
     }
   }

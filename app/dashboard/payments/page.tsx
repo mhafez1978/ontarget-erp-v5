@@ -121,11 +121,13 @@ export default function PaymentsPage() {
         // Load companies for company selector
         const companiesResponse = await fetch("/api/companies");
         const companiesData = await companiesResponse.json();
-        setCompanies(companiesData || []);
+        // API returns { success, companies, count }
+        const list = companiesData?.companies || [];
+        setCompanies(list);
 
-        // Auto-select first company
-        if (companiesData && companiesData.length > 0) {
-          setSelectedCompanyId(companiesData[0].id);
+        // Auto-select first company if any
+        if (list.length > 0) {
+          setSelectedCompanyId(list[0].id);
         }
 
         setLoading(false);
@@ -343,7 +345,7 @@ export default function PaymentsPage() {
         </div>
 
         {/* Company Selector for SUPER_ADMIN/multi-company admins */}
-        {companies.length > 1 && (
+        {companies.length >= 1 && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Select Company</CardTitle>

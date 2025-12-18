@@ -1,0 +1,296 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { CreditCard, Calendar, Lock, User } from "lucide-react";
+import {
+  useStripe,
+  useElements,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
+} from "@stripe/react-stripe-js";
+
+interface PaymentFormProps {
+  onCardDataChange?: (cardData: {
+    cardNumber: string;
+    cardHolder: string;
+    expiryDate: string;
+    cvv: string;
+    cardBrand: "visa" | "mastercard" | "amex" | "discover";
+  }) => void;
+  onValidationChange?: (isValid: boolean) => void;
+  onPaymentMethodCreated?: (paymentMethodId: string) => void;
+}
+
+const cardElementOptions = {
+  style: {
+    base: {
+      fontSize: "16px",
+      color: "#1a1a1a",
+      "::placeholder": {
+        color: "#94a3b8",
+      },
+      fontFamily: "system-ui, -apple-system, sans-serif",
+    },
+    invalid: {
+      color: "#ef4444",
+      iconColor: "#ef4444",
+    },
+  },
+};
+
+export function PaymentForm({
+  onCardDataChange,
+  onValidationChange,
+  onPaymentMethodCreated,
+}: PaymentFormProps) {
+  const stripe = useStripe();
+  const elements = useElements();
+
+  const [cardHolder, setCardHolder] = useState("");
+  const [cardBrand, setCardBrand] = useState<
+    "visa" | "mastercard" | "amex" | "discover"
+  >("visa");
+  const [cardComplete, setCardComplete] = useState(false);
+  const [expiryComplete, setExpiryComplete] = useState(false);
+  const [cvcComplete, setCvcComplete] = useState(false);
+  const [errors, setErrors] = useState<{
+    cardNumber?: string;
+    cardHolder?: string;
+    expiry?: string;
+    cvc?: string;
+  }>({});
+
+  // Format card number with spaces
+  const formatCardNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, "");
+    const limited = cleaned.substring(0, 16);
+    const formatted = limited.match(/.{1,4}/g)?.join(" ") || limited;
+    return formatted;
+  };
+
+  // Format expiry date
+  const formatExpiryDate = (value: string) => {
+    const cleaned = value.replace(/\D/g, "");
+    if (cleaned.length >= 2) {
+      return cleaned.substring(0, 2) + "/" + cleaned.substring(2, 4);
+    }
+    return cleaned;
+  };
+
+  // Validate card number (Luhn algorithm)
+  const validateCardNumber = (number: string): boolean => {
+    const cleaned = number.replace(/\s/g, "");
+    if (cleaned.length < 13 || cleaned.length > 16) return false;
+
+    let sum = 0;
+    let isEven = false;
+
+    for (let i = cleaned.length - 1; i >= 0; i--) {
+      let digit = parseInt(cleaned[i]);
+
+      if (isEven) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+
+      sum += digit;
+      isEven = !isEven;
+    }
+
+    return sum % 10 === 0;
+  };
+
+  // Validate expiry date
+  const validateExpiryDate = (expiry: string): boolean => {
+    const [month, year] = expiry.split("/");
+    if (!month || !year) return false;
+
+    const monthNum = parseInt(month);
+    const yearNum = parseInt("20" + year);
+
+    if (monthNum < 1 || monthNum > 12) return false;
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    if (yearNum < currentYear) return false;
+    if (yearNum === currentYear && monthNum < currentMonth) return false;
+
+    return true;
+  };
+
+  const handleCardNumberChange = (value: string) => {
+    const formatted = formatCardNumber(value);
+    setCardNumber(formatted);
+
+    const cleaned = formatted.replace(/\s/g, "");
+    if (cleaned.length > 0) {
+      const isValid = validateCardNumber(formatted);
+      setErrors((prev) => ({
+        ...prev,
+        cardNumber:
+          !isValid && cleaned.length >= 13 ? "Invalid card number" : undefined,
+      }));
+    } else {
+      setErrors((prev) => ({ ...prev, cardNumber: undefined }));
+    }
+
+    onCardChange?.({ cardNumber: formatted, cardHolder, expiryDate, cvv });
+  };
+
+  const handleCardHolderChange = (value: string) => {
+    const formatted = value.toUpperCase().replace(/[^A-Z\s]/g, "");
+    setCardHolder(formatted);
+
+    if (formatted.length > 0 && formatted.length < 3) {
+      setErrors((prev) => ({
+        ...prev,
+        cardHolder: "Name must be at least 3 characters",
+      }));
+    } else {
+      setErrors((prev) => ({ ...prev, cardHolder: undefined }));
+    }
+
+    onCardChange?.({ cardNumber, cardHolder: formatted, expiryDate, cvv });
+  };
+
+  const handleExpiryDateChange = (value: string) => {
+    const formatted = formatExpiryDate(value);
+    setExpiryDate(formatted);
+
+    if (formatted.length === 5) {
+      const isValid = validateExpiryDate(formatted);
+      setErrors((prev) => ({
+        ...prev,
+        expiryDate: !isValid ? "Invalid or expired date" : undefined,
+      }));
+    } else {
+      setErrors((prev) => ({ ...prev, expiryDate: undefined }));
+    }
+
+    onCardChange?.({ cardNumber, cardHolder, expiryDate: formatted, cvv });
+  };
+
+  const handleCvvChange = (value: string) => {
+    const cleaned = value.replace(/\D/g, "").substring(0, 4);
+    setCvv(cleaned);
+
+    if (cleaned.length > 0 && cleaned.length < 3) {
+      setErrors((prev) => ({
+        ...prev,
+        cvv: "CVV must be 3-4 digits",
+      }));
+    } else {
+      setErrors((prev) => ({ ...prev, cvv: undefined }));
+    }
+
+    onCardChange?.({ cardNumber, cardHolder, expiryDate, cvv: cleaned });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Card Display */}
+      <CreditCardDisplay
+        cardNumber={cardNumber}
+        cardHolder={cardHolder}
+        expiryDate={expiryDate}
+        cvv={cvv}
+      />
+
+      {/* Payment Form */}
+      <div className="space-y-4">
+        <div className="text-sm text-muted-foreground text-center bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-900">
+          💳 Your card will not be charged during the 30-day trial period
+        </div>
+
+        {/* Card Number */}
+        <div className="space-y-2">
+          <Label htmlFor="cardNumber" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            Card Number
+          </Label>
+          <Input
+            id="cardNumber"
+            type="text"
+            placeholder="1234 5678 9012 3456"
+            value={cardNumber}
+            onChange={(e) => handleCardNumberChange(e.target.value)}
+            maxLength={19}
+            className={errors.cardNumber ? "border-red-500" : ""}
+          />
+          {errors.cardNumber && (
+            <p className="text-sm text-red-500">{errors.cardNumber}</p>
+          )}
+        </div>
+
+        {/* Card Holder */}
+        <div className="space-y-2">
+          <Label htmlFor="cardHolder">Card Holder Name</Label>
+          <Input
+            id="cardHolder"
+            type="text"
+            placeholder="JOHN DOE"
+            value={cardHolder}
+            onChange={(e) => handleCardHolderChange(e.target.value)}
+            className={errors.cardHolder ? "border-red-500" : ""}
+          />
+          {errors.cardHolder && (
+            <p className="text-sm text-red-500">{errors.cardHolder}</p>
+          )}
+        </div>
+
+        {/* Expiry and CVV */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="expiryDate" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Expiry Date
+            </Label>
+            <Input
+              id="expiryDate"
+              type="text"
+              placeholder="MM/YY"
+              value={expiryDate}
+              onChange={(e) => handleExpiryDateChange(e.target.value)}
+              maxLength={5}
+              className={errors.expiryDate ? "border-red-500" : ""}
+            />
+            {errors.expiryDate && (
+              <p className="text-sm text-red-500">{errors.expiryDate}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cvv" className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              CVV
+            </Label>
+            <Input
+              id="cvv"
+              type="text"
+              placeholder="123"
+              value={cvv}
+              onChange={(e) => handleCvvChange(e.target.value)}
+              maxLength={4}
+              className={errors.cvv ? "border-red-500" : ""}
+            />
+            {errors.cvv && <p className="text-sm text-red-500">{errors.cvv}</p>}
+          </div>
+        </div>
+
+        {/* Security Note */}
+        <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+          <Lock className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <span>
+            Your payment information is encrypted and secure. We use
+            industry-standard security measures to protect your data.
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}

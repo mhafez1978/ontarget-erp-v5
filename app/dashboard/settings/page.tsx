@@ -28,7 +28,9 @@ import {
   EyeOff,
   UsersRound,
   Sparkles,
+  CreditCard,
 } from "lucide-react";
+import PaymentProviderCards from "@/components/payment-provider-cards";
 import { StorageProviderCards } from "@/components/storage-provider-cards";
 import { EmailProviderCards } from "@/components/email-provider-cards";
 import { SubscriptionPlanCards } from "@/components/subscription-plan-cards";
@@ -2865,6 +2867,39 @@ export default function SettingsPage() {
               </AccordionContent>
             </AccordionItem>
           )}
+
+          {/* Payment Provider Configuration - visible to all, content gated by role */}
+          <AccordionItem value="payment-provider">
+            <AccordionTrigger className="text-xl font-semibold">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment Provider Configuration
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="pt-4">
+                {/* Show config UI only to SUPER_ADMIN or ADMIN; otherwise show informative message */}
+                {user.role === "SUPER_ADMIN" || user.role === "ADMIN" ? (
+                  <div className="pt-2">
+                    {/* PaymentProviderCards is client component */}
+                    {/* @ts-ignore */}
+                    <PaymentProviderCards userRole={user.role} />
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-md bg-muted text-muted-foreground">
+                    <div className="font-semibold">
+                      Payment Provider Configuration
+                    </div>
+                    <div className="text-sm">
+                      Only company administrators and the SUPER_ADMIN can
+                      configure payment gateways. If you believe you should have
+                      access, please contact your account administrator.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
           {/* Captcha Settings */}
           {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (

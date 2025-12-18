@@ -11,17 +11,25 @@ import {
   RefundResult,
   WebhookVerification,
 } from "./base";
+import {
+  CENTS_PER_DOLLAR,
+  PaymentProviderName,
+  PAYPAL_BASE_URL_SANDBOX,
+  PAYPAL_BASE_URL_LIVE,
+} from "./constants";
+import { fetchWithTimeout } from "@/lib/payments/fetch-with-timeout";
+import { logger } from "@/lib/payments/logger";
 
 export class PayPalProvider extends PaymentProvider {
   private baseUrl: string;
 
   constructor(config: PaymentProviderConfig) {
-    super(config, "paypal");
+    super(config, PaymentProviderName.PAYPAL);
 
-    // Use sandbox for test mode, live for production
-    this.baseUrl = config.isTestMode
-      ? "https://api-m.sandbox.paypal.com"
-      : "https://api-m.paypal.com";
+    // Use environment variable if set, otherwise fallback to sandbox/live based on test mode
+    this.baseUrl =
+      process.env.PAYPAL_BASE_URL ||
+      (config.isTestMode ? PAYPAL_BASE_URL_SANDBOX : PAYPAL_BASE_URL_LIVE);
   }
 
   private async getAccessToken(): Promise<string> {
@@ -29,7 +37,7 @@ export class PayPalProvider extends PaymentProvider {
       `${this.config.publicKey}:${this.config.secretKey}`
     ).toString("base64");
 
-    const response = await fetch(`${this.baseUrl}/v1/oauth2/token`, {
+    const response = await fetchWithTimeout(`${this.baseUrl}/v1/oauth2/token`, {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,
@@ -39,6 +47,10 @@ export class PayPalProvider extends PaymentProvider {
     });
 
     if (!response.ok) {
+      logger.error("Failed to get PayPal access token", {
+        status: response.status,
+        statusText: response.statusText,
+      });
       throw new Error("Failed to get PayPal access token");
     }
 
@@ -53,8 +65,8 @@ export class PayPalProvider extends PaymentProvider {
         success: true,
         message: "Successfully connected to PayPal",
       };
-    } catch (error) {
-      const err = error as Error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
       return {
         success: false,
         message: err.message || "Failed to connect to PayPal",
@@ -63,31 +75,54 @@ export class PayPalProvider extends PaymentProvider {
   }
 
   async processPayment(intent: PaymentIntent): Promise<PaymentResult> {
+    // Validate required fields
+    if (!intent.amount || intent.amount <= 0) {
+      return {
+        success: false,
+        status: "failed",
+        errorMessage: "Invalid payment amount: must be positive",
+      };
+    }
+    if (!intent.currency || intent.currency.length !== 3) {
+      return {
+        success: false,
+        status: "failed",
+        errorMessage: "Invalid currency code: must be 3-letter ISO code",
+      };
+    }
+
     try {
       const accessToken = await this.getAccessToken();
 
       // Create order
-      const orderResponse = await fetch(`${this.baseUrl}/v2/checkout/orders`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          intent: "CAPTURE",
-          purchase_units: [
-            {
-              amount: {
-                currency_code: intent.currency.toUpperCase(),
-                value: intent.amount.toFixed(2),
+      const orderResponse = await fetchWithTimeout(
+        `${this.baseUrl}/v2/checkout/orders`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            intent: "CAPTURE",
+            purchase_units: [
+              {
+                amount: {
+                  currency_code: intent.currency.toUpperCase(),
+                  value: intent.amount.toFixed(2),
+                },
+                description: intent.description,
               },
-              description: intent.description,
-            },
-          ],
-        }),
-      });
+            ],
+          }),
+        }
+      );
 
       if (!orderResponse.ok) {
+        logger.error("Failed to create PayPal order", {
+          status: orderResponse.status,
+          statusText: orderResponse.statusText,
+        });
         throw new Error("Failed to create PayPal order");
       }
 
@@ -123,7 +158,7 @@ export class PayPalProvider extends PaymentProvider {
     try {
       const accessToken = await this.getAccessToken();
 
-      const refundResponse = await fetch(
+      const refundResponse = await fetchWithTimeout(
         `${this.baseUrl}/v2/payments/captures/${refund.transactionId}/refund`,
         {
           method: "POST",
@@ -135,7 +170,7 @@ export class PayPalProvider extends PaymentProvider {
             amount: refund.amount
               ? {
                   value: refund.amount.toFixed(2),
-                  currency_code: "USD",
+                  currency_code: (refund.currency || "USD").toUpperCase(),
                 }
               : undefined,
             note_to_payer: refund.reason,
@@ -144,6 +179,10 @@ export class PayPalProvider extends PaymentProvider {
       );
 
       if (!refundResponse.ok) {
+        logger.error("Failed to process PayPal refund", {
+          status: refundResponse.status,
+          statusText: refundResponse.statusText,
+        });
         throw new Error("Failed to process PayPal refund");
       }
 
@@ -157,8 +196,8 @@ export class PayPalProvider extends PaymentProvider {
           : undefined,
         providerResponse: refundData,
       };
-    } catch (error) {
-      const err = error as Error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
       return {
         success: false,
         errorMessage: err.message || "Refund processing failed",
@@ -181,11 +220,21 @@ export class PayPalProvider extends PaymentProvider {
     try {
       const accessToken = await this.getAccessToken();
 
-      // Parse the webhook payload
-      const event = JSON.parse(payload);
+      // Parse the webhook payload with error handling
+      let event: any;
+      try {
+        event = JSON.parse(payload);
+      } catch (parseError) {
+        return {
+          isValid: false,
+          errorMessage: "Invalid JSON payload",
+        };
+      }
 
       // Verify webhook signature with PayPal
-      const verifyResponse = await fetch(
+      // Note: In production, signature should be extracted from webhook headers:
+      // PAYPAL-TRANSMISSION-ID, PAYPAL-TRANSMISSION-TIME, PAYPAL-TRANSMISSION-SIG, PAYPAL-CERT-URL
+      const verifyResponse = await fetchWithTimeout(
         `${this.baseUrl}/v1/notifications/verify-webhook-signature`,
         {
           method: "POST",
@@ -195,10 +244,10 @@ export class PayPalProvider extends PaymentProvider {
           },
           body: JSON.stringify({
             auth_algo: "SHA256withRSA",
-            cert_url: signature, // This should come from webhook headers
-            transmission_id: event.id,
-            transmission_sig: signature,
-            transmission_time: event.create_time,
+            cert_url: signature, // TODO: Extract from PAYPAL-CERT-URL header
+            transmission_id: event.id, // TODO: Extract from PAYPAL-TRANSMISSION-ID header
+            transmission_sig: signature, // TODO: Extract from PAYPAL-TRANSMISSION-SIG header
+            transmission_time: event.create_time, // TODO: Extract from PAYPAL-TRANSMISSION-TIME header
             webhook_id: this.config.webhookSecret,
             webhook_event: event,
           }),
@@ -215,8 +264,8 @@ export class PayPalProvider extends PaymentProvider {
             ? "Webhook verification failed"
             : undefined,
       };
-    } catch (error) {
-      const err = error as Error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
       return {
         isValid: false,
         errorMessage: err.message || "Webhook verification failed",
@@ -228,7 +277,7 @@ export class PayPalProvider extends PaymentProvider {
     try {
       const accessToken = await this.getAccessToken();
 
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${this.baseUrl}/v2/checkout/orders/${transactionId}`,
         {
           headers: {
@@ -238,10 +287,18 @@ export class PayPalProvider extends PaymentProvider {
       );
 
       if (!response.ok) {
+        logger.error("Failed to retrieve PayPal order", {
+          transactionId,
+          status: response.status,
+          statusText: response.statusText,
+        });
         throw new Error("Failed to retrieve PayPal order");
       }
 
       const order = await response.json();
+
+      const firstUnit = order.purchase_units?.[0];
+      const amountValue = firstUnit?.amount?.value;
 
       return {
         success: order.status === "COMPLETED",
@@ -254,14 +311,12 @@ export class PayPalProvider extends PaymentProvider {
             : order.status === "CREATED" || order.status === "APPROVED"
             ? "pending"
             : "failed",
-        amount: order.purchase_units?.[0]?.amount?.value
-          ? parseFloat(order.purchase_units[0].amount.value)
-          : undefined,
-        currency: order.purchase_units?.[0]?.amount?.currency_code,
+        amount: amountValue ? parseFloat(amountValue) : undefined,
+        currency: firstUnit?.amount?.currency_code,
         providerResponse: order,
       };
-    } catch (error) {
-      const err = error as Error;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
       return {
         success: false,
         status: "failed",

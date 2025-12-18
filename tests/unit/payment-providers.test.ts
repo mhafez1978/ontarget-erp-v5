@@ -23,7 +23,7 @@ describe("payment providers factory", () => {
     ).to.throw("not yet implemented");
     expect(() =>
       createPaymentProvider("unknown", { secretKey: "x", isTestMode: true })
-    ).to.throw("Unsupported payment provider");
+    ).to.throw(/Failed to create provider.*unsupported/i);
   });
 
   it("lists supported providers", () => {
