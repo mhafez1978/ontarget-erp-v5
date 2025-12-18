@@ -12,7 +12,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { BorderBeam } from "@/components/ui/border-beam";
-import { CreditCard, Wallet } from "lucide-react";
+import { CreditCard, Wallet, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Company {
@@ -196,94 +196,332 @@ export default function PaymentProviderCards({
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent>
+        <SheetContent className="sm:max-w-xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Configure {selectedProvider}</SheetTitle>
+            <SheetTitle className="text-xl">
+              Configure {selectedProvider === "stripe" ? "Stripe" : "PayPal"}
+            </SheetTitle>
           </SheetHeader>
 
-          <div className="space-y-4 mt-4 px-6">
-            {(userRole === "ADMIN" || userRole === "SUPER_ADMIN") && (
-              <div>
-                <Label>Scope</Label>
-                <div className="mt-2 space-x-2">
-                  <Button
-                    variant={
-                      selectedCompanyId === "GLOBAL" ? "default" : "ghost"
-                    }
-                    onClick={() => setSelectedCompanyId("GLOBAL")}
-                  >
-                    Global
-                  </Button>
-                  {companies.length === 0 ? (
-                    <div className="text-sm text-muted-foreground mt-2">
-                      No companies available — you can configure a global (root)
-                      payment provider here. Ensure you are logged in as
-                      **SUPER_ADMIN** or **ADMIN** for company-scoped
-                      configuration.
-                    </div>
+          <div className="space-y-6 mt-6 px-6">
+            {/* Setup Instructions */}
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <svg
+                  className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div className="space-y-2 text-sm">
+                  <p className="font-semibold text-blue-900 dark:text-blue-100">
+                    {selectedProvider === "stripe"
+                      ? "Stripe Setup Instructions"
+                      : "PayPal Setup Instructions"}
+                  </p>
+                  {selectedProvider === "stripe" ? (
+                    <ol className="space-y-2 text-blue-800 dark:text-blue-200 list-decimal list-inside">
+                      <li>
+                        Go to{" "}
+                        <a
+                          href="https://dashboard.stripe.com/register"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline font-medium"
+                        >
+                          Stripe Dashboard
+                        </a>
+                      </li>
+                      <li>
+                        Navigate to <strong>Developers → API keys</strong>
+                      </li>
+                      <li>
+                        Copy your <strong>Publishable key</strong> (starts with
+                        pk_test_ or pk_live_)
+                      </li>
+                      <li>
+                        Reveal and copy your <strong>Secret key</strong> (starts
+                        with sk_test_ or sk_live_)
+                      </li>
+                      <li>
+                        Go to <strong>Developers → Webhooks</strong>
+                      </li>
+                      <li>
+                        Click <strong>Add endpoint</strong>
+                      </li>
+                      <li>
+                        Enter your webhook URL:{" "}
+                        <code className="bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded text-xs">
+                          {typeof window !== "undefined"
+                            ? window.location.origin
+                            : "https://yourdomain.com"}
+                          /api/payments/webhook
+                        </code>
+                      </li>
+                      <li>
+                        Select events: <strong>payment_intent.succeeded</strong>
+                        , <strong>payment_intent.payment_failed</strong>,{" "}
+                        <strong>customer.subscription.created</strong>,{" "}
+                        <strong>customer.subscription.updated</strong>,{" "}
+                        <strong>customer.subscription.deleted</strong>
+                      </li>
+                      <li>
+                        Copy the <strong>Signing secret</strong> (starts with
+                        whsec_)
+                      </li>
+                    </ol>
                   ) : (
-                    companies.map((c) => (
-                      <Button
-                        key={c.id}
-                        variant={
-                          selectedCompanyId === c.id ? "default" : "ghost"
-                        }
-                        onClick={() => setSelectedCompanyId(c.id)}
-                      >
-                        {c.name}
-                      </Button>
-                    ))
+                    <ol className="space-y-2 text-blue-800 dark:text-blue-200 list-decimal list-inside">
+                      <li>
+                        Go to{" "}
+                        <a
+                          href="https://developer.paypal.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline font-medium"
+                        >
+                          PayPal Developer Dashboard
+                        </a>
+                      </li>
+                      <li>
+                        Click <strong>My Apps & Credentials</strong>
+                      </li>
+                      <li>
+                        Switch between <strong>Sandbox</strong> (test) or{" "}
+                        <strong>Live</strong> mode
+                      </li>
+                      <li>
+                        Click <strong>Create App</strong> (or select existing
+                        app)
+                      </li>
+                      <li>
+                        Copy your <strong>Client ID</strong>
+                      </li>
+                      <li>
+                        Reveal and copy your <strong>Secret</strong>
+                      </li>
+                      <li>
+                        Under <strong>Webhooks</strong>, click{" "}
+                        <strong>Add Webhook</strong>
+                      </li>
+                      <li>
+                        Enter your webhook URL:{" "}
+                        <code className="bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded text-xs">
+                          {typeof window !== "undefined"
+                            ? window.location.origin
+                            : "https://yourdomain.com"}
+                          /api/payments/webhook
+                        </code>
+                      </li>
+                      <li>
+                        Select event types:{" "}
+                        <strong>PAYMENT.CAPTURE.COMPLETED</strong>,{" "}
+                        <strong>PAYMENT.CAPTURE.DENIED</strong>,{" "}
+                        <strong>BILLING.SUBSCRIPTION.CREATED</strong>,{" "}
+                        <strong>BILLING.SUBSCRIPTION.UPDATED</strong>,{" "}
+                        <strong>BILLING.SUBSCRIPTION.CANCELLED</strong>
+                      </li>
+                      <li>
+                        Copy the <strong>Webhook ID</strong> for your records
+                      </li>
+                    </ol>
                   )}
                 </div>
               </div>
+            </div>
+
+            {(userRole === "ADMIN" || userRole === "SUPER_ADMIN") && (
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">
+                  Configuration Scope
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={
+                      selectedCompanyId === "GLOBAL" ? "default" : "outline"
+                    }
+                    onClick={() => setSelectedCompanyId("GLOBAL")}
+                    className="flex-shrink-0"
+                  >
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    Global (Root)
+                  </Button>
+                  {companies.map((c) => (
+                    <Button
+                      key={c.id}
+                      type="button"
+                      size="sm"
+                      variant={
+                        selectedCompanyId === c.id ? "default" : "outline"
+                      }
+                      onClick={() => setSelectedCompanyId(c.id)}
+                      className="flex-shrink-0"
+                    >
+                      <svg
+                        className="mr-2 h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
+                      </svg>
+                      {c.name}
+                    </Button>
+                  ))}
+                </div>
+                {companies.length === 0 && (
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border">
+                    No companies found. Configure the global (root) payment
+                    provider for ERP subscription billing.
+                  </p>
+                )}
+              </div>
             )}
 
-            <div>
-              <Label>Public Key</Label>
+            <div className="space-y-2">
+              <Label htmlFor="publicKey" className="text-sm font-medium">
+                {selectedProvider === "stripe"
+                  ? "Publishable Key"
+                  : "Client ID"}
+              </Label>
               <Input
+                id="publicKey"
+                type="text"
+                placeholder={
+                  selectedProvider === "stripe" ? "pk_test_..." : "Client ID"
+                }
                 value={publicKey}
                 onChange={(e) =>
                   setPublicKey((e.target as HTMLInputElement).value)
                 }
+                className="font-mono text-sm"
               />
+              <p className="text-xs text-muted-foreground">
+                {selectedProvider === "stripe"
+                  ? "Found in Stripe Dashboard → Developers → API keys"
+                  : "Found in PayPal Developer Dashboard"}
+              </p>
             </div>
 
-            <div>
-              <Label>Secret Key</Label>
+            <div className="space-y-2">
+              <Label htmlFor="secretKey" className="text-sm font-medium">
+                {selectedProvider === "stripe" ? "Secret Key" : "Client Secret"}
+              </Label>
               <Input
+                id="secretKey"
+                type="password"
+                placeholder={
+                  selectedProvider === "stripe"
+                    ? "sk_test_..."
+                    : "Client Secret"
+                }
                 value={secretKey}
                 onChange={(e) =>
                   setSecretKey((e.target as HTMLInputElement).value)
                 }
+                className="font-mono text-sm"
               />
+              <p className="text-xs text-muted-foreground">
+                Encrypted before storage. Never shown after saving.
+              </p>
             </div>
 
-            <div>
-              <Label>Webhook Secret</Label>
+            <div className="space-y-2">
+              <Label htmlFor="webhookSecret" className="text-sm font-medium">
+                Webhook Secret
+              </Label>
               <Input
+                id="webhookSecret"
+                type="password"
+                placeholder={
+                  selectedProvider === "stripe" ? "whsec_..." : "Webhook Secret"
+                }
                 value={webhookSecret}
                 onChange={(e) =>
                   setWebhookSecret((e.target as HTMLInputElement).value)
                 }
+                className="font-mono text-sm"
               />
+              <p className="text-xs text-muted-foreground">
+                Used to verify webhook signatures from{" "}
+                {selectedProvider === "stripe" ? "Stripe" : "PayPal"}.
+              </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Label>Test Mode</Label>
-              <input
-                type="checkbox"
-                checked={isTestMode}
-                onChange={(e) =>
-                  setIsTestMode((e.target as HTMLInputElement).checked)
-                }
-              />
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+              <div className="space-y-0.5">
+                <Label
+                  htmlFor="testMode"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Test Mode
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Use test credentials and simulate transactions
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  id="testMode"
+                  type="checkbox"
+                  checked={isTestMode}
+                  onChange={(e) =>
+                    setIsTestMode((e.target as HTMLInputElement).checked)
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                />
+              </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save"}
+            <div className="flex gap-3 pt-4 border-t">
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex-1"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Save Configuration
+                  </>
+                )}
               </Button>
-              <Button variant="ghost" onClick={() => setIsSheetOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsSheetOpen(false)}
+                disabled={isSaving}
+              >
                 Cancel
               </Button>
             </div>

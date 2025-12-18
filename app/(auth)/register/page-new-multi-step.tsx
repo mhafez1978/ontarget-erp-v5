@@ -445,7 +445,7 @@ function RegisterForm() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            We'll use this to create your account and initialize billing.
+            We&apos;ll use this to create your account and initialize billing.
           </p>
         </div>
       </div>
