@@ -11,7 +11,11 @@ import {
   CardExpiryElement,
   CardCvcElement,
 } from "@stripe/react-stripe-js";
-import type { StripeCardNumberElementChangeEvent } from "@stripe/stripe-js";
+import type {
+  StripeCardNumberElementChangeEvent,
+  StripeCardExpiryElementChangeEvent,
+  StripeCardCvcElementChangeEvent,
+} from "@stripe/stripe-js";
 
 interface PaymentFormProps {
   onCardDataChange?: (cardData: {
@@ -120,7 +124,7 @@ export function PaymentForm({
     }
 
     if (event.error) {
-      setErrors((prev) => ({ ...prev, cardNumber: event.error.message }));
+      setErrors((prev) => ({ ...prev, cardNumber: event.error?.message }));
     } else {
       setErrors((prev) => ({ ...prev, cardNumber: undefined }));
     }
@@ -137,19 +141,19 @@ export function PaymentForm({
     }
   };
 
-  const handleExpiryChange = (event: StripeCardNumberElementChangeEvent) => {
+  const handleExpiryChange = (event: StripeCardExpiryElementChangeEvent) => {
     setExpiryComplete(event.complete);
     if (event.error) {
-      setErrors((prev) => ({ ...prev, expiry: event.error.message }));
+      setErrors((prev) => ({ ...prev, expiry: event.error?.message }));
     } else {
       setErrors((prev) => ({ ...prev, expiry: undefined }));
     }
   };
 
-  const handleCvcChange = (event: StripeCardNumberElementChangeEvent) => {
+  const handleCvcChange = (event: StripeCardCvcElementChangeEvent) => {
     setCvcComplete(event.complete);
     if (event.error) {
-      setErrors((prev) => ({ ...prev, cvc: event.error.message }));
+      setErrors((prev) => ({ ...prev, cvc: event.error?.message }));
     } else {
       setErrors((prev) => ({ ...prev, cvc: undefined }));
     }

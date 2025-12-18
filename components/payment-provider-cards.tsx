@@ -37,6 +37,12 @@ export default function PaymentProviderCards({
   const [isTestMode, setIsTestMode] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Track active providers
+  const [activeProviders, setActiveProviders] = useState<{
+    stripe: boolean;
+    paypal: boolean;
+  }>({ stripe: false, paypal: false });
+
   useEffect(() => {
     if (userRole === "SUPER_ADMIN" || userRole === "ADMIN") {
       const fetchCompanies = async () => {
@@ -58,6 +64,37 @@ export default function PaymentProviderCards({
       fetchCompanies();
     }
   }, [userRole]);
+
+  // Check active providers on mount and when scope changes
+  useEffect(() => {
+    const checkActiveProviders = async () => {
+      const providers = ["stripe", "paypal"];
+      const results: { stripe: boolean; paypal: boolean } = {
+        stripe: false,
+        paypal: false,
+      };
+
+      for (const provider of providers) {
+        try {
+          const url =
+            selectedCompanyId === "GLOBAL"
+              ? `/api/settings/payment-provider?scope=GLOBAL&provider=${provider}`
+              : `/api/settings/payment-provider?companyId=${selectedCompanyId}&provider=${provider}`;
+          const resp = await fetch(url);
+          const data = await resp.json();
+          if (resp.ok && data.provider && data.provider.isEnabled) {
+            results[provider as "stripe" | "paypal"] = true;
+          }
+        } catch (err) {
+          console.error(`Failed to check ${provider} status:`, err);
+        }
+      }
+
+      setActiveProviders(results);
+    };
+
+    checkActiveProviders();
+  }, [selectedCompanyId]);
 
   const openFor = async (provider: string) => {
     setSelectedProvider(provider);
@@ -91,7 +128,15 @@ export default function PaymentProviderCards({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const body: any = {
+      const body: {
+        provider: string;
+        publicKey: string;
+        secretKey: string;
+        webhookSecret: string;
+        isTestMode: boolean;
+        companyId?: string;
+        scope?: string;
+      } = {
         provider: selectedProvider,
         publicKey,
         secretKey,
@@ -111,6 +156,19 @@ export default function PaymentProviderCards({
       if (resp.ok) {
         toast.success("Payment provider saved");
         setIsSheetOpen(false);
+        // Refresh active providers
+        const url =
+          selectedCompanyId === "GLOBAL"
+            ? `/api/settings/payment-provider?scope=GLOBAL&provider=${selectedProvider}`
+            : `/api/settings/payment-provider?companyId=${selectedCompanyId}&provider=${selectedProvider}`;
+        const checkResp = await fetch(url);
+        const checkData = await checkResp.json();
+        if (checkResp.ok && checkData.provider) {
+          setActiveProviders((prev) => ({
+            ...prev,
+            [selectedProvider]: !!checkData.provider.isEnabled,
+          }));
+        }
       } else {
         toast.error(data.error || data.message || "Failed to save provider");
       }
@@ -126,9 +184,10 @@ export default function PaymentProviderCards({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
+          className="cursor-pointer hover:shadow-lg transition-shadow relative overflow-hidden"
           onClick={() => openFor("stripe")}
         >
+          {activeProviders.stripe && <BorderBeam />}
           <CardContent className="flex items-center gap-4 p-6">
             <svg
               className="h-8 w-auto"
@@ -151,9 +210,10 @@ export default function PaymentProviderCards({
         </Card>
 
         <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
+          className="cursor-pointer hover:shadow-lg transition-shadow relative overflow-hidden"
           onClick={() => openFor("paypal")}
         >
+          {activeProviders.paypal && <BorderBeam />}
           <CardContent className="flex items-center gap-4 p-6">
             <svg
               className="h-8 w-auto"
