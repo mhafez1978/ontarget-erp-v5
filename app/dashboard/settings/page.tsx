@@ -2903,7 +2903,7 @@ export default function SettingsPage() {
 
           {/* Captcha Settings */}
           {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
-            <AccordionItem value="captcha-config">Expiry date and secure expiry 
+            <AccordionItem value="captcha-config">
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
                   <Key className="h-5 w-5" />
