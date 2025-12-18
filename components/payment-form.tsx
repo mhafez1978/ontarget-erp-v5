@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { CreditCard, Lock, User } from "lucide-react";
-import { CreditCardDisplay } from "@/components/credit-card-display";
+
 import {
   useStripe,
   useElements,
@@ -89,18 +89,6 @@ export function PaymentForm({
   const [displayNumber, setDisplayNumber] = useState("");
   const [displayExpiry, setDisplayExpiry] = useState("");
   const [displayCvv, setDisplayCvv] = useState("");
-
-  // Ephemeral reveal state (client-only)
-  const [revealOn, setRevealOn] = useState(false);
-  const [revealNumber, setRevealNumber] = useState("");
-  const [revealTimeLeft, setRevealTimeLeft] = useState<number | null>(null);
-
-  const formatRevealForDisplay = (digits: string) => {
-    const cleaned = (digits || "").replace(/\D/g, "");
-    const formatted = cleaned.match(/.{1,4}/g)?.join(" ") || "";
-    // Pad with dots to preserve width when empty/partial
-    return formatted.padEnd(19, "•").substring(0, 19);
-  };
 
   // Handle card holder name change
   const handleCardHolderChange = (value: string) => {
@@ -233,11 +221,6 @@ export function PaymentForm({
               brand: paymentMethod.card?.brand,
               last4: paymentMethod.card?.last4,
             });
-
-            // Clear any ephemeral reveal input when a payment method is created
-            setRevealNumber("");
-            setRevealOn(false);
-            setRevealTimeLeft(null);
           }
         } catch (error) {
           console.error("Payment method creation failed:", error);
@@ -249,36 +232,6 @@ export function PaymentForm({
     const timeoutId = setTimeout(createPaymentMethod, 1000);
     return () => clearTimeout(timeoutId);
   }, [stripe, elements, isFormValid, cardHolder, onPaymentMethodCreated]);
-
-  // Auto-hide reveal after a countdown
-  useEffect(() => {
-    if (!revealOn) return;
-    if (revealTimeLeft === null) return;
-
-    const interval = setInterval(() => {
-      setRevealTimeLeft((prev) => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          // Time's up: hide and clear
-          setRevealOn(false);
-          setRevealNumber("");
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [revealOn, revealTimeLeft]);
-
-  // Ensure we clear any ephemeral values on unmount
-  useEffect(() => {
-    return () => {
-      setRevealNumber("");
-      setRevealOn(false);
-      setRevealTimeLeft(null);
-    };
-  }, []);
 
   return (
     <div className="space-y-4">
@@ -322,93 +275,9 @@ export function PaymentForm({
           All card fields below are secure and processed by Stripe. We never
           store full card numbers.
         </p>
-
-        {/* Reveal while typing (client-only, ephemeral) */}
-        <div className="pt-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={revealOn}
-              onChange={async (e) => {
-                const checked = e.target.checked;
-                setRevealOn(checked);
-                if (!checked) setRevealNumber("");
-
-                // Send activity log to server (no PAN, only metadata)
-                try {
-                  await fetch("/api/activity/reveal-toggle", {
-                    method: "POST",
-                    headers: { "content-type": "application/json" },
-                    body: JSON.stringify({
-                      toggledOn: checked,
-                      context: "registration:payment",
-                    }),
-                  });
-                } catch (err) {
-                  // Swallow any errors — audit logs are best-effort
-                }
-
-                // If enabling, start countdown (10s)
-                if (checked) {
-                  setRevealTimeLeft(10);
-                } else {
-                  setRevealTimeLeft(null);
-                }
-              }}
-              className="accent-primary"
-            />
-            <span>
-              Reveal card number while typing (client-only, not saved)
-            </span>
-            {revealTimeLeft !== null && (
-              <small className="ml-2 text-xs text-muted-foreground">
-                ({revealTimeLeft}s)
-              </small>
-            )}
-          </label>
-
-          {revealOn && (
-            <div className="space-y-2 mt-3">
-              <Input
-                id="revealCardNumber"
-                type="text"
-                inputMode="numeric"
-                placeholder="1234 5678 9012 3456"
-                value={revealNumber.replace(/(\d{4})/g, "$1 ").trim()}
-                onChange={(e) =>
-                  setRevealNumber(
-                    e.target.value.replace(/\D/g, "").slice(0, 16)
-                  )
-                }
-                onBlur={() => {
-                  setRevealNumber("");
-                  setRevealOn(false);
-                  setRevealTimeLeft(null);
-                }}
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-              />
-
-              <div className="max-w-sm">
-                <CreditCardDisplay
-                  // When revealing, format the plain digits for display
-                  cardNumber={formatRevealForDisplay(revealNumber)}
-                  cardHolder={cardHolder}
-                  expiryDate={displayExpiry}
-                  cvv={displayCvv}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  This number is only visible locally and will not be sent or
-                  stored. It auto-hides after a short time.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* Expiry and CVC - Stripe Secure Elements */}
+      {/* Expiry and CVV - Stripe Secure Elements */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label className="flex items-center gap-2 text-muted-foreground text-xs">

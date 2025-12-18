@@ -34,9 +34,15 @@ describe("POST /api/activity/reveal-toggle", () => {
     // Assert
     expect(res.status).to.equal(200);
     expect(body.success).to.equal(true);
-    expect((audit.createAuditLog as unknown as sinon.SinonStub).called).to.equal(true);
-    const callArgs = (audit.createAuditLog as unknown as sinon.SinonStub).getCall(0).args[0];
-    expect(callArgs.action).to.equal((audit.AUDIT_ACTIONS as any).PAYMENT_REVEAL_TOGGLED);
+    expect(
+      (audit.createAuditLog as unknown as sinon.SinonStub).called
+    ).to.equal(true);
+    const callArgs = (
+      audit.createAuditLog as unknown as sinon.SinonStub
+    ).getCall(0).args[0];
+    expect(callArgs.action).to.equal(
+      (audit.AUDIT_ACTIONS as any).PAYMENT_REVEAL_TOGGLED
+    );
     expect(callArgs.metadata?.toggledOn).to.equal(true);
     expect(callArgs.metadata?.context).to.equal("registration:payment");
   });

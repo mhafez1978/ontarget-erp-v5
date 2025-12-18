@@ -4,17 +4,9 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  UserPlus,
   Mail,
   Lock,
   User,
@@ -23,12 +15,13 @@ import {
   EyeOff,
   CheckCircle2,
   ArrowRight,
-  ArrowLeft,
   Check,
+  ShieldCheck,
+  Quote,
+  Building2,
 } from "lucide-react";
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
-import { CreditCardDisplay } from "@/components/credit-card-display";
 import { PaymentForm } from "@/components/payment-form";
 import {
   AddressAutocomplete,
@@ -454,22 +447,22 @@ function RegisterForm() {
       {[1, 2, 3].map((step) => (
         <div key={step} className="flex items-center">
           <div
-            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
+            className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${
               currentStep >= step
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-muted-foreground text-muted-foreground"
             }`}
           >
             {currentStep > step ? (
-              <Check className="h-5 w-5" />
+              <Check className="h-4 w-4" />
             ) : (
-              <span className="text-sm font-semibold">{step}</span>
+              <span className="text-xs font-semibold">{step}</span>
             )}
           </div>
           {step < 3 && (
             <div
-              className={`w-16 h-0.5 mx-2 transition-all ${
-                currentStep > step ? "bg-primary" : "bg-muted-foreground"
+              className={`w-12 h-0.5 mx-2 transition-all ${
+                currentStep > step ? "bg-primary" : "bg-muted-foreground/30"
               }`}
             />
           )}
@@ -480,7 +473,7 @@ function RegisterForm() {
 
   // Step 1: Plan Selection
   const renderPlanSelection = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Choose Your Plan</h2>
         <p className="text-muted-foreground text-sm">
@@ -489,7 +482,7 @@ function RegisterForm() {
       </div>
 
       {/* Contact Information (needed for setup intent) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name-step1">Full Name</Label>
           <div className="relative">
@@ -530,10 +523,6 @@ function RegisterForm() {
               required
             />
           </div>
-          <p className="text-xs text-muted-foreground">
-            We&apos;ll use this to create your account and initialize billing.
-          </p>
-
           {isCheckingEmail && (
             <p className="text-xs text-muted-foreground">Checking email…</p>
           )}
@@ -549,7 +538,7 @@ function RegisterForm() {
       </div>
 
       {/* Billing Cycle Toggle */}
-      <div className="flex items-center justify-center gap-3 p-1 bg-muted rounded-lg w-fit mx-auto">
+      <div className="flex items-center justify-center gap-3 p-1 bg-muted rounded-lg w-fit mx-auto mt-4">
         <button
           type="button"
           onClick={() => setBillingCycle("monthly")}
@@ -572,182 +561,165 @@ function RegisterForm() {
         >
           Annual
           <span className="ml-2 text-xs text-green-600 font-semibold">
-            Save 15%
+            -15%
           </span>
         </button>
       </div>
 
       {/* Plan Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         {(["ESSENTIAL", "GROWTH", "ENTERPRISE"] as const).map((plan) => (
           <button
             key={plan}
             type="button"
             onClick={() => setSelectedPlan(plan)}
-            className={`text-left p-4 rounded-lg border-2 transition-all hover:shadow-lg ${
+            className={`text-left p-4 rounded-lg border transition-all hover:shadow-md ${
               selectedPlan === plan
-                ? "border-primary bg-primary/5 shadow-md"
+                ? "border-primary bg-primary/5 ring-1 ring-primary"
                 : "border-border hover:border-primary/50"
             }`}
           >
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold">{planDetails[plan].name}</h3>
-              {selectedPlan === plan && (
-                <Check className="h-5 w-5 text-primary" />
-              )}
-            </div>
-            {billingCycle === "monthly" ? (
-              <div className="text-2xl font-bold text-primary mb-2">
-                {planDetails[plan].monthlyPrice}
-                <span className="text-sm font-normal text-muted-foreground">
-                  /mo
-                </span>
-              </div>
-            ) : (
-              <div className="mb-2">
-                <div className="text-2xl font-bold text-primary">
-                  {planDetails[plan].annualPrice}
-                  <span className="text-sm font-normal text-muted-foreground">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-sm">
+                  {planDetails[plan].name}
+                </h3>
+                <div className="text-lg font-bold text-primary">
+                  {billingCycle === "monthly"
+                    ? planDetails[plan].monthlyPrice
+                    : planDetails[plan].annualPrice}
+                  <span className="text-xs font-normal text-muted-foreground">
                     /mo
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {planDetails[plan].annualTotal} billed annually
-                </p>
               </div>
-            )}
-            <ul className="space-y-1 text-xs text-muted-foreground">
-              {planDetails[plan].features.map((feature, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 shrink-0" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
+              {selectedPlan === plan && (
+                <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="h-4 w-4 text-primary-foreground" />
+                </div>
+              )}
+            </div>
           </button>
         ))}
       </div>
 
-      <div className="flex justify-center">
-        <Button
-          type="button"
-          onClick={handleNextStep}
-          className="w-full max-w-md"
-          size="lg"
-        >
-          Continue to Payment
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
+      <Button
+        type="button"
+        onClick={handleNextStep}
+        className="w-full"
+        size="lg"
+      >
+        Continue to Payment
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </Button>
     </div>
   );
 
   // Step 2: Payment & Billing
   const renderPaymentStep = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold mb-2">Payment Information</h2>
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
-          <CheckCircle2 className="h-5 w-5 text-green-600" />
-          <p className="text-sm font-medium text-green-800 dark:text-green-200">
-            30-day free trial • Cancel anytime • No charge until trial ends
-          </p>
+        <h2 className="text-2xl font-bold mb-2">Payment Details</h2>
+        <p className="text-sm text-muted-foreground">
+          Secure payment processing via Stripe
+        </p>
+      </div>
+
+      {/* Order Summary Card */}
+      <div className="bg-muted/30 border rounded-lg p-4 space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="font-medium">
+            {planDetails[selectedPlan].name} Plan
+          </span>
+          <span className="font-bold">
+            {billingCycle === "monthly"
+              ? planDetails[selectedPlan].monthlyPrice
+              : planDetails[selectedPlan].annualPrice}
+            /mo
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-green-600 font-medium">
+          <CheckCircle2 className="h-3 w-3" />
+          30-day free trial included
         </div>
       </div>
 
       {publishableKeyError && (
-        <div className="p-4 border border-destructive rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="p-3 border border-destructive rounded-lg bg-destructive/10 text-destructive text-sm">
           {publishableKeyError}
         </div>
       )}
 
       {setupIntentError && (
-        <div className="p-4 border border-destructive rounded-lg bg-destructive/10 text-sm flex flex-col gap-3">
+        <div className="p-3 border border-destructive rounded-lg bg-destructive/10 text-sm flex flex-col gap-2">
           <span className="text-destructive">{setupIntentError}</span>
-          <div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={createSetupIntent}
-              disabled={isCreatingSetupIntent}
-            >
-              {isCreatingSetupIntent ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying...
-                </>
-              ) : (
-                "Retry"
-              )}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={createSetupIntent}
+            disabled={isCreatingSetupIntent}
+          >
+            {isCreatingSetupIntent ? (
+              <>
+                <Loader2 className="mr-2 h-3 w-3 animate-spin" /> Retrying...
+              </>
+            ) : (
+              "Retry"
+            )}
+          </Button>
         </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Left Column: Credit Card Display */}
-        <div className="space-y-4">
-          <CreditCardDisplay
-            cardNumber={cardData.cardNumber}
-            cardHolder={cardData.cardHolder}
-            expiryDate={cardData.expiryDate}
-            cvv={cardData.cvv}
-          />
-        </div>
-
-        {/* Right Column: Payment Form */}
-        <div className="space-y-4">
-          {clientSecret && stripePromise ? (
-            <Elements
-              stripe={stripePromise}
-              options={{
-                clientSecret,
-                appearance: {
-                  theme: "stripe",
-                  variables: {
-                    colorPrimary: "#0066ff",
-                  },
+      {/* Payment Form - Single Column */}
+      <div className="space-y-4">
+        {clientSecret && stripePromise ? (
+          <Elements
+            stripe={stripePromise}
+            options={{
+              clientSecret,
+              appearance: {
+                theme: "stripe",
+                variables: {
+                  colorPrimary: "#0066ff",
+                  borderRadius: "8px",
                 },
+              },
+            }}
+          >
+            <PaymentForm
+              onCardDataChange={setCardData}
+              onValidationChange={setIsPaymentValid}
+              onPaymentMethodCreated={(id, details) => {
+                setPaymentMethodId(id);
+                setPaymentSummary({
+                  brand: details?.brand,
+                  last4: details?.last4,
+                });
               }}
-            >
-              <PaymentForm
-                onCardDataChange={setCardData}
-                onValidationChange={setIsPaymentValid}
-                onPaymentMethodCreated={(id, details) => {
-                  setPaymentMethodId(id);
-                  setPaymentSummary({
-                    brand: details?.brand,
-                    last4: details?.last4,
-                  });
-                }}
-              />
-            </Elements>
-          ) : (
-            <div className="flex items-center justify-center p-8 bg-muted/50 rounded-lg min-h-[300px]">
-              <div className="text-center space-y-1">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
-                <span className="text-sm text-muted-foreground">
-                  {isLoadingPublishableKey
-                    ? "Loading payment provider..."
-                    : isCreatingSetupIntent
-                    ? "Preparing payment form..."
-                    : "Waiting to initialize payment form"}
-                </span>
-                {publishableKeyError && (
-                  <p className="text-xs text-destructive">
-                    {publishableKeyError}
-                  </p>
-                )}
-              </div>
+            />
+          </Elements>
+        ) : (
+          <div className="flex items-center justify-center p-8 bg-muted/50 rounded-lg min-h-[200px]">
+            <div className="text-center space-y-2">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
+              <span className="text-sm text-muted-foreground block">
+                {isLoadingPublishableKey
+                  ? "Loading secure payment..."
+                  : isCreatingSetupIntent
+                  ? "Initializing..."
+                  : "Please wait..."}
+              </span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Billing Address */}
-      <div className="border-t pt-6 mt-6">
-        <h3 className="text-lg font-semibold mb-4">Billing Address</h3>
+      <div className="border-t pt-6">
+        <h3 className="text-sm font-semibold mb-4">Billing Address</h3>
         <AddressAutocomplete
-          label="Billing Address"
+          label="Address"
           value={billingAddress}
           onChange={setBillingAddress}
           required
@@ -755,47 +727,62 @@ function RegisterForm() {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex gap-3 pt-4">
+      <div className="flex gap-3 pt-2">
         <Button
           type="button"
           variant="outline"
           onClick={handlePreviousStep}
           className="flex-1"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Plan
+          Back
         </Button>
-        <Button
-          type="button"
-          onClick={handleNextStep}
-          className="flex-1"
-          disabled={
-            !clientSecret ||
-            !isPaymentValid ||
-            !paymentMethodId ||
-            !billingAddress.addressLine1 ||
-            !billingAddress.city ||
-            !billingAddress.state ||
-            !billingAddress.postalCode ||
-            isCreatingSetupIntent ||
-            isLoadingPublishableKey ||
-            !!publishableKeyError
-          }
-        >
-          Continue to Account
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="flex-1 flex flex-col gap-1">
+          <Button
+            type="button"
+            onClick={handleNextStep}
+            className="w-full"
+            disabled={
+              !clientSecret ||
+              !isPaymentValid ||
+              !paymentMethodId ||
+              !billingAddress.addressLine1 ||
+              !billingAddress.city ||
+              !billingAddress.state ||
+              !billingAddress.postalCode ||
+              isCreatingSetupIntent ||
+              isLoadingPublishableKey ||
+              !!publishableKeyError
+            }
+          >
+            Continue
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+          {/* Diagnostic Message for Disabled Button */}
+          {currentStep === 2 && (
+            <div className="text-[10px] text-center text-muted-foreground h-4">
+              {!clientSecret
+                ? "Initializing payment..."
+                : !isPaymentValid
+                ? "Please complete card details"
+                : !paymentMethodId
+                ? "Processing card..."
+                : !billingAddress.addressLine1
+                ? "Enter billing address"
+                : null}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 
   // Step 3: Account Details
   const renderAccountStep = () => (
-    <div className="space-y-6 max-w-md mx-auto">
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold mb-2">Account Details</h2>
+        <h2 className="text-2xl font-bold mb-2">Secure Your Account</h2>
         <p className="text-sm text-muted-foreground">
-          Create your login credentials
+          Set a strong password to protect your data
         </p>
       </div>
 
@@ -807,18 +794,11 @@ function RegisterForm() {
             <Input
               id="name"
               type="text"
-              placeholder="John Doe"
-              className="pl-10"
               value={formData.name}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  name: capitalizeName(e.target.value),
-                })
-              }
-              required
-              disabled={isLoading}
+              className="pl-10 bg-muted/50"
+              disabled
             />
+            <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-green-600" />
           </div>
         </div>
 
@@ -829,15 +809,11 @@ function RegisterForm() {
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
-              className="pl-10"
               value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              required
-              disabled={isLoading}
+              className="pl-10 bg-muted/50"
+              disabled
             />
+            <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-green-600" />
           </div>
         </div>
 
@@ -869,9 +845,6 @@ function RegisterForm() {
               )}
             </button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Use 8+ chars with upper, lower, and a number
-          </p>
         </div>
 
         <div className="space-y-2">
@@ -908,35 +881,7 @@ function RegisterForm() {
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-        <h3 className="font-semibold text-sm">Registration Summary</h3>
-        <div className="text-sm text-muted-foreground space-y-1">
-          <p>
-            <span className="font-medium">Plan:</span>{" "}
-            {planDetails[selectedPlan].name} (
-            {billingCycle === "monthly" ? "Monthly" : "Annual"})
-          </p>
-          <p>
-            <span className="font-medium">Payment:</span>{" "}
-            {paymentSummary.last4
-              ? `${(paymentSummary.brand || "Card").toUpperCase()} ending in ${
-                  paymentSummary.last4
-                }`
-              : "Payment method pending"}
-          </p>
-          <p>
-            <span className="font-medium">Trial:</span> 30 days free, then{" "}
-            {billingCycle === "monthly"
-              ? planDetails[selectedPlan].monthlyPrice
-              : planDetails[selectedPlan].annualPrice}
-            /month
-          </p>
-        </div>
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-4">
         <Button
           type="button"
           variant="outline"
@@ -944,61 +889,74 @@ function RegisterForm() {
           disabled={isLoading}
           className="flex-1"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
         <Button type="submit" disabled={isLoading} className="flex-1">
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating Account...
+              Creating...
             </>
           ) : (
             <>
-              <UserPlus className="mr-2 h-4 w-4" />
               Create Account
+              <ArrowRight className="ml-2 h-4 w-4" />
             </>
           )}
         </Button>
       </div>
-
-      <p className="text-xs text-center text-muted-foreground mt-4">
-        By creating an account, you agree to our{" "}
-        <Link href="/terms" className="underline hover:text-primary">
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link href="/privacy" className="underline hover:text-primary">
-          Privacy Policy
-        </Link>
-      </p>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-4xl">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
-              <UserPlus className="h-6 w-6 text-primary-foreground" />
+    <div className="min-h-screen w-full grid lg:grid-cols-2">
+      {/* Left Panel - Brand & Testimonial */}
+      <div className="hidden lg:flex flex-col justify-between bg-zinc-900 p-12 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] opacity-10 bg-cover bg-center" />
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 text-2xl font-bold">
+            <Building2 className="h-8 w-8" />
+            OnTarget ERP
+          </div>
+        </div>
+
+        <div className="relative z-10 max-w-md space-y-6">
+          <Quote className="h-12 w-12 text-zinc-600" />
+          <blockquote className="text-2xl font-medium leading-relaxed">
+            &quot;This platform completely transformed how we manage our global
+            workforce. The efficiency gains were immediate.&quot;
+          </blockquote>
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 rounded-full bg-zinc-700 flex items-center justify-center font-bold">
+              JD
+            </div>
+            <div>
+              <div className="font-semibold">Jane Doe</div>
+              <div className="text-sm text-zinc-400">CTO, TechGlobal Inc.</div>
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">
-            Create Your Account
-          </CardTitle>
-          <CardDescription className="text-center">
-            {currentStep === 1 && "Select your plan to get started"}
-            {currentStep === 2 && "Enter your payment information"}
-            {currentStep === 3 && "Complete your account details"}
-          </CardDescription>
-        </CardHeader>
+        </div>
 
-        <CardContent>
+        <div className="relative z-10 flex items-center gap-4 text-sm text-zinc-500">
+          <div className="flex items-center gap-1">
+            <ShieldCheck className="h-4 w-4" />
+            Bank-level security
+          </div>
+          <div className="flex items-center gap-1">
+            <CheckCircle2 className="h-4 w-4" />
+            PCI Compliant
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Form */}
+      <div className="flex items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-md space-y-8">
           <StepIndicator />
 
           {error && (
-            <div className="mb-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-lg text-sm">
+            <div className="p-3 bg-destructive/10 border border-destructive text-destructive rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -1008,8 +966,19 @@ function RegisterForm() {
             {currentStep === 2 && renderPaymentStep()}
             {currentStep === 3 && renderAccountStep()}
           </form>
-        </CardContent>
-      </Card>
+
+          <p className="text-xs text-center text-muted-foreground">
+            By continuing, you agree to our{" "}
+            <Link href="/terms" className="underline hover:text-primary">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline hover:text-primary">
+              Privacy Policy
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1018,17 +987,8 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">
-          <Card className="w-full max-w-4xl">
-            <CardHeader className="space-y-1">
-              <div className="flex items-center justify-center mb-4">
-                <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 text-primary-foreground animate-spin" />
-                </div>
-              </div>
-              <CardTitle className="text-2xl text-center">Loading...</CardTitle>
-            </CardHeader>
-          </Card>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       }
     >

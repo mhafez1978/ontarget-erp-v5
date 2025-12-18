@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = bodySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
     const { toggledOn, context } = parsed.data;
@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
     await createAuditLog({
       action: AUDIT_ACTIONS.PAYMENT_REVEAL_TOGGLED,
       userId: user?.id ?? null,
-      description: `User ${toggledOn ? 'opened' : 'closed'} card reveal (${context || 'unknown'})`,
+      description: `User ${toggledOn ? "opened" : "closed"} card reveal (${
+        context || "unknown"
+      })`,
       metadata: {
         toggledOn,
         context: context || null,
@@ -36,6 +38,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to record reveal toggle:", error);
-    return NextResponse.json({ error: "Failed to record event" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to record event" },
+      { status: 500 }
+    );
   }
 }

@@ -89,6 +89,7 @@ export function getPriceIdForPlan(
     const prices = cfg.prices || {};
     return prices[plan]?.priceId || null;
   } catch (error) {
+    console.error("Error getting price ID for plan:", error);
     return null;
   }
 }
@@ -111,6 +112,7 @@ export function getPlanFromPriceId(
     }
     return null;
   } catch (error) {
+    console.log("Error getting plan from price ID:", error);
     return null;
   }
 }
@@ -126,7 +128,7 @@ export async function getRootPriceId(plan: string) {
   return getPriceIdForPlan(gateway, plan);
 }
 
-export default {
+const paymentsService = {
   getRootGateway,
   getGatewayForCompany,
   instantiateStripeProviderFromGateway,
@@ -134,3 +136,5 @@ export default {
   getPlanFromPriceId,
   getRootPriceId,
 };
+
+export default paymentsService;
