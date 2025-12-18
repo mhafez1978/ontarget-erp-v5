@@ -162,6 +162,7 @@ export async function POST(request: NextRequest) {
     const dataToSave: any = {
       publicKey: publicKey ? encrypt(publicKey) : null,
       isTestMode: isTestMode ?? true,
+      isEnabled: true,
       configuredBy: user.id,
     };
 
