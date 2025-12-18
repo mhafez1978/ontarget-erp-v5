@@ -134,6 +134,7 @@ export default function PaymentProviderCards({
         secretKey: string;
         webhookSecret: string;
         isTestMode: boolean;
+        isEnabled: boolean;
         companyId?: string;
         scope?: string;
       } = {
@@ -142,6 +143,7 @@ export default function PaymentProviderCards({
         secretKey,
         webhookSecret,
         isTestMode,
+        isEnabled: true,
       };
       if (selectedCompanyId !== "GLOBAL") body.companyId = selectedCompanyId;
       else body.scope = "GLOBAL";
