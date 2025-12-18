@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { CreditCard, Calendar, Lock, User } from "lucide-react";
+import { CreditCard, Lock, User } from "lucide-react";
+import { CreditCardDisplay } from "@/components/credit-card-display";
 import {
   useStripe,
   useElements,
@@ -82,10 +83,23 @@ export function PaymentForm({
     }
   }, [isFormValid, onValidationChange]);
 
-  // State to track card details for display (visual input)
-  const [visualCardNumber, setVisualCardNumber] = useState("");
-  const [visualExpiry, setVisualExpiry] = useState("");
-  const [visualCvv, setVisualCvv] = useState("");
+  // We only use Stripe Elements as the single source of truth. For card preview
+  // we send masked values back to the parent (no PAN exposure).
+  const MASKED_NUMBER = "•••• •••• •••• ••••";
+  const [displayNumber, setDisplayNumber] = useState("");
+  const [displayExpiry, setDisplayExpiry] = useState("");
+  const [displayCvv, setDisplayCvv] = useState("");
+
+  // Ephemeral reveal state (client-only)
+  const [revealOn, setRevealOn] = useState(false);
+  const [revealNumber, setRevealNumber] = useState("");
+
+  const formatRevealForDisplay = (digits: string) => {
+    const cleaned = (digits || "").replace(/\D/g, "");
+    const formatted = cleaned.match(/.{1,4}/g)?.join(" ") || "";
+    // Pad with dots to preserve width when empty/partial
+    return formatted.padEnd(19, "•").substring(0, 19);
+  };
 
   // Handle card holder name change
   const handleCardHolderChange = (value: string) => {
@@ -95,76 +109,13 @@ export function PaymentForm({
       .join(" ");
     setCardHolder(capitalized);
 
-    // Update parent component with visual card data
+    // Update parent component with masked data
     if (onCardDataChange) {
       onCardDataChange({
-        cardNumber: visualCardNumber,
+        cardNumber: displayNumber || (cardComplete ? MASKED_NUMBER : ""),
         cardHolder: capitalized,
-        expiryDate: visualExpiry,
-        cvv: visualCvv,
-        cardBrand,
-      });
-    }
-  };
-
-  // Handle visual card number input (for display only)
-  const handleVisualCardNumberChange = (value: string) => {
-    // Remove non-digit characters
-    const digitsOnly = value.replace(/\D/g, "");
-    // Limit to 16 digits
-    const limited = digitsOnly.slice(0, 16);
-    setVisualCardNumber(limited);
-
-    // Update parent component
-    if (onCardDataChange) {
-      onCardDataChange({
-        cardNumber: limited,
-        cardHolder,
-        expiryDate: visualExpiry,
-        cvv: visualCvv,
-        cardBrand,
-      });
-    }
-  };
-
-  // Handle visual expiry input (for display only)
-  const handleVisualExpiryChange = (value: string) => {
-    // Remove non-digit characters
-    const digitsOnly = value.replace(/\D/g, "");
-    // Format as MM/YY
-    let formatted = digitsOnly;
-    if (digitsOnly.length >= 2) {
-      formatted = digitsOnly.slice(0, 2) + "/" + digitsOnly.slice(2, 4);
-    }
-    setVisualExpiry(formatted);
-
-    // Update parent component
-    if (onCardDataChange) {
-      onCardDataChange({
-        cardNumber: visualCardNumber,
-        cardHolder,
-        expiryDate: formatted,
-        cvv: visualCvv,
-        cardBrand,
-      });
-    }
-  };
-
-  // Handle visual CVV input (for display only)
-  const handleVisualCvvChange = (value: string) => {
-    // Remove non-digit characters
-    const digitsOnly = value.replace(/\D/g, "");
-    // Limit to 4 digits
-    const limited = digitsOnly.slice(0, 4);
-    setVisualCvv(limited);
-
-    // Update parent component
-    if (onCardDataChange) {
-      onCardDataChange({
-        cardNumber: visualCardNumber,
-        cardHolder,
-        expiryDate: visualExpiry,
-        cvv: limited,
+        expiryDate: displayExpiry,
+        cvv: displayCvv,
         cardBrand,
       });
     }
@@ -189,23 +140,25 @@ export function PaymentForm({
       };
       nextBrand = brandMap[event.brand] || "visa";
       setCardBrand(nextBrand);
-
-      // Update parent with brand change
-      if (onCardDataChange) {
-        onCardDataChange({
-          cardNumber: visualCardNumber,
-          cardHolder,
-          expiryDate: visualExpiry,
-          cvv: visualCvv,
-          cardBrand: nextBrand,
-        });
-      }
     }
 
     if (event.error) {
       setErrors((prev) => ({ ...prev, cardNumber: event.error?.message }));
     } else {
       setErrors((prev) => ({ ...prev, cardNumber: undefined }));
+    }
+
+    // Update display and parent with masked presence (we can't read PAN)
+    const display = event.empty ? "" : MASKED_NUMBER;
+    setDisplayNumber(display);
+    if (onCardDataChange) {
+      onCardDataChange({
+        cardNumber: display,
+        cardHolder,
+        expiryDate: displayExpiry,
+        cvv: displayCvv,
+        cardBrand: nextBrand,
+      });
     }
   };
 
@@ -216,6 +169,21 @@ export function PaymentForm({
     } else {
       setErrors((prev) => ({ ...prev, expiry: undefined }));
     }
+
+    // We can't access month/year from this event in all Stripe SDK versions,
+    // so show a generic MM/YY placeholder when the expiry is complete.
+    const expiryDisplay = event.complete ? "MM/YY" : "";
+    setDisplayExpiry(expiryDisplay);
+
+    if (onCardDataChange) {
+      onCardDataChange({
+        cardNumber: displayNumber || (cardComplete ? MASKED_NUMBER : ""),
+        cardHolder,
+        expiryDate: expiryDisplay,
+        cvv: displayCvv,
+        cardBrand,
+      });
+    }
   };
 
   const handleCvcChange = (event: StripeCardCvcElementChangeEvent) => {
@@ -224,6 +192,19 @@ export function PaymentForm({
       setErrors((prev) => ({ ...prev, cvc: event.error?.message }));
     } else {
       setErrors((prev) => ({ ...prev, cvc: undefined }));
+    }
+
+    const cvvDisplay = event.empty ? "" : "•••";
+    setDisplayCvv(cvvDisplay);
+
+    if (onCardDataChange) {
+      onCardDataChange({
+        cardNumber: displayNumber || (cardComplete ? MASKED_NUMBER : ""),
+        cardHolder,
+        expiryDate: displayExpiry,
+        cvv: cvvDisplay,
+        cardBrand,
+      });
     }
   };
 
@@ -251,6 +232,10 @@ export function PaymentForm({
               brand: paymentMethod.card?.brand,
               last4: paymentMethod.card?.last4,
             });
+
+            // Clear any ephemeral reveal input when a payment method is created
+            setRevealNumber("");
+            setRevealOn(false);
           }
         } catch (error) {
           console.error("Payment method creation failed:", error);
@@ -284,31 +269,11 @@ export function PaymentForm({
         )}
       </div>
 
-      {/* Card Number - Visual Input */}
+      {/* Card Number - Stripe Secure Element */}
       <div className="space-y-2">
-        <Label htmlFor="visualCardNumber" className="flex items-center gap-2">
+        <Label className="flex items-center gap-2">
           <CreditCard className="h-4 w-4" />
           Card Number
-        </Label>
-        <Input
-          id="visualCardNumber"
-          type="text"
-          inputMode="numeric"
-          placeholder="1234 5678 9012 3456"
-          value={visualCardNumber.replace(/(\d{4})/g, "$1 ").trim()}
-          onChange={(e) => handleVisualCardNumberChange(e.target.value)}
-          maxLength={19}
-        />
-        <p className="text-xs text-muted-foreground">
-          Enter your card number above for preview
-        </p>
-      </div>
-
-      {/* Card Number - Stripe Secure Element (hidden but functional) */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2 text-muted-foreground text-xs">
-          <Lock className="h-3 w-3" />
-          Secure Card Verification
         </Label>
         <div className="p-3 border rounded-md bg-background">
           <CardNumberElement
@@ -319,43 +284,60 @@ export function PaymentForm({
         {errors.cardNumber && (
           <p className="text-xs text-red-500">{errors.cardNumber}</p>
         )}
-        <p className="text-xs text-muted-foreground">
-          Re-enter your card number here for secure payment processing
-        </p>
       </div>
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground">
+          All card fields below are secure and processed by Stripe. We never
+          store full card numbers.
+        </p>
 
-      {/* Expiry and CVC - Visual Inputs */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="visualExpiry" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Expiry Date
-          </Label>
-          <Input
-            id="visualExpiry"
-            type="text"
-            inputMode="numeric"
-            placeholder="MM/YY"
-            value={visualExpiry}
-            onChange={(e) => handleVisualExpiryChange(e.target.value)}
-            maxLength={5}
-          />
-        </div>
+        {/* Reveal while typing (client-only, ephemeral) */}
+        <div className="pt-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={revealOn}
+              onChange={(e) => {
+                setRevealOn(e.target.checked);
+                if (!e.target.checked) setRevealNumber("");
+              }}
+              className="accent-primary"
+            />
+            <span>
+              Reveal card number while typing (client-only, not saved)
+            </span>
+          </label>
 
-        <div className="space-y-2">
-          <Label htmlFor="visualCvv" className="flex items-center gap-2">
-            <Lock className="h-4 w-4" />
-            CVV
-          </Label>
-          <Input
-            id="visualCvv"
-            type="text"
-            inputMode="numeric"
-            placeholder="123"
-            value={visualCvv}
-            onChange={(e) => handleVisualCvvChange(e.target.value)}
-            maxLength={4}
-          />
+          {revealOn && (
+            <div className="space-y-2 mt-3">
+              <Input
+                id="revealCardNumber"
+                type="text"
+                inputMode="numeric"
+                placeholder="1234 5678 9012 3456"
+                value={revealNumber.replace(/(\d{4})/g, "$1 ").trim()}
+                onChange={(e) =>
+                  setRevealNumber(
+                    e.target.value.replace(/\D/g, "").slice(0, 16)
+                  )
+                }
+                onBlur={() => setRevealNumber("")}
+              />
+
+              <div className="max-w-sm">
+                <CreditCardDisplay
+                  cardNumber={formatRevealForDisplay(revealNumber)}
+                  cardHolder={cardHolder}
+                  expiryDate={displayExpiry}
+                  cvv={displayCvv}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  This number is only visible locally and will not be sent or
+                  stored.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -398,9 +380,9 @@ export function PaymentForm({
         <div className="text-xs text-muted-foreground">
           <p className="font-medium">Your payment information is secure</p>
           <p className="mt-1">
-            Enter your card details twice: once for the visual preview card, and
-            again in the secure fields for payment processing. We use Stripe for
-            secure payment processing.
+            For your security, full card numbers are never exposed to the app.
+            We display a masked preview and the card ending in the last 4 digits
+            after the card is saved.
           </p>
         </div>
       </div>

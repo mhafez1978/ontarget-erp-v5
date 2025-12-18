@@ -113,7 +113,6 @@ export async function POST(request: NextRequest) {
         trialEndsAt: trialEndsAt,
         verificationToken,
         verificationTokenExpires,
-        stripeCustomerId: stripeCustomerId || null, // Store Stripe customer ID if payment method was added
         // Store billing address if provided
         ...(billingAddress && {
           addressLine1: billingAddress.addressLine1,
@@ -132,7 +131,6 @@ export async function POST(request: NextRequest) {
         plan: true,
         billingCycle: true,
         createdAt: true,
-        stripeCustomerId: true,
       },
     });
 
@@ -153,6 +151,22 @@ export async function POST(request: NextRequest) {
       }
     } catch (error) {
       console.error("Error fetching geolocation:", error);
+    }
+
+    // Persist payment provider external id if provided (e.g., Stripe customer id)
+    try {
+      if (stripeCustomerId) {
+        await db.customerPaymentProvider.create({
+          data: {
+            userId: user.id,
+            provider: "STRIPE",
+            externalId: stripeCustomerId,
+          },
+        });
+      }
+    } catch (providerErr) {
+      // Log but don't fail registration — this is non-critical
+      console.error("Failed to store payment provider info:", providerErr);
     }
 
     // Create audit log for user registration
