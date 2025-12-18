@@ -93,6 +93,7 @@ export function PaymentForm({
   // Ephemeral reveal state (client-only)
   const [revealOn, setRevealOn] = useState(false);
   const [revealNumber, setRevealNumber] = useState("");
+  const [revealTimeLeft, setRevealTimeLeft] = useState<number | null>(null);
 
   const formatRevealForDisplay = (digits: string) => {
     const cleaned = (digits || "").replace(/\D/g, "");
@@ -236,6 +237,7 @@ export function PaymentForm({
             // Clear any ephemeral reveal input when a payment method is created
             setRevealNumber("");
             setRevealOn(false);
+            setRevealTimeLeft(null);
           }
         } catch (error) {
           console.error("Payment method creation failed:", error);
@@ -247,6 +249,36 @@ export function PaymentForm({
     const timeoutId = setTimeout(createPaymentMethod, 1000);
     return () => clearTimeout(timeoutId);
   }, [stripe, elements, isFormValid, cardHolder, onPaymentMethodCreated]);
+
+  // Auto-hide reveal after a countdown
+  useEffect(() => {
+    if (!revealOn) return;
+    if (revealTimeLeft === null) return;
+
+    const interval = setInterval(() => {
+      setRevealTimeLeft((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          // Time's up: hide and clear
+          setRevealOn(false);
+          setRevealNumber("");
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [revealOn, revealTimeLeft]);
+
+  // Ensure we clear any ephemeral values on unmount
+  useEffect(() => {
+    return () => {
+      setRevealNumber("");
+      setRevealOn(false);
+      setRevealTimeLeft(null);
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -297,15 +329,42 @@ export function PaymentForm({
             <input
               type="checkbox"
               checked={revealOn}
-              onChange={(e) => {
-                setRevealOn(e.target.checked);
-                if (!e.target.checked) setRevealNumber("");
+              onChange={async (e) => {
+                const checked = e.target.checked;
+                setRevealOn(checked);
+                if (!checked) setRevealNumber("");
+
+                // Send activity log to server (no PAN, only metadata)
+                try {
+                  await fetch("/api/activity/reveal-toggle", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({
+                      toggledOn: checked,
+                      context: "registration:payment",
+                    }),
+                  });
+                } catch (err) {
+                  // Swallow any errors — audit logs are best-effort
+                }
+
+                // If enabling, start countdown (10s)
+                if (checked) {
+                  setRevealTimeLeft(10);
+                } else {
+                  setRevealTimeLeft(null);
+                }
               }}
               className="accent-primary"
             />
             <span>
               Reveal card number while typing (client-only, not saved)
             </span>
+            {revealTimeLeft !== null && (
+              <small className="ml-2 text-xs text-muted-foreground">
+                ({revealTimeLeft}s)
+              </small>
+            )}
           </label>
 
           {revealOn && (
@@ -321,11 +380,19 @@ export function PaymentForm({
                     e.target.value.replace(/\D/g, "").slice(0, 16)
                   )
                 }
-                onBlur={() => setRevealNumber("")}
+                onBlur={() => {
+                  setRevealNumber("");
+                  setRevealOn(false);
+                  setRevealTimeLeft(null);
+                }}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
               />
 
               <div className="max-w-sm">
                 <CreditCardDisplay
+                  // When revealing, format the plain digits for display
                   cardNumber={formatRevealForDisplay(revealNumber)}
                   cardHolder={cardHolder}
                   expiryDate={displayExpiry}
@@ -333,7 +400,7 @@ export function PaymentForm({
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   This number is only visible locally and will not be sent or
-                  stored.
+                  stored. It auto-hides after a short time.
                 </p>
               </div>
             </div>
