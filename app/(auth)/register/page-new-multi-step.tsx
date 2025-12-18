@@ -100,6 +100,11 @@ function RegisterForm() {
     confirmPassword: "",
   });
 
+  // Email uniqueness state (checked on blur / debounced while typing)
+  const [emailExists, setEmailExists] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [emailCheckError, setEmailCheckError] = useState("");
+
   // Function to capitalize each word in a name
   const capitalizeName = (name: string): string => {
     return name
@@ -239,6 +244,79 @@ function RegisterForm() {
     formData.email,
   ]);
 
+  // Check email immediately (used on blur)
+  async function checkEmail(emailRaw: string) {
+    const email = (emailRaw || "").trim();
+    if (!email || !isValidEmail(email)) return;
+
+    setIsCheckingEmail(true);
+    setEmailCheckError("");
+
+    try {
+      const res = await fetch("/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "Failed to check email");
+      }
+
+      const data = await res.json();
+      setEmailExists(!!data.exists);
+    } catch (err) {
+      setEmailCheckError(
+        err instanceof Error ? err.message : "Failed to check email"
+      );
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  }
+
+  // Debounced email check while typing
+  useEffect(() => {
+    const controller = new AbortController();
+    const email = formData.email.trim();
+    if (!email || !isValidEmail(email)) return;
+
+    setIsCheckingEmail(true);
+    setEmailCheckError("");
+
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/auth/check-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          throw new Error(d.error || "Failed to check email");
+        }
+
+        const data = await res.json();
+        setEmailExists(!!data.exists);
+      } catch (err) {
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          setEmailCheckError(
+            err instanceof Error ? err.message : "Failed to check email"
+          );
+        }
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }, 500);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
+  }, [formData.email]);
+
   const planDetails = {
     ESSENTIAL: {
       name: "Essential",
@@ -285,6 +363,11 @@ function RegisterForm() {
 
       if (!isValidEmail(formData.email)) {
         setError("Please enter a valid email address");
+        return;
+      }
+
+      if (emailExists) {
+        setError("An account with this email already exists. Please log in.");
         return;
       }
 
@@ -438,15 +521,30 @@ function RegisterForm() {
               placeholder="you@example.com"
               className="pl-10"
               value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
+              onChange={(e) => {
+                setFormData({ ...formData, email: e.target.value });
+                setEmailExists(false);
+                setEmailCheckError("");
+              }}
+              onBlur={() => checkEmail(formData.email)}
               required
             />
           </div>
           <p className="text-xs text-muted-foreground">
             We&apos;ll use this to create your account and initialize billing.
           </p>
+
+          {isCheckingEmail && (
+            <p className="text-xs text-muted-foreground">Checking email…</p>
+          )}
+          {emailExists && (
+            <p className="text-xs text-destructive">
+              An account with this email already exists — please log in.
+            </p>
+          )}
+          {emailCheckError && (
+            <p className="text-xs text-destructive">{emailCheckError}</p>
+          )}
         </div>
       </div>
 
@@ -878,7 +976,7 @@ function RegisterForm() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">
       <Card className="w-full max-w-4xl">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
@@ -920,7 +1018,7 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">
           <Card className="w-full max-w-4xl">
             <CardHeader className="space-y-1">
               <div className="flex items-center justify-center mb-4">

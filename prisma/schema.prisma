@@ -158,12 +158,34 @@ model User {
 
   // Payment system relations
   invoices Invoice[]
+  customerPaymentProviders CustomerPaymentProvider[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([role])
   @@index([email])
+}
+
+// Payment provider enum and mapping table for external customer IDs
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+  OTHER
+}
+
+model CustomerPaymentProvider {
+  id         String          @id @default(cuid())
+  userId     String
+  provider   PaymentProvider
+  externalId String
+  metadata   Json?
+  createdAt  DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@unique([provider, externalId])
 }
 
 model VerificationToken {
