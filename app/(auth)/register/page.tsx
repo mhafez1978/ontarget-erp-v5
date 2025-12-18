@@ -399,7 +399,7 @@ function RegisterForm() {
   const renderPlanSelection = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Choose Your Plan</h2>
+        <h2 className="text-2xl font-bold mb-2">Choose Your Plan !!!</h2>
         <p className="text-muted-foreground text-sm">
           Start with a 30-day free trial • Cancel anytime
         </p>
@@ -445,7 +445,7 @@ function RegisterForm() {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            We'll use this to create your account and initialize billing.
+            We&apos;ll use this to create your account and initialize billing.
           </p>
         </div>
       </div>
@@ -589,11 +589,19 @@ function RegisterForm() {
         {/* Left Column: Credit Card Display */}
         <div className="space-y-4">
           <CreditCardDisplay
-            cardNumber={cardData.cardNumber}
+            cardNumber={
+              paymentSummary.last4
+                ? `•••• •••• •••• ${paymentSummary.last4}`
+                : cardData.cardNumber || "•••• •••• •••• ••••"
+            }
             cardHolder={cardData.cardHolder}
             expiryDate={cardData.expiryDate}
             cvv={cardData.cvv}
           />
+          <p className="text-xs text-muted-foreground">
+            For your security we only show masked numbers. The card ending is
+            shown after saving.
+          </p>
         </div>
 
         {/* Right Column: Payment Form */}
@@ -675,6 +683,10 @@ function RegisterForm() {
             !clientSecret ||
             !isPaymentValid ||
             !paymentMethodId ||
+            !billingAddress.addressLine1 ||
+            !billingAddress.city ||
+            !billingAddress.state ||
+            !billingAddress.postalCode ||
             isCreatingSetupIntent ||
             isLoadingPublishableKey ||
             !!publishableKeyError
@@ -874,7 +886,7 @@ function RegisterForm() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">
       <Card className="w-full max-w-4xl">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
@@ -916,7 +928,7 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+        <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted p-4">
           <Card className="w-full max-w-4xl">
             <CardHeader className="space-y-1">
               <div className="flex items-center justify-center mb-4">
