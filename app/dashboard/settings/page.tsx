@@ -2880,9 +2880,9 @@ export default function SettingsPage() {
               <div className="pt-4">
                 {/* Show config UI only to SUPER_ADMIN or ADMIN; otherwise show informative message */}
                 {user.role === "SUPER_ADMIN" || user.role === "ADMIN" ? (
-                  <div className="pt-2">
+                  <div className="pt-2 pl-2">
                     {/* PaymentProviderCards is client component */}
-                    {/* @ts-ignore */}
+
                     <PaymentProviderCards userRole={user.role} />
                   </div>
                 ) : (

@@ -675,6 +675,10 @@ function RegisterForm() {
             !clientSecret ||
             !isPaymentValid ||
             !paymentMethodId ||
+            !billingAddress.addressLine1 ||
+            !billingAddress.city ||
+            !billingAddress.state ||
+            !billingAddress.postalCode ||
             isCreatingSetupIntent ||
             isLoadingPublishableKey ||
             !!publishableKeyError
