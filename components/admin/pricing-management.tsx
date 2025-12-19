@@ -174,9 +174,29 @@ export function PricingManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-6">
-        <DollarSign className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-bold">Plan Pricing Management</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">Plan Pricing Management</h2>
+        </div>
+        <Button 
+          onClick={handleSeedPricing} 
+          disabled={saving}
+          variant="outline"
+          size="sm"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Initializing...
+            </>
+          ) : (
+            <>
+              <Database className="h-4 w-4 mr-2" />
+              Reset to Defaults
+            </>
+          )}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
