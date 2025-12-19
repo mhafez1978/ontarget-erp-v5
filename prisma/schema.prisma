@@ -2716,3 +2716,36 @@ enum UserRole {
   CONTRACTOR // External contractor working with company
   SUPPLIER // Supplier/vendor of a company
 }
+
+// Plan Pricing Configuration - allows dynamic pricing management
+model PlanPricing {
+  id        String   @id @default(cuid())
+  plan      String   @unique // ESSENTIAL, GROWTH, ENTERPRISE
+  
+  // Monthly pricing
+  monthlyPrice      Float
+  monthlyPromoPrice Float?
+  
+  // Annual pricing
+  annualPrice         Float
+  annualPriceMonthly  Float
+  
+  // Transaction fees
+  transactionFeePercent Float
+  transactionFeeFixed   Float
+  
+  // Storage
+  baseStorageGB          Int
+  extraStoragePricePer100GB Float
+  extraStoragePricePerGB    Float
+  
+  // Marketing
+  isPopular Boolean @default(false)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String? // User ID who created/updated
+  
+  @@index([plan])
+}

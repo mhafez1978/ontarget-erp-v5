@@ -29,8 +29,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Instantiate Stripe provider
-    const provider =
-      paymentsService.instantiateStripeProviderFromGateway(gateway);
+    let provider;
+    try {
+      provider = paymentsService.instantiateStripeProviderFromGateway(gateway);
+    } catch (providerError) {
+      console.error("Failed to instantiate Stripe provider:", providerError);
+      await createAuditLog({
+        action: AUDIT_ACTIONS.PAYMENT_SETUP_INTENT_FAILED,
+        companyId: gateway.companyId,
+        description: "Failed to instantiate payment provider",
+        metadata: {
+          error: providerError instanceof Error ? providerError.message : String(providerError),
+          provider: gateway.provider,
+        },
+      });
+      return NextResponse.json(
+        { 
+          error: providerError instanceof Error 
+            ? providerError.message 
+            : "Failed to initialize payment provider" 
+        },
+        { status: 500 }
+      );
+    }
 
     // Type guard to ensure provider has required methods
     if (
@@ -76,6 +97,7 @@ export async function POST(request: NextRequest) {
       error?: string;
     };
     if (!customerResult.success || !customerResult.customerId) {
+      console.error("Failed to create Stripe customer:", customerResult.error);
       await createAuditLog({
         action: AUDIT_ACTIONS.PAYMENT_SETUP_INTENT_FAILED,
         companyId: gateway.companyId,
@@ -100,6 +122,7 @@ export async function POST(request: NextRequest) {
       customerResult.customerId
     )) as { success: boolean; clientSecret?: string; error?: string };
     if (!setupIntentResult.success || !setupIntentResult.clientSecret) {
+      console.error("Failed to create setup intent:", setupIntentResult.error);
       await createAuditLog({
         action: AUDIT_ACTIONS.PAYMENT_SETUP_INTENT_FAILED,
         companyId: gateway.companyId,

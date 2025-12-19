@@ -40,6 +40,7 @@ import { CreateTeamDialog } from "@/components/create-team-dialog";
 import { EditTeamDialog } from "@/components/edit-team-dialog";
 import { DeleteTeamDialog } from "@/components/delete-team-dialog";
 import { AddTeamMemberDialog } from "@/components/add-team-member-dialog";
+import { PricingManagement } from "@/components/admin/pricing-management";
 import {
   getModelsForProvider,
   estimateGenerationCost,
@@ -2470,6 +2471,21 @@ export default function SettingsPage() {
               </div>
             </AccordionContent>
           </AccordionItem>
+
+          {/* Plan Pricing Management - SUPER_ADMIN only */}
+          {user.role === "SUPER_ADMIN" && (
+            <AccordionItem value="plan-pricing">
+              <AccordionTrigger className="text-xl font-semibold">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Plan Pricing Management
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="space-y-6 pt-4">
+                <PricingManagement />
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* AI Storefront & LLM Provider - SUPER_ADMIN only */}
           {user.role === "SUPER_ADMIN" && (
