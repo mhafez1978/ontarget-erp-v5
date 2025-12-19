@@ -40,15 +40,54 @@ export default function SelectPlanPage() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [verifying, setVerifying] = useState(true);
+  const router = useRouter();
+  const searchParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const onboardTokenQuery = searchParams.get("onboard");
+
   const [stripePromise, setStripePromise] =
     useState<Promise<Stripe | null> | null>(null);
   const [clientSecret, setClientSecret] = useState("");
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [paymentMethodId, setPaymentMethodId] = useState<string>("");
   const [isPaymentValid, setIsPaymentValid] = useState(false);
   const [plans, setPlans] = useState<PlanData[]>([]);
 
+  // Onboarding-specific state
+  const [onboardToken, setOnboardToken] = useState<string | null>(
+    onboardTokenQuery || null
+  );
+  const [onboardUser, setOnboardUser] = useState<{ id: string; name: string; email: string } | null>(null);
+
   useEffect(() => {
-    // Check if user actually needs to select a plan
+    // If this page was reached via an onboarding token, verify that token
+    const verifyOnboard = async (token: string) => {
+      try {
+        const res = await fetch(`/api/onboarding/verify-oauth-token?token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+        if (!res.ok) {
+          // Token invalid / expired -> send to login with message
+          console.error("Onboard token invalid:", data);
+          router.push("/login");
+          return;
+        }
+
+        // Pre-fill requested plan and user info
+        if (data.requestedPlan) setSelectedPlan(data.requestedPlan);
+        setOnboardUser(data.user);
+        setOnboardToken(token);
+        setVerifying(false);
+      } catch (err) {
+        console.error("Failed to verify onboarding token:", err);
+        router.push("/login");
+      }
+    };
+
+    if (onboardTokenQuery) {
+      verifyOnboard(onboardTokenQuery);
+      return;
+    }
+
+    // Otherwise require normal authentication / session
     const checkPlan = async () => {
       try {
         const response = await fetch("/api/auth/me");
@@ -74,7 +113,7 @@ export default function SelectPlanPage() {
     };
 
     checkPlan();
-  }, [router]);
+  }, [router, onboardTokenQuery]);
 
   // Load pricing from API
   useEffect(() => {
@@ -185,10 +224,21 @@ export default function SelectPlanPage() {
         setStripePromise(stripe);
 
         // Create SetupIntent for card verification
-        const setupRes = await fetch("/api/payments/create-setup-intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
+            // If we're onboarding an OAuth user, include their name/email so the
+        // setup intent / customer is created for them; otherwise call without body
+        let setupRes;
+        if (onboardUser) {
+          setupRes = await fetch("/api/payments/create-setup-intent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: onboardUser.email, name: onboardUser.name }),
+          });
+        } else {
+          setupRes = await fetch("/api/payments/create-setup-intent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+        }
 
         const setupData = await setupRes.json();
 
@@ -199,6 +249,7 @@ export default function SelectPlanPage() {
         }
 
         setClientSecret(setupData.clientSecret);
+        if (setupData.customerId) setCustomerId(setupData.customerId);
       } catch (error: unknown) {
         console.error("Error initializing payment:", error);
         toast.error(
@@ -238,20 +289,39 @@ export default function SelectPlanPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/user/select-plan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          plan: selectedPlan,
-          billingCycle: billingCycle.toUpperCase(),
-          paymentMethodId,
-        }),
-      });
+      let response;
+
+      if (onboardToken && onboardUser) {
+        // Complete OAuth onboarding flow
+        response = await fetch("/api/onboarding/complete-oauth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: onboardToken,
+            plan: selectedPlan,
+            billingCycle: billingCycle.toUpperCase(),
+            paymentMethodId,
+            stripeCustomerId: customerId || undefined,
+            billingAddress: undefined,
+          }),
+        });
+      } else {
+        // Regular logged-in flow
+        response = await fetch("/api/user/select-plan", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            plan: selectedPlan,
+            billingCycle: billingCycle.toUpperCase(),
+            paymentMethodId,
+          }),
+        });
+      }
 
       if (!response.ok) {
-        throw new Error("Failed to select plan");
+        throw new Error("Failed to select/complete plan");
       }
 
       toast.success("Plan selected successfully!");

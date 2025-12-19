@@ -150,6 +150,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Track whether we created a new user in this request
+    let isNewUser = false;
+
     if (user) {
       // User exists - check if they can login with OAuth
       if (!user.isActive) {
@@ -241,6 +244,9 @@ export async function GET(request: NextRequest) {
             mfaEnabled: true,
           },
         });
+
+        // Mark we created a new user so later we can create an onboarding token
+        isNewUser = true;
 
         // Send welcome email to new ERP customer only
         try {
@@ -362,15 +368,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // If MFA is enabled, redirect to MFA challenge without creating a session
+    // Determine if this user was just created in this request
+    // (we'll set isNewUser true in the create branch earlier)
+
     if (user.mfaEnabled) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
       const pendingToken = createPendingMfaToken(user.id, user.email, "google");
       return buildMfaRedirectResponse(appUrl, pendingToken, "google");
     }
-
-    // Create session using session manager
-    const session = await createSession({ userId: user.id, request });
 
     console.log(
       "Google OAuth successful for user:",
@@ -382,6 +387,41 @@ export async function GET(request: NextRequest) {
       "Context:",
       context
     );
+
+    // If this is a newly created root-platform user and plan is GUEST, create an
+    // OAuth onboarding token and redirect to Select Plan WITHOUT creating a session.
+    // Note: we assume the "isNewUser" flag is set when we created the user above.
+    // (This prevents automatic sign-in before onboarding completes.)
+    // We'll detect by checking for a temporary marker created in the DB create block.
+
+    const isNewRootOauth = user && user.plan === "GUEST" && context === "root" && isNewUser === true;
+
+    if (isNewRootOauth) {
+      // Create onboarding token valid for 1 hour
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      const onboarding = await db.oAuthOnboarding.create({
+        data: {
+          userId: user.id,
+          requestedPlan: selectedPlan || null,
+          context: "root",
+          expiresAt,
+        },
+      });
+
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_TOKEN_CREATED,
+        userId: user.id,
+        description: `Created OAuth onboarding token for ${user.email}`,
+        metadata: { token: onboarding.token, expiresAt: onboarding.expiresAt?.toISOString() },
+      }).catch(console.error);
+
+      const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/select-plan?onboard=${encodeURIComponent(onboarding.token)}`;
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Create session using session manager
+    const session = await createSession({ userId: user.id, request });
 
     // Determine redirect URL based on context and user state
     let redirectUrl: string;
