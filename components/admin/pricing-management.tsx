@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, DollarSign, Save } from "lucide-react";
+import { Loader2, DollarSign, Save, Database } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 interface PlanPricing {
@@ -92,7 +92,7 @@ export function PricingManagement() {
   const updateField = (
     index: number,
     field: keyof PlanPricing,
-    value: string | number | boolean
+    value: string | number | boolean | null
   ) => {
     const updated = [...pricing];
     updated[index] = {
@@ -102,10 +102,72 @@ export function PricingManagement() {
     setPricing(updated);
   };
 
+  const handleSeedPricing = async () => {
+    try {
+      setSaving(true);
+      const response = await fetch("/api/admin/seed-pricing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to seed pricing");
+      }
+
+      toast.success("Default pricing initialized successfully");
+      fetchPricing(); // Refresh data
+    } catch (error) {
+      console.error("Error seeding pricing:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to seed pricing"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If no pricing data exists, show seed button
+  if (pricing.length === 0) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>No Pricing Configured</CardTitle>
+            <CardDescription>
+              Initialize default pricing for all plans (Essential, Growth,
+              Enterprise)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleSeedPricing} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Initializing...
+                </>
+              ) : (
+                <>
+                  <Database className="h-4 w-4 mr-2" />
+                  Initialize Default Pricing
+                </>
+              )}
+            </Button>
+            <p className="text-sm text-muted-foreground mt-4">
+              This will create default pricing for all three plans. You can
+              customize the prices after initialization.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
