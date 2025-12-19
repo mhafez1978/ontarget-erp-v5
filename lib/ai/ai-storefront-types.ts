@@ -95,26 +95,32 @@ export const aiFrontstoreSectionSchema = z.object({
 export const aiFrontstoreSpecSchema = z.object({
   version: z.literal(1),
   meta: z.object({
-    layoutStyle: z.enum([
-      "hero-left",
-      "hero-split",
-      "magazine",
-      "one-page",
-      "asymmetric",
-      "centered",
-      "minimal",
-      "bold",
-    ]),
-    tone: z.enum(["playful", "serious", "luxury", "minimal"]),
+    layoutStyle: z
+      .enum([
+        "hero-left",
+        "hero-split",
+        "magazine",
+        "one-page",
+        "asymmetric",
+        "centered",
+        "minimal",
+        "bold",
+      ])
+      .catch("hero-left"), // Default to "hero-left" if validation fails
+    tone: z.enum(["playful", "serious", "luxury", "minimal"]).catch("serious"),
     primaryColor: z.string(),
     secondaryColor: z.string(),
     accentColor: z.string(),
     backgroundColor: z.string().optional(),
     textColor: z.string().optional(),
-    heroSize: z.enum(["compact", "full", "extra-large", "minimal"]).optional(),
+    heroSize: z
+      .enum(["compact", "full", "extra-large", "minimal"])
+      .optional()
+      .catch("full"),
     buttonStyle: z
       .enum(["solid", "outline", "pill", "ghost", "3d", "underline"])
-      .optional(),
+      .optional()
+      .catch("solid"),
     cornerStyle: z
       .enum(["rounded", "soft", "sharp", "extra-rounded"])
       .optional(),
