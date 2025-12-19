@@ -12,70 +12,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Check, Loader2, CreditCard, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import {
-  PLAN_PRICING,
-  PLAN_LIMITS,
-  getTotalUserLimit,
-} from "@/lib/plan-limits";
+import { PLAN_LIMITS, getTotalUserLimit } from "@/lib/plan-limits";
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { PaymentForm } from "@/components/payment-form";
 
-const plans = [
-  {
-    id: "ESSENTIAL",
-    name: "Essential",
-    description: "Perfect for small businesses getting started",
-    price: `$${PLAN_PRICING.ESSENTIAL.monthlyPromoPrice}/month`,
-    originalPrice: `$${PLAN_PRICING.ESSENTIAL.monthlyPrice}`,
-    annualPrice: `or $${PLAN_PRICING.ESSENTIAL.annualPriceMonthly}/month billed annually`,
-    transactionFee: `${PLAN_PRICING.ESSENTIAL.transactionFeePercent}% + $${PLAN_PRICING.ESSENTIAL.transactionFeeFixed}`,
-    isPromo: true,
-    features: [
-      `Create ${PLAN_LIMITS.ESSENTIAL.companies} company`,
-      `${getTotalUserLimit("ESSENTIAL")} total users`,
-      `${PLAN_LIMITS.ESSENTIAL.customers} customers`,
-      `${PLAN_LIMITS.ESSENTIAL.storageGB} GB storage`,
-      "Customer & order management",
-      "Email support",
-    ],
-  },
-  {
-    id: "GROWTH",
-    name: "Growth",
-    description: "For growing businesses with multiple locations",
-    price: `$${PLAN_PRICING.GROWTH.monthlyPrice}/month`,
-    annualPrice: `or $${PLAN_PRICING.GROWTH.annualPriceMonthly}/month billed annually`,
-    transactionFee: `${PLAN_PRICING.GROWTH.transactionFeePercent}% + $${PLAN_PRICING.GROWTH.transactionFeeFixed}`,
-    features: [
-      `Create up to ${PLAN_LIMITS.GROWTH.companies} companies`,
-      `${getTotalUserLimit("GROWTH")} total users`,
-      `${PLAN_LIMITS.GROWTH.customers} customers`,
-      `${PLAN_LIMITS.GROWTH.storageGB} GB storage`,
-      "Advanced analytics",
-      "Priority support",
-      "Custom branding",
-    ],
-  },
-  {
-    id: "ENTERPRISE",
-    name: "Enterprise",
-    description: "For large organizations with complex needs",
-    price: `$${PLAN_PRICING.ENTERPRISE.monthlyPrice}/month`,
-    annualPrice: `or $${PLAN_PRICING.ENTERPRISE.annualPriceMonthly}/month billed annually`,
-    transactionFee: `${PLAN_PRICING.ENTERPRISE.transactionFeePercent}% + $${PLAN_PRICING.ENTERPRISE.transactionFeeFixed}`,
-    features: [
-      "Unlimited companies",
-      "Unlimited users",
-      "Unlimited customers",
-      `${PLAN_LIMITS.ENTERPRISE.storageGB} GB storage`,
-      "Dedicated account manager",
-      "Custom integrations",
-      "24/7 phone support",
-      "SLA guarantee",
-    ],
-  },
-];
+interface PlanData {
+  id: string;
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  monthlyPromoPrice: number | null;
+  annualPrice: number;
+  annualPriceMonthly: number;
+  transactionFeePercent: number;
+  transactionFeeFixed: number;
+  isPopular: boolean;
+  features: string[];
+}
 
 export default function SelectPlanPage() {
   const router = useRouter();
@@ -91,6 +45,7 @@ export default function SelectPlanPage() {
   const [clientSecret, setClientSecret] = useState("");
   const [paymentMethodId, setPaymentMethodId] = useState<string>("");
   const [isPaymentValid, setIsPaymentValid] = useState(false);
+  const [plans, setPlans] = useState<PlanData[]>([]);
 
   useEffect(() => {
     // Check if user actually needs to select a plan
@@ -120,6 +75,86 @@ export default function SelectPlanPage() {
 
     checkPlan();
   }, [router]);
+
+  // Load pricing from API
+  useEffect(() => {
+    const fetchPricing = async () => {
+      try {
+        const response = await fetch("/api/admin/pricing");
+        const data = await response.json();
+
+        if (data.pricing && Array.isArray(data.pricing)) {
+          const formattedPlans: PlanData[] = data.pricing.map((p: any) => {
+            const planLimits = PLAN_LIMITS[p.plan as keyof typeof PLAN_LIMITS];
+            
+            // Define features based on plan
+            let features: string[] = [];
+            if (p.plan === "ESSENTIAL") {
+              features = [
+                `Create ${planLimits.companies} company`,
+                `${getTotalUserLimit("ESSENTIAL")} total users`,
+                `${planLimits.customers} customers`,
+                `${planLimits.storageGB} GB storage`,
+                "Customer & order management",
+                "Email support",
+              ];
+            } else if (p.plan === "GROWTH") {
+              features = [
+                `Create up to ${planLimits.companies} companies`,
+                `${getTotalUserLimit("GROWTH")} total users`,
+                `${planLimits.customers} customers`,
+                `${planLimits.storageGB} GB storage`,
+                "Advanced analytics",
+                "Priority support",
+                "Custom branding",
+              ];
+            } else if (p.plan === "ENTERPRISE") {
+              features = [
+                "Unlimited companies",
+                "Unlimited users",
+                "Unlimited customers",
+                `${planLimits.storageGB} GB storage`,
+                "Dedicated account manager",
+                "Custom integrations",
+                "24/7 phone support",
+                "SLA guarantee",
+              ];
+            }
+
+            let description = "";
+            if (p.plan === "ESSENTIAL") {
+              description = "Perfect for small businesses getting started";
+            } else if (p.plan === "GROWTH") {
+              description = "For growing businesses with multiple locations";
+            } else if (p.plan === "ENTERPRISE") {
+              description = "For large organizations with complex needs";
+            }
+
+            return {
+              id: p.plan,
+              name: p.plan.charAt(0) + p.plan.slice(1).toLowerCase(),
+              description,
+              monthlyPrice: p.monthlyPrice,
+              monthlyPromoPrice: p.monthlyPromoPrice,
+              annualPrice: p.annualPrice,
+              annualPriceMonthly: p.annualPriceMonthly,
+              transactionFeePercent: p.transactionFeePercent,
+              transactionFeeFixed: p.transactionFeeFixed,
+              isPopular: p.isPopular,
+              features,
+            };
+          });
+
+          setPlans(formattedPlans);
+        }
+      } catch (error) {
+        console.error("Error fetching pricing:", error);
+        toast.error("Failed to load pricing");
+      }
+    };
+
+    fetchPricing();
+  }, []);
 
   // Load Stripe and create setup intent when component mounts
   useEffect(() => {
@@ -257,14 +292,10 @@ export default function SelectPlanPage() {
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               {billingCycle === "monthly"
-                ? selectedPlanData?.price
-                : `$${
-                    selectedPlan === "ESSENTIAL"
-                      ? PLAN_PRICING.ESSENTIAL.annualPriceMonthly
-                      : selectedPlan === "GROWTH"
-                      ? PLAN_PRICING.GROWTH.annualPriceMonthly
-                      : PLAN_PRICING.ENTERPRISE.annualPriceMonthly
-                  }/month`}{" "}
+                ? selectedPlanData?.monthlyPromoPrice
+                  ? `$${selectedPlanData.monthlyPromoPrice}/month`
+                  : `$${selectedPlanData?.monthlyPrice}/month`
+                : `$${selectedPlanData?.annualPriceMonthly}/month`}{" "}
               • Billed {billingCycle === "monthly" ? "Monthly" : "Annually"}
             </p>
           </div>
@@ -385,14 +416,14 @@ export default function SelectPlanPage() {
                 </div>
                 {billingCycle === "monthly" ? (
                   <>
-                    {plan.isPromo && plan.originalPrice ? (
+                    {plan.monthlyPromoPrice ? (
                       <div className="mt-4">
                         <div className="flex items-baseline gap-2">
                           <span className="text-xl text-orange-500 line-through font-semibold">
-                            {plan.originalPrice}
+                            ${plan.monthlyPrice}
                           </span>
                           <span className="text-3xl font-bold">
-                            {plan.price}
+                            ${plan.monthlyPromoPrice}/month
                           </span>
                         </div>
                         <p className="text-xs text-primary font-medium mt-1">
@@ -405,7 +436,7 @@ export default function SelectPlanPage() {
                     ) : (
                       <div>
                         <div className="text-3xl font-bold mt-4">
-                          {plan.price}
+                          ${plan.monthlyPrice}/month
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
                           Billed monthly
@@ -416,18 +447,10 @@ export default function SelectPlanPage() {
                 ) : (
                   <div className="mt-4">
                     <div className="text-3xl font-bold">
-                      {plan.id === "ESSENTIAL"
-                        ? `$${PLAN_PRICING.ESSENTIAL.annualPriceMonthly}/month`
-                        : plan.id === "GROWTH"
-                        ? `$${PLAN_PRICING.GROWTH.annualPriceMonthly}/month`
-                        : `$${PLAN_PRICING.ENTERPRISE.annualPriceMonthly}/month`}
+                      ${plan.annualPriceMonthly}/month
                     </div>
                     <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
-                      {plan.id === "ESSENTIAL"
-                        ? `$${PLAN_PRICING.ESSENTIAL.annualPrice}/year`
-                        : plan.id === "GROWTH"
-                        ? `$${PLAN_PRICING.GROWTH.annualPrice}/year`
-                        : `$${PLAN_PRICING.ENTERPRISE.annualPrice}/year`}
+                      ${plan.annualPrice}/year
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
                       Billed annually
@@ -435,7 +458,7 @@ export default function SelectPlanPage() {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground mt-2">
-                  Transaction fee: {plan.transactionFee}
+                  Transaction fee: {plan.transactionFeePercent}% + ${plan.transactionFeeFixed}
                 </p>
               </CardHeader>
               <CardContent>
