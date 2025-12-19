@@ -279,6 +279,28 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Fetch company locations for map integration
+    const locations = await db.companyLocation.findMany({
+      where: { companyId },
+      orderBy: [{ isMain: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        isMain: true,
+        latitude: true,
+        longitude: true,
+        addressLine1: true,
+        addressLine2: true,
+        city: true,
+        state: true,
+        country: true,
+        postalCode: true,
+        phone: true,
+        email: true,
+      },
+    });
+
     // Fetch previous conversation messages for context
     const previousMessages = await db.storefrontMessage.findMany({
       where: { conversationId: conversation.id },
@@ -400,6 +422,22 @@ export async function POST(request: NextRequest) {
         id: p.id,
         title: p.title,
         excerpt: p.excerpt,
+      })),
+      locations: locations.map((loc) => ({
+        id: loc.id,
+        name: loc.name,
+        type: loc.type,
+        isMain: loc.isMain,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        addressLine1: loc.addressLine1,
+        addressLine2: loc.addressLine2,
+        city: loc.city,
+        state: loc.state,
+        country: loc.country,
+        postalCode: loc.postalCode,
+        phone: loc.phone,
+        email: loc.email,
       })),
       metadata: {
         title: (companyData?.storeMetadata as any)?.title || null,
@@ -587,7 +625,6 @@ export async function POST(request: NextRequest) {
             }
 
             const specVersion = await db.storefrontSpecVersion.create({
-               
               data: {
                 companyId,
                 spec: (resultSpec || {}) as any,
@@ -657,7 +694,6 @@ export async function POST(request: NextRequest) {
           }
 
           const specVersion = await db.storefrontSpecVersion.create({
-             
             data: {
               companyId,
               spec: (result.spec || {}) as any,

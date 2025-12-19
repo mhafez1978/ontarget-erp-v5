@@ -434,18 +434,73 @@ export default function ContactMapSectionV2({
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <div className="rounded-2xl overflow-hidden shadow-xl border border-gray-200/50 hover:shadow-2xl transition-all duration-300">
-              {locations.length > 0 ? (
+              {locations.length > 0 &&
+              locations.some((loc) => loc.latitude && loc.longitude) ? (
                 <MapSectionV2
-                  locations={locations}
+                  locations={locations.filter(
+                    (loc) => loc.latitude && loc.longitude
+                  )}
                   height={isVertical ? 300 : 450}
                   interactive={true}
                 />
               ) : (
-                <div className="h-96 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-500">
-                  <div className="text-center">
+                <div
+                  className="bg-linear-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center text-gray-500 relative overflow-hidden"
+                  style={{ height: isVertical ? "300px" : "450px" }}
+                >
+                  {/* Decorative map-like background */}
+                  <div className="absolute inset-0 opacity-10">
+                    <svg
+                      width="100%"
+                      height="100%"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <defs>
+                        <pattern
+                          id="grid"
+                          width="40"
+                          height="40"
+                          patternUnits="userSpaceOnUse"
+                        >
+                          <path
+                            d="M 40 0 L 0 0 0 40"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="0.5"
+                          />
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#grid)" />
+                      <circle
+                        cx="50%"
+                        cy="50%"
+                        r="100"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        opacity="0.3"
+                      />
+                      <circle
+                        cx="50%"
+                        cy="50%"
+                        r="150"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        opacity="0.2"
+                      />
+                    </svg>
+                  </div>
+                  <div className="text-center relative z-10">
                     <MapPin className="h-12 w-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm font-medium">
-                      No locations available
+                      {locations.length > 0
+                        ? "Location coordinates not available"
+                        : "No locations available"}
+                    </p>
+                    <p className="text-xs opacity-50 mt-2">
+                      {locations.length > 0 &&
+                        "Contact information is available below"}
                     </p>
                   </div>
                 </div>
