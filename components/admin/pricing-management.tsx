@@ -144,7 +144,8 @@ export function PricingManagement() {
           <CardHeader>
             <CardTitle>No Pricing Configured</CardTitle>
             <CardDescription>
-              Initialize default pricing for all plans (Essential, Growth, Enterprise)
+              Initialize default pricing for all plans (Essential, Growth,
+              Enterprise)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -162,7 +163,8 @@ export function PricingManagement() {
               )}
             </Button>
             <p className="text-sm text-muted-foreground mt-4">
-              This will create default pricing for all three plans. You can customize the prices after initialization.
+              This will create default pricing for all three plans. You can
+              customize the prices after initialization.
             </p>
           </CardContent>
         </Card>
