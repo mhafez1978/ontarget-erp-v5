@@ -68,7 +68,9 @@ async function seedPricing() {
         update: pricing,
         create: pricing,
       });
-      console.log(`✅ ${pricing.plan} pricing configured: $${pricing.monthlyPrice}/mo`);
+      console.log(
+        `✅ ${pricing.plan} pricing configured: $${pricing.monthlyPrice}/mo`
+      );
     }
 
     console.log("\n✅ All pricing data seeded successfully!");
