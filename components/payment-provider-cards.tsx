@@ -136,6 +136,18 @@ export default function PaymentProviderCards({
 
   const handleSave = async () => {
     setIsSaving(true);
+
+    // UI validation: require all keys for Stripe provider
+    if (selectedProvider === "stripe") {
+      if (!publicKey || !secretKey || !webhookSecret) {
+        toast.error(
+          "Please enter Publishable Key, Secret Key and Webhook Secret for Stripe"
+        );
+        setIsSaving(false);
+        return;
+      }
+    }
+
     try {
       const body: {
         provider: string;
@@ -165,8 +177,44 @@ export default function PaymentProviderCards({
 
       const data = await resp.json();
       if (resp.ok) {
-        toast.success("Payment provider saved");
-        setIsSheetOpen(false);
+        // After saving, run a connection test to ensure keys are valid.
+        const testBody: any = {
+          provider: selectedProvider,
+          publicKey,
+          secretKey,
+          webhookSecret,
+          isTestMode,
+        };
+
+        // If company-scoped, use company test endpoint
+        let testUrl = "/api/settings/payment-provider/test";
+        if (selectedCompanyId !== "GLOBAL") {
+          testUrl = `/api/company/payment-gateways/${selectedProvider}/test`;
+          testBody.companyId = selectedCompanyId;
+        }
+
+        try {
+          const testResp = await fetch(testUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(testBody),
+          });
+          const testData = await testResp.json();
+          if (testResp.ok && testData.success) {
+            toast.success("Payment provider saved and connection verified");
+            setIsSheetOpen(false);
+          } else {
+            toast.error(
+              testData.message ||
+                testData.error ||
+                "Saved but test connection failed"
+            );
+          }
+        } catch (err) {
+          console.error("Failed to test connection after saving:", err);
+          toast.error("Saved but failed to validate connection");
+        }
+
         // Refresh active providers
         const url =
           selectedCompanyId === "GLOBAL"
@@ -532,9 +580,13 @@ export default function PaymentProviderCards({
 
             <div className="space-y-2">
               <Label htmlFor="publicKey" className="text-sm font-medium">
-                {selectedProvider === "stripe"
-                  ? "Publishable Key"
-                  : "Client ID"}
+                {selectedProvider === "stripe" ? (
+                  <>
+                    Publishable Key <span className="text-red-500 ml-1">*</span>
+                  </>
+                ) : (
+                  "Client ID"
+                )}
               </Label>
               <Input
                 id="publicKey"
@@ -580,7 +632,7 @@ export default function PaymentProviderCards({
 
             <div className="space-y-2">
               <Label htmlFor="webhookSecret" className="text-sm font-medium">
-                Webhook Secret
+                Webhook Secret <span className="text-red-500 ml-1">*</span>
               </Label>
               <Input
                 id="webhookSecret"

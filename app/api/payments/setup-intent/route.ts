@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Instantiate provider and create customer + setup intent
-    const provider =
+    const provider: any =
       paymentsService.instantiateStripeProviderFromGateway(gateway);
 
     // Type guard to ensure provider has required methods

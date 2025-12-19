@@ -7,6 +7,7 @@ interface CreditCardDisplayProps {
   cardHolder: string;
   expiryDate: string;
   cvv: string;
+  cardBrand?: "visa" | "mastercard" | "amex" | "discover" | "generic";
 }
 
 export function CreditCardDisplay({
@@ -14,7 +15,10 @@ export function CreditCardDisplay({
   cardHolder,
   expiryDate,
   cvv,
+  cardBrand,
 }: CreditCardDisplayProps) {
+  // Allow explicit brand override when provided by parent
+
   // Format card number with spaces
   const formatCardNumber = (number: string) => {
     const cleaned = number.replace(/\s/g, "");
@@ -31,7 +35,7 @@ export function CreditCardDisplay({
     return "generic";
   };
 
-  const cardType = getCardType(cardNumber);
+  const cardType = cardBrand || getCardType(cardNumber);
 
   return (
     <div className="relative w-full max-w-sm mx-auto perspective-1000">

@@ -10,12 +10,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Loader2, CreditCard, ChevronLeft } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  CreditCard,
+  ChevronLeft,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PLAN_LIMITS, getTotalUserLimit } from "@/lib/plan-limits";
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { PaymentForm } from "@/components/payment-form";
+import { CreditCardDisplay } from "@/components/credit-card-display";
+import {
+  AddressAutocomplete,
+  AddressData,
+} from "@/components/address-autocomplete";
 
 interface PlanData {
   id: string;
@@ -31,8 +42,18 @@ interface PlanData {
   features: string[];
 }
 
+interface PricingApiResponse {
+  plan: string;
+  monthlyPrice: number;
+  monthlyPromoPrice: number | null;
+  annualPrice: number;
+  annualPriceMonthly: number;
+  transactionFeePercent: number;
+  transactionFeeFixed: number;
+  isPopular: boolean;
+}
+
 export default function SelectPlanPage() {
-  const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1); // 1: Select Plan, 2: Payment
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
@@ -41,7 +62,9 @@ export default function SelectPlanPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [verifying, setVerifying] = useState(true);
   const router = useRouter();
-  const searchParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const searchParams = new URLSearchParams(
+    typeof window !== "undefined" ? window.location.search : ""
+  );
   const onboardTokenQuery = searchParams.get("onboard");
 
   const [stripePromise, setStripePromise] =
@@ -52,17 +75,47 @@ export default function SelectPlanPage() {
   const [isPaymentValid, setIsPaymentValid] = useState(false);
   const [plans, setPlans] = useState<PlanData[]>([]);
 
+  // Billing address state
+  const [billingAddress, setBillingAddress] = useState<AddressData>({
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    country: "United States",
+    countryCode: "US",
+    postalCode: "",
+  });
+
+  const [cardData, setCardData] = useState({
+    cardNumber: "",
+    cardHolder: "",
+    expiryDate: "",
+    cvv: "",
+  });
+  const [paymentSummary, setPaymentSummary] = useState<{
+    brand?: string;
+    last4?: string;
+  }>({});
+
   // Onboarding-specific state
   const [onboardToken, setOnboardToken] = useState<string | null>(
     onboardTokenQuery || null
   );
-  const [onboardUser, setOnboardUser] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [onboardUser, setOnboardUser] = useState<{
+    id: string;
+    name: string;
+    email: string;
+  } | null>(null);
 
   useEffect(() => {
     // If this page was reached via an onboarding token, verify that token
     const verifyOnboard = async (token: string) => {
       try {
-        const res = await fetch(`/api/onboarding/verify-oauth-token?token=${encodeURIComponent(token)}`);
+        const res = await fetch(
+          `/api/onboarding/verify-oauth-token?token=${encodeURIComponent(
+            token
+          )}`
+        );
         const data = await res.json();
         if (!res.ok) {
           // Token invalid / expired -> send to login with message
@@ -70,6 +123,8 @@ export default function SelectPlanPage() {
           router.push("/login");
           return;
         }
+
+        console.log("[Select Plan] Token verified, user data:", data.user);
 
         // Pre-fill requested plan and user info
         if (data.requestedPlan) setSelectedPlan(data.requestedPlan);
@@ -99,6 +154,14 @@ export default function SelectPlanPage() {
             router.push("/dashboard");
             return;
           }
+
+          // Set user info for creating setup intent
+          console.log("[Select Plan] Authenticated user:", data.user);
+          setOnboardUser({
+            id: data.user.id,
+            name: data.user.name || data.user.email || "User",
+            email: data.user.email,
+          });
         } else {
           // Not authenticated, redirect to login
           router.push("/login");
@@ -123,66 +186,69 @@ export default function SelectPlanPage() {
         const data = await response.json();
 
         if (data.pricing && Array.isArray(data.pricing)) {
-          const formattedPlans: PlanData[] = data.pricing.map((p: any) => {
-            const planLimits = PLAN_LIMITS[p.plan as keyof typeof PLAN_LIMITS];
+          const formattedPlans: PlanData[] = data.pricing.map(
+            (p: PricingApiResponse) => {
+              const planLimits =
+                PLAN_LIMITS[p.plan as keyof typeof PLAN_LIMITS];
 
-            // Define features based on plan
-            let features: string[] = [];
-            if (p.plan === "ESSENTIAL") {
-              features = [
-                `Create ${planLimits.companies} company`,
-                `${getTotalUserLimit("ESSENTIAL")} total users`,
-                `${planLimits.customers} customers`,
-                `${planLimits.storageGB} GB storage`,
-                "Customer & order management",
-                "Email support",
-              ];
-            } else if (p.plan === "GROWTH") {
-              features = [
-                `Create up to ${planLimits.companies} companies`,
-                `${getTotalUserLimit("GROWTH")} total users`,
-                `${planLimits.customers} customers`,
-                `${planLimits.storageGB} GB storage`,
-                "Advanced analytics",
-                "Priority support",
-                "Custom branding",
-              ];
-            } else if (p.plan === "ENTERPRISE") {
-              features = [
-                "Unlimited companies",
-                "Unlimited users",
-                "Unlimited customers",
-                `${planLimits.storageGB} GB storage`,
-                "Dedicated account manager",
-                "Custom integrations",
-                "24/7 phone support",
-                "SLA guarantee",
-              ];
+              // Define features based on plan
+              let features: string[] = [];
+              if (p.plan === "ESSENTIAL") {
+                features = [
+                  `Create ${planLimits.companies} company`,
+                  `${getTotalUserLimit("ESSENTIAL")} total users`,
+                  `${planLimits.customers} customers`,
+                  `${planLimits.storageGB} GB storage`,
+                  "Customer & order management",
+                  "Email support",
+                ];
+              } else if (p.plan === "GROWTH") {
+                features = [
+                  `Create up to ${planLimits.companies} companies`,
+                  `${getTotalUserLimit("GROWTH")} total users`,
+                  `${planLimits.customers} customers`,
+                  `${planLimits.storageGB} GB storage`,
+                  "Advanced analytics",
+                  "Priority support",
+                  "Custom branding",
+                ];
+              } else if (p.plan === "ENTERPRISE") {
+                features = [
+                  "Unlimited companies",
+                  "Unlimited users",
+                  "Unlimited customers",
+                  `${planLimits.storageGB} GB storage`,
+                  "Dedicated account manager",
+                  "Custom integrations",
+                  "24/7 phone support",
+                  "SLA guarantee",
+                ];
+              }
+
+              let description = "";
+              if (p.plan === "ESSENTIAL") {
+                description = "Perfect for small businesses getting started";
+              } else if (p.plan === "GROWTH") {
+                description = "For growing businesses with multiple locations";
+              } else if (p.plan === "ENTERPRISE") {
+                description = "For large organizations with complex needs";
+              }
+
+              return {
+                id: p.plan,
+                name: p.plan.charAt(0) + p.plan.slice(1).toLowerCase(),
+                description,
+                monthlyPrice: p.monthlyPrice,
+                monthlyPromoPrice: p.monthlyPromoPrice,
+                annualPrice: p.annualPrice,
+                annualPriceMonthly: p.annualPriceMonthly,
+                transactionFeePercent: p.transactionFeePercent,
+                transactionFeeFixed: p.transactionFeeFixed,
+                isPopular: p.isPopular,
+                features,
+              };
             }
-
-            let description = "";
-            if (p.plan === "ESSENTIAL") {
-              description = "Perfect for small businesses getting started";
-            } else if (p.plan === "GROWTH") {
-              description = "For growing businesses with multiple locations";
-            } else if (p.plan === "ENTERPRISE") {
-              description = "For large organizations with complex needs";
-            }
-
-            return {
-              id: p.plan,
-              name: p.plan.charAt(0) + p.plan.slice(1).toLowerCase(),
-              description,
-              monthlyPrice: p.monthlyPrice,
-              monthlyPromoPrice: p.monthlyPromoPrice,
-              annualPrice: p.annualPrice,
-              annualPriceMonthly: p.annualPriceMonthly,
-              transactionFeePercent: p.transactionFeePercent,
-              transactionFeeFixed: p.transactionFeeFixed,
-              isPopular: p.isPopular,
-              features,
-            };
-          });
+          );
 
           setPlans(formattedPlans);
         }
@@ -224,21 +290,26 @@ export default function SelectPlanPage() {
         setStripePromise(stripe);
 
         // Create SetupIntent for card verification
-            // If we're onboarding an OAuth user, include their name/email so the
-        // setup intent / customer is created for them; otherwise call without body
-        let setupRes;
-        if (onboardUser) {
-          setupRes = await fetch("/api/payments/create-setup-intent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: onboardUser.email, name: onboardUser.name }),
-          });
-        } else {
-          setupRes = await fetch("/api/payments/create-setup-intent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-          });
-        }
+        // If we're onboarding an OAuth user, include their name/email so the
+        // setup intent / customer is created for them
+        const setupBody =
+          onboardUser && onboardUser.email && onboardUser.name
+            ? {
+                email: onboardUser.email,
+                name: onboardUser.name,
+              }
+            : {};
+
+        console.log(
+          "[Select Plan] Creating setup intent with body:",
+          setupBody
+        );
+
+        const setupRes = await fetch("/api/payments/create-setup-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(setupBody),
+        });
 
         const setupData = await setupRes.json();
 
@@ -261,7 +332,7 @@ export default function SelectPlanPage() {
     };
 
     initializePayment();
-  }, [step]); // Depend on step so it initializes when step changes to 2
+  }, [step, onboardUser]); // Depend on step so it initializes when step changes to 2
 
   const handleContinueToPayment = () => {
     if (!selectedPlan) {
@@ -286,6 +357,17 @@ export default function SelectPlanPage() {
       return;
     }
 
+    // Validate billing address
+    if (
+      !billingAddress.addressLine1 ||
+      !billingAddress.city ||
+      !billingAddress.state ||
+      !billingAddress.postalCode
+    ) {
+      toast.error("Please complete your billing address");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -302,7 +384,7 @@ export default function SelectPlanPage() {
             billingCycle: billingCycle.toUpperCase(),
             paymentMethodId,
             stripeCustomerId: customerId || undefined,
-            billingAddress: undefined,
+            billingAddress,
           }),
         });
       } else {
@@ -326,8 +408,8 @@ export default function SelectPlanPage() {
 
       toast.success("Plan selected successfully!");
 
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Redirect to success page with beating heart animation
+      router.push("/register/success");
       router.refresh();
     } catch (error) {
       console.error("Error selecting plan:", error);
@@ -372,25 +454,92 @@ export default function SelectPlanPage() {
             </p>
           </div>
 
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                Secure payment • Cancel anytime • No surprise charges
+              </p>
+            </div>
+          </div>
+
           {stripePromise && clientSecret ? (
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <Card>
+            <Elements
+              stripe={stripePromise}
+              options={{
+                clientSecret,
+                appearance: {
+                  theme: "stripe",
+                  variables: {
+                    colorPrimary: "#0066ff",
+                  },
+                },
+              }}
+            >
+              <div className="flex flex-col gap-6 mb-6">
+                {/* Left Column: Credit Card Display */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Card Preview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CreditCardDisplay
+                      cardNumber={
+                        paymentSummary.last4
+                          ? `•••• •••• •••• ${paymentSummary.last4}`
+                          : cardData.cardNumber || "•••• •••• •••• ••••"
+                      }
+                      cardHolder={cardData.cardHolder}
+                      expiryDate={cardData.expiryDate}
+                      cvv={cardData.cvv}
+                    />
+                    <p className="text-xs text-muted-foreground mt-3">
+                      For your security we only show masked numbers. The card
+                      ending is shown after saving.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Right Column: Payment Form */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payment Information</CardTitle>
+                    <CardDescription>
+                      Your card will be charged starting next billing cycle
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <PaymentForm
+                      onCardDataChange={setCardData}
+                      onValidationChange={setIsPaymentValid}
+                      onPaymentMethodCreated={(id, details) => {
+                        setPaymentMethodId(id);
+                        setPaymentSummary({
+                          brand: details?.brand,
+                          last4: details?.last4,
+                        });
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Payment Information
-                  </CardTitle>
+                  <CardTitle>Billing Address</CardTitle>
                   <CardDescription>
-                    Your card will be charged starting next billing cycle
+                    Enter the billing address for your payment method
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <PaymentForm
-                    onPaymentMethodCreated={(pmId) => {
-                      setPaymentMethodId(pmId);
-                      setIsPaymentValid(true);
-                    }}
-                    onValidationChange={setIsPaymentValid}
+                  <AddressAutocomplete
+                    label="Billing Address"
+                    value={billingAddress}
+                    onChange={setBillingAddress}
+                    required
                   />
                 </CardContent>
               </Card>

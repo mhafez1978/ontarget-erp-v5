@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
         employmentType,
         payRate:
           payRate !== undefined && payRate !== ""
-            ? parseFloat(payRate as any)
+            ? parseFloat(payRate as string)
             : undefined,
         status: "ACTIVE",
         hireDate: new Date(),

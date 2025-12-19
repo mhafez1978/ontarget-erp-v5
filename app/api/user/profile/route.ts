@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
         plan: true,
         mfaEnabled: true,
         mfaSetupAt: true,
+        authMethod: true,
+        password: true,
         image: true,
         addressLine1: true,
         addressLine2: true,
@@ -52,6 +54,8 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.json({
       ...user,
+      hasPassword: !!user.password,
+      password: undefined, // Don't send the actual password hash
       image: user.image
         ? user.image.startsWith("http")
           ? user.image

@@ -29,6 +29,7 @@ import {
   UsersRound,
   Sparkles,
   CreditCard,
+  Lock,
 } from "lucide-react";
 import PaymentProviderCards from "@/components/payment-provider-cards";
 import { StorageProviderCards } from "@/components/storage-provider-cards";
@@ -41,6 +42,7 @@ import { EditTeamDialog } from "@/components/edit-team-dialog";
 import { DeleteTeamDialog } from "@/components/delete-team-dialog";
 import { AddTeamMemberDialog } from "@/components/add-team-member-dialog";
 import { PricingManagement } from "@/components/admin/pricing-management";
+import { PasswordManagementTab } from "@/components/password-management-tab";
 import {
   getModelsForProvider,
   estimateGenerationCost,
@@ -171,7 +173,7 @@ export default function SettingsPage() {
   } | null>(null);
   const [teamsRefreshKey, setTeamsRefreshKey] = useState(0);
   const [activeUserManagementTab, setActiveUserManagementTab] = useState<
-    "users" | "teams"
+    "users" | "teams" | "passwords"
   >("users");
   const [selectedCompanyForTeams, setSelectedCompanyForTeams] = useState<
     string | null
@@ -3141,12 +3143,30 @@ export default function SettingsPage() {
                         <UsersRound className="h-4 w-4 inline mr-2" />
                         Teams Management
                       </button>
+                      {(user.role === "SUPER_ADMIN" ||
+                        user.role === "ADMIN") && (
+                        <button
+                          onClick={() =>
+                            setActiveUserManagementTab("passwords")
+                          }
+                          className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+                            activeUserManagementTab === "passwords"
+                              ? "border-primary text-primary"
+                              : "border-transparent text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Lock className="h-4 w-4 inline mr-2" />
+                          Password Management
+                        </button>
+                      )}
                     </div>
                   </div>
 
                   {/* Tab Content */}
                   {activeUserManagementTab === "users" ? (
                     <UserManagementTable />
+                  ) : activeUserManagementTab === "passwords" ? (
+                    <PasswordManagementTab currentUserRole={user.role} />
                   ) : (
                     <>
                       {/* Company Selector for SUPER_ADMIN and ADMIN */}
