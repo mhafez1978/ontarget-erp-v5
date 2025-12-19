@@ -271,13 +271,12 @@ export async function POST(request: NextRequest) {
             await sendEmail({
               to: email,
               subject: "Set Your Password",
-              companyId: companyId,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                   <h2>Welcome to ${company.name}!</h2>
                   <p>Hello ${name},</p>
                   <p>Your customer account has been created. To access your dashboard and view your purchase history, invoices, and project updates, you'll need to set your password.</p>
-                  <p><strong>Your Access Code:</strong> <code style="background: #f4f4f4; padding: 4px 8px; border-radius: 4px;">${GENERIC_ACCESS_CODE}</code></p>
+                  <p><strong>Your Access Code:</strong> <code style="background: #f4f4f4; padding: 4px 8px; border-radius: 4px;">${tempPassword}</code></p>
                   <p>Click the link below to set your password:</p>
                   <p><a href="${resetUrl}" style="display: inline-block; background: #0070f3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Set Your Password</a></p>
                   <p>Or copy this link: <a href="${resetUrl}">${resetUrl}</a></p>
