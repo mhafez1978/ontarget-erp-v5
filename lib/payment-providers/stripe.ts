@@ -22,7 +22,7 @@ export class StripeProvider extends PaymentProvider {
     super(config, "stripe");
 
     this.stripe = new Stripe(config.secretKey, {
-      apiVersion: "2025-10-29.clover",
+      apiVersion: "2024-11-20.acacia",
       typescript: true,
     });
   }
