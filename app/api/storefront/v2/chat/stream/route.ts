@@ -625,7 +625,6 @@ export async function POST(request: NextRequest) {
             }
 
             const specVersion = await db.storefrontSpecVersion.create({
-               
               data: {
                 companyId,
                 spec: (resultSpec || {}) as any,
@@ -695,7 +694,6 @@ export async function POST(request: NextRequest) {
           }
 
           const specVersion = await db.storefrontSpecVersion.create({
-             
             data: {
               companyId,
               spec: (result.spec || {}) as any,
