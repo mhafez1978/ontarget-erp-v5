@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import paymentsService from "@/lib/payments/service";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
+import { getGeoLocation, extractClientIp } from "@/lib/geo-location";
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,15 +40,19 @@ export async function POST(request: NextRequest) {
         companyId: gateway.companyId,
         description: "Failed to instantiate payment provider",
         metadata: {
-          error: providerError instanceof Error ? providerError.message : String(providerError),
+          error:
+            providerError instanceof Error
+              ? providerError.message
+              : String(providerError),
           provider: gateway.provider,
         },
       });
       return NextResponse.json(
-        { 
-          error: providerError instanceof Error 
-            ? providerError.message 
-            : "Failed to initialize payment provider" 
+        {
+          error:
+            providerError instanceof Error
+              ? providerError.message
+              : "Failed to initialize payment provider",
         },
         { status: 500 }
       );
@@ -73,22 +78,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Try to obtain client geo info for audit logging
-    let geoData = null;
-    try {
-      const forwardedFor = request.headers.get("x-forwarded-for");
-      const realIp = request.headers.get("x-real-ip");
-      const clientIp = forwardedFor?.split(",")[0]?.trim() || realIp || null;
-
-      const geoRes = await fetch(`${request.nextUrl.origin}/api/get-location`, {
-        headers: {
-          "x-forwarded-for": clientIp || "",
-          "x-real-ip": clientIp || "",
-        },
-      });
-      if (geoRes.ok) geoData = await geoRes.json();
-    } catch (err) {
-      console.debug("Failed to fetch geo for setup intent audit:", err);
-    }
+    const clientIp = extractClientIp(request.headers);
+    const geoData = await getGeoLocation(clientIp);
 
     // Create customer with proper typing
     const customerResult = (await provider.createCustomer(email, name)) as {
