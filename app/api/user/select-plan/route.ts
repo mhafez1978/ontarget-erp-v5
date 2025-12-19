@@ -7,11 +7,18 @@ const VALID_PLANS = ["ESSENTIAL", "GROWTH", "ENTERPRISE"];
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan } = await req.json();
+    const { plan, paymentMethodId, billingCycle } = await req.json();
 
     if (!plan || !VALID_PLANS.includes(plan)) {
       return NextResponse.json(
         { success: false, message: "Invalid plan selected" },
+        { status: 400 }
+      );
+    }
+
+    if (!paymentMethodId) {
+      return NextResponse.json(
+        { success: false, message: "Payment method is required" },
         { status: 400 }
       );
     }
@@ -51,11 +58,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update user's plan
+    // Update user's plan and payment method
     await db.user.update({
       where: { id: user.id },
       data: {
         plan: plan,
+        stripePaymentMethodId: paymentMethodId,
       },
     });
 
@@ -63,7 +71,9 @@ export async function POST(req: NextRequest) {
     await createAuditLog({
       userId: user.id,
       action: "USER_PLAN_SELECTED",
-      description: `User selected plan: ${plan}`,
+      description: `User selected plan: ${plan} (${
+        billingCycle || "MONTHLY"
+      } billing) via OAuth flow`,
     });
 
     return NextResponse.json({
