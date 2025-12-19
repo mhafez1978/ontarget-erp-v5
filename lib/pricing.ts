@@ -1,8 +1,23 @@
 import { db } from "@/lib/db";
 import { PLAN_LIMITS, type PlanType } from "@/lib/plan-limits";
 
+type PricingData = {
+  name: string;
+  monthlyPrice: number;
+  monthlyPromoPrice: number | null;
+  annualPrice: number;
+  annualPriceMonthly: number;
+  transactionFee: string;
+  transactionFeePercent: number;
+  transactionFeeFixed: number;
+  baseStorageGB: number;
+  extraStoragePricePer100GB: number;
+  extraStoragePricePerGB: number;
+  isPopular: boolean;
+};
+
 // Cache for pricing to avoid excessive DB calls
-let pricingCache: Map<string, any> | null = null;
+let pricingCache: Map<string, PricingData> | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 60000; // 1 minute cache
 
@@ -25,12 +40,7 @@ export async function getPlanPricing(plan: PlanType) {
     });
 
     if (pricing) {
-      // Update cache
-      if (!pricingCache) pricingCache = new Map();
-      pricingCache.set(plan, pricing);
-      cacheTimestamp = now;
-      
-      return {
+      const pricingData: PricingData = {
         name: plan,
         monthlyPrice: pricing.monthlyPrice,
         monthlyPromoPrice: pricing.monthlyPromoPrice,
@@ -44,6 +54,13 @@ export async function getPlanPricing(plan: PlanType) {
         extraStoragePricePerGB: pricing.extraStoragePricePerGB,
         isPopular: pricing.isPopular,
       };
+
+      // Update cache
+      if (!pricingCache) pricingCache = new Map();
+      pricingCache.set(plan, pricingData);
+      cacheTimestamp = now;
+
+      return pricingData;
     }
 
     // Fallback to hardcoded if not found in DB
