@@ -179,8 +179,8 @@ export function PricingManagement() {
           <DollarSign className="h-6 w-6 text-primary" />
           <h2 className="text-2xl font-bold">Plan Pricing Management</h2>
         </div>
-        <Button 
-          onClick={handleSeedPricing} 
+        <Button
+          onClick={handleSeedPricing}
           disabled={saving}
           variant="outline"
           size="sm"
