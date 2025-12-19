@@ -158,6 +158,10 @@ model User {
 
   // Payment system relations
   invoices Invoice[]
+
+  // OAuth onboarding relation (single token for OAuth-driven new users)
+  oauthOnboarding OAuthOnboarding?
+
   customerPaymentProviders CustomerPaymentProvider[]
 
   createdAt DateTime @default(now())
@@ -2092,6 +2096,35 @@ model OnboardingToken {
 
   @@index([token])
   @@index([staffId])
+  @@index([expiresAt])
+  @@index([isUsed])
+}
+
+// OAuth Onboarding Token for root platform customers
+model OAuthOnboarding {
+  id           String   @id @default(cuid())
+  token        String   @unique @default(cuid())
+
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Requested plan passed during OAuth flow (ESSENTIAL|GROWTH|ENTERPRISE|null)
+  requestedPlan String?
+  context       String   @default("root") // root | storefront
+  companyId     String?  // present when context is storefront
+
+  // Token lifecycle
+  expiresAt   DateTime
+  usedAt      DateTime?
+  isUsed      Boolean   @default(false)
+  completedAt DateTime?
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([token])
+  @@index([userId])
   @@index([expiresAt])
   @@index([isUsed])
 }
