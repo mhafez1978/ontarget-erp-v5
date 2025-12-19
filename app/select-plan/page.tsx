@@ -10,13 +10,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, CreditCard, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
   PLAN_PRICING,
   PLAN_LIMITS,
   getTotalUserLimit,
 } from "@/lib/plan-limits";
+import { loadStripe, type Stripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { PaymentForm } from "@/components/payment-form";
 
 const plans = [
   {
@@ -76,12 +79,18 @@ const plans = [
 
 export default function SelectPlanPage() {
   const router = useRouter();
+  const [step, setStep] = useState<1 | 2>(1); // 1: Select Plan, 2: Payment
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly"
   );
   const [isLoading, setIsLoading] = useState(false);
   const [verifying, setVerifying] = useState(true);
+  const [stripePromise, setStripePromise] =
+    useState<Promise<Stripe | null> | null>(null);
+  const [clientSecret, setClientSecret] = useState("");
+  const [paymentMethodId, setPaymentMethodId] = useState<string>("");
+  const [isPaymentValid, setIsPaymentValid] = useState(false);
 
   useEffect(() => {
     // Check if user actually needs to select a plan
@@ -112,9 +121,80 @@ export default function SelectPlanPage() {
     checkPlan();
   }, [router]);
 
+  // Load Stripe and create setup intent when component mounts
+  useEffect(() => {
+    const initializePayment = async () => {
+      try {
+        // Fetch Stripe publishable key
+        const res = await fetch("/api/payments/public-key", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Payment provider is not configured");
+        }
+
+        const { publishableKey } = data;
+
+        if (!publishableKey || publishableKey === "not_configured") {
+          throw new Error("Payment provider is missing a publishable key");
+        }
+
+        // Initialize Stripe
+        const stripe = loadStripe(publishableKey);
+        setStripePromise(stripe);
+
+        // Create SetupIntent for card verification
+        const setupRes = await fetch("/api/payments/create-setup-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const setupData = await setupRes.json();
+
+        if (!setupRes.ok) {
+          throw new Error(
+            setupData.error || "Failed to create payment setup intent"
+          );
+        }
+
+        setClientSecret(setupData.clientSecret);
+      } catch (error: unknown) {
+        console.error("Error initializing payment:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to initialize payment"
+        );
+      }
+    };
+
+    initializePayment();
+  }, []);
+
+  const handleContinueToPayment = () => {
+    if (!selectedPlan) {
+      toast.error("Please select a plan");
+      return;
+    }
+    setStep(2);
+  };
+
+  const handleBackToPlan = () => {
+    setStep(1);
+  };
+
   const handleSelectPlan = async () => {
     if (!selectedPlan) {
       toast.error("Please select a plan");
+      return;
+    }
+
+    if (!paymentMethodId) {
+      toast.error("Please add a payment method");
       return;
     }
 
@@ -129,6 +209,7 @@ export default function SelectPlanPage() {
         body: JSON.stringify({
           plan: selectedPlan,
           billingCycle: billingCycle.toUpperCase(),
+          paymentMethodId,
         }),
       });
 
@@ -157,6 +238,89 @@ export default function SelectPlanPage() {
     );
   }
 
+  // Step 2: Payment
+  if (step === 2) {
+    const selectedPlanData = plans.find((p) => p.id === selectedPlan);
+
+    return (
+      <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="container mx-auto px-4 py-16 max-w-2xl">
+          <Button variant="ghost" onClick={handleBackToPlan} className="mb-6">
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back to Plans
+          </Button>
+
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-4">Add Payment Method</h1>
+            <p className="text-lg text-muted-foreground">
+              Selected Plan: <strong>{selectedPlanData?.name}</strong>
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {billingCycle === "monthly"
+                ? selectedPlanData?.price
+                : `$${
+                    selectedPlan === "ESSENTIAL"
+                      ? PLAN_PRICING.ESSENTIAL.annualPriceMonthly
+                      : selectedPlan === "GROWTH"
+                      ? PLAN_PRICING.GROWTH.annualPriceMonthly
+                      : PLAN_PRICING.ENTERPRISE.annualPriceMonthly
+                  }/month`}{" "}
+              • Billed {billingCycle === "monthly" ? "Monthly" : "Annually"}
+            </p>
+          </div>
+
+          {stripePromise && clientSecret ? (
+            <Elements stripe={stripePromise} options={{ clientSecret }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Payment Information
+                  </CardTitle>
+                  <CardDescription>
+                    Your card will be charged starting next billing cycle
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PaymentForm
+                    onPaymentMethodCreated={(pmId) => {
+                      setPaymentMethodId(pmId);
+                      setIsPaymentValid(true);
+                    }}
+                    onValidationChange={setIsPaymentValid}
+                  />
+                </CardContent>
+              </Card>
+
+              <div className="mt-6 flex justify-end">
+                <Button
+                  size="lg"
+                  onClick={handleSelectPlan}
+                  disabled={!isPaymentValid || isLoading}
+                  className="min-w-[200px]"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Complete Setup"
+                  )}
+                </Button>
+              </div>
+            </Elements>
+          ) : (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Step 1: Select Plan
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container mx-auto px-4 py-16">
@@ -290,18 +454,11 @@ export default function SelectPlanPage() {
         <div className="flex justify-center">
           <Button
             size="lg"
-            onClick={handleSelectPlan}
-            disabled={!selectedPlan || isLoading}
+            onClick={handleContinueToPayment}
+            disabled={!selectedPlan}
             className="min-w-[200px]"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              "Continue to Dashboard"
-            )}
+            Continue to Payment
           </Button>
         </div>
       </div>
