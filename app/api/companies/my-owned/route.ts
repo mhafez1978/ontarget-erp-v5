@@ -51,10 +51,14 @@ export async function GET(request: NextRequest) {
         );
         companies = Array.from(map.values());
 
-        // ensure root company present and sorted first
-        const root = await db.company.findFirst({ where: { isRoot: true } });
-        if (root && !companies.some((c) => c.id === root.id))
-          companies.unshift(root);
+        // For SUPER_ADMIN only: ensure root company present and sorted first
+        if (user.role === "SUPER_ADMIN") {
+          const root = await db.company.findFirst({ where: { isRoot: true } });
+          if (root && !companies.some((c) => c.id === root.id))
+            companies.unshift(root);
+        }
+
+        // Sort: root first (if present), then by creation date
         companies.sort((a, b) =>
           a.isRoot && !b.isRoot
             ? -1

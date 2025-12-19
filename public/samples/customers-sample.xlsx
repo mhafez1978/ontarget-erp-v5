@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Worksheet ss:Name="Customers">
+    <Table>
+      <Row>
+        <Cell><Data ss:Type="String">email*</Data></Cell>
+        <Cell><Data ss:Type="String">name*</Data></Cell>
+        <Cell><Data ss:Type="String">phone</Data></Cell>
+        <Cell><Data ss:Type="String">addressLine1</Data></Cell>
+        <Cell><Data ss:Type="String">addressLine2</Data></Cell>
+        <Cell><Data ss:Type="String">city</Data></Cell>
+        <Cell><Data ss:Type="String">state</Data></Cell>
+        <Cell><Data ss:Type="String">country</Data></Cell>
+        <Cell><Data ss:Type="String">countryCode</Data></Cell>
+        <Cell><Data ss:Type="String">postalCode</Data></Cell>
+        <Cell><Data ss:Type="String">latitude</Data></Cell>
+        <Cell><Data ss:Type="String">longitude</Data></Cell>
+        <Cell><Data ss:Type="String">image</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">jane.doe@example.com</Data></Cell>
+        <Cell><Data ss:Type="String">Jane Doe</Data></Cell>
+        <Cell><Data ss:Type="String">555-0101</Data></Cell>
+        <Cell><Data ss:Type="String">New York</Data></Cell>
+        <Cell><Data ss:Type="String">10001</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">john.smith@example.com</Data></Cell>
+        <Cell><Data ss:Type="String">John Smith</Data></Cell>
+        <Cell><Data ss:Type="String">555-0202</Data></Cell>
+        <Cell><Data ss:Type="String">Boston</Data></Cell>
+        <Cell><Data ss:Type="String">02101</Data></Cell>
+      </Row>
+    </Table>
+  </Worksheet>
+</Workbook>

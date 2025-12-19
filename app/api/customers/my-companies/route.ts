@@ -68,15 +68,31 @@ export async function GET(request: NextRequest) {
     // Remove duplicates
     const uniqueCompanyIds = [...new Set(allCompanyIds)];
 
+    // If the user manages no companies, return an empty response
     if (uniqueCompanyIds.length === 0) {
       return NextResponse.json({
         success: true,
         customers: [],
+        companies: [],
         count: 0,
       });
     }
 
-    // Fetch all COMPANY_CUSTOMER role users for these companies
+    // Fetch basic company info for all managed companies (include those with zero customers)
+    const managedCompanies = await db.company.findMany({
+      where: { id: { in: uniqueCompanyIds } },
+      select: { id: true, name: true },
+    });
+
+    // Pre-populate a map with all managed companies (customers empty by default)
+    const companiesMap = new Map(
+      managedCompanies.map((c) => [
+        c.id,
+        { id: c.id, name: c.name, customers: [] as any },
+      ])
+    );
+
+    // Fetch all COMPANY_CUSTOMER role users for these companies (if any)
     const companyMembers = await db.companyMember.findMany({
       where: {
         companyId: {
@@ -121,21 +137,19 @@ export async function GET(request: NextRequest) {
       createdAt: member.user.createdAt,
     }));
 
-    // Group customers by company for easier frontend processing
-    const companiesMap = new Map<
-      string,
-      { id: string; name: string; customers: typeof customers }
-    >();
-
+    // Attach customers to the pre-populated companies map
     customers.forEach((customer) => {
-      if (!companiesMap.has(customer.companyId)) {
+      const entry = companiesMap.get(customer.companyId);
+      if (entry) {
+        entry.customers.push(customer);
+      } else {
+        // Fallback: create entry if company wasn't in managedCompanies for some reason
         companiesMap.set(customer.companyId, {
           id: customer.companyId,
           name: customer.companyName,
-          customers: [],
+          customers: [customer],
         });
       }
-      companiesMap.get(customer.companyId)!.customers.push(customer);
     });
 
     const companies = Array.from(companiesMap.values());

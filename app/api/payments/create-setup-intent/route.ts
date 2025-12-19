@@ -51,6 +51,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Try to obtain client geo info for audit logging
+    let geoData = null;
+    try {
+      const forwardedFor = request.headers.get("x-forwarded-for");
+      const realIp = request.headers.get("x-real-ip");
+      const clientIp = forwardedFor?.split(",")[0]?.trim() || realIp || null;
+
+      const geoRes = await fetch(`${request.nextUrl.origin}/api/get-location`, {
+        headers: {
+          "x-forwarded-for": clientIp || "",
+          "x-real-ip": clientIp || "",
+        },
+      });
+      if (geoRes.ok) geoData = await geoRes.json();
+    } catch (err) {
+      console.debug("Failed to fetch geo for setup intent audit:", err);
+    }
+
     // Create customer with proper typing
     const customerResult = (await provider.createCustomer(email, name)) as {
       success: boolean;
@@ -63,6 +81,13 @@ export async function POST(request: NextRequest) {
         companyId: gateway.companyId,
         description: customerResult.error || "Failed to create customer",
         metadata: { email, name },
+        ipAddress: geoData?.ip || null,
+        ipv4: geoData?.ipv4 || null,
+        ipv6: geoData?.ipv6 || null,
+        city: geoData?.city || null,
+        state: geoData?.region || null,
+        country: geoData?.country_name || null,
+        countryFlag: geoData?.flag || null,
       });
       return NextResponse.json(
         { error: customerResult.error || "Failed to create customer" },
@@ -80,6 +105,13 @@ export async function POST(request: NextRequest) {
         companyId: gateway.companyId,
         description: setupIntentResult.error || "Failed to create setup intent",
         metadata: { email, name, customerId: customerResult.customerId },
+        ipAddress: geoData?.ip || null,
+        ipv4: geoData?.ipv4 || null,
+        ipv6: geoData?.ipv6 || null,
+        city: geoData?.city || null,
+        state: geoData?.region || null,
+        country: geoData?.country_name || null,
+        countryFlag: geoData?.flag || null,
       });
       return NextResponse.json(
         { error: setupIntentResult.error || "Failed to create setup intent" },
@@ -97,6 +129,13 @@ export async function POST(request: NextRequest) {
         customerId: customerResult.customerId,
         clientSecret: !!setupIntentResult.clientSecret,
       },
+      ipAddress: geoData?.ip || null,
+      ipv4: geoData?.ipv4 || null,
+      ipv6: geoData?.ipv6 || null,
+      city: geoData?.city || null,
+      state: geoData?.region || null,
+      country: geoData?.country_name || null,
+      countryFlag: geoData?.flag || null,
     });
 
     return NextResponse.json({

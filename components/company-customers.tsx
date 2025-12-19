@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Loader2, Building2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EditCustomerSheet } from "./edit-customer-sheet";
+import { BulkImportCustomers } from "./bulk-import-customers";
 import { toast } from "sonner";
 import { confirmToast } from "@/lib/confirm";
 
@@ -48,6 +49,9 @@ export function CompanyCustomers() {
     null
   );
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+
+  // Bulk import sheet state
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const fetchCustomers = async () => {
     try {
@@ -168,9 +172,14 @@ export function CompanyCustomers() {
               {companies.length === 1 ? "company" : "companies"}
             </CardDescription>
           </div>
-          <Button size="sm" variant="outline" onClick={fetchCustomers}>
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={fetchCustomers}>
+              Refresh
+            </Button>
+            <Button size="sm" onClick={() => setBulkOpen(true)}>
+              Bulk Import
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -261,6 +270,13 @@ export function CompanyCustomers() {
           </Tabs>
         )}
       </CardContent>
+
+      {/* Bulk import sheet */}
+      <BulkImportCustomers
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onSuccess={fetchCustomers}
+      />
 
       <EditCustomerSheet
         open={editSheetOpen}
