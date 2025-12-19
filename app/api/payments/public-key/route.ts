@@ -3,6 +3,7 @@ import paymentsService from "@/lib/payments/service";
 import { decrypt } from "@/lib/encryption";
 import { PaymentProviderName } from "@/lib/payment-providers/constants";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
+import { getGeoLocation, extractClientIp } from "@/lib/geo-location";
 
 export async function GET(request: NextRequest) {
   try {
@@ -61,22 +62,8 @@ export async function GET(request: NextRequest) {
     };
 
     // Attempt to enrich audit log with geo information from client IP
-    let geoData = null;
-    try {
-      const forwardedFor = request.headers.get("x-forwarded-for");
-      const realIp = request.headers.get("x-real-ip");
-      const clientIp = forwardedFor?.split(",")[0]?.trim() || realIp || null;
-
-      const geoRes = await fetch(`${request.nextUrl.origin}/api/get-location`, {
-        headers: {
-          "x-forwarded-for": clientIp || "",
-          "x-real-ip": clientIp || "",
-        },
-      });
-      if (geoRes.ok) geoData = await geoRes.json();
-    } catch (err) {
-      console.debug("Failed to fetch geo for publishable key audit:", err);
-    }
+    const clientIp = extractClientIp(request.headers);
+    const geoData = await getGeoLocation(clientIp);
 
     await createAuditLog({
       action: AUDIT_ACTIONS.PAYMENT_GATEWAY_PUBLISHABLE_KEY_FETCHED,
