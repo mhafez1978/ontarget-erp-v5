@@ -4,7 +4,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import type {
   User,
   Company,
-  CompanyMembership,
+  CompanyMember,
   CompanyStaff,
 } from "@prisma/client";
 
@@ -20,7 +20,7 @@ interface PaymentProviderSettingsBody {
 
 interface UserWithRelations extends User {
   ownedCompanies: Company[];
-  companyMemberships: CompanyMembership[];
+  companyMemberships: CompanyMember[];
   companyStaff: CompanyStaff[];
 }
 
@@ -152,6 +152,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Require all keys for Stripe provider to avoid incomplete configuration
+    if (provider === "stripe" && (!publicKey || !secretKey || !webhookSecret)) {
+      return NextResponse.json(
+        {
+          error:
+            "Publishable key, secret key and webhook secret are required for Stripe",
+        },
+        { status: 400 }
+      );
+    }
+
     const encryptModule = await import("@/lib/encryption");
     const { encrypt } = encryptModule;
 
@@ -159,8 +170,13 @@ export async function POST(request: NextRequest) {
       where: { companyId: targetCompanyId, provider },
     });
     let gateway: any;
+
+    // Do not overwrite existing keys when empty — only set if provided
+    const encryptedPublicForUpdate = publicKey ? encrypt(publicKey) : undefined;
+    const encryptedPublicForCreate = publicKey ? encrypt(publicKey) : null;
+
     const dataToSave: any = {
-      publicKey: publicKey ? encrypt(publicKey) : null,
+      publicKey: encryptedPublicForUpdate,
       isTestMode: isTestMode ?? true,
       isEnabled: true,
       configuredBy: user.id,
@@ -170,13 +186,25 @@ export async function POST(request: NextRequest) {
     if (webhookSecret) dataToSave.webhookSecret = encrypt(webhookSecret);
 
     if (existing) {
+      // Only update publicKey if provided (else leave as-is)
+      const updateData = { ...dataToSave };
+      if (encryptedPublicForUpdate === undefined) delete updateData.publicKey;
+
       gateway = await db.paymentGateway.update({
         where: { id: existing.id },
-        data: dataToSave,
+        data: updateData,
       });
     } else {
       gateway = await db.paymentGateway.create({
-        data: { companyId: targetCompanyId, provider, ...dataToSave },
+        data: {
+          companyId: targetCompanyId,
+          provider,
+          publicKey: encryptedPublicForCreate,
+          secretKey: secretKey ? encrypt(secretKey) : null,
+          webhookSecret: webhookSecret ? encrypt(webhookSecret) : null,
+          isTestMode: isTestMode ?? true,
+          configuredBy: user.id,
+        },
       });
     }
 

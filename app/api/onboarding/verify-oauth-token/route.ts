@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!onboarding) {
-      return NextResponse.json({ error: "Invalid onboarding token" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Invalid onboarding token" },
+        { status: 404 }
+      );
     }
 
     if (new Date() > onboarding.expiresAt) {
@@ -32,11 +35,17 @@ export async function GET(request: NextRequest) {
         metadata: { token: onboarding.token, expired: true },
       }).catch(console.error);
 
-      return NextResponse.json({ error: "Onboarding token expired", expired: true }, { status: 400 });
+      return NextResponse.json(
+        { error: "Onboarding token expired", expired: true },
+        { status: 400 }
+      );
     }
 
     if (onboarding.isUsed) {
-      return NextResponse.json({ error: "Onboarding already completed", alreadyCompleted: true }, { status: 400 });
+      return NextResponse.json(
+        { error: "Onboarding already completed", alreadyCompleted: true },
+        { status: 400 }
+      );
     }
 
     // Return token info for frontend to pre-fill and allow completion
@@ -44,7 +53,10 @@ export async function GET(request: NextRequest) {
       action: AUDIT_ACTIONS.ONBOARDING_TOKEN_VIEWED,
       userId: onboarding.userId,
       description: `OAuth onboarding token verified for ${onboarding.user.email}`,
-      metadata: { token: onboarding.token, requestedPlan: onboarding.requestedPlan },
+      metadata: {
+        token: onboarding.token,
+        requestedPlan: onboarding.requestedPlan,
+      },
     }).catch(console.error);
 
     return NextResponse.json({
@@ -55,6 +67,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error verifying OAuth onboarding token:", error);
-    return NextResponse.json({ error: "Failed to verify token" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to verify token" },
+      { status: 500 }
+    );
   }
 }

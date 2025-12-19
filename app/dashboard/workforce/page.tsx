@@ -4,6 +4,15 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Lock, Shield } from "lucide-react";
+import {
   SuperAdminWorkforceView,
   AdminWorkforceView,
   ManagerWorkforceView,
@@ -97,7 +106,43 @@ export default function WorkforcePage() {
 
   return (
     <DashboardLayout user={user}>
-      {getRoleWorkforceView(user.role)}
+      <div className="space-y-6">
+        {/* Password Management Quick Access Card for Admins */}
+        {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
+          <Card className="bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-900">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
+                <Shield className="h-5 w-5" />
+                Password Management
+              </CardTitle>
+              <CardDescription className="text-blue-700 dark:text-blue-300">
+                Reset user passwords without requiring their current password
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  {user.role === "SUPER_ADMIN"
+                    ? "Reset passwords for any user in the system"
+                    : "Reset passwords for members of your company"}
+                </p>
+                <Button
+                  onClick={() =>
+                    router.push("/dashboard/workforce/password-management")
+                  }
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Manage Passwords
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Role-based workforce view */}
+        {getRoleWorkforceView(user.role)}
+      </div>
     </DashboardLayout>
   );
 }

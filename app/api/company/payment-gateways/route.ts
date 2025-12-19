@@ -59,15 +59,17 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Don't send encrypted keys back, just indicate if they exist
+    // Decrypt keys to send back (they're stored encrypted)
     const safeGateways = gateways.map((gateway) => ({
       id: gateway.id,
       provider: gateway.provider,
       isEnabled: gateway.isEnabled,
       isTestMode: gateway.isTestMode,
-      publicKey: gateway.publicKey ? decrypt(gateway.publicKey) : null, // Public key is safe to send
-      hasSecretKey: !!gateway.secretKey,
-      hasWebhookSecret: !!gateway.webhookSecret,
+      publicKey: gateway.publicKey ? decrypt(gateway.publicKey) : null,
+      secretKey: gateway.secretKey ? decrypt(gateway.secretKey) : null,
+      webhookSecret: gateway.webhookSecret
+        ? decrypt(gateway.webhookSecret)
+        : null,
       lastTestedAt: gateway.lastTestedAt,
       lastTestResult: gateway.lastTestResult,
       createdAt: gateway.createdAt,
@@ -149,34 +151,55 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const gatewayData = {
-      publicKey: publicKey ? encrypt(publicKey) : null,
-      secretKey: secretKey ? encrypt(secretKey) : undefined, // Only update if provided
-      webhookSecret: webhookSecret ? encrypt(webhookSecret) : undefined,
-      isTestMode: isTestMode ?? true,
-      configuredBy: user.id,
-    };
+    // Validate Stripe requires all 3 keys on initial creation
+    if (!existingGateway && provider === "stripe") {
+      if (!publicKey || !secretKey || !webhookSecret) {
+        return NextResponse.json(
+          {
+            error:
+              "Stripe requires all three keys: publishable key, secret key, and webhook secret",
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     let gateway;
 
     if (existingGateway) {
-      // Update existing gateway (only update keys if provided)
+      // Update existing gateway - only update keys if provided (non-empty)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const updateData: Record<string, any> = { ...gatewayData };
-      if (!secretKey) delete updateData.secretKey;
-      if (!webhookSecret) delete updateData.webhookSecret;
+      const updateData: Record<string, any> = {
+        isTestMode: isTestMode ?? existingGateway.isTestMode,
+        configuredBy: user.id,
+      };
+
+      // Update keys only if provided (non-empty strings)
+      if (publicKey && publicKey.trim()) {
+        updateData.publicKey = encrypt(publicKey);
+      }
+      if (secretKey && secretKey.trim()) {
+        updateData.secretKey = encrypt(secretKey);
+      }
+      if (webhookSecret && webhookSecret.trim()) {
+        updateData.webhookSecret = encrypt(webhookSecret);
+      }
 
       gateway = await db.paymentGateway.update({
         where: { id: existingGateway.id },
         data: updateData,
       });
     } else {
-      // Create new gateway
+      // Create new gateway - all keys required for Stripe
       gateway = await db.paymentGateway.create({
         data: {
           companyId,
           provider,
-          ...gatewayData,
+          publicKey: publicKey ? encrypt(publicKey) : null,
+          secretKey: secretKey ? encrypt(secretKey) : null,
+          webhookSecret: webhookSecret ? encrypt(webhookSecret) : null,
+          isTestMode: isTestMode ?? true,
+          configuredBy: user.id,
         },
       });
     }

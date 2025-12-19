@@ -58,12 +58,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update user's plan and payment method
+    // Update user's plan
     await db.user.update({
       where: { id: user.id },
       data: {
         plan: plan,
-        stripePaymentMethodId: paymentMethodId,
       },
     });
 

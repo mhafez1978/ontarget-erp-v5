@@ -26,9 +26,19 @@ export async function getRootGateway() {
   const root = await db.company.findFirst({ where: { isRoot: true } });
   if (!root) return null;
 
-  const gateway = await db.paymentGateway.findFirst({
-    where: { companyId: root.id, isEnabled: true },
+  // Prefer an enabled gateway that has a publishable key configured (avoid returning gateways
+  // with null publicKey which will cause clients to fail when fetching the publishable key)
+  let gateway = await db.paymentGateway.findFirst({
+    where: { companyId: root.id, isEnabled: true, publicKey: { not: null } },
   });
+
+  if (!gateway) {
+    // Fallback to any enabled gateway
+    gateway = await db.paymentGateway.findFirst({
+      where: { companyId: root.id, isEnabled: true },
+    });
+  }
+
   return gateway || null;
 }
 
@@ -39,9 +49,18 @@ export async function getRootGateway() {
  */
 export async function getGatewayForCompany(companyId: string) {
   if (!companyId) return null;
-  const gateway = await db.paymentGateway.findFirst({
-    where: { companyId, isEnabled: true },
+
+  // Prefer a gateway with a configured publicKey to avoid missing publishable key errors
+  let gateway = await db.paymentGateway.findFirst({
+    where: { companyId, isEnabled: true, publicKey: { not: null } },
   });
+
+  if (!gateway) {
+    gateway = await db.paymentGateway.findFirst({
+      where: { companyId, isEnabled: true },
+    });
+  }
+
   return gateway || null;
 }
 

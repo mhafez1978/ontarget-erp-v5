@@ -103,8 +103,8 @@ export async function POST(request: NextRequest) {
       data: {
         rootCompanyId: gateway.companyId,
         subscriberCompanyId,
-        plan: plan || "ESSENTIAL",
-        status: status as "ACTIVE" | "PAST_DUE" | "CANCELLED" | "TRIALING",
+        plan: (plan as any) || "ESSENTIAL",
+        status: status as "ACTIVE" | "PAST_DUE" | "CANCELLED" | "TRIAL",
         trialEndsAt,
         billingCycleStart,
         billingCycleEnd,

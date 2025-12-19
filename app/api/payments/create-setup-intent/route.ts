@@ -5,9 +5,24 @@ import { getGeoLocation, extractClientIp } from "@/lib/geo-location";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Try to parse JSON body, but handle empty body gracefully
+    let body: { email?: string; name?: string } = {};
+    try {
+      const text = await request.text();
+      if (text) {
+        body = JSON.parse(text);
+      }
+    } catch (parseError) {
+      console.error("Failed to parse request body:", parseError);
+      // Continue with empty body - will check for email/name below
+    }
+
     const { email, name } = body;
 
+    // This endpoint is intended for onboarding flows (OAuth first-login) where
+    // the frontend provides the new user's email and name. Do not fallback to
+    // an authenticated session — requiring explicit email/name avoids mixing
+    // flows for already-logged-in users.
     if (!email || !name) {
       return NextResponse.json(
         { error: "Email and name are required" },

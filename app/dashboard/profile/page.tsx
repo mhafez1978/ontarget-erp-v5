@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
-import { Upload, Loader2, Save, User } from "lucide-react";
+import { Upload, Loader2, Save, User, Eye, EyeOff, Lock } from "lucide-react";
 
 interface UserProfile {
   id: string;
@@ -42,6 +42,8 @@ interface UserProfile {
   emailVerified?: string | null;
   mfaEnabled?: boolean;
   mfaSetupAt?: string | null;
+  authMethod?: string | null;
+  hasPassword?: boolean;
 }
 
 interface FormData {
@@ -97,6 +99,17 @@ export default function ProfilePage() {
   });
 
   const [isDirty, setIsDirty] = useState(false);
+
+  // Password reset state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   // Calculate profile completion percentage
   const calculateProgress = () => {
@@ -346,6 +359,84 @@ export default function ProfilePage() {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
+      toast.error("Please fill in all password fields");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    if (!/[A-Z]/.test(passwordData.newPassword)) {
+      toast.error("Password must contain at least one uppercase letter");
+      return;
+    }
+
+    if (!/[a-z]/.test(passwordData.newPassword)) {
+      toast.error("Password must contain at least one lowercase letter");
+      return;
+    }
+
+    if (!/[0-9]/.test(passwordData.newPassword)) {
+      toast.error("Password must contain at least one number");
+      return;
+    }
+
+    // If user has a password, require current password
+    if (user?.hasPassword && !passwordData.currentPassword) {
+      toast.error("Please enter your current password");
+      return;
+    }
+
+    setResettingPassword(true);
+
+    try {
+      const response = await fetch("/api/user/password", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword || undefined,
+          newPassword: passwordData.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to reset password");
+      }
+
+      toast.success("Password updated successfully!");
+
+      // Clear the form
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to reset password"
+      );
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
   const currentAvatarSrc = imagePreview
     ? imagePreview
     : user?.image
@@ -379,6 +470,7 @@ export default function ProfilePage() {
           <TabsList>
             <TabsTrigger value="profile">Profile information</TabsTrigger>
             <TabsTrigger value="security">Account security</TabsTrigger>
+            <TabsTrigger value="password">Reset Password</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
@@ -677,6 +769,251 @@ export default function ProfilePage() {
                 );
               }}
             />
+          </TabsContent>
+
+          <TabsContent value="password">
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold mb-2">Reset Password</h1>
+              <p className="text-muted-foreground">
+                Update your password to keep your account secure
+              </p>
+            </div>
+
+            <form onSubmit={handlePasswordReset}>
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lock className="h-5 w-5" />
+                    Change Password
+                  </CardTitle>
+                  <CardDescription>
+                    Enter your current password and choose a new secure password
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Current Password - Only show if user has a password */}
+                  {user?.hasPassword && (
+                    <div className="space-y-2">
+                      <Label htmlFor="currentPassword">
+                        Current Password <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="currentPassword"
+                          type={showCurrentPassword ? "text" : "password"}
+                          value={passwordData.currentPassword}
+                          onChange={(e) =>
+                            setPasswordData((prev) => ({
+                              ...prev,
+                              currentPassword: e.target.value,
+                            }))
+                          }
+                          placeholder="Enter your current password"
+                          className="pr-10"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() =>
+                            setShowCurrentPassword(!showCurrentPassword)
+                          }
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Enter your current password to change it
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Info message for OAuth users */}
+                  {!user?.hasPassword && (
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Setting your first password:</strong> You signed
+                        up with Google OAuth. You can now set a password to
+                        enable traditional email/password login in addition to
+                        Google sign-in.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* New Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">
+                      New Password <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showNewPassword ? "text" : "password"}
+                        value={passwordData.newPassword}
+                        onChange={(e) =>
+                          setPasswordData((prev) => ({
+                            ...prev,
+                            newPassword: e.target.value,
+                          }))
+                        }
+                        placeholder="Enter new password"
+                        className="pr-10"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
+                        {showNewPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    <div className="text-xs space-y-1">
+                      <p
+                        className={
+                          passwordData.newPassword.length >= 8
+                            ? "text-green-600"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        ✓ At least 8 characters
+                      </p>
+                      <p
+                        className={
+                          /[A-Z]/.test(passwordData.newPassword)
+                            ? "text-green-600"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        ✓ One uppercase letter
+                      </p>
+                      <p
+                        className={
+                          /[a-z]/.test(passwordData.newPassword)
+                            ? "text-green-600"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        ✓ One lowercase letter
+                      </p>
+                      <p
+                        className={
+                          /[0-9]/.test(passwordData.newPassword)
+                            ? "text-green-600"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        ✓ One number
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">
+                      Confirm New Password{" "}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordData((prev) => ({
+                            ...prev,
+                            confirmPassword: e.target.value,
+                          }))
+                        }
+                        placeholder="Confirm new password"
+                        className="pr-10"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    {passwordData.confirmPassword &&
+                      passwordData.newPassword !==
+                        passwordData.confirmPassword && (
+                        <p className="text-xs text-red-500">
+                          Passwords do not match
+                        </p>
+                      )}
+                    {passwordData.confirmPassword &&
+                      passwordData.newPassword ===
+                        passwordData.confirmPassword && (
+                        <p className="text-xs text-green-600">
+                          Passwords match ✓
+                        </p>
+                      )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex gap-3">
+                <Button
+                  type="submit"
+                  disabled={
+                    resettingPassword ||
+                    !passwordData.newPassword ||
+                    !passwordData.confirmPassword ||
+                    passwordData.newPassword !== passwordData.confirmPassword
+                  }
+                  className="flex-1"
+                >
+                  {resettingPassword ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating Password...
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="mr-2 h-4 w-4" />
+                      Update Password
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    setPasswordData({
+                      currentPassword: "",
+                      newPassword: "",
+                      confirmPassword: "",
+                    })
+                  }
+                  disabled={resettingPassword}
+                >
+                  Clear
+                </Button>
+              </div>
+            </form>
           </TabsContent>
         </Tabs>
       </div>

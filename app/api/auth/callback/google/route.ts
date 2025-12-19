@@ -248,68 +248,7 @@ export async function GET(request: NextRequest) {
         // Mark we created a new user so later we can create an onboarding token
         isNewUser = true;
 
-        // Send welcome email to new ERP customer only
-        try {
-          console.log(`[Google OAuth] Sending welcome email to: ${email}`);
-          const { subject, html } = await getWelcomeCustomerEmail(
-            user.name || email,
-            email
-          );
-          console.log(`[Google OAuth] Email subject: ${subject}`);
-          await sendEmail({
-            to: email,
-            subject,
-            html,
-          });
-          console.log(
-            `[Google OAuth] Welcome email sent successfully to: ${email}`
-          );
-
-          // Log welcome email sent
-          await createAuditLog({
-            action: AUDIT_ACTIONS.WELCOME_EMAIL_SENT,
-            userId: user.id,
-            entityType: "User",
-            entityId: user.id,
-            description: `Welcome email sent to new ERP customer: ${email}`,
-            metadata: {
-              email,
-              userName: user.name,
-              provider: "google",
-              subject,
-            },
-          });
-        } catch (emailError) {
-          console.error(
-            "[Google OAuth] Failed to send welcome email:",
-            emailError
-          );
-          console.error("[Google OAuth] Error details:", {
-            message:
-              emailError instanceof Error
-                ? emailError.message
-                : String(emailError),
-            stack: emailError instanceof Error ? emailError.stack : undefined,
-          });
-
-          // Log email failure
-          await createAuditLog({
-            action: AUDIT_ACTIONS.EMAIL_FAILED,
-            userId: user.id,
-            entityType: "User",
-            entityId: user.id,
-            description: `Failed to send welcome email to: ${email}`,
-            metadata: {
-              email,
-              provider: "google",
-              error:
-                emailError instanceof Error
-                  ? emailError.message
-                  : String(emailError),
-            },
-          }).catch(console.error);
-          // Don't fail OAuth if email fails
-        }
+        // Note: Welcome email will be sent after onboarding completes
       }
     }
 
@@ -394,7 +333,8 @@ export async function GET(request: NextRequest) {
     // (This prevents automatic sign-in before onboarding completes.)
     // We'll detect by checking for a temporary marker created in the DB create block.
 
-    const isNewRootOauth = user && user.plan === "GUEST" && context === "root" && isNewUser === true;
+    const isNewRootOauth =
+      user && user.plan === "GUEST" && context === "root" && isNewUser === true;
 
     if (isNewRootOauth) {
       // Create onboarding token valid for 1 hour
@@ -413,10 +353,15 @@ export async function GET(request: NextRequest) {
         action: AUDIT_ACTIONS.ONBOARDING_TOKEN_CREATED,
         userId: user.id,
         description: `Created OAuth onboarding token for ${user.email}`,
-        metadata: { token: onboarding.token, expiresAt: onboarding.expiresAt?.toISOString() },
+        metadata: {
+          token: onboarding.token,
+          expiresAt: onboarding.expiresAt?.toISOString(),
+        },
       }).catch(console.error);
 
-      const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/select-plan?onboard=${encodeURIComponent(onboarding.token)}`;
+      const redirectUrl = `${
+        process.env.NEXT_PUBLIC_APP_URL
+      }/select-plan?onboard=${encodeURIComponent(onboarding.token)}`;
       return NextResponse.redirect(redirectUrl);
     }
 
