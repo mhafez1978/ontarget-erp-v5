@@ -192,7 +192,9 @@ export default function FrontstoreV2Page() {
               ]);
             } else if (event === "spec") {
               setPreviewSpec(parsed);
+              console.log("Received spec event:", parsed);
             } else if (event === "version") {
+              console.log("Received version event:", parsed);
               if (parsed.versionId) {
                 setVersionId(parsed.versionId);
 
@@ -446,12 +448,29 @@ export default function FrontstoreV2Page() {
 
   return (
     <div className="p-4 space-y-4">
+      {/* Debug Panel */}
+      <div className="p-3 bg-gray-100 border rounded text-xs space-y-1">
+        <div>
+          <strong>Debug State:</strong>
+        </div>
+        <div>versionId: {versionId || "null"}</div>
+        <div>previewSpec: {previewSpec ? "✓ exists" : "null"}</div>
+        <div>conversationId: {conversationId || "null"}</div>
+        <div>loading: {loading ? "true" : "false"}</div>
+        <div>Messages count: {messages.length}</div>
+      </div>
+
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Sparkles className="h-5 w-5" />
           AI Chat Builder (v2) - MVP
         </h2>
         <div className="flex items-center gap-2">
+          {!versionId && !previewSpec && conversationId && (
+            <div className="text-sm text-muted-foreground italic">
+              💬 AI is asking a question - respond to generate a design
+            </div>
+          )}
           {versionId && (
             <Button
               variant="outline"

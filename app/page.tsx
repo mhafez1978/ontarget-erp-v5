@@ -32,6 +32,17 @@ export default async function HomePage() {
   const aiEnabled =
     rootCompany?.aiStorefrontEnabled && rootCompany.aiStorefrontSpec;
 
+  // Fetch pricing from database
+  const pricingData = await db.planPricing.findMany({
+    orderBy: { monthlyPrice: "asc" },
+  });
+
+  // Create a map for easy access
+  const pricingMap = pricingData.reduce((acc, p) => {
+    acc[p.plan] = p;
+    return acc;
+  }, {} as Record<string, (typeof pricingData)[0]>);
+
   // Fetch approved testimonials for the root company (OnTarget ERP homepage)
   const approvedTestimonials = rootCompany
     ? await db.testimonial.findMany({
@@ -458,17 +469,32 @@ export default async function HomePage() {
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Essential</h3>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl text-orange-500 line-through font-semibold">
-                    $49.99
+                  {pricingMap.ESSENTIAL?.monthlyPromoPrice && (
+                    <span className="text-2xl text-orange-500 line-through font-semibold">
+                      ${pricingMap.ESSENTIAL.monthlyPrice.toFixed(2)}
+                    </span>
+                  )}
+                  <span className="text-4xl font-bold">
+                    $
+                    {(
+                      pricingMap.ESSENTIAL?.monthlyPromoPrice ||
+                      pricingMap.ESSENTIAL?.monthlyPrice ||
+                      45.99
+                    ).toFixed(2)}
                   </span>
-                  <span className="text-4xl font-bold">$45.99</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
-                <p className="text-sm text-primary font-medium mt-2">
-                  Limited time offer!
-                </p>
+                {pricingMap.ESSENTIAL?.monthlyPromoPrice && (
+                  <p className="text-sm text-primary font-medium mt-2">
+                    Limited time offer!
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground mt-1">
-                  or $42.49/month billed annually
+                  or $
+                  {(pricingMap.ESSENTIAL?.annualPriceMonthly || 42.49).toFixed(
+                    2
+                  )}
+                  /month billed annually
                 </p>
               </div>
 
@@ -497,13 +523,21 @@ export default async function HomePage() {
 
               <div className="border-t pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  3.9% + $0.99 per CC transaction
+                  {pricingMap.ESSENTIAL?.transactionFeePercent || 3.9}% + $
+                  {(pricingMap.ESSENTIAL?.transactionFeeFixed || 0.99).toFixed(
+                    2
+                  )}{" "}
+                  per CC transaction
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Plus any other Stripe fees
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Extra storage: $0.45/GB/month
+                  Extra storage: $
+                  {(
+                    pricingMap.ESSENTIAL?.extraStoragePricePerGB || 0.45
+                  ).toFixed(2)}
+                  /GB/month
                 </p>
               </div>
 
@@ -525,11 +559,15 @@ export default async function HomePage() {
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Growth</h3>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold">$299.99</span>
+                  <span className="text-4xl font-bold">
+                    ${(pricingMap.GROWTH?.monthlyPrice || 299.99).toFixed(2)}
+                  </span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  or $289.99/month billed annually
+                  or $
+                  {(pricingMap.GROWTH?.annualPriceMonthly || 289.99).toFixed(2)}
+                  /month billed annually
                 </p>
               </div>
 
@@ -564,13 +602,19 @@ export default async function HomePage() {
 
               <div className="border-t pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  3.2% + $0.49 per CC transaction
+                  {pricingMap.GROWTH?.transactionFeePercent || 3.2}% + $
+                  {(pricingMap.GROWTH?.transactionFeeFixed || 0.49).toFixed(2)}{" "}
+                  per CC transaction
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Plus any other Stripe fees
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Extra storage: $0.32/GB/month
+                  Extra storage: $
+                  {(pricingMap.GROWTH?.extraStoragePricePerGB || 0.32).toFixed(
+                    2
+                  )}
+                  /GB/month
                 </p>
               </div>
 
@@ -584,11 +628,18 @@ export default async function HomePage() {
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold">$999.99</span>
+                  <span className="text-4xl font-bold">
+                    $
+                    {(pricingMap.ENTERPRISE?.monthlyPrice || 999.99).toFixed(2)}
+                  </span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  or $969.99/month billed annually
+                  or $
+                  {(
+                    pricingMap.ENTERPRISE?.annualPriceMonthly || 969.99
+                  ).toFixed(2)}
+                  /month billed annually
                 </p>
               </div>
 
@@ -627,13 +678,21 @@ export default async function HomePage() {
 
               <div className="border-t pt-6 space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  2.9% + $0.20 per CC transaction
+                  {pricingMap.ENTERPRISE?.transactionFeePercent || 2.9}% + $
+                  {(pricingMap.ENTERPRISE?.transactionFeeFixed || 0.2).toFixed(
+                    2
+                  )}{" "}
+                  per CC transaction
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Plus any other Stripe fees
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Extra storage: $0.10/GB/month
+                  Extra storage: $
+                  {(
+                    pricingMap.ENTERPRISE?.extraStoragePricePerGB || 0.1
+                  ).toFixed(2)}
+                  /GB/month
                 </p>
               </div>
 
