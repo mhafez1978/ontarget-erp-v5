@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
       city: geoData?.city || null,
       state: geoData?.region || null,
       country: geoData?.country_name || null,
-      countryFlag: geoData?.country_flag || null,
+      countryFlag: geoData?.flag || null,
     });
 
     // Create audit log for the new subscriber customer (ADMIN)
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
       city: geoData?.city || null,
       state: geoData?.region || null,
       country: geoData?.country_name || null,
-      countryFlag: geoData?.country_flag || null,
+      countryFlag: geoData?.flag || null,
     });
 
     return NextResponse.json({

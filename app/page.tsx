@@ -347,12 +347,9 @@ export default async function HomePage() {
                           }}
                         >
                           {rows.map((col, i) => {
-                            // Pattern: up, down, down, up, up, down, down, up...
-                            // Position in 4-column cycle: i % 4
-                            // 0 -> up (normal), 1 -> down, 2 -> down, 3 -> up
-                            const posInCycle = i % 4;
-                            const shouldRotate =
-                              posInCycle === 1 || posInCycle === 2;
+                            // Pattern: alternate per column — 0 -> up (normal), 1 -> down, 2 -> up, 3 -> down, ...
+                            // Use a simple parity check so direction alternates each column
+                            const shouldRotate = i % 2 === 1;
 
                             return (
                               <Marquee

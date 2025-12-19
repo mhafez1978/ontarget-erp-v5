@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus, Loader2, Trash2, Pencil } from "lucide-react";
 import { AddSubscriberSheet } from "@/components/add-subscriber-sheet";
 import { EditSubscriptionSheet } from "@/components/edit-subscription-sheet";
+import { BulkImportCustomers } from "@/components/bulk-import-customers";
 import { toast } from "sonner";
 import { confirmToast } from "@/lib/confirm";
 //import { OnTargetERPSubscribers } from "@/components/ontarget-erp-subscribers";
@@ -43,6 +44,24 @@ export function SuperAdminCustomerView({
     useState<Subscriber | null>(null);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
 
+  // Bulk import UI state (Super Admin should be able to import into any company)
+  const [bulkOpen, setBulkOpen] = useState(false);
+
+  // Additional state for standalone ERP customers (no company)
+  const [erpCustomers, setErpCustomers] = useState<
+    {
+      id: string;
+      name: string | null;
+      email: string | null;
+      plan: string | null;
+      billingCycle: string | null;
+      createdAt: string;
+      emailVerified: boolean;
+    }[]
+  >([]);
+  const [isLoadingErp, setIsLoadingErp] = useState(true);
+  const [erpError, setErpError] = useState<string | null>(null);
+
   const fetchSubscribers = async () => {
     try {
       setIsLoading(true);
@@ -63,8 +82,29 @@ export function SuperAdminCustomerView({
     }
   };
 
+  const fetchErpCustomers = async () => {
+    try {
+      setIsLoadingErp(true);
+      setErpError(null);
+      const res = await fetch("/api/erp-customers");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch ERP customers");
+      }
+
+      setErpCustomers(data.customers || []);
+    } catch (err) {
+      setErpError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching ERP customers:", err);
+    } finally {
+      setIsLoadingErp(false);
+    }
+  };
+
   useEffect(() => {
     fetchSubscribers();
+    fetchErpCustomers();
   }, []);
 
   const handleEditSubscriber = (subscriber: Subscriber) => {
@@ -158,13 +198,18 @@ export function SuperAdminCustomerView({
           <h1 className="text-3xl font-bold tracking-tight mb-4">Customers</h1>
           <p className="text-muted-foreground">Welcome {userName || "Guest"}</p>
         </div>
-        <Button
-          onClick={() => setIsAddingSubscriber(true)}
-          className="shrink-0"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add Customer
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setIsAddingSubscriber(true)}
+            className="shrink-0"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add Customer
+          </Button>
+          <Button size="sm" onClick={() => setBulkOpen(true)} variant="outline">
+            Bulk Import
+          </Button>
+        </div>
       </div>
 
       {/* OnTarget ERP Subscribers - Companies created today */}
@@ -331,6 +376,86 @@ export function SuperAdminCustomerView({
         </CardContent>
       </Card>
 
+      {/* Individual ERP Customers (no company) */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>
+            Individual Subscribers (No Company) ({erpCustomers.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoadingErp ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : erpError ? (
+            <div className="text-center py-12">
+              <p className="text-red-600">{erpError}</p>
+              <Button
+                onClick={fetchErpCustomers}
+                variant="outline"
+                className="mt-4"
+              >
+                Refresh
+              </Button>
+            </div>
+          ) : erpCustomers.length === 0 ? (
+            <div className="text-center py-12 space-y-4">
+              <p className="text-muted-foreground">
+                No individual subscribers yet.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      Email
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      Plan
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      Verified
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      Created
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {erpCustomers.map((c) => (
+                    <tr key={c.id} className="border-b">
+                      <td className="px-4 py-4">
+                        <div className="font-medium">{c.name || "—"}</div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="font-medium">{c.email}</div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="text-sm">{c.plan}</div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="text-sm">
+                          {c.emailVerified ? "Yes" : "No"}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-muted-foreground">
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Add Subscriber Sheet */}
       <AddSubscriberSheet
         open={isAddingSubscriber}
@@ -357,6 +482,17 @@ export function SuperAdminCustomerView({
             : null
         }
         onSuccess={fetchSubscribers}
+      />
+
+      {/* Bulk Import Sheet (Super Admin) */}
+      <BulkImportCustomers
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onSuccess={() => {
+          // Refresh both lists in case imported customers were added to companies or as standalone users
+          fetchSubscribers();
+          fetchErpCustomers();
+        }}
       />
     </div>
   );
