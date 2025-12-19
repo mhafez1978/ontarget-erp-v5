@@ -86,7 +86,7 @@ export default function SelectPlanPage() {
         if (data.pricing && Array.isArray(data.pricing)) {
           const formattedPlans: PlanData[] = data.pricing.map((p: any) => {
             const planLimits = PLAN_LIMITS[p.plan as keyof typeof PLAN_LIMITS];
-            
+
             // Define features based on plan
             let features: string[] = [];
             if (p.plan === "ESSENTIAL") {
@@ -156,8 +156,10 @@ export default function SelectPlanPage() {
     fetchPricing();
   }, []);
 
-  // Load Stripe and create setup intent when component mounts
+  // Load Stripe and create setup intent when user reaches step 2
   useEffect(() => {
+    if (step !== 2) return; // Only initialize on step 2
+
     const initializePayment = async () => {
       try {
         // Fetch Stripe publishable key
@@ -208,7 +210,7 @@ export default function SelectPlanPage() {
     };
 
     initializePayment();
-  }, []);
+  }, [step]); // Depend on step so it initializes when step changes to 2
 
   const handleContinueToPayment = () => {
     if (!selectedPlan) {
@@ -458,7 +460,8 @@ export default function SelectPlanPage() {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground mt-2">
-                  Transaction fee: {plan.transactionFeePercent}% + ${plan.transactionFeeFixed}
+                  Transaction fee: {plan.transactionFeePercent}% + $
+                  {plan.transactionFeeFixed}
                 </p>
               </CardHeader>
               <CardContent>
