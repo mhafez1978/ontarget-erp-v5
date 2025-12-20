@@ -39,6 +39,8 @@ export async function GET() {
           latitude: lat,
           longitude: lng,
           size: 0.06,
+          // Allow company to override marker color via storeMetadata.markerColor (hex string), otherwise undefined
+          color: (c as any).storeMetadata?.markerColor ?? undefined,
         };
       })
       .filter(Boolean);
