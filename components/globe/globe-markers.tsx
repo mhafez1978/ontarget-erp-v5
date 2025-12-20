@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Globe, GLOBE_CONFIG } from "@/components/ui/globe";
 
 type Marker = {
@@ -57,6 +57,7 @@ function hexToRgbNormalized(
 
 export function GlobeMarkers({ className }: { className?: string }) {
   const [markers, setMarkers] = useState<ClientMarker[] | null>(null);
+  const markersCacheRef = useRef<ClientMarker[] | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -78,7 +79,12 @@ export function GlobeMarkers({ className }: { className?: string }) {
               isRoot: d.isRoot === true,
             }));
           console.log("Transformed markers for Globe:", m);
-          setMarkers(m);
+          
+          // Only update state if markers have actually changed to avoid unnecessary re-renders
+          if (JSON.stringify(markersCacheRef.current) !== JSON.stringify(m)) {
+            markersCacheRef.current = m;
+            setMarkers(m);
+          }
         })
         .catch((err) => {
           console.error("Failed to fetch globe markers:", err);
@@ -88,8 +94,9 @@ export function GlobeMarkers({ className }: { className?: string }) {
     // Initial fetch
     fetchMarkers();
 
-    // Poll for updates every 30 seconds to reflect new subscriptions/locations dynamically
-    const interval = setInterval(fetchMarkers, 30000);
+    // Poll for updates every 60 seconds (increased from 30s to reduce animation interruptions)
+    // Markers will update smoothly without resetting the globe rotation
+    const interval = setInterval(fetchMarkers, 60000);
 
     return () => {
       mounted = false;
