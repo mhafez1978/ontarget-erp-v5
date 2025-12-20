@@ -17,6 +17,7 @@ import {
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
+  Plus,
 } from "lucide-react";
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import confetti from "canvas-confetti";
@@ -24,6 +25,7 @@ import {
   AddressAutocomplete,
   AddressData,
 } from "@/components/address-autocomplete";
+import LocationsManager from "@/components/locations-manager";
 interface CreateCompanyModalProps {
   onSuccess: (company: unknown, user: unknown) => void;
   onClose: () => void;
@@ -36,6 +38,7 @@ export function CreateCompanyModal({
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [createdCompanyId, setCreatedCompanyId] = useState<string | null>(null);
 
   const initialFormData = {
     name: "",
@@ -145,10 +148,9 @@ export function CreateCompanyModal({
         });
       }, 250);
 
-      // Small delay to let confetti start before calling onSuccess
-      setTimeout(() => {
-        onSuccess(data.company, data.user);
-      }, 500);
+      // Store company ID and show locations manager
+      setCreatedCompanyId(data.company.id);
+      // Don't call onSuccess yet - let user add locations first
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -354,9 +356,13 @@ export function CreateCompanyModal({
                 <Building2 className="h-5 w-5" />
               </div>
               <div>
-                <CardTitle>Create Your Company</CardTitle>
+                <CardTitle>
+                  {createdCompanyId ? "Add Locations" : "Create Your Company"}
+                </CardTitle>
                 <CardDescription>
-                  Step {currentStep} of {totalSteps}
+                  {createdCompanyId
+                    ? "Add one or more locations for your company (optional)"
+                    : `Step ${currentStep} of ${totalSteps}`}
                 </CardDescription>
               </div>
             </div>
@@ -370,13 +376,15 @@ export function CreateCompanyModal({
             </Button>
           </div>
 
-          {/* Progress bar */}
-          <div className="w-full bg-muted rounded-full h-2 mt-4">
-            <div
-              className="bg-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-            />
-          </div>
+          {/* Progress bar - only show during creation steps */}
+          {!createdCompanyId && (
+            <div className="w-full bg-muted rounded-full h-2 mt-4">
+              <div
+                className="bg-primary h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+              />
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -386,49 +394,90 @@ export function CreateCompanyModal({
             </div>
           )}
 
-          {renderStep()}
+          {createdCompanyId ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-semibold text-green-900 dark:text-green-100">
+                      Company created successfully!
+                    </p>
+                    <p className="text-sm text-green-700 dark:text-green-200 mt-1">
+                      Now add one or more locations for your company.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <LocationsManager companyId={createdCompanyId} />
+            </div>
+          ) : (
+            renderStep()
+          )}
 
           {/* Navigation buttons */}
           <div className="flex justify-between gap-4 pt-4">
             <Button
               type="button"
               variant="outline"
-              onClick={currentStep === 1 ? onClose : handleBack}
+              onClick={
+                createdCompanyId
+                  ? () => {
+                      // Call onSuccess when user finishes with locations
+                      onSuccess(null, null);
+                    }
+                  : currentStep === 1
+                  ? onClose
+                  : handleBack
+              }
               disabled={isLoading}
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {currentStep === 1 ? "Cancel" : "Back"}
+              {createdCompanyId ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Done
+                </>
+              ) : (
+                <>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {currentStep === 1 ? "Cancel" : "Back"}
+                </>
+              )}
             </Button>
 
-            {currentStep < totalSteps ? (
-              <Button
-                type="button"
-                onClick={handleNext}
-                className={getPulsateClassName(isFormDirty)}
-                disabled={isLoading || !formData.name.trim()}
-              >
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={handleSubmit}
-                className={getPulsateClassName(isFormDirty)}
-                disabled={isLoading || !formData.name.trim()}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
+            {!createdCompanyId && (
+              <>
+                {currentStep < totalSteps ? (
+                  <Button
+                    type="button"
+                    onClick={handleNext}
+                    className={getPulsateClassName(isFormDirty)}
+                    disabled={isLoading || !formData.name.trim()}
+                  >
+                    Next
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 ) : (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Create Company
-                  </>
+                  <Button
+                    type="button"
+                    onClick={handleSubmit}
+                    className={getPulsateClassName(isFormDirty)}
+                    disabled={isLoading || !formData.name.trim()}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Create Company
+                      </>
+                    )}
+                  </Button>
                 )}
-              </Button>
+              </>
             )}
           </div>
         </CardContent>

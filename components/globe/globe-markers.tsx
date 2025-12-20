@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, memo } from "react";
 import { Globe, GLOBE_CONFIG } from "@/components/ui/globe";
 
 type Marker = {
@@ -55,49 +55,65 @@ function hexToRgbNormalized(
   return undefined;
 }
 
-export function GlobeMarkers({ className }: { className?: string }) {
+function GlobeMarkersComponent({ className }: { className?: string }) {
   const [markers, setMarkers] = useState<ClientMarker[] | null>(null);
 
   useEffect(() => {
-    let mounted = true;
+    const mounted = true;
 
-    const fetchMarkers = () => {
-      fetch("/api/globe/markers")
-        .then((r) => r.json())
-        .then((data: Marker[]) => {
-          if (!mounted) return;
-          console.log("Raw marker data from API:", data);
-          const m = data
-            .filter(
-              (d) => Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
-            )
-            .map((d) => ({
-              location: [d.latitude, d.longitude] as [number, number],
-              size: d.size ?? 0.06,
-              color: hexToRgbNormalized(d.color ?? "#fb6421"),
-              isRoot: d.isRoot === true,
-            }));
-          console.log("Transformed markers for Globe:", m);
-          setMarkers(m);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch globe markers:", err);
-        });
+    const fetchMarkers = async () => {
+      try {
+        const response = await fetch("/api/globe/markers");
+        const data: Marker[] = await response.json();
+
+        if (!mounted) return;
+
+        console.log("Raw marker data from API:", data);
+        const m = data
+          .filter(
+            (d) => Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
+          )
+          .map((d) => ({
+            location: [d.latitude, d.longitude] as [number, number],
+            size: d.size ?? 0.06,
+            color: hexToRgbNormalized(d.color ?? "#fb6421"),
+            isRoot: d.isRoot === true,
+          }));
+        console.log("Transformed markers for Globe:", m);
+        setMarkers(m);
+      } catch (err) {
+        console.error("Failed to fetch globe markers:", err);
+        // Still show globe even if fetch fails
+        if (mounted) {
+          setMarkers([]);
+        }
+      }
     };
 
-    // Initial fetch
+    // Fetch markers once on mount
     fetchMarkers();
-
-    // Poll for updates every 30 seconds to reflect new subscriptions/locations dynamically
-    const interval = setInterval(fetchMarkers, 30000);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
   }, []);
 
-  if (!markers) {
+  // Memoize marker color to prevent unnecessary config object recreation
+  const markerColorNormalized = useMemo(
+    () =>
+      markers && markers.length > 0 && markers[0].color
+        ? markers[0].color
+        : undefined,
+    [markers]
+  );
+
+  // Memoize config to prevent Globe from reinitializing on every render
+  const config = useMemo(
+    () => ({
+      ...GLOBE_CONFIG,
+      markers: markers ?? [],
+      ...(markerColorNormalized ? { markerColor: markerColorNormalized } : {}),
+    }),
+    [markers, markerColorNormalized]
+  );
+
+  if (markers === null) {
     return (
       <div
         className={`relative w-full h-[360px] md:h-[480px] lg:h-[560px] ${
@@ -112,26 +128,15 @@ export function GlobeMarkers({ className }: { className?: string }) {
     );
   }
 
-  const markerColorNormalized =
-    markers && markers.length > 0 && markers[0].color
-      ? markers[0].color
-      : undefined;
-
   return (
     <div
       className={`relative w-full h-[360px] md:h-[480px] lg:h-[560px] ${
         className ?? ""
       }`}
     >
-      <Globe
-        config={{
-          ...GLOBE_CONFIG,
-          markers,
-          ...(markerColorNormalized
-            ? { markerColor: markerColorNormalized }
-            : {}),
-        }}
-      />
+      <Globe config={config} />
     </div>
   );
 }
+
+export const GlobeMarkers = memo(GlobeMarkersComponent);

@@ -43,7 +43,7 @@ export async function GET() {
     // Process each company and add markers for locations
     companies.forEach((company) => {
       const isRoot = company.isRoot;
-      const size = isRoot ? 0.12 : 0.06;
+      const size = isRoot ? 0.1 : 0.06;
       const defaultColor = isRoot ? "#ff0000" : undefined;
       const customColor =
         (company.storeMetadata as { markerColor?: string } | null)
