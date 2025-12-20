@@ -79,7 +79,7 @@ export function GlobeMarkers({ className }: { className?: string }) {
               isRoot: d.isRoot === true,
             }));
           console.log("Transformed markers for Globe:", m);
-          
+
           // Only update state if markers have actually changed to avoid unnecessary re-renders
           if (JSON.stringify(markersCacheRef.current) !== JSON.stringify(m)) {
             markersCacheRef.current = m;
@@ -104,7 +104,7 @@ export function GlobeMarkers({ className }: { className?: string }) {
     };
   }, []);
 
-  if (!markers) {
+  if (markers === null) {
     return (
       <div
         className={`relative w-full h-[360px] md:h-[480px] lg:h-[560px] ${
@@ -120,9 +120,7 @@ export function GlobeMarkers({ className }: { className?: string }) {
   }
 
   const markerColorNormalized =
-    markers && markers.length > 0 && markers[0].color
-      ? markers[0].color
-      : undefined;
+    markers.length > 0 && markers[0].color ? markers[0].color : undefined;
 
   return (
     <div
