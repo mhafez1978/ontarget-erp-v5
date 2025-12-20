@@ -106,7 +106,7 @@ export default function PasswordManagementPage() {
         const usersData = await usersResponse.json();
 
         // Format users data - both endpoints now return { users: [...] }
-        let usersList: UserProfile[] = usersData.users || [];
+        const usersList: UserProfile[] = usersData.users || [];
 
         setUsers(usersList);
         setFilteredUsers(usersList);

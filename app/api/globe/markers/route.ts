@@ -13,6 +13,7 @@ export async function GET() {
             name: true,
             latitude: true,
             longitude: true,
+            storeMetadata: true,
             locations: {
               where: { isMain: true },
               select: { latitude: true, longitude: true },
@@ -24,6 +25,7 @@ export async function GET() {
       take: 1000, // limit to avoid huge responses
     });
 
+    // Map subscriber companies to markers
     const markers = subs
       .map((s) => {
         const c = s.subscriberCompany;
@@ -40,10 +42,52 @@ export async function GET() {
           longitude: lng,
           size: 0.06,
           // Allow company to override marker color via storeMetadata.markerColor (hex string), otherwise undefined
-          color: (c as any).storeMetadata?.markerColor ?? undefined,
+          color:
+            (c.storeMetadata as { markerColor?: string } | null)?.markerColor ??
+            undefined,
         };
       })
       .filter(Boolean);
+
+    // Also add the root company as a prominent red marker if coordinates are available
+    const root = await db.company.findFirst({
+      where: { isRoot: true },
+      select: {
+        id: true,
+        name: true,
+        latitude: true,
+        longitude: true,
+        storeMetadata: true,
+        locations: {
+          where: { isMain: true },
+          select: { latitude: true, longitude: true },
+          take: 1,
+        },
+      },
+    });
+
+    if (root) {
+      const rootLoc =
+        root.locations && root.locations.length > 0 ? root.locations[0] : null;
+      const rootLat = rootLoc?.latitude ?? root.latitude;
+      const rootLng = rootLoc?.longitude ?? root.longitude;
+      if (typeof rootLat === "number" && typeof rootLng === "number") {
+        const rootMarker = {
+          id: root.id,
+          name: root.name,
+          latitude: rootLat,
+          longitude: rootLng,
+          size: 0.12,
+          color:
+            (root.storeMetadata as { markerColor?: string } | null)
+              ?.markerColor ?? "#ff0000",
+          isRoot: true,
+        };
+
+        // Put root marker first so client can pick its color as globe markerColor
+        markers.unshift(rootMarker as any);
+      }
+    }
 
     return NextResponse.json(markers);
   } catch (err) {

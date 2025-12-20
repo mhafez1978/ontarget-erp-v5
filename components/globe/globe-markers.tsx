@@ -12,16 +12,13 @@ type Marker = {
   color?: string;
 };
 
-function hexToRgb(hex: string): [number, number, number] {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? [
-        parseInt(result[1], 16) / 255,
-        parseInt(result[2], 16) / 255,
-        parseInt(result[3], 16) / 255,
-      ]
-    : [1, 0.4, 0.13]; // fallback to orange
-}
+// Client-side marker shape used by the Globe renderer
+type ClientMarker = {
+  location: [number, number];
+  size: number;
+  color?: [number, number, number];
+  isRoot?: boolean;
+};
 
 function hexToRgbNormalized(
   input?: string
@@ -58,14 +55,7 @@ function hexToRgbNormalized(
 }
 
 export function GlobeMarkers({ className }: { className?: string }) {
-  const [markers, setMarkers] = useState<
-    | {
-        location: [number, number];
-        size: number;
-        color?: string;
-      }[]
-    | null
-  >(null);
+  const [markers, setMarkers] = useState<ClientMarker[] | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -74,11 +64,14 @@ export function GlobeMarkers({ className }: { className?: string }) {
       .then((data: Marker[]) => {
         if (!mounted) return;
         const m = data
-          .filter((d) => d.latitude && d.longitude)
+          .filter(
+            (d) => Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
+          )
           .map((d) => ({
             location: [d.latitude, d.longitude] as [number, number],
             size: d.size ?? 0.06,
-            color: d.color ?? "#fb6421",
+            color: hexToRgbNormalized(d.color ?? "#fb6421"),
+            isRoot: (d as any).isRoot === true,
           }));
         setMarkers(m);
       })
@@ -108,7 +101,7 @@ export function GlobeMarkers({ className }: { className?: string }) {
 
   const markerColorNormalized =
     markers && markers.length > 0 && markers[0].color
-      ? hexToRgbNormalized(markers[0].color)
+      ? markers[0].color
       : undefined;
 
   return (
