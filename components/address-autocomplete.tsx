@@ -664,6 +664,8 @@ export function AddressAutocomplete({
 
   // Handle suggestion selection
   const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
+    console.log("[AddressAutocomplete] Suggestion selected:", suggestion);
+
     const p = suggestion.properties;
 
     const street = p.street
@@ -682,9 +684,14 @@ export function AddressAutocomplete({
       longitude: suggestion.geometry.coordinates[0],
     };
 
+    console.log("[AddressAutocomplete] New address object:", newAddress);
+    console.log("[AddressAutocomplete] onChange type:", typeof onChange);
+
     // Safely call onChange with validation
     if (typeof onChange === "function") {
+      console.log("[AddressAutocomplete] Calling onChange with:", newAddress);
       onChange(newAddress);
+      console.log("[AddressAutocomplete] onChange called successfully");
     } else {
       console.error(
         "[AddressAutocomplete] onChange is not a function",
@@ -745,7 +752,7 @@ export function AddressAutocomplete({
           {/* Suggestions */}
           {showSuggestions && suggestions.length > 0 && (
             <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg top-full left-0">
-              <ul 
+              <ul
                 className="max-h-60 overflow-auto p-1"
                 onMouseDown={(e) => e.stopPropagation()}
               >
@@ -767,7 +774,12 @@ export function AddressAutocomplete({
                     <li
                       key={index}
                       className="cursor-pointer rounded-sm px-3 py-2 text-sm hover:bg-accent"
-                      onClick={() => handleSelectSuggestion(suggestion)}
+                      onClick={() => {
+                        console.log(
+                          "[AddressAutocomplete] Li clicked, calling handleSelectSuggestion"
+                        );
+                        handleSelectSuggestion(suggestion);
+                      }}
                     >
                       <div className="flex items-start gap-3">
                         <MapPin className="h-4 w-4 text-primary mt-1 shrink-0" />
