@@ -20,14 +20,15 @@ export async function GET() {
   try {
     const markers: GlobeMarker[] = [];
 
-    // Add all root company locations as red markers
-    const root = await db.company.findFirst({
-      where: { isRoot: true },
+    // Fetch all companies with their locations and store metadata
+    const companies = await db.company.findMany({
       select: {
         id: true,
         name: true,
+        isRoot: true,
         latitude: true,
         longitude: true,
+        storeMetadata: true,
         locations: {
           select: {
             id: true,
@@ -39,111 +40,49 @@ export async function GET() {
       },
     });
 
-    if (root) {
-      // Add markers for all root company locations
-      if (root.locations && root.locations.length > 0) {
-        root.locations.forEach((loc) => {
+    // Process each company and add markers for locations
+    companies.forEach((company) => {
+      const isRoot = company.isRoot;
+      const size = isRoot ? 0.12 : 0.06;
+      const defaultColor = isRoot ? "#ff0000" : undefined;
+      const customColor =
+        (company.storeMetadata as { markerColor?: string } | null)
+          ?.markerColor ?? undefined;
+      const color = customColor || defaultColor;
+
+      // Add markers for all locations
+      if (company.locations && company.locations.length > 0) {
+        company.locations.forEach((loc) => {
           if (
             typeof loc.latitude === "number" &&
             typeof loc.longitude === "number"
           ) {
             markers.push({
-              id: `${root.id}-${loc.id}`,
-              name: `${root.name} - ${loc.name}`,
+              id: `${company.id}-${loc.id}`,
+              name: `${company.name} - ${loc.name}`,
               latitude: loc.latitude,
               longitude: loc.longitude,
-              size: 0.12,
-              color: "#ff0000", // Red for root company
-              isRoot: true,
-              companyId: root.id,
+              size,
+              color,
+              isRoot,
+              companyId: company.id,
             });
           }
         });
       } else if (
-        typeof root.latitude === "number" &&
-        typeof root.longitude === "number"
+        typeof company.latitude === "number" &&
+        typeof company.longitude === "number"
       ) {
         // Fallback: use company-level coordinates if no locations exist
         markers.push({
-          id: root.id,
-          name: root.name,
-          latitude: root.latitude,
-          longitude: root.longitude,
-          size: 0.12,
-          color: "#ff0000",
-          isRoot: true,
-          companyId: root.id,
-        });
-      }
-    }
-
-    // Add markers for all subscriber company locations
-    const subs = await db.subscription.findMany({
-      where: { status: "ACTIVE" },
-      include: {
-        subscriberCompany: {
-          select: {
-            id: true,
-            name: true,
-            latitude: true,
-            longitude: true,
-            storeMetadata: true,
-            locations: {
-              select: {
-                id: true,
-                name: true,
-                latitude: true,
-                longitude: true,
-              },
-            },
-          },
-        },
-      },
-      take: 1000,
-    });
-
-    subs.forEach((s) => {
-      const c = s.subscriberCompany;
-      if (!c) return;
-
-      // Skip root company (already added above)
-      if (c.id === root?.id) return;
-
-      // Add markers for all subscriber locations
-      if (c.locations && c.locations.length > 0) {
-        c.locations.forEach((loc) => {
-          if (
-            typeof loc.latitude === "number" &&
-            typeof loc.longitude === "number"
-          ) {
-            markers.push({
-              id: `${c.id}-${loc.id}`,
-              name: `${c.name} - ${loc.name}`,
-              latitude: loc.latitude,
-              longitude: loc.longitude,
-              size: 0.06,
-              color:
-                (c.storeMetadata as { markerColor?: string } | null)
-                  ?.markerColor ?? undefined,
-              companyId: c.id,
-            });
-          }
-        });
-      } else if (
-        typeof c.latitude === "number" &&
-        typeof c.longitude === "number"
-      ) {
-        // Fallback: use company-level coordinates if no locations exist
-        markers.push({
-          id: c.id,
-          name: c.name,
-          latitude: c.latitude,
-          longitude: c.longitude,
-          size: 0.06,
-          color:
-            (c.storeMetadata as { markerColor?: string } | null)?.markerColor ??
-            undefined,
-          companyId: c.id,
+          id: company.id,
+          name: company.name,
+          latitude: company.latitude,
+          longitude: company.longitude,
+          size,
+          color,
+          isRoot,
+          companyId: company.id,
         });
       }
     });

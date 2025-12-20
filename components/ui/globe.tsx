@@ -13,15 +13,16 @@ export const GLOBE_CONFIG: COBEOptions = {
   height: 800,
   onRender: () => {},
   devicePixelRatio: 2,
-  phi: 0, // Centered - no rotation
-  theta: 0.2, // Slight tilt for natural view of all countries
+  phi: 0,
+  theta: 0.3,
   dark: 0,
+  diffuse: 0.4,
   mapSamples: 16000,
+  mapBrightness: 1.2,
   baseColor: [1, 1, 1],
   markerColor: [251 / 255, 100 / 255, 21 / 255],
-  glowColor: [0, 0.8, 1], // Cyan-blue glow (blend of green & blue)
-  scale: 1, // Full scale to show all countries
-  markers: [], // Will be overridden by GlobeMarkers component with dynamic data
+  glowColor: [1, 1, 1],
+  markers: [],
 };
 
 export function Globe({
@@ -95,20 +96,9 @@ export function Globe({
         className
       )}
     >
-      {/* Hazy circular gradient background behind globe - 4x larger */}
-      <div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle at center, rgba(34, 197, 94, 0.4) 0%, rgba(34, 197, 94, 0.3) 15%, rgba(34, 197, 94, 0.15) 50%, rgba(34, 197, 94, 0) 200%)",
-          filter: "blur(60px)",
-          zIndex: 0,
-        }}
-      />
-
       <canvas
         className={cn(
-          "size-full opacity-0 transition-opacity duration-500 contain-[layout_paint_size] relative z-10"
+          "size-full opacity-0 transition-opacity duration-500 contain-[layout_paint_size]"
         )}
         ref={canvasRef}
         onPointerDown={(e) => {
