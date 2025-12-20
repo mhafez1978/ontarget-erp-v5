@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { LocationType, Prisma } from "@prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // PATCH /api/company/[companyId]/locations/[locationId] - Update a location
 export async function PATCH(request: NextRequest, context: any) {
@@ -81,11 +82,123 @@ export async function PATCH(request: NextRequest, context: any) {
     if (body.notes !== undefined) updateData.notes = body.notes;
     if (body.isMain !== undefined) updateData.isMain = body.isMain;
 
+    // Get original location for comparison
+    const originalLocation = await db.companyLocation.findUnique({
+      where: { id: locationId },
+    });
+
     // Update the location
     const updatedLocation = await db.companyLocation.update({
       where: { id: locationId },
       data: updateData,
     });
+
+    // Get geo-location for audit log
+    let geoData = null;
+    try {
+      const geoResponse = await fetch(
+        `${request.nextUrl.origin}/api/get-location`,
+        {
+          headers: {
+            "x-forwarded-for": request.headers.get("x-forwarded-for") || "",
+            "x-real-ip": request.headers.get("x-real-ip") || "",
+          },
+        }
+      );
+      if (geoResponse.ok) {
+        geoData = await geoResponse.json();
+      }
+    } catch (error) {
+      console.error("Error fetching geolocation:", error);
+    }
+
+    // Build changed fields list
+    const changedFields: Record<string, { before: unknown; after: unknown }> =
+      {};
+    if (originalLocation) {
+      if (updateData.name && originalLocation.name !== updateData.name) {
+        changedFields.name = {
+          before: originalLocation.name,
+          after: updateData.name,
+        };
+      }
+      if (
+        updateData.latitude &&
+        originalLocation.latitude !== updateData.latitude
+      ) {
+        changedFields.latitude = {
+          before: originalLocation.latitude,
+          after: updateData.latitude,
+        };
+      }
+      if (
+        updateData.longitude &&
+        originalLocation.longitude !== updateData.longitude
+      ) {
+        changedFields.longitude = {
+          before: originalLocation.longitude,
+          after: updateData.longitude,
+        };
+      }
+      if (
+        updateData.addressLine1 &&
+        originalLocation.addressLine1 !== updateData.addressLine1
+      ) {
+        changedFields.addressLine1 = {
+          before: originalLocation.addressLine1,
+          after: updateData.addressLine1,
+        };
+      }
+      if (updateData.city && originalLocation.city !== updateData.city) {
+        changedFields.city = {
+          before: originalLocation.city,
+          after: updateData.city,
+        };
+      }
+      if (
+        updateData.country &&
+        originalLocation.country !== updateData.country
+      ) {
+        changedFields.country = {
+          before: originalLocation.country,
+          after: updateData.country,
+        };
+      }
+    }
+
+    // Create audit log for location update
+    try {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.LOCATION_UPDATED,
+        userId: sessionUser.id,
+        companyId,
+        entityType: "Location",
+        entityId: locationId,
+        description: `Location "${updatedLocation.name}" updated`,
+        metadata: {
+          locationName: updatedLocation.name,
+          locationType: updatedLocation.type,
+          changedFields,
+          newCoordinates: {
+            latitude: updatedLocation.latitude,
+            longitude: updatedLocation.longitude,
+          },
+        },
+        ipAddress: geoData?.ip || null,
+        ipv4: geoData?.ipv4 || null,
+        ipv6: geoData?.ipv6 || null,
+        city: geoData?.city || null,
+        state: geoData?.region || null,
+        country: geoData?.country_name || null,
+        countryFlag: geoData?.flag || null,
+      });
+    } catch (auditError) {
+      console.error(
+        "Failed to create audit log for location update:",
+        auditError
+      );
+      // Don't fail the request if audit logging fails
+    }
 
     return NextResponse.json({
       success: true,
@@ -174,6 +287,62 @@ export async function DELETE(request: NextRequest, context: any) {
 
     // Delete the location
     await db.companyLocation.delete({ where: { id: locationId } });
+
+    // Get geo-location for audit log
+    let geoData = null;
+    try {
+      const geoResponse = await fetch(
+        `${request.nextUrl.origin}/api/get-location`,
+        {
+          headers: {
+            "x-forwarded-for": request.headers.get("x-forwarded-for") || "",
+            "x-real-ip": request.headers.get("x-real-ip") || "",
+          },
+        }
+      );
+      if (geoResponse.ok) {
+        geoData = await geoResponse.json();
+      }
+    } catch (error) {
+      console.error("Error fetching geolocation:", error);
+    }
+
+    // Create audit log for location deletion
+    try {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.LOCATION_DELETED,
+        userId: sessionUser.id,
+        companyId,
+        entityType: "Location",
+        entityId: locationId,
+        description: `Location "${location.name}" deleted from company`,
+        metadata: {
+          locationName: location.name,
+          locationType: location.type,
+          address: `${location.addressLine1}${
+            location.addressLine2 ? " " + location.addressLine2 : ""
+          }, ${location.city}, ${location.state || ""} ${location.country}`,
+          coordinates: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+          },
+          wasMain: location.isMain,
+        },
+        ipAddress: geoData?.ip || null,
+        ipv4: geoData?.ipv4 || null,
+        ipv6: geoData?.ipv6 || null,
+        city: geoData?.city || null,
+        state: geoData?.region || null,
+        country: geoData?.country_name || null,
+        countryFlag: geoData?.flag || null,
+      });
+    } catch (auditError) {
+      console.error(
+        "Failed to create audit log for location deletion:",
+        auditError
+      );
+      // Don't fail the request if audit logging fails
+    }
 
     return NextResponse.json({
       success: true,
