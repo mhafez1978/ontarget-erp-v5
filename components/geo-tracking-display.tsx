@@ -38,6 +38,8 @@ interface ActiveSession {
   sessionIpAddress: string | null;
   sessionIpv4: string | null;
   sessionIpv6: string | null;
+  createdAt: string;
+  expiresAt: string;
 }
 
 export function GeoTrackingDisplay() {
@@ -229,6 +231,14 @@ export function GeoTrackingDisplay() {
                         {session.sessionIpv6 && (
                           <span>IPv6: {session.sessionIpv6}</span>
                         )}
+                      </div>
+                    )}
+                    {session.createdAt && (
+                      <div className="text-xs text-muted-foreground">
+                        <span>
+                          Logged in:{" "}
+                          {new Date(session.createdAt).toLocaleString()}
+                        </span>
                       </div>
                     )}
                   </div>

@@ -5,6 +5,20 @@ import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
 
+// Helper to extract client IP from request headers
+function getClientIp(req: NextRequest): string | null {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    const first = xff.split(",")[0].trim();
+    if (first) return first;
+  }
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf) return cf;
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return realIp;
+  return null;
+}
+
 const completeSchema = z.object({
   token: z.string(),
   plan: z.enum(["ESSENTIAL", "GROWTH", "ENTERPRISE"]),
@@ -131,12 +145,14 @@ export async function POST(request: NextRequest) {
       return { user: updatedUser };
     });
 
-    // Audit completion
+    // Audit completion with geo-location data
+    const clientIp = getClientIp(request);
     await createAuditLog({
       action: AUDIT_ACTIONS.ONBOARDING_COMPLETED,
       userId: result.user.id,
       description: `OAuth onboarding completed for ${result.user.email}`,
       metadata: { token: token, plan },
+      ipAddress: clientIp,
     }).catch(console.error);
 
     // Send welcome email after successful onboarding

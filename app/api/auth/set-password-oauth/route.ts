@@ -5,6 +5,20 @@ import { z } from "zod";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createSession } from "@/lib/session-manager";
 
+// Helper to extract client IP from request headers
+function getClientIp(req: NextRequest): string | null {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    const first = xff.split(",")[0].trim();
+    if (first) return first;
+  }
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf) return cf;
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return realIp;
+  return null;
+}
+
 // Validation schema for setting password during OAuth signup
 const setPasswordSchema = z.object({
   token: z.string().min(1, "Onboarding token is required"),
@@ -124,7 +138,8 @@ export async function POST(request: NextRequest) {
       return { user: updatedUser };
     });
 
-    // Log the password setup
+    // Log the password setup with geo-location data
+    const clientIp = getClientIp(request);
     await createAuditLog({
       action: AUDIT_ACTIONS.PASSWORD_CHANGED,
       userId: result.user.id,
@@ -135,6 +150,7 @@ export async function POST(request: NextRequest) {
         email: result.user.email,
         name: result.user.name,
       },
+      ipAddress: clientIp,
     }).catch(console.error);
 
     // Create a session for the user so they can proceed to plan selection
