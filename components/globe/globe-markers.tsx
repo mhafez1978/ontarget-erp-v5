@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Globe, GLOBE_CONFIG } from "@/components/ui/globe";
 
 type Marker = {
@@ -57,51 +57,41 @@ function hexToRgbNormalized(
 
 export function GlobeMarkers({ className }: { className?: string }) {
   const [markers, setMarkers] = useState<ClientMarker[] | null>(null);
-  const markersCacheRef = useRef<ClientMarker[] | null>(null);
 
   useEffect(() => {
-    let mounted = true;
+    const mounted = true;
 
-    const fetchMarkers = () => {
-      fetch("/api/globe/markers")
-        .then((r) => r.json())
-        .then((data: Marker[]) => {
-          if (!mounted) return;
-          console.log("Raw marker data from API:", data);
-          const m = data
-            .filter(
-              (d) => Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
-            )
-            .map((d) => ({
-              location: [d.latitude, d.longitude] as [number, number],
-              size: d.size ?? 0.06,
-              color: hexToRgbNormalized(d.color ?? "#fb6421"),
-              isRoot: d.isRoot === true,
-            }));
-          console.log("Transformed markers for Globe:", m);
+    const fetchMarkers = async () => {
+      try {
+        const response = await fetch("/api/globe/markers");
+        const data: Marker[] = await response.json();
 
-          // Only update state if markers have actually changed to avoid unnecessary re-renders
-          if (JSON.stringify(markersCacheRef.current) !== JSON.stringify(m)) {
-            markersCacheRef.current = m;
-            setMarkers(m);
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to fetch globe markers:", err);
-        });
+        if (!mounted) return;
+
+        console.log("Raw marker data from API:", data);
+        const m = data
+          .filter(
+            (d) => Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
+          )
+          .map((d) => ({
+            location: [d.latitude, d.longitude] as [number, number],
+            size: d.size ?? 0.06,
+            color: hexToRgbNormalized(d.color ?? "#fb6421"),
+            isRoot: d.isRoot === true,
+          }));
+        console.log("Transformed markers for Globe:", m);
+        setMarkers(m);
+      } catch (err) {
+        console.error("Failed to fetch globe markers:", err);
+        // Still show globe even if fetch fails
+        if (mounted) {
+          setMarkers([]);
+        }
+      }
     };
 
-    // Initial fetch
+    // Fetch markers once on mount
     fetchMarkers();
-
-    // Poll for updates every 60 seconds (increased from 30s to reduce animation interruptions)
-    // Markers will update smoothly without resetting the globe rotation
-    const interval = setInterval(fetchMarkers, 60000);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
   }, []);
 
   if (markers === null) {
