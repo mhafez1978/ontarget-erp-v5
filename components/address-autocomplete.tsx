@@ -609,8 +609,8 @@ export function AddressAutocomplete({
         setShowSuggestions(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   // Search for addresses using your internal API (which proxies to Photon)
@@ -670,7 +670,7 @@ export function AddressAutocomplete({
       ? `${p.housenumber || ""} ${p.street}`.trim()
       : p.name || "";
 
-    onChange({
+    const newAddress = {
       addressLine1: street,
       addressLine2: "",
       city: p.city || "",
@@ -680,7 +680,17 @@ export function AddressAutocomplete({
       postalCode: p.postcode || "",
       latitude: suggestion.geometry.coordinates[1],
       longitude: suggestion.geometry.coordinates[0],
-    });
+    };
+
+    // Safely call onChange with validation
+    if (typeof onChange === "function") {
+      onChange(newAddress);
+    } else {
+      console.error(
+        "[AddressAutocomplete] onChange is not a function",
+        onChange
+      );
+    }
 
     setSearchQuery(street);
     setShowSuggestions(false);
@@ -754,7 +764,10 @@ export function AddressAutocomplete({
                     <li
                       key={index}
                       className="cursor-pointer rounded-sm px-3 py-2 text-sm hover:bg-accent"
-                      onClick={() => handleSelectSuggestion(suggestion)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectSuggestion(suggestion);
+                      }}
                     >
                       <div className="flex items-start gap-3">
                         <MapPin className="h-4 w-4 text-primary mt-1 shrink-0" />
@@ -792,9 +805,11 @@ export function AddressAutocomplete({
             type="text"
             placeholder="123 Main Street"
             value={safeValue.addressLine1}
-            onChange={(e) =>
-              onChange({ ...safeValue, addressLine1: e.target.value })
-            }
+            onChange={(e) => {
+              if (typeof onChange === "function") {
+                onChange({ ...safeValue, addressLine1: e.target.value });
+              }
+            }}
           />
         </div>
 
@@ -805,9 +820,11 @@ export function AddressAutocomplete({
             type="text"
             placeholder="Apt 4B"
             value={safeValue.addressLine2}
-            onChange={(e) =>
-              onChange({ ...safeValue, addressLine2: e.target.value })
-            }
+            onChange={(e) => {
+              if (typeof onChange === "function") {
+                onChange({ ...safeValue, addressLine2: e.target.value });
+              }
+            }}
           />
         </div>
 
@@ -818,7 +835,11 @@ export function AddressAutocomplete({
             type="text"
             placeholder="New York"
             value={safeValue.city}
-            onChange={(e) => onChange({ ...safeValue, city: e.target.value })}
+            onChange={(e) => {
+              if (typeof onChange === "function") {
+                onChange({ ...safeValue, city: e.target.value });
+              }
+            }}
           />
         </div>
 
@@ -829,7 +850,11 @@ export function AddressAutocomplete({
             type="text"
             placeholder="New York"
             value={safeValue.state}
-            onChange={(e) => onChange({ ...safeValue, state: e.target.value })}
+            onChange={(e) => {
+              if (typeof onChange === "function") {
+                onChange({ ...safeValue, state: e.target.value });
+              }
+            }}
           />
         </div>
 
@@ -846,9 +871,11 @@ export function AddressAutocomplete({
               type="text"
               placeholder="United States"
               value={safeValue.country}
-              onChange={(e) =>
-                onChange({ ...safeValue, country: e.target.value })
-              }
+              onChange={(e) => {
+                if (typeof onChange === "function") {
+                  onChange({ ...safeValue, country: e.target.value });
+                }
+              }}
               className={safeValue.countryCode ? "pl-12" : ""}
             />
           </div>
@@ -861,9 +888,11 @@ export function AddressAutocomplete({
             type="text"
             placeholder="10001"
             value={safeValue.postalCode}
-            onChange={(e) =>
-              onChange({ ...safeValue, postalCode: e.target.value })
-            }
+            onChange={(e) => {
+              if (typeof onChange === "function") {
+                onChange({ ...safeValue, postalCode: e.target.value });
+              }
+            }}
           />
         </div>
       </div>
