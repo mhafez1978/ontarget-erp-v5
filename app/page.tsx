@@ -17,6 +17,8 @@ import { TestimonialForm } from "@/components/storefront/testimonial-form";
 import Image from "next/image";
 import { Marquee } from "@/components/ui/marquee";
 
+export const revalidate = 0; // Disable caching for pricing updates
+
 export default async function HomePage() {
   const rootCompany = await db.company.findFirst({
     where: { isRoot: true },
