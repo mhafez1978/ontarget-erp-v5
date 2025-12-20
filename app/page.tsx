@@ -135,14 +135,14 @@ export default async function HomePage() {
           </div>
 
           {/* Globe (magic UI) */}
-          <div className="mt-8 flex justify-center relative">
+          <div className=" flex justify-center relative">
             <div className="w-full max-w-4xl">
               <GlobeMarkers />
             </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-12 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-8 max-w-4xl mx-auto">
             <div className="text-center">
               <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">
                 10K+

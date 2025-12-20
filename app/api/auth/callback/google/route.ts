@@ -359,9 +359,11 @@ export async function GET(request: NextRequest) {
         },
       }).catch(console.error);
 
+      // Redirect to password setup page instead of directly to plan selection
+      // User must set a password to proceed
       const redirectUrl = `${
         process.env.NEXT_PUBLIC_APP_URL
-      }/select-plan?onboard=${encodeURIComponent(onboarding.token)}`;
+      }/oauth-setup/${encodeURIComponent(onboarding.token)}`;
       return NextResponse.redirect(redirectUrl);
     }
 

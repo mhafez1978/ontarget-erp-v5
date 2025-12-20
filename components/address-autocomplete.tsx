@@ -697,6 +697,17 @@ export function AddressAutocomplete({
     return String.fromCodePoint(...codePoints);
   };
 
+  // Ensure value is defined with defaults
+  const safeValue = value || {
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    country: "United States",
+    countryCode: "US",
+    postalCode: "",
+  };
+
   return (
     <div className="space-y-4">
       {/* Address Search */}
@@ -780,9 +791,9 @@ export function AddressAutocomplete({
             id="addressLine1"
             type="text"
             placeholder="123 Main Street"
-            value={value.addressLine1}
+            value={safeValue.addressLine1}
             onChange={(e) =>
-              onChange({ ...value, addressLine1: e.target.value })
+              onChange({ ...safeValue, addressLine1: e.target.value })
             }
           />
         </div>
@@ -793,9 +804,9 @@ export function AddressAutocomplete({
             id="addressLine2"
             type="text"
             placeholder="Apt 4B"
-            value={value.addressLine2}
+            value={safeValue.addressLine2}
             onChange={(e) =>
-              onChange({ ...value, addressLine2: e.target.value })
+              onChange({ ...safeValue, addressLine2: e.target.value })
             }
           />
         </div>
@@ -806,8 +817,8 @@ export function AddressAutocomplete({
             id="city"
             type="text"
             placeholder="New York"
-            value={value.city}
-            onChange={(e) => onChange({ ...value, city: e.target.value })}
+            value={safeValue.city}
+            onChange={(e) => onChange({ ...safeValue, city: e.target.value })}
           />
         </div>
 
@@ -817,26 +828,28 @@ export function AddressAutocomplete({
             id="state"
             type="text"
             placeholder="New York"
-            value={value.state}
-            onChange={(e) => onChange({ ...value, state: e.target.value })}
+            value={safeValue.state}
+            onChange={(e) => onChange({ ...safeValue, state: e.target.value })}
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="country">Country</Label>
           <div className="relative">
-            {value.countryCode && (
+            {safeValue.countryCode && (
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xl pointer-events-none">
-                {getCountryFlag(value.countryCode)}
+                {getCountryFlag(safeValue.countryCode)}
               </span>
             )}
             <Input
               id="country"
               type="text"
               placeholder="United States"
-              value={value.country}
-              onChange={(e) => onChange({ ...value, country: e.target.value })}
-              className={value.countryCode ? "pl-12" : ""}
+              value={safeValue.country}
+              onChange={(e) =>
+                onChange({ ...safeValue, country: e.target.value })
+              }
+              className={safeValue.countryCode ? "pl-12" : ""}
             />
           </div>
         </div>
@@ -847,8 +860,10 @@ export function AddressAutocomplete({
             id="postalCode"
             type="text"
             placeholder="10001"
-            value={value.postalCode}
-            onChange={(e) => onChange({ ...value, postalCode: e.target.value })}
+            value={safeValue.postalCode}
+            onChange={(e) =>
+              onChange({ ...safeValue, postalCode: e.target.value })
+            }
           />
         </div>
       </div>
