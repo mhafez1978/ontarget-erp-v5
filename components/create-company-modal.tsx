@@ -19,10 +19,11 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
-import confetti from "canvas-confetti";import {
+import confetti from "canvas-confetti";
+import {
   AddressAutocomplete,
   AddressData,
-} from \"@/components/address-autocomplete\";
+} from "@/components/address-autocomplete";
 interface CreateCompanyModalProps {
   onSuccess: (company: unknown, user: unknown) => void;
   onClose: () => void;
@@ -58,7 +59,8 @@ export function CreateCompanyModal({
   };
 
   const [formData, setFormData] = useState(initialFormData);
-  const [addressData, setAddressData] = useState<AddressData>(initialAddressData);
+  const [addressData, setAddressData] =
+    useState<AddressData>(initialAddressData);
   const isFormDirty = useFormDirty(initialFormData, formData);
 
   const totalSteps = 4;
@@ -322,10 +324,13 @@ export function CreateCompanyModal({
                   <>
                     <p>
                       <strong>Address:</strong> {addressData.addressLine1}
-                      {addressData.addressLine2 && `, ${addressData.addressLine2}`}
+                      {addressData.addressLine2 &&
+                        `, ${addressData.addressLine2}`}
                     </p>
                     <p>
-                      <strong>Location:</strong> {addressData.city}{addressData.state && `, ${addressData.state}`} {addressData.country}
+                      <strong>Location:</strong> {addressData.city}
+                      {addressData.state && `, ${addressData.state}`}{" "}
+                      {addressData.country}
                     </p>
                   </>
                 )}
