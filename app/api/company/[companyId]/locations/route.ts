@@ -6,7 +6,6 @@ import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // GET /api/company/[companyId]/locations - Fetch all locations for a company
 export async function GET(request: NextRequest, context: any) {
-  const { params } = context;
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);
@@ -16,7 +15,8 @@ export async function GET(request: NextRequest, context: any) {
 
     const { user: sessionUser } = validation;
 
-    const companyId = params.companyId;
+    const { params } = context;
+    const companyId = (await params).companyId;
 
     // Verify user owns this company
     const company = await db.company.findUnique({
@@ -59,7 +59,6 @@ export async function GET(request: NextRequest, context: any) {
 
 // POST /api/company/[companyId]/locations - Create a new location
 export async function POST(request: NextRequest, context: any) {
-  const { params } = context;
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);
@@ -69,7 +68,8 @@ export async function POST(request: NextRequest, context: any) {
 
     const { user: sessionUser } = validation;
 
-    const companyId = params.companyId;
+    const { params } = context;
+    const companyId = (await params).companyId;
     const body = await request.json();
 
     // Validate required fields
