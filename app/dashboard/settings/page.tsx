@@ -615,6 +615,21 @@ export default function SettingsPage() {
       return;
     }
 
+    // If enabling, require Client ID and Client Secret
+    if (checked) {
+      const hasClientId = oauthProviders[provider].clientId?.trim();
+      const hasClientSecret = oauthProviders[provider].clientSecret?.trim();
+
+      if (!hasClientId || !hasClientSecret) {
+        toast.error(`Cannot enable ${provider}`, {
+          description:
+            "Please provide both Client ID and Client Secret before enabling this OAuth provider.",
+          duration: 5000,
+        });
+        return;
+      }
+    }
+
     setOauthLoading({ ...oauthLoading, [provider]: true });
     try {
       const response = await fetch("/api/settings/oauth-providers", {

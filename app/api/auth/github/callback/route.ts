@@ -160,6 +160,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    let isNewUser = false;
+
     if (user) {
       // User exists - check if they can login with OAuth
       if (!user.isActive) {
@@ -189,6 +191,8 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // User doesn't exist - create new user based on context
+      isNewUser = true;
+
       if (context === "storefront" && companyId) {
         // STOREFRONT CONTEXT: Create COMPANY_CUSTOMER
         user = await db.user.create({
@@ -307,6 +311,34 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Create onboarding token for new OAuth users in ROOT context (expires in 24 hours)
+    let onboarding = null;
+    if (isNewUser && context !== "storefront") {
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      onboarding = await db.onboardingToken.create({
+        data: {
+          userId: user.id,
+          expiresAt,
+        },
+      });
+
+      // Audit: onboarding token created
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_TOKEN_CREATED,
+        userId: user.id,
+        entityType: "User",
+        entityId: user.id,
+        description: `Created onboarding token for GitHub OAuth user: ${email}`,
+        metadata: {
+          token: onboarding.token,
+          expiresAt: onboarding.expiresAt.toISOString(),
+          provider: "github",
+        },
+      });
+    }
+
     // If MFA is enabled, redirect to MFA challenge without creating a session
     if (user.mfaEnabled) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
@@ -339,7 +371,11 @@ export async function GET(request: NextRequest) {
       }
     } else if (user.plan === "GUEST") {
       // ROOT PLATFORM - new users need to select a plan
-      redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`;
+      redirectUrl = onboarding
+        ? `${
+            process.env.NEXT_PUBLIC_APP_URL
+          }/select-plan?onboard=${encodeURIComponent(onboarding.token)}`
+        : `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`;
     } else {
       // ROOT PLATFORM - existing users go to dashboard
       redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
