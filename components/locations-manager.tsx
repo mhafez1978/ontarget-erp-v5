@@ -247,7 +247,12 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Company Locations</h3>
-        <Button type="button" onClick={handleAddLocation} size="sm" className="gap-2">
+        <Button
+          type="button"
+          onClick={handleAddLocation}
+          size="sm"
+          className="gap-2"
+        >
           <Plus className="h-4 w-4" />
           Add Location
         </Button>
@@ -496,7 +501,11 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
 
             {/* Actions */}
             <div className="flex gap-2 justify-end pt-4">
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button type="button" onClick={handleSaveLocation}>
