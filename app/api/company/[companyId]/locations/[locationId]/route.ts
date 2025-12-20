@@ -6,7 +6,6 @@ import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // PATCH /api/company/[companyId]/locations/[locationId] - Update a location
 export async function PATCH(request: NextRequest, context: any) {
-  const { params } = context;
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);
@@ -16,8 +15,9 @@ export async function PATCH(request: NextRequest, context: any) {
 
     const { user: sessionUser } = validation;
 
-    const companyId = params.companyId;
-    const locationId = params.locationId;
+    const { params } = context;
+    const companyId = (await params).companyId;
+    const locationId = (await params).locationId;
     const body = await request.json();
 
     // Verify company exists and user owns it
@@ -215,7 +215,6 @@ export async function PATCH(request: NextRequest, context: any) {
 
 // DELETE /api/company/[companyId]/locations/[locationId] - Delete a location
 export async function DELETE(request: NextRequest, context: any) {
-  const { params } = context;
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);
@@ -225,8 +224,9 @@ export async function DELETE(request: NextRequest, context: any) {
 
     const { user: sessionUser } = validation;
 
-    const companyId = params.companyId;
-    const locationId = params.locationId;
+    const { params } = context;
+    const companyId = (await params).companyId;
+    const locationId = (await params).locationId;
 
     // Verify company exists and user owns it
     const company = await db.company.findUnique({
