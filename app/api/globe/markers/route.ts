@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// Revalidate cache every 60 seconds
-export const revalidate = 60;
+// Revalidate cache every 10 seconds for faster updates
+export const revalidate = 10;
 
 // Type definition for globe markers
 type GlobeMarker = {
@@ -85,6 +85,17 @@ export async function GET() {
           companyId: company.id,
         });
       }
+    });
+
+    console.log(
+      `[Globe Markers] Generated ${markers.length} markers from ${companies.length} companies`
+    );
+    companies.forEach((c) => {
+      console.log(
+        `  - ${c.name} (${c.isRoot ? "ROOT" : "SUB"}): ${
+          c.locations.length
+        } locations, coords: ${c.latitude},${c.longitude}`
+      );
     });
 
     return NextResponse.json(markers);
