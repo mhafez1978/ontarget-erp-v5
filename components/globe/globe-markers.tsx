@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, memo } from "react";
 import { Globe, GLOBE_CONFIG } from "@/components/ui/globe";
 
 type Marker = {
@@ -55,7 +55,7 @@ function hexToRgbNormalized(
   return undefined;
 }
 
-export function GlobeMarkers({ className }: { className?: string }) {
+function GlobeMarkersComponent({ className }: { className?: string }) {
   const [markers, setMarkers] = useState<ClientMarker[] | null>(null);
 
   useEffect(() => {
@@ -94,6 +94,25 @@ export function GlobeMarkers({ className }: { className?: string }) {
     fetchMarkers();
   }, []);
 
+  // Memoize marker color to prevent unnecessary config object recreation
+  const markerColorNormalized = useMemo(
+    () =>
+      markers && markers.length > 0 && markers[0].color
+        ? markers[0].color
+        : undefined,
+    [markers]
+  );
+
+  // Memoize config to prevent Globe from reinitializing on every render
+  const config = useMemo(
+    () => ({
+      ...GLOBE_CONFIG,
+      markers: markers ?? [],
+      ...(markerColorNormalized ? { markerColor: markerColorNormalized } : {}),
+    }),
+    [markers, markerColorNormalized]
+  );
+
   if (markers === null) {
     return (
       <div
@@ -109,24 +128,15 @@ export function GlobeMarkers({ className }: { className?: string }) {
     );
   }
 
-  const markerColorNormalized =
-    markers.length > 0 && markers[0].color ? markers[0].color : undefined;
-
   return (
     <div
       className={`relative w-full h-[360px] md:h-[480px] lg:h-[560px] ${
         className ?? ""
       }`}
     >
-      <Globe
-        config={{
-          ...GLOBE_CONFIG,
-          markers,
-          ...(markerColorNormalized
-            ? { markerColor: markerColorNormalized }
-            : {}),
-        }}
-      />
+      <Globe config={config} />
     </div>
   );
 }
+
+export const GlobeMarkers = memo(GlobeMarkersComponent);
