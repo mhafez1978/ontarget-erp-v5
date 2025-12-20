@@ -10,6 +10,7 @@ type Marker = {
   longitude: number;
   size?: number;
   color?: string;
+  isRoot?: boolean;
 };
 
 // Client-side marker shape used by the Globe renderer
@@ -71,7 +72,7 @@ export function GlobeMarkers({ className }: { className?: string }) {
             location: [d.latitude, d.longitude] as [number, number],
             size: d.size ?? 0.06,
             color: hexToRgbNormalized(d.color ?? "#fb6421"),
-            isRoot: (d as any).isRoot === true,
+            isRoot: d.isRoot === true,
           }));
         setMarkers(m);
       })
