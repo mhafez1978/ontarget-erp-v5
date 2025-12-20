@@ -102,6 +102,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    let isNewUser = false;
+
     if (user) {
       // User exists - check if they can login with OAuth
       if (!user.isActive) {
@@ -132,6 +134,8 @@ export async function GET(request: NextRequest) {
     } else {
       // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
       // They will need to select a plan before accessing the dashboard
+      isNewUser = true;
+
       user = await db.user.create({
         data: {
           email,
@@ -210,6 +214,35 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Create onboarding token for new OAuth users (expires in 24 hours)
+    let onboarding = null;
+    if (isNewUser) {
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      onboarding = await db.onboardingToken.create({
+        data: {
+          userId: user.id,
+          expiresAt,
+        },
+      });
+
+      // Audit: onboarding token created
+      const { createAuditLog, AUDIT_ACTIONS } = await import("@/lib/audit-log");
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_TOKEN_CREATED,
+        userId: user.id,
+        entityType: "User",
+        entityId: user.id,
+        description: `Created onboarding token for WeChat OAuth user: ${email}`,
+        metadata: {
+          token: onboarding.token,
+          expiresAt: onboarding.expiresAt.toISOString(),
+          provider: "wechat",
+        },
+      });
+    }
+
     // If MFA is enabled, redirect to MFA challenge without creating a session
     if (user.mfaEnabled) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
@@ -222,7 +255,11 @@ export async function GET(request: NextRequest) {
 
     // Determine redirect URL
     const redirectUrl =
-      user.plan === "GUEST"
+      user.plan === "GUEST" && onboarding
+        ? `${
+            process.env.NEXT_PUBLIC_APP_URL
+          }/select-plan?onboard=${encodeURIComponent(onboarding.token)}`
+        : user.plan === "GUEST"
         ? `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
         : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
 
