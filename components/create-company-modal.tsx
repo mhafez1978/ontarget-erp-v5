@@ -269,8 +269,8 @@ export function CreateCompanyModal({
             <div className="space-y-2">
               <Label>Company Address (Optional)</Label>
               <AddressAutocomplete
-                onSelect={setAddressData}
-                initialData={addressData}
+                value={addressData}
+                onChange={setAddressData}
                 disabled={isLoading}
               />
             </div>
