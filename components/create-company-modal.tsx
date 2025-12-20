@@ -19,8 +19,10 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
-import confetti from "canvas-confetti";
-
+import confetti from "canvas-confetti";import {
+  AddressAutocomplete,
+  AddressData,
+} from \"@/components/address-autocomplete\";
 interface CreateCompanyModalProps {
   onSuccess: (company: unknown, user: unknown) => void;
   onClose: () => void;
@@ -39,14 +41,27 @@ export function CreateCompanyModal({
     slogan: "",
     description: "",
     email: "",
+    salesEmail: "",
+    supportEmail: "",
     phone: "",
     website: "",
   };
 
+  const initialAddressData: AddressData = {
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    country: "",
+    countryCode: "",
+    postalCode: "",
+  };
+
   const [formData, setFormData] = useState(initialFormData);
+  const [addressData, setAddressData] = useState<AddressData>(initialAddressData);
   const isFormDirty = useFormDirty(initialFormData, formData);
 
-  const totalSteps = 3;
+  const totalSteps = 4;
 
   const handleNext = () => {
     // Validate current step
@@ -80,7 +95,10 @@ export function CreateCompanyModal({
       const response = await fetch("/api/company/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          address: addressData,
+        }),
       });
 
       const data = await response.json();
@@ -200,6 +218,32 @@ export function CreateCompanyModal({
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="salesEmail">Sales Email (Optional)</Label>
+              <Input
+                id="salesEmail"
+                type="email"
+                placeholder="sales@acme.com"
+                value={formData.salesEmail}
+                onChange={(e) =>
+                  setFormData({ ...formData, salesEmail: e.target.value })
+                }
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="supportEmail">Support Email (Optional)</Label>
+              <Input
+                id="supportEmail"
+                type="email"
+                placeholder="support@acme.com"
+                value={formData.supportEmail}
+                onChange={(e) =>
+                  setFormData({ ...formData, supportEmail: e.target.value })
+                }
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="phone">Phone Number (Optional)</Label>
               <Input
                 id="phone"
@@ -219,26 +263,31 @@ export function CreateCompanyModal({
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="website">Website (Optional)</Label>
-              <Input
-                id="website"
-                type="url"
-                placeholder="https://acme.com"
-                value={formData.website}
-                onChange={(e) =>
-                  setFormData({ ...formData, website: e.target.value })
-                }
+              <Label>Company Address (Optional)</Label>
+              <AddressAutocomplete
+                onSelect={setAddressData}
+                initialData={addressData}
                 disabled={isLoading}
               />
             </div>
+          </div>
+        );
 
+      case 4:
+        return (
+          <div className="space-y-4">
             {/* Summary */}
-            <div className="mt-6 p-4 bg-muted rounded-lg space-y-2">
+            <div className="mt-4 p-4 bg-muted rounded-lg space-y-2 max-h-[300px] overflow-y-auto">
               <h4 className="font-semibold text-sm">Review Your Information</h4>
-              <div className="text-sm space-y-1">
+              <div className="text-sm space-y-2">
                 <p>
                   <strong>Company Name:</strong> {formData.name || "N/A"}
                 </p>
+                {formData.slogan && (
+                  <p>
+                    <strong>Slogan:</strong> {formData.slogan}
+                  </p>
+                )}
                 {formData.description && (
                   <p>
                     <strong>Description:</strong> {formData.description}
@@ -247,6 +296,16 @@ export function CreateCompanyModal({
                 {formData.email && (
                   <p>
                     <strong>Email:</strong> {formData.email}
+                  </p>
+                )}
+                {formData.salesEmail && (
+                  <p>
+                    <strong>Sales Email:</strong> {formData.salesEmail}
+                  </p>
+                )}
+                {formData.supportEmail && (
+                  <p>
+                    <strong>Support Email:</strong> {formData.supportEmail}
                   </p>
                 )}
                 {formData.phone && (
@@ -258,6 +317,17 @@ export function CreateCompanyModal({
                   <p>
                     <strong>Website:</strong> {formData.website}
                   </p>
+                )}
+                {addressData.addressLine1 && (
+                  <>
+                    <p>
+                      <strong>Address:</strong> {addressData.addressLine1}
+                      {addressData.addressLine2 && `, ${addressData.addressLine2}`}
+                    </p>
+                    <p>
+                      <strong>Location:</strong> {addressData.city}{addressData.state && `, ${addressData.state}`} {addressData.country}
+                    </p>
+                  </>
                 )}
               </div>
             </div>

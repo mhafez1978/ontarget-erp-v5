@@ -16,9 +16,7 @@ export const GLOBE_CONFIG: COBEOptions = {
   phi: 0, // Centered - no rotation
   theta: 0.2, // Slight tilt for natural view of all countries
   dark: 0,
-  diffuse: 1.2, // Increased lighting
   mapSamples: 16000,
-  mapBrightness: 1.8, // Brightened map
   baseColor: [1, 1, 1],
   markerColor: [251 / 255, 100 / 255, 21 / 255],
   glowColor: [0, 0.8, 1], // Cyan-blue glow (blend of green & blue)

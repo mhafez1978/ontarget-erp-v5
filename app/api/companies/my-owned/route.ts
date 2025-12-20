@@ -20,20 +20,101 @@ export async function GET(request: NextRequest) {
         where: { id: user.id },
         include: {
           ownedCompanies: {
-            select: { id: true, name: true, isRoot: true, createdAt: true },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              slogan: true,
+              description: true,
+              logo: true,
+              email: true,
+              salesEmail: true,
+              supportEmail: true,
+              phone: true,
+              website: true,
+              addressLine1: true,
+              addressLine2: true,
+              city: true,
+              state: true,
+              country: true,
+              countryCode: true,
+              postalCode: true,
+              isRoot: true,
+              createdAt: true,
+              _count: {
+                select: {
+                  members: true,
+                  staff: true,
+                },
+              },
+            },
             orderBy: { createdAt: "asc" },
           },
           companyMemberships: {
             include: {
               company: {
-                select: { id: true, name: true, isRoot: true, createdAt: true },
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  slogan: true,
+                  description: true,
+                  logo: true,
+                  email: true,
+                  salesEmail: true,
+                  supportEmail: true,
+                  phone: true,
+                  website: true,
+                  addressLine1: true,
+                  addressLine2: true,
+                  city: true,
+                  state: true,
+                  country: true,
+                  countryCode: true,
+                  postalCode: true,
+                  isRoot: true,
+                  createdAt: true,
+                  _count: {
+                    select: {
+                      members: true,
+                      staff: true,
+                    },
+                  },
+                },
               },
             },
           },
           companyStaff: {
             include: {
               company: {
-                select: { id: true, name: true, isRoot: true, createdAt: true },
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  slogan: true,
+                  description: true,
+                  logo: true,
+                  email: true,
+                  salesEmail: true,
+                  supportEmail: true,
+                  phone: true,
+                  website: true,
+                  addressLine1: true,
+                  addressLine2: true,
+                  city: true,
+                  state: true,
+                  country: true,
+                  countryCode: true,
+                  postalCode: true,
+                  isRoot: true,
+                  createdAt: true,
+                  _count: {
+                    select: {
+                      members: true,
+                      staff: true,
+                    },
+                  },
+                },
               },
             },
           },
@@ -42,20 +123,67 @@ export async function GET(request: NextRequest) {
 
       if (userWithCompanies) {
         const map = new Map<string, any>();
-        userWithCompanies.ownedCompanies.forEach((c) => map.set(c.id, c));
-        userWithCompanies.companyMemberships.forEach((m: any) =>
-          map.set(m.company.id, m.company)
-        );
-        userWithCompanies.companyStaff.forEach((s: any) =>
-          map.set(s.company.id, s.company)
-        );
+        userWithCompanies.ownedCompanies.forEach((c) => {
+          // For owned companies, memberCount includes owner (1) + members + staff
+          const memberCount =
+            1 + (c._count?.members || 0) + (c._count?.staff || 0);
+          map.set(c.id, { ...c, memberCount });
+        });
+        userWithCompanies.companyMemberships.forEach((m: any) => {
+          const company = m.company;
+          // For memberships, don't add 1 because owner is counted separately
+          const memberCount =
+            (company._count?.members || 0) + (company._count?.staff || 0);
+          map.set(company.id, { ...company, memberCount });
+        });
+        userWithCompanies.companyStaff.forEach((s: any) => {
+          const company = s.company;
+          // For staff companies, don't add 1 because owner is counted separately
+          const memberCount =
+            (company._count?.members || 0) + (company._count?.staff || 0);
+          map.set(company.id, { ...company, memberCount });
+        });
         companies = Array.from(map.values());
 
         // For SUPER_ADMIN only: ensure root company present and sorted first
         if (user.role === "SUPER_ADMIN") {
-          const root = await db.company.findFirst({ where: { isRoot: true } });
-          if (root && !companies.some((c) => c.id === root.id))
-            companies.unshift(root);
+          const root = await db.company.findFirst({
+            where: { isRoot: true },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              slogan: true,
+              description: true,
+              logo: true,
+              email: true,
+              salesEmail: true,
+              supportEmail: true,
+              phone: true,
+              website: true,
+              addressLine1: true,
+              addressLine2: true,
+              city: true,
+              state: true,
+              country: true,
+              countryCode: true,
+              postalCode: true,
+              isRoot: true,
+              createdAt: true,
+              _count: {
+                select: {
+                  members: true,
+                  staff: true,
+                },
+              },
+            },
+          });
+          if (root && !companies.some((c) => c.id === root.id)) {
+            // For root company (owned by super admin), memberCount = 1 (owner) + members + staff
+            const memberCount =
+              1 + (root._count?.members || 0) + (root._count?.staff || 0);
+            companies.unshift({ ...root, memberCount });
+          }
         }
 
         // Sort: root first (if present), then by creation date

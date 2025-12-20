@@ -21,6 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { Upload, Loader2, Save, User, Eye, EyeOff, Lock } from "lucide-react";
+import { getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 
 interface UserProfile {
   id: string;
@@ -274,6 +275,10 @@ export default function ProfilePage() {
           detail: { imageUrl: newImageUrl },
         })
       );
+
+      // Force a recalculation of the progress bar by updating formData
+      // This triggers the progress calculation function which checks for user?.image
+      setFormData((prev) => ({ ...prev }));
 
       toast.success("Profile image updated successfully!");
       clearSelectedImage();
@@ -531,6 +536,7 @@ export default function ProfilePage() {
                             type="button"
                             onClick={handleUploadSelectedAvatar}
                             disabled={uploadingImage}
+                            className={getPulsateClassName(true)}
                           >
                             {uploadingImage ? (
                               <>

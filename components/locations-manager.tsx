@@ -339,7 +339,14 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent
+          className="max-w-2xl"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") e.stopPropagation();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>
               {editingLocation ? "Edit Location" : "Add New Location"}
