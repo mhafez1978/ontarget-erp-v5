@@ -206,33 +206,42 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
     }
   };
 
-  const handleDeleteLocation = async (locationId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this location? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
+  const handleDeleteLocation = async (
+    locationId: string,
+    locationName: string
+  ) => {
+    // Show warning toast with action button for confirmation
+    toast.warning(`Delete "${locationName}"?`, {
+      description: "This action cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const response = await fetch(
+              `/api/company/${companyId}/locations/${locationId}`,
+              { method: "DELETE" }
+            );
 
-    try {
-      const response = await fetch(
-        `/api/company/${companyId}/locations/${locationId}`,
-        { method: "DELETE" }
-      );
+            const data = await response.json();
 
-      if (!response.ok) {
-        const error = await response.json();
-        toast.error(error.error || "Failed to delete location");
-        return;
-      }
+            if (!response.ok) {
+              toast.error(data.error || "Failed to delete location");
+              return;
+            }
 
-      toast.success("Location deleted");
-      fetchLocations();
-    } catch (error) {
-      console.error("Error deleting location:", error);
-      toast.error("Error deleting location");
-    }
+            toast.success("Location deleted successfully");
+            fetchLocations();
+          } catch (error) {
+            console.error("Error deleting location:", error);
+            toast.error("Error deleting location");
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {}, // Just dismiss
+      },
+    });
   };
 
   if (loading) {
@@ -331,7 +340,9 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteLocation(location.id)}
+                      onClick={() =>
+                        handleDeleteLocation(location.id, location.name)
+                      }
                       className="gap-2 text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
