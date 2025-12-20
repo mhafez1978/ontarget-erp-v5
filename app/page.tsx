@@ -16,6 +16,7 @@ import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-rend
 import { TestimonialForm } from "@/components/storefront/testimonial-form";
 import Image from "next/image";
 import { Marquee } from "@/components/ui/marquee";
+import { GlobeMarkers } from "@/components/globe/globe-markers";
 
 export const revalidate = 0; // Disable caching for pricing updates
 
@@ -116,12 +117,12 @@ export default async function HomePage() {
             </span>
           </h1>
 
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-8 sm:text-xl">
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-4 sm:text-xl">
             Streamline operations, boost business, and drive growth with our
             comprehensive Ai driven enterprise resource planning platform
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-2">
             <Link href="/register?plan=ESSENTIAL">
               <Button size="lg" className="group">
                 Get Started Free
@@ -133,8 +134,15 @@ export default async function HomePage() {
             </Button>
           </div>
 
+          {/* Globe (magic UI) */}
+          <div className="mt-8 flex justify-center relative">
+            <div className="w-full max-w-4xl">
+              <GlobeMarkers />
+            </div>
+          </div>
+
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-12 max-w-4xl mx-auto">
             <div className="text-center">
               <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">
                 10K+

@@ -305,10 +305,11 @@ export async function GET(request: NextRequest) {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
 
-      onboarding = await db.onboardingToken.create({
+      onboarding = await db.oAuthOnboarding.create({
         data: {
           userId: user.id,
           expiresAt,
+          context: "root",
         },
       });
 

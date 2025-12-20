@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
@@ -226,10 +227,11 @@ export async function GET(request: NextRequest) {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
 
-      onboarding = await db.onboardingToken.create({
+      onboarding = await db.oAuthOnboarding.create({
         data: {
           userId: user.id,
           expiresAt,
+          context: "root",
         },
       });
 
