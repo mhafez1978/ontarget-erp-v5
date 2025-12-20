@@ -113,25 +113,56 @@ export async function PATCH(request: NextRequest, context: any) {
     }
 
     // Build changed fields list
-    const changedFields: Record<string, { before: unknown; after: unknown }> = {};
+    const changedFields: Record<string, { before: unknown; after: unknown }> =
+      {};
     if (originalLocation) {
       if (updateData.name && originalLocation.name !== updateData.name) {
-        changedFields.name = { before: originalLocation.name, after: updateData.name };
+        changedFields.name = {
+          before: originalLocation.name,
+          after: updateData.name,
+        };
       }
-      if (updateData.latitude && originalLocation.latitude !== updateData.latitude) {
-        changedFields.latitude = { before: originalLocation.latitude, after: updateData.latitude };
+      if (
+        updateData.latitude &&
+        originalLocation.latitude !== updateData.latitude
+      ) {
+        changedFields.latitude = {
+          before: originalLocation.latitude,
+          after: updateData.latitude,
+        };
       }
-      if (updateData.longitude && originalLocation.longitude !== updateData.longitude) {
-        changedFields.longitude = { before: originalLocation.longitude, after: updateData.longitude };
+      if (
+        updateData.longitude &&
+        originalLocation.longitude !== updateData.longitude
+      ) {
+        changedFields.longitude = {
+          before: originalLocation.longitude,
+          after: updateData.longitude,
+        };
       }
-      if (updateData.addressLine1 && originalLocation.addressLine1 !== updateData.addressLine1) {
-        changedFields.addressLine1 = { before: originalLocation.addressLine1, after: updateData.addressLine1 };
+      if (
+        updateData.addressLine1 &&
+        originalLocation.addressLine1 !== updateData.addressLine1
+      ) {
+        changedFields.addressLine1 = {
+          before: originalLocation.addressLine1,
+          after: updateData.addressLine1,
+        };
       }
       if (updateData.city && originalLocation.city !== updateData.city) {
-        changedFields.city = { before: originalLocation.city, after: updateData.city };
+        changedFields.city = {
+          before: originalLocation.city,
+          after: updateData.city,
+        };
       }
-      if (updateData.country && originalLocation.country !== updateData.country) {
-        changedFields.country = { before: originalLocation.country, after: updateData.country };
+      if (
+        updateData.country &&
+        originalLocation.country !== updateData.country
+      ) {
+        changedFields.country = {
+          before: originalLocation.country,
+          after: updateData.country,
+        };
       }
     }
 
@@ -162,7 +193,10 @@ export async function PATCH(request: NextRequest, context: any) {
         countryFlag: geoData?.flag || null,
       });
     } catch (auditError) {
-      console.error("Failed to create audit log for location update:", auditError);
+      console.error(
+        "Failed to create audit log for location update:",
+        auditError
+      );
       // Don't fail the request if audit logging fails
     }
 
@@ -285,7 +319,9 @@ export async function DELETE(request: NextRequest, context: any) {
         metadata: {
           locationName: location.name,
           locationType: location.type,
-          address: `${location.addressLine1}${location.addressLine2 ? " " + location.addressLine2 : ""}, ${location.city}, ${location.state || ""} ${location.country}`,
+          address: `${location.addressLine1}${
+            location.addressLine2 ? " " + location.addressLine2 : ""
+          }, ${location.city}, ${location.state || ""} ${location.country}`,
           coordinates: {
             latitude: location.latitude,
             longitude: location.longitude,
@@ -301,7 +337,10 @@ export async function DELETE(request: NextRequest, context: any) {
         countryFlag: geoData?.flag || null,
       });
     } catch (auditError) {
-      console.error("Failed to create audit log for location deletion:", auditError);
+      console.error(
+        "Failed to create audit log for location deletion:",
+        auditError
+      );
       // Don't fail the request if audit logging fails
     }
 

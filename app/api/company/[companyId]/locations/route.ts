@@ -188,7 +188,9 @@ export async function POST(request: NextRequest, context: any) {
         metadata: {
           locationName: location.name,
           locationType: location.type,
-          address: `${addressLine1}${addressLine2 ? " " + addressLine2 : ""}, ${city}, ${state || ""} ${country}`,
+          address: `${addressLine1}${
+            addressLine2 ? " " + addressLine2 : ""
+          }, ${city}, ${state || ""} ${country}`,
           coordinates: {
             latitude: location.latitude,
             longitude: location.longitude,
