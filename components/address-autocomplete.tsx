@@ -665,7 +665,7 @@ export function AddressAutocomplete({
   // Handle suggestion selection
   const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
     console.log("[AddressAutocomplete] Suggestion selected:", suggestion);
-    
+
     const p = suggestion.properties;
 
     const street = p.street
@@ -775,7 +775,9 @@ export function AddressAutocomplete({
                       key={index}
                       className="cursor-pointer rounded-sm px-3 py-2 text-sm hover:bg-accent"
                       onClick={() => {
-                        console.log("[AddressAutocomplete] Li clicked, calling handleSelectSuggestion");
+                        console.log(
+                          "[AddressAutocomplete] Li clicked, calling handleSelectSuggestion"
+                        );
                         handleSelectSuggestion(suggestion);
                       }}
                     >
