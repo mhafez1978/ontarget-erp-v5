@@ -13,27 +13,17 @@ export const GLOBE_CONFIG: COBEOptions = {
   height: 800,
   onRender: () => {},
   devicePixelRatio: 2,
-  phi: 0,
-  theta: 0.3,
+  phi: 0, // Centered - no rotation
+  theta: 0.2, // Slight tilt for natural view of all countries
   dark: 0,
-  diffuse: 0.4,
+  diffuse: 1.2, // Increased lighting
   mapSamples: 16000,
-  mapBrightness: 1.2,
+  mapBrightness: 1.8, // Brightened map
   baseColor: [1, 1, 1],
   markerColor: [251 / 255, 100 / 255, 21 / 255],
-  glowColor: [1, 1, 1],
-  markers: [
-    { location: [14.5995, 120.9842], size: 0.03 },
-    { location: [19.076, 72.8777], size: 0.1 },
-    { location: [23.8103, 90.4125], size: 0.05 },
-    { location: [30.0444, 31.2357], size: 0.07 },
-    { location: [39.9042, 116.4074], size: 0.08 },
-    { location: [-23.5505, -46.6333], size: 0.1 },
-    { location: [19.4326, -99.1332], size: 0.1 },
-    { location: [40.7128, -74.006], size: 0.1 },
-    { location: [34.6937, 135.5022], size: 0.05 },
-    { location: [41.0082, 28.9784], size: 0.06 },
-  ],
+  glowColor: [0, 0.8, 1], // Cyan-blue glow (blend of green & blue)
+  scale: 1, // Full scale to show all countries
+  markers: [], // Will be overridden by GlobeMarkers component with dynamic data
 };
 
 export function Globe({
@@ -43,8 +33,7 @@ export function Globe({
   className?: string;
   config?: COBEOptions;
 }) {
-  let phi = 0;
-  let width = 0;
+  const phi = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointerInteracting = useRef<number | null>(null);
   const pointerInteractionMovement = useRef(0);
@@ -72,6 +61,7 @@ export function Globe({
   };
 
   useEffect(() => {
+    let width = 0;
     const onResize = () => {
       if (canvasRef.current) {
         width = canvasRef.current.offsetWidth;
@@ -86,8 +76,8 @@ export function Globe({
       width: width * 2,
       height: width * 2,
       onRender: (state) => {
-        if (!pointerInteracting.current) phi += 0.005;
-        state.phi = phi + rs.get();
+        if (!pointerInteracting.current) phi.current += 0.005;
+        state.phi = phi.current + rs.get();
         state.width = width * 2;
         state.height = width * 2;
       },
@@ -103,13 +93,24 @@ export function Globe({
   return (
     <div
       className={cn(
-        "absolute inset-0 mx-auto aspect-[1/1] w-full max-w-[600px]",
+        "absolute inset-0 mx-auto aspect-square w-full max-w-[600px]",
         className
       )}
     >
+      {/* Hazy circular gradient background behind globe - 4x larger */}
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(34, 197, 94, 0.4) 0%, rgba(34, 197, 94, 0.3) 15%, rgba(34, 197, 94, 0.15) 50%, rgba(34, 197, 94, 0) 200%)",
+          filter: "blur(60px)",
+          zIndex: 0,
+        }}
+      />
+
       <canvas
         className={cn(
-          "size-full opacity-0 transition-opacity duration-500 [contain:layout_paint_size]"
+          "size-full opacity-0 transition-opacity duration-500 contain-[layout_paint_size] relative z-10"
         )}
         ref={canvasRef}
         onPointerDown={(e) => {
