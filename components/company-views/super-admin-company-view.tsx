@@ -20,12 +20,25 @@ import {
   Briefcase,
   TrendingUp,
   ExternalLink,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MyOwnedCompanies } from "@/components/my-owned-companies";
 import { AddCompanySheet } from "@/components/add-company-sheet";
+import { EditCompanySheet } from "@/components/edit-company-sheet";
 import { LogoImage } from "@/components/logo-image";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SubscriberCompany {
   id: string;
@@ -95,6 +108,13 @@ export function SuperAdminCompanyView({
       setIsLoading(false);
     }
   };
+
+  const [isEditingCompany, setIsEditingCompany] = useState(false);
+  const [selectedCompanyForEdit, setSelectedCompanyForEdit] =
+    useState<SubscriberCompany | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] =
+    useState<SubscriberCompany | null>(null);
 
   const fetchSubscriberCompanies = async () => {
     try {
@@ -409,6 +429,31 @@ export function SuperAdminCompanyView({
                                   No store
                                 </span>
                               )}
+
+                              {/* Allow Super Admin to edit/delete subscriber companies */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedCompanyForEdit(company);
+                                  setIsEditingCompany(true);
+                                }}
+                                title="Edit Company"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setCompanyToDelete(company);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                title="Delete Company"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -427,6 +472,55 @@ export function SuperAdminCompanyView({
         onOpenChange={setIsSheetOpen}
         onSuccess={handleCompanyAdded}
       />
+
+      {/* Edit sheet for subscriber companies (Super Admin) */}
+      <EditCompanySheet
+        open={isEditingCompany}
+        onOpenChange={(open) => setIsEditingCompany(open)}
+        company={selectedCompanyForEdit as any}
+        onSuccess={() => {
+          fetchSubscriberCompanies();
+          setSelectedCompanyForEdit(null);
+        }}
+      />
+
+      {/* Delete dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Company</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{companyToDelete?.name}"? This
+              will permanently delete the company and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!companyToDelete) return;
+                try {
+                  const res = await fetch(
+                    `/api/company/${companyToDelete.id}`,
+                    {
+                      method: "DELETE",
+                    }
+                  );
+                  if (!res.ok) throw new Error("Failed to delete company");
+                  setDeleteDialogOpen(false);
+                  setCompanyToDelete(null);
+                  fetchSubscriberCompanies();
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Company
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

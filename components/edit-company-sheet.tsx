@@ -78,51 +78,114 @@ export function EditCompanySheet({
 
   // Load company data when sheet opens or company changes
   useEffect(() => {
-    if (company && open) {
-      console.log("Loading company data:", company); // Debug log
-      setFormData({
-        name: company.name || "",
-        slogan: company.slogan || "",
-        description: company.description || "",
-        email: company.email || "",
-        salesEmail: company.salesEmail || "",
-        supportEmail: company.supportEmail || "",
-        phone: company.phone || "",
-        website: company.website || "",
-      });
-      setAddressData({
-        addressLine1: company.addressLine1 || "",
-        addressLine2: company.addressLine2 || "",
-        city: company.city || "",
-        state: company.state || "",
-        country: company.country || "",
-        countryCode: company.countryCode || "",
-        postalCode: company.postalCode || "",
-      });
-      setError(null);
-    } else if (!open) {
-      // Reset form when sheet closes
-      setFormData({
-        name: "",
-        slogan: "",
-        description: "",
-        email: "",
-        salesEmail: "",
-        supportEmail: "",
-        phone: "",
-        website: "",
-      });
-      setAddressData({
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        state: "",
-        country: "",
-        countryCode: "",
-        postalCode: "",
-      });
-      setError(null);
+    let mounted = true;
+
+    async function loadCompanyDetails() {
+      // If given company has only light fields (from my-owned), fetch full details
+      if (company && open) {
+        try {
+          // If company already has email/address fields populated, use it
+          const needsFetch = typeof (company as any).email === "undefined";
+
+          if (needsFetch) {
+            const res = await fetch(`/api/company/${company.id}`);
+            if (!mounted) return;
+            if (res.ok) {
+              const data = await res.json();
+              const full = data.company;
+              setFormData({
+                name: full.name || "",
+                slogan: full.slogan || "",
+                description: full.description || "",
+                email: full.email || "",
+                salesEmail: full.salesEmail || "",
+                supportEmail: full.supportEmail || "",
+                phone: full.phone || "",
+                website: full.website || "",
+              });
+              setAddressData({
+                addressLine1: full.addressLine1 || "",
+                addressLine2: full.addressLine2 || "",
+                city: full.city || "",
+                state: full.state || "",
+                country: full.country || "",
+                countryCode: full.countryCode || "",
+                postalCode: full.postalCode || "",
+                latitude: full.latitude ?? undefined,
+                longitude: full.longitude ?? undefined,
+              });
+              setError(null);
+            } else {
+              // fallback to minimal company data
+              setFormData({
+                name: company.name || "",
+                slogan: (company as any).slogan || "",
+                description: (company as any).description || "",
+                email: "",
+                salesEmail: "",
+                supportEmail: "",
+                phone: "",
+                website: "",
+              });
+            }
+          } else {
+            setFormData({
+              name: company.name || "",
+              slogan: company.slogan || "",
+              description: company.description || "",
+              email: company.email || "",
+              salesEmail: (company as any).salesEmail || "",
+              supportEmail: (company as any).supportEmail || "",
+              phone: (company as any).phone || "",
+              website: (company as any).website || "",
+            });
+            setAddressData({
+              addressLine1: (company as any).addressLine1 || "",
+              addressLine2: (company as any).addressLine2 || "",
+              city: (company as any).city || "",
+              state: (company as any).state || "",
+              country: (company as any).country || "",
+              countryCode: (company as any).countryCode || "",
+              postalCode: (company as any).postalCode || "",
+              latitude: (company as any).latitude ?? undefined,
+              longitude: (company as any).longitude ?? undefined,
+            });
+            setError(null);
+          }
+        } catch (err) {
+          console.error("Failed to load company details:", err);
+          if (mounted) setError("Failed to load company details");
+        }
+      } else if (!open) {
+        // Reset form when sheet closes
+        setFormData({
+          name: "",
+          slogan: "",
+          description: "",
+          email: "",
+          salesEmail: "",
+          supportEmail: "",
+          phone: "",
+          website: "",
+        });
+        setAddressData({
+          addressLine1: "",
+          addressLine2: "",
+          city: "",
+          state: "",
+          country: "",
+          countryCode: "",
+          postalCode: "",
+        });
+        setError(null);
+      }
     }
+
+    loadCompanyDetails();
+
+    return () => {
+      mounted = false;
+    };
   }, [company, open]);
 
   // Track if form is dirty
