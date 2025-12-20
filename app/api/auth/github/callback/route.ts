@@ -372,11 +372,11 @@ export async function GET(request: NextRequest) {
         redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/`;
       }
     } else if (user.plan === "GUEST") {
-      // ROOT PLATFORM - new users need to select a plan
+      // ROOT PLATFORM - new users need to set password first, then select a plan
       redirectUrl = onboarding
-        ? `${
-            process.env.NEXT_PUBLIC_APP_URL
-          }/select-plan?onboard=${encodeURIComponent(onboarding.token)}`
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/oauth-setup/${encodeURIComponent(
+            onboarding.token
+          )}`
         : `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`;
     } else {
       // ROOT PLATFORM - existing users go to dashboard

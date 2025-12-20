@@ -259,9 +259,9 @@ export async function GET(request: NextRequest) {
     // Determine redirect URL
     const redirectUrl =
       user.plan === "GUEST" && onboarding
-        ? `${
-            process.env.NEXT_PUBLIC_APP_URL
-          }/select-plan?onboard=${encodeURIComponent(onboarding.token)}`
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/oauth-setup/${encodeURIComponent(
+            onboarding.token
+          )}`
         : user.plan === "GUEST"
         ? `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
         : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;

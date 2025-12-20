@@ -359,6 +359,7 @@ export default function SelectPlanPage() {
 
     // Validate billing address
     if (
+      !billingAddress ||
       !billingAddress.addressLine1 ||
       !billingAddress.city ||
       !billingAddress.state ||

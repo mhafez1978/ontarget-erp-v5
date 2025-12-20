@@ -547,7 +547,8 @@ export async function getWelcomeCustomerEmailHtml(
 ): Promise<string> {
   // Try to get root company data for fallback
   let companyName = "OnTarget ERP";
-  let companyWebsite = process.env.NEXTAUTH_URL || "http://localhost:3001";
+  let companyWebsite =
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000/login";
 
   try {
     const rootCompany = await db.company.findFirst({
