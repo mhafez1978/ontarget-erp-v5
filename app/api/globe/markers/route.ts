@@ -44,7 +44,8 @@ export async function GET() {
     companies.forEach((company) => {
       const isRoot = company.isRoot;
       const size = 0.1;
-      const defaultColor = isRoot ? "#ff0000" : undefined;
+      // Root company locations = purple (#9333ea), Subscriber locations = green (#10b981)
+      const defaultColor = isRoot ? "#9333ea" : "#10b981";
       const customColor =
         (company.storeMetadata as { markerColor?: string } | null)
           ?.markerColor ?? undefined;
