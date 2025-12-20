@@ -206,7 +206,10 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
     }
   };
 
-  const handleDeleteLocation = async (locationId: string, locationName: string) => {
+  const handleDeleteLocation = async (
+    locationId: string,
+    locationName: string
+  ) => {
     // Show warning toast with action button for confirmation
     toast.warning(`Delete "${locationName}"?`, {
       description: "This action cannot be undone.",
@@ -337,7 +340,9 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteLocation(location.id, location.name)}
+                      onClick={() =>
+                        handleDeleteLocation(location.id, location.name)
+                      }
                       className="gap-2 text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
