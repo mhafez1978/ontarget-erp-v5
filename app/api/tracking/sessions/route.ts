@@ -1,6 +1,19 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { countryCodeToFlag, lookupGeoByIp } from "@/lib/ip-lookup";
+interface ActiveSession {
+  id: string;
+  userName: string | null;
+  userEmail: string | null;
+  companyName: string | null;
+  role: string;
+  sessionCity: string | null;
+  sessionState: string | null;
+  sessionCountry: string | null;
+  sessionCountryFlag: string | null;
+  sessionIpAddress: string | null;
+  sessionIpv4: string | null;
+  sessionIpv6: string | null;
+  createdAt: string;
+  expiresAt: string;
+}
 
 export async function GET() {
   try {
@@ -43,7 +56,9 @@ export async function GET() {
         if (
           !sessionCity &&
           !sessionCountry &&
-          (session.sessionIpv4 || session.sessionIpv6 || session.sessionIpAddress)
+          (session.sessionIpv4 ||
+            session.sessionIpv6 ||
+            session.sessionIpAddress)
         ) {
           const ipForLookup =
             session.sessionIpv4 ||
@@ -56,7 +71,9 @@ export async function GET() {
               sessionState = geo.region || sessionState;
               sessionCountry = geo.country || sessionCountry;
               sessionCountryFlag =
-                sessionCountryFlag || countryCodeToFlag(geo.countryCode) || null;
+                sessionCountryFlag ||
+                countryCodeToFlag(geo.countryCode) ||
+                null;
             }
           } catch (error) {
             console.error(
@@ -81,6 +98,8 @@ export async function GET() {
           sessionIpAddress: session.sessionIpAddress,
           sessionIpv4: session.sessionIpv4,
           sessionIpv6: session.sessionIpv6,
+          createdAt: session.createdAt.toISOString(),
+          expiresAt: session.expires.toISOString(),
         };
       })
     );
