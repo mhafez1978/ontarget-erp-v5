@@ -60,28 +60,40 @@ export function GlobeMarkers({ className }: { className?: string }) {
 
   useEffect(() => {
     let mounted = true;
-    fetch("/api/globe/markers")
-      .then((r) => r.json())
-      .then((data: Marker[]) => {
-        if (!mounted) return;
-        const m = data
-          .filter(
-            (d) => Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
-          )
-          .map((d) => ({
-            location: [d.latitude, d.longitude] as [number, number],
-            size: d.size ?? 0.06,
-            color: hexToRgbNormalized(d.color ?? "#fb6421"),
-            isRoot: d.isRoot === true,
-          }));
-        setMarkers(m);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch globe markers:", err);
-      });
+
+    const fetchMarkers = () => {
+      fetch("/api/globe/markers")
+        .then((r) => r.json())
+        .then((data: Marker[]) => {
+          if (!mounted) return;
+          console.log("Raw marker data from API:", data);
+          const m = data
+            .filter(
+              (d) => Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
+            )
+            .map((d) => ({
+              location: [d.latitude, d.longitude] as [number, number],
+              size: d.size ?? 0.06,
+              color: hexToRgbNormalized(d.color ?? "#fb6421"),
+              isRoot: d.isRoot === true,
+            }));
+          console.log("Transformed markers for Globe:", m);
+          setMarkers(m);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch globe markers:", err);
+        });
+    };
+
+    // Initial fetch
+    fetchMarkers();
+
+    // Poll for updates every 30 seconds to reflect new subscriptions/locations dynamically
+    const interval = setInterval(fetchMarkers, 30000);
 
     return () => {
       mounted = false;
+      clearInterval(interval);
     };
   }, []);
 
