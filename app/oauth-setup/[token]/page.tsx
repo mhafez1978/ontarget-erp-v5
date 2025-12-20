@@ -22,6 +22,10 @@ interface PasswordRequirement {
   met: boolean;
 }
 
+interface ValidationError {
+  message: string;
+}
+
 export default function OAuthSetupPage() {
   const router = useRouter();
   const params = useParams();
@@ -99,7 +103,7 @@ export default function OAuthSetupPage() {
     },
     {
       text: "Passwords match",
-      met: password && password === confirmPassword,
+      met: Boolean(password && password === confirmPassword),
     },
   ];
 
@@ -136,7 +140,7 @@ export default function OAuthSetupPage() {
       if (!response.ok) {
         if (data.errors) {
           const errorMessages = data.errors
-            .map((e: any) => e.message)
+            .map((e: ValidationError) => e.message)
             .join(", ");
           setError(errorMessages);
           toast.error(errorMessages);
@@ -166,7 +170,7 @@ export default function OAuthSetupPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-100">
         <Card className="w-full max-w-md">
           <CardContent className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -177,7 +181,7 @@ export default function OAuthSetupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl">Set Up Your Account</CardTitle>

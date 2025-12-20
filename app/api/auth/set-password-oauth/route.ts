@@ -97,7 +97,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify email matches
-    if (email.toLowerCase() !== onboarding.user.email.toLowerCase()) {
+    if (
+      !onboarding.user.email ||
+      email.toLowerCase() !== onboarding.user.email.toLowerCase()
+    ) {
       return NextResponse.json(
         { error: "Email does not match registered email" },
         { status: 400 }
