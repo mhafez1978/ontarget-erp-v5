@@ -66,42 +66,43 @@ export default function PaymentProviderCards({
     }
   }, [userRole]);
 
-  // Check active providers on mount and when scope changes
-  useEffect(() => {
-    const checkActiveProviders = async () => {
-      const providers = ["stripe", "paypal"];
-      const results: { stripe: boolean; paypal: boolean } = {
-        stripe: false,
-        paypal: false,
-      };
-
-      for (const provider of providers) {
-        try {
-          const url =
-            selectedCompanyId === "GLOBAL"
-              ? `/api/settings/payment-provider?scope=GLOBAL&provider=${provider}`
-              : `/api/settings/payment-provider?companyId=${selectedCompanyId}&provider=${provider}`;
-          const resp = await fetch(url);
-          const data = await resp.json();
-          console.log(`[${provider}] Response:`, data);
-          if (resp.ok && data.provider && data.provider.isEnabled) {
-            console.log(`✅ ${provider} is enabled`);
-            results[provider as "stripe" | "paypal"] = true;
-          } else {
-            console.log(`❌ ${provider} not enabled`, {
-              hasProvider: !!data.provider,
-              isEnabled: data.provider?.isEnabled,
-            });
-          }
-        } catch (err) {
-          console.error(`Failed to check ${provider} status:`, err);
-        }
-      }
-
-      console.log("Final activeProviders:", results);
-      setActiveProviders(results);
+  // Check active providers function (extracted for reuse)
+  const checkActiveProviders = async () => {
+    const providers = ["stripe", "paypal"];
+    const results: { stripe: boolean; paypal: boolean } = {
+      stripe: false,
+      paypal: false,
     };
 
+    for (const provider of providers) {
+      try {
+        const url =
+          selectedCompanyId === "GLOBAL"
+            ? `/api/settings/payment-provider?scope=GLOBAL&provider=${provider}`
+            : `/api/settings/payment-provider?companyId=${selectedCompanyId}&provider=${provider}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        console.log(`[${provider}] Response:`, data);
+        if (resp.ok && data.provider && data.provider.isEnabled) {
+          console.log(`✅ ${provider} is enabled`);
+          results[provider as "stripe" | "paypal"] = true;
+        } else {
+          console.log(`❌ ${provider} not enabled`, {
+            hasProvider: !!data.provider,
+            isEnabled: data.provider?.isEnabled,
+          });
+        }
+      } catch (err) {
+        console.error(`Failed to check ${provider} status:`, err);
+      }
+    }
+
+    console.log("Final activeProviders:", results);
+    setActiveProviders(results);
+  };
+
+  // Check active providers on mount and when scope changes
+  useEffect(() => {
     checkActiveProviders();
   }, [selectedCompanyId]);
 
@@ -215,19 +216,8 @@ export default function PaymentProviderCards({
           toast.error("Saved but failed to validate connection");
         }
 
-        // Refresh active providers
-        const url =
-          selectedCompanyId === "GLOBAL"
-            ? `/api/settings/payment-provider?scope=GLOBAL&provider=${selectedProvider}`
-            : `/api/settings/payment-provider?companyId=${selectedCompanyId}&provider=${selectedProvider}`;
-        const checkResp = await fetch(url);
-        const checkData = await checkResp.json();
-        if (checkResp.ok && checkData.provider) {
-          setActiveProviders((prev) => ({
-            ...prev,
-            [selectedProvider]: !!checkData.provider.isEnabled,
-          }));
-        }
+        // Refresh active providers by re-running the check
+        await checkActiveProviders();
       } else {
         toast.error(data.error || data.message || "Failed to save provider");
       }
