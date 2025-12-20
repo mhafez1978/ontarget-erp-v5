@@ -609,8 +609,8 @@ export function AddressAutocomplete({
         setShowSuggestions(false);
       }
     }
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Search for addresses using your internal API (which proxies to Photon)
@@ -745,7 +745,10 @@ export function AddressAutocomplete({
           {/* Suggestions */}
           {showSuggestions && suggestions.length > 0 && (
             <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg top-full left-0">
-              <ul className="max-h-60 overflow-auto p-1">
+              <ul 
+                className="max-h-60 overflow-auto p-1"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
                 {suggestions.map((suggestion, index) => {
                   const p = suggestion.properties;
                   const flag = p.countrycode
@@ -764,10 +767,7 @@ export function AddressAutocomplete({
                     <li
                       key={index}
                       className="cursor-pointer rounded-sm px-3 py-2 text-sm hover:bg-accent"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectSuggestion(suggestion);
-                      }}
+                      onClick={() => handleSelectSuggestion(suggestion)}
                     >
                       <div className="flex items-start gap-3">
                         <MapPin className="h-4 w-4 text-primary mt-1 shrink-0" />
