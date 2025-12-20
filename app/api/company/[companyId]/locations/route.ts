@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { LocationType } from "@prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // GET /api/company/[companyId]/locations - Fetch all locations for a company
 export async function GET(request: NextRequest, context: any) {
@@ -155,6 +156,59 @@ export async function POST(request: NextRequest, context: any) {
         isMain: isMain || false,
       },
     });
+
+    // Get geo-location for audit log
+    let geoData = null;
+    try {
+      const geoResponse = await fetch(
+        `${request.nextUrl.origin}/api/get-location`,
+        {
+          headers: {
+            "x-forwarded-for": request.headers.get("x-forwarded-for") || "",
+            "x-real-ip": request.headers.get("x-real-ip") || "",
+          },
+        }
+      );
+      if (geoResponse.ok) {
+        geoData = await geoResponse.json();
+      }
+    } catch (error) {
+      console.error("Error fetching geolocation:", error);
+    }
+
+    // Create audit log for location creation
+    try {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.LOCATION_CREATED,
+        userId: sessionUser.id,
+        companyId,
+        entityType: "Location",
+        entityId: location.id,
+        description: `Location "${location.name}" created in company (${location.type})`,
+        metadata: {
+          locationName: location.name,
+          locationType: location.type,
+          address: `${addressLine1}${addressLine2 ? " " + addressLine2 : ""}, ${city}, ${state || ""} ${country}`,
+          coordinates: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+          },
+          isMain: location.isMain,
+          phone: location.phone,
+          email: location.email,
+        },
+        ipAddress: geoData?.ip || null,
+        ipv4: geoData?.ipv4 || null,
+        ipv6: geoData?.ipv6 || null,
+        city: geoData?.city || null,
+        state: geoData?.region || null,
+        country: geoData?.country_name || null,
+        countryFlag: geoData?.flag || null,
+      });
+    } catch (auditError) {
+      console.error("Failed to create audit log for location:", auditError);
+      // Don't fail the request if audit logging fails
+    }
 
     return NextResponse.json({
       success: true,
