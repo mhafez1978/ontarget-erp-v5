@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Update user and mark onboarding as used in a transaction
-    const now = new Date();
+    // const now = new Date();
     const result = await db.$transaction(async (tx) => {
       // Update user with password, name, and set authMethod to 'both'
       const updatedUser = await tx.user.update({

@@ -359,11 +359,13 @@ export async function GET(request: NextRequest) {
         },
       }).catch(console.error);
 
-      // Redirect to password setup page instead of directly to plan selection
-      // User must set a password to proceed
+      // Redirect to plan selection with needsPassword flag
+      // Password setup will be step 0 in the plan selection flow
       const redirectUrl = `${
         process.env.NEXT_PUBLIC_APP_URL
-      }/oauth-setup/${encodeURIComponent(onboarding.token)}`;
+      }/select-plan?onboard=${encodeURIComponent(
+        onboarding.token
+      )}&needsPassword=true`;
       return NextResponse.redirect(redirectUrl);
     }
 
