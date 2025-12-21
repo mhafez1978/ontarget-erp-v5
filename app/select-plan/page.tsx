@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Check,
   Loader2,
@@ -73,7 +72,7 @@ export default function SelectPlanPage() {
   );
   const onboardTokenQuery = searchParams.get("onboard");
   const needsPasswordQuery = searchParams.get("needsPassword") === "true";
-  
+
   // Password setup state (for OAuth users)
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -144,12 +143,12 @@ export default function SelectPlanPage() {
         if (data.requestedPlan) setSelectedPlan(data.requestedPlan);
         setOnboardUser(data.user);
         setOnboardToken(token);
-        
+
         // If this is an OAuth user who needs to set a password, start at step 0
         if (needsPasswordQuery) {
           setStep(0);
         }
-        
+
         setVerifying(false);
       } catch (err) {
         console.error("Failed to verify onboarding token:", err);
@@ -196,7 +195,7 @@ export default function SelectPlanPage() {
     };
 
     checkPlan();
-  }, [router, onboardTokenQuery]);
+  }, [router, onboardTokenQuery, needsPasswordQuery]);
 
   // Load pricing from API
   useEffect(() => {
@@ -359,14 +358,22 @@ export default function SelectPlanPage() {
     { text: "At least 8 characters", met: password.length >= 8 },
     { text: "At least one uppercase letter", met: /[A-Z]/.test(password) },
     { text: "At least one number", met: /[0-9]/.test(password) },
-    { text: "At least one special character (!@#$%^&*)", met: /[!@#$%^&*]/.test(password) },
-    { text: "Passwords match", met: Boolean(password && password === confirmPassword) },
+    {
+      text: "At least one special character (!@#$%^&*)",
+      met: /[!@#$%^&*]/.test(password),
+    },
+    {
+      text: "Passwords match",
+      met: Boolean(password && password === confirmPassword),
+    },
   ];
-  const allPasswordRequirementsMet = passwordRequirements.every((req) => req.met);
+  const allPasswordRequirementsMet = passwordRequirements.every(
+    (req) => req.met
+  );
 
   const handlePasswordSetup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!allPasswordRequirementsMet) {
       toast.error("Please meet all password requirements");
       return;
@@ -378,7 +385,7 @@ export default function SelectPlanPage() {
     }
 
     setSettingPassword(true);
-    
+
     try {
       const response = await fetch("/api/auth/set-password-oauth", {
         method: "POST",
@@ -400,7 +407,7 @@ export default function SelectPlanPage() {
       }
 
       toast.success("Password set successfully!");
-      
+
       // Move to step 1 (plan selection)
       setStep(1);
     } catch (error) {
@@ -514,7 +521,8 @@ export default function SelectPlanPage() {
             <CardHeader>
               <CardTitle className="text-2xl">Set Up Your Password</CardTitle>
               <CardDescription>
-                Create a secure password to complete your account setup. You can use this to sign in anytime.
+                Create a secure password to complete your account setup. You can
+                use this to sign in anytime.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -537,6 +545,7 @@ export default function SelectPlanPage() {
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label="Toggle password visibility"
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -564,7 +573,10 @@ export default function SelectPlanPage() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      aria-label="Toggle confirm password visibility"
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -585,7 +597,11 @@ export default function SelectPlanPage() {
                       ) : (
                         <AlertCircle className="h-4 w-4 text-gray-400" />
                       )}
-                      <span className={req.met ? "text-green-600" : "text-muted-foreground"}>
+                      <span
+                        className={
+                          req.met ? "text-green-600" : "text-muted-foreground"
+                        }
+                      >
                         {req.text}
                       </span>
                     </div>
