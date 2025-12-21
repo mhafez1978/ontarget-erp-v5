@@ -91,17 +91,6 @@ export async function GET() {
       }
     });
 
-    console.log(
-      `[Globe Markers] Generated ${markers.length} markers from ${companies.length} companies`
-    );
-    companies.forEach((c) => {
-      console.log(
-        `  - ${c.name} (${c.isRoot ? "ROOT" : "SUB"}): ${
-          c.locations.length
-        } locations, coords: ${c.latitude},${c.longitude}`
-      );
-    });
-
     return NextResponse.json(markers);
   } catch (err) {
     console.error("/api/globe/markers error:", err);

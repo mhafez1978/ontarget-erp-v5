@@ -14,6 +14,9 @@
 /coverage
 /documentation
 /admin-scripts
+/scripts
+/tests
+/var
 
 # next.js
 /.next/
@@ -25,6 +28,13 @@
 # misc
 .DS_Store
 *.pem
+*.sql
+*.log
+check*.mjs
+test*.mjs
+seed*.mjs
+seed-pricing.mjs
+
 
 # debug
 npm-debug.log*
