@@ -1,10 +1,12 @@
 "use client";
 
+
+import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { RootCompanyBrandingCard } from "@/components/root-company-branding-card";
 import { CompanyWhiteLabelSettings } from "@/components/company-white-label-settings";
-import { Loader2 } from "lucide-react";
+;
 
 export default function BrandingPage() {
   const [user, setUser] = useState<{

@@ -1,5 +1,7 @@
 "use client";
 
+
+import { ArrowLeft, Edit, Trash2, Loader2, Calendar, Users, CheckCircle2, Activity, Clock, Plus, StickyNote } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard-layout";
@@ -17,19 +19,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ArrowLeft,
-  Edit,
-  Trash2,
-  Loader2,
-  Calendar,
-  Users,
-  CheckCircle2,
-  Activity,
-  Clock,
-  Plus,
-  StickyNote,
-} from "lucide-react";
+
+
+
+
+
+
+
+
+
+
+;
 import { toast } from "sonner";
 import { ProjectOverviewTab } from "@/components/projects/project-overview-tab";
 import { ProjectTeamTab } from "@/components/projects/project-team-tab";

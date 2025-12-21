@@ -1,25 +1,25 @@
 "use client";
 
+
+import { Mail, Lock, User, Loader2, Eye, EyeOff, CheckCircle2, ArrowRight, Check, ShieldCheck, Quote, Building2 } from "lucide-react";
 import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Mail,
-  Lock,
-  User,
-  Loader2,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  ArrowRight,
-  Check,
-  ShieldCheck,
-  Quote,
-  Building2,
-} from "lucide-react";
+
+
+
+
+
+
+
+
+
+
+
+;
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { PaymentForm } from "@/components/payment-form";

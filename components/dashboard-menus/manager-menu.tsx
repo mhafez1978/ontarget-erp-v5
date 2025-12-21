@@ -1,15 +1,14 @@
-import {
-  LayoutDashboard,
-  Users,
-  BarChart3,
-  Settings,
-  User,
-  UsersRound,
-  FolderKanban,
-  Clock,
-  ShoppingCart,
-  Receipt,
-} from "lucide-react";
+import { LayoutDashboard, Users, BarChart3, Settings, User, UsersRound, FolderKanban, Clock, ShoppingCart, Receipt } from "lucide-react";
+
+
+
+
+
+
+
+
+
+;
 
 export const managerMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

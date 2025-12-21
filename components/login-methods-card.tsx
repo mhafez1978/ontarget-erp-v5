@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Key, Shield, Clock, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -12,7 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Key, Shield, Clock, TrendingUp, Link as LinkIcon } from "lucide-react";
+
+
+
+
+import Link as LinkIcon from "lucide-react/dist/esm/icons/link as link-icon";;
 import { toast } from "sonner";
 
 interface AccountInfo {

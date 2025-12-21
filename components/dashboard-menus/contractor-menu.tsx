@@ -1,11 +1,10 @@
-import {
-  LayoutDashboard,
-  Briefcase,
-  FileText,
-  Settings,
-  Users,
-  User,
-} from "lucide-react";
+import { LayoutDashboard, Briefcase, FileText, Settings, Users, User } from "lucide-react";
+
+
+
+
+
+;
 
 export const contractorMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

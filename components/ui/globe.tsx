@@ -70,6 +70,13 @@ export function Globe({
     window.addEventListener("resize", onResize);
     onResize();
 
+    // Animation time tracking for marker pulse effect
+    let animationTime = 0;
+
+    // Assign random phase offset to each marker for unsynchronized blinking
+    const markerPhases =
+      config.markers?.map(() => Math.random() * Math.PI * 2) || [];
+
     const globe = createGlobe(canvasRef.current!, {
       ...config,
       width: width * 2,
@@ -79,6 +86,26 @@ export function Globe({
         state.phi = phi.current + rs.get();
         state.width = width * 2;
         state.height = width * 2;
+
+        // Animate markers with independent pulse effects
+        animationTime += 0.02;
+
+        // Update marker sizes dynamically with individual phases
+        if (config.markers && Array.isArray(config.markers)) {
+          state.markers = config.markers.map(
+            (
+              marker: { location: [number, number]; size?: number },
+              index: number
+            ) => {
+              const phase = markerPhases[index] || 0;
+              const pulseScale = 1 + Math.sin(animationTime + phase) * 0.3; // Each marker has its own phase
+              return {
+                ...marker,
+                size: (marker.size || 0.03) * pulseScale,
+              };
+            }
+          );
+        }
       },
     });
 

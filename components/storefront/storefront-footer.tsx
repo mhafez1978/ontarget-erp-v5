@@ -1,7 +1,12 @@
 "use client";
 
-import Link from "next/link";
+
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import Link from "next/link";
+
+
+
+;
 
 interface AiMeta {
   primaryColor?: string;

@@ -1,5 +1,7 @@
 "use client";
 
+
+import { ArrowLeft, Edit, Trash2, Loader2, Users, Briefcase, UserPlus, Activity, MoreVertical } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,17 +15,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ArrowLeft,
-  Edit,
-  Trash2,
-  Loader2,
-  Users,
-  Briefcase,
-  UserPlus,
-  Activity,
-  MoreVertical,
-} from "lucide-react";
+
+
+
+
+
+
+
+
+;
 import { toast } from "sonner";
 import { AddTeamMemberDialog } from "@/components/add-team-member-dialog";
 import { RemoveTeamMemberDialog } from "@/components/remove-team-member-dialog";

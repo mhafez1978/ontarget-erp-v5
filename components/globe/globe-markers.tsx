@@ -59,27 +59,27 @@ function GlobeMarkersComponent({ className }: { className?: string }) {
   const [markers, setMarkers] = useState<ClientMarker[] | null>(null);
 
   useEffect(() => {
-    const mounted = true;
+    let mounted = true;
 
     const fetchMarkers = async () => {
       try {
-        const response = await fetch("/api/globe/markers");
+        const response = await fetch("/api/globe/markers", {
+          cache: "no-store", // Bypass cache to get fresh data
+        });
         const data: Marker[] = await response.json();
 
         if (!mounted) return;
 
-        console.log("Raw marker data from API:", data);
         const m = data
           .filter(
             (d) => Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
           )
           .map((d) => ({
             location: [d.latitude, d.longitude] as [number, number],
-            size: 0.1,
+            size: d.size ?? 0.03,
             color: hexToRgbNormalized(d.color ?? "#fb6421"),
             isRoot: d.isRoot === true,
           }));
-        console.log("Transformed markers for Globe:", m);
         setMarkers(m);
       } catch (err) {
         console.error("Failed to fetch globe markers:", err);
@@ -90,8 +90,26 @@ function GlobeMarkersComponent({ className }: { className?: string }) {
       }
     };
 
-    // Fetch markers once on mount
+    // Fetch markers immediately on mount
     fetchMarkers();
+
+    // Set up polling to refetch markers every 30 seconds
+    const pollInterval = setInterval(() => {
+      fetchMarkers();
+    }, 30000); // 30 seconds
+
+    // Refetch when window regains focus
+    const handleFocus = () => {
+      fetchMarkers();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    // Cleanup on unmount
+    return () => {
+      mounted = false;
+      clearInterval(pollInterval);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   // Memoize marker color to prevent unnecessary config object recreation

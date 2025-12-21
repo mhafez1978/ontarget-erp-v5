@@ -1,8 +1,10 @@
 "use client";
 
+
+import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart } from "lucide-react";
+;
 
 export default function RegisterSuccessPage() {
   const router = useRouter();

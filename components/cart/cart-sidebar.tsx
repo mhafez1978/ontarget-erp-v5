@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +14,10 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+
+
+
+;
 import Image from "next/image";
 
 export function CartSidebar() {

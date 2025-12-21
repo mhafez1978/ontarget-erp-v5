@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+
 import { X, Mail, CheckCircle } from "lucide-react";
+import { useState } from "react";
+
+
+;
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 

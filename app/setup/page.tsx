@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Loader2, Rocket, Building2, User, Briefcase, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,15 +15,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Loader2,
-  Rocket,
-  Building2,
-  User,
-  Briefcase,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+
+
+
+
+
+
+;
 
 export default function SetupPage() {
   const router = useRouter();

@@ -1,6 +1,11 @@
+import { ShoppingCart, Star, Mail, Phone, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, Star, Mail, Phone, MapPin } from "lucide-react";
+
+
+
+
+;
 import {
   Card,
   CardContent,

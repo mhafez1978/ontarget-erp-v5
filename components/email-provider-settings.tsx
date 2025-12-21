@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Loader2, Mail, AlertCircle, Crown, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,15 +17,13 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import {
-  Loader2,
-  Mail,
-  AlertCircle,
-  Crown,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-} from "lucide-react";
+
+
+
+
+
+
+;
 import { toast } from "sonner";
 import EmailProviderWizard from "@/components/email-provider-wizard";
 
