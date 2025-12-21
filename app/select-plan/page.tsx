@@ -10,12 +10,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Check,
   Loader2,
   CreditCard,
   ChevronLeft,
   CheckCircle2,
+  Eye,
+  EyeOff,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PLAN_LIMITS, getTotalUserLimit } from "@/lib/plan-limits";
@@ -54,7 +60,7 @@ interface PricingApiResponse {
 }
 
 export default function SelectPlanPage() {
-  const [step, setStep] = useState<1 | 2>(1); // 1: Select Plan, 2: Payment
+  const [step, setStep] = useState<0 | 1 | 2>(1); // 0: Set Password (OAuth), 1: Select Plan, 2: Payment
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly"
@@ -66,6 +72,14 @@ export default function SelectPlanPage() {
     typeof window !== "undefined" ? window.location.search : ""
   );
   const onboardTokenQuery = searchParams.get("onboard");
+  const needsPasswordQuery = searchParams.get("needsPassword") === "true";
+  
+  // Password setup state (for OAuth users)
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [settingPassword, setSettingPassword] = useState(false);
 
   const [stripePromise, setStripePromise] =
     useState<Promise<Stripe | null> | null>(null);
@@ -130,6 +144,12 @@ export default function SelectPlanPage() {
         if (data.requestedPlan) setSelectedPlan(data.requestedPlan);
         setOnboardUser(data.user);
         setOnboardToken(token);
+        
+        // If this is an OAuth user who needs to set a password, start at step 0
+        if (needsPasswordQuery) {
+          setStep(0);
+        }
+        
         setVerifying(false);
       } catch (err) {
         console.error("Failed to verify onboarding token:", err);
@@ -334,6 +354,63 @@ export default function SelectPlanPage() {
     initializePayment();
   }, [step, onboardUser]); // Depend on step so it initializes when step changes to 2
 
+  // Password requirements validation
+  const passwordRequirements = [
+    { text: "At least 8 characters", met: password.length >= 8 },
+    { text: "At least one uppercase letter", met: /[A-Z]/.test(password) },
+    { text: "At least one number", met: /[0-9]/.test(password) },
+    { text: "At least one special character (!@#$%^&*)", met: /[!@#$%^&*]/.test(password) },
+    { text: "Passwords match", met: Boolean(password && password === confirmPassword) },
+  ];
+  const allPasswordRequirementsMet = passwordRequirements.every((req) => req.met);
+
+  const handlePasswordSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!allPasswordRequirementsMet) {
+      toast.error("Please meet all password requirements");
+      return;
+    }
+
+    if (!onboardToken || !onboardUser) {
+      toast.error("Invalid onboarding session");
+      return;
+    }
+
+    setSettingPassword(true);
+    
+    try {
+      const response = await fetch("/api/auth/set-password-oauth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: onboardToken,
+          password,
+          confirmPassword,
+          name: onboardUser.name,
+          email: onboardUser.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Failed to set password");
+        return;
+      }
+
+      toast.success("Password set successfully!");
+      
+      // Move to step 1 (plan selection)
+      setStep(1);
+    } catch (error) {
+      console.error("Error setting password:", error);
+      toast.error("Failed to set password");
+    } finally {
+      setSettingPassword(false);
+    }
+  };
+
   const handleContinueToPayment = () => {
     if (!selectedPlan) {
       toast.error("Please select a plan");
@@ -424,6 +501,116 @@ export default function SelectPlanPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Step 0: Set Password (for OAuth users)
+  if (step === 0) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="container mx-auto px-4 py-16 max-w-md">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Set Up Your Password</CardTitle>
+              <CardDescription>
+                Create a secure password to complete your account setup. You can use this to sign in anytime.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordSetup} className="space-y-4">
+                {/* Password Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Confirm Password Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm your password"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Password Requirements */}
+                <div className="space-y-2 text-sm">
+                  <p className="font-medium">Password Requirements:</p>
+                  {passwordRequirements.map((req, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      {req.met ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-gray-400" />
+                      )}
+                      <span className={req.met ? "text-green-600" : "text-muted-foreground"}>
+                        {req.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={!allPasswordRequirementsMet || settingPassword}
+                >
+                  {settingPassword ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Setting Password...
+                    </>
+                  ) : (
+                    "Continue to Plan Selection"
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

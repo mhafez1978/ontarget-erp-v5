@@ -129,14 +129,8 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Mark onboarding token as used
-      await tx.oAuthOnboarding.update({
-        where: { id: onboarding.id },
-        data: {
-          isUsed: true,
-          usedAt: now,
-        },
-      });
+      // DO NOT mark onboarding token as used yet - only mark it after plan selection
+      // This allows the user to proceed to /select-plan with the same token
 
       return { user: updatedUser };
     });
