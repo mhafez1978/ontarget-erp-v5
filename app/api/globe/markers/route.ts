@@ -43,7 +43,7 @@ export async function GET() {
     // Process each company and add markers for locations
     companies.forEach((company) => {
       const isRoot = company.isRoot;
-      const size = 0.05; // Smaller marker size for better visibility
+      const size = 0.03; // Smaller, consistent marker size
       // Root company locations = purple (#9333ea), Subscriber locations = green (#10b981)
       const defaultColor = isRoot ? "#9333ea" : "#10b981";
       const customColor =

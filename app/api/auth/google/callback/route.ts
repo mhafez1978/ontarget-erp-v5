@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import crypto from "crypto";
 import { trackLoginMethod } from "@/lib/account-tracking";
+import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
+import {
+  buildMfaRedirectResponse,
+  createPendingMfaToken,
+} from "@/lib/mfa-pending";
 
 // GET /api/auth/google/callback
 // Handles OAuth callback from Google
@@ -111,8 +115,11 @@ export async function GET(request: NextRequest) {
         isActive: true,
         image: true,
         plan: true,
+        mfaEnabled: true,
       },
     });
+
+    let isNewUser = false;
 
     if (user) {
       // User exists - check if they can login with OAuth
@@ -130,8 +137,12 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Update their profile picture if changed
-      if (picture && picture !== user.image) {
+      // Update their profile picture only if they don't already have a custom upload
+      const hasCustomProfileImage =
+        user.image?.startsWith("/uploads/") ||
+        user.image?.includes("/uploads/");
+
+      if (picture && picture !== user.image && !hasCustomProfileImage) {
         await db.user.update({
           where: { id: user.id },
           data: { image: picture },
@@ -140,6 +151,8 @@ export async function GET(request: NextRequest) {
     } else {
       // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
       // They will be redirected to plan selection
+      isNewUser = true;
+
       user = await db.user.create({
         data: {
           email,
@@ -161,6 +174,7 @@ export async function GET(request: NextRequest) {
           isActive: true,
           image: true,
           plan: true,
+          mfaEnabled: true,
         },
       });
 
@@ -283,57 +297,47 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get user's geolocation
-    let geoData = null;
-    try {
-      const geoResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/get-location`,
-        {
-          headers: {
-            "x-forwarded-for": request.headers.get("x-forwarded-for") || "",
-            "x-real-ip": request.headers.get("x-real-ip") || "",
-          },
-        }
-      );
-      if (geoResponse.ok) {
-        geoData = await geoResponse.json();
-      }
-    } catch (error) {
-      console.error("Error fetching geolocation:", error);
+    // Create onboarding token for new OAuth users (expires in 24 hours)
+    let onboarding = null;
+    if (isNewUser) {
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      onboarding = await db.oAuthOnboarding.create({
+        data: {
+          userId: user.id,
+          expiresAt,
+          context: "root",
+        },
+      });
+
+      // Audit: onboarding token created
+      await createAuditLog({
+        action: AUDIT_ACTIONS.ONBOARDING_TOKEN_CREATED,
+        userId: user.id,
+        entityType: "User",
+        entityId: user.id,
+        description: `Created onboarding token for Google OAuth user: ${email}`,
+        metadata: {
+          token: onboarding.token,
+          expiresAt: onboarding.expiresAt.toISOString(),
+          provider: "google",
+        },
+      });
     }
 
-    // Create a session record with geo-tracking
-    const sessionToken = crypto.randomUUID();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+    // If MFA is enabled, redirect to MFA challenge without creating a session
+    if (user.mfaEnabled) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+      const pendingToken = createPendingMfaToken(user.id, user.email, "google");
+      return buildMfaRedirectResponse(appUrl, pendingToken, "google");
+    }
 
-    await db.session.create({
-      data: {
-        sessionToken,
-        userId: user.id,
-        expires: expiresAt,
-        sessionIpAddress: geoData?.ip || null,
-        sessionIpv4: geoData?.ipv4 || null,
-        sessionIpv6: geoData?.ipv6 || null,
-        sessionCity: geoData?.city || null,
-        sessionState: geoData?.region || null,
-        sessionCountry: geoData?.country_name || null,
-        sessionCountryFlag: geoData?.flag || null,
-        sessionUserAgent: request.headers.get("user-agent") || null,
-      },
-    });
-
-    // Update user's last login info
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        lastLoginAt: new Date(),
-        lastLoginIpAddress: geoData?.ip || null,
-        lastLoginCity: geoData?.city || null,
-        lastLoginState: geoData?.region || null,
-        lastLoginCountry: geoData?.country || null,
-        lastLoginCountryFlag: geoData?.flag || null,
-      },
+    // Create session token
+    const session = await createSession({
+      userId: user.id,
+      userAgent: request.headers.get("user-agent") || undefined,
+      request,
     });
 
     console.log(
@@ -346,28 +350,23 @@ export async function GET(request: NextRequest) {
     // Check if user needs to select a plan (new users with GUEST plan)
     const redirectUrl =
       user.plan === "GUEST"
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
+        ? onboarding
+          ? `${
+              process.env.NEXT_PUBLIC_APP_URL
+            }/oauth-setup/${encodeURIComponent(onboarding.token)}`
+          : `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
         : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
 
     const response = NextResponse.redirect(redirectUrl);
 
-    // Set session cookies on response
-    if (user) {
-      response.cookies.set("userId", user.id, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: "/",
-      });
-      response.cookies.set("sessionToken", sessionToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: "/",
-      });
-    }
+    // Set session cookie on response
+    response.cookies.set("sessionToken", session.sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
 
     return response;
   } catch (error) {

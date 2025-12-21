@@ -75,7 +75,7 @@ function GlobeMarkersComponent({ className }: { className?: string }) {
           )
           .map((d) => ({
             location: [d.latitude, d.longitude] as [number, number],
-            size: 0.1,
+            size: d.size ?? 0.03,
             color: hexToRgbNormalized(d.color ?? "#fb6421"),
             isRoot: d.isRoot === true,
           }));
