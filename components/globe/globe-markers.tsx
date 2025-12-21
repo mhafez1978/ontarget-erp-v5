@@ -59,11 +59,13 @@ function GlobeMarkersComponent({ className }: { className?: string }) {
   const [markers, setMarkers] = useState<ClientMarker[] | null>(null);
 
   useEffect(() => {
-    const mounted = true;
+    let mounted = true;
 
     const fetchMarkers = async () => {
       try {
-        const response = await fetch("/api/globe/markers");
+        const response = await fetch("/api/globe/markers", {
+          cache: "no-store", // Bypass cache to get fresh data
+        });
         const data: Marker[] = await response.json();
 
         if (!mounted) return;
@@ -90,8 +92,28 @@ function GlobeMarkersComponent({ className }: { className?: string }) {
       }
     };
 
-    // Fetch markers once on mount
+    // Fetch markers immediately on mount
     fetchMarkers();
+
+    // Set up polling to refetch markers every 30 seconds
+    const pollInterval = setInterval(() => {
+      console.log("Polling for new globe markers...");
+      fetchMarkers();
+    }, 30000); // 30 seconds
+
+    // Refetch when window regains focus
+    const handleFocus = () => {
+      console.log("Window focused, refetching globe markers...");
+      fetchMarkers();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    // Cleanup on unmount
+    return () => {
+      mounted = false;
+      clearInterval(pollInterval);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   // Memoize marker color to prevent unnecessary config object recreation
