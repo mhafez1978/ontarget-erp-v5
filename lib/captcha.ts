@@ -109,27 +109,30 @@ export async function verifyGoogleCaptchaDetailed(
     const data = (await resp.json()) as Record<string, unknown> | null;
 
     // Normalize to the typed response shape
+    const dataObj = data as Record<string, unknown>;
+    const score: number | undefined =
+      typeof dataObj?.score === "number" ? dataObj.score : undefined;
+    const action: string | undefined =
+      typeof dataObj?.action === "string" ? dataObj.action : undefined;
+    const challenge_ts: string | undefined =
+      typeof dataObj?.challenge_ts === "string"
+        ? dataObj.challenge_ts
+        : undefined;
+    const hostname: string | undefined =
+      typeof dataObj?.hostname === "string" ? dataObj.hostname : undefined;
+    const errorCodes: string[] | undefined = Array.isArray(
+      dataObj?.["error-codes"]
+    )
+      ? (dataObj["error-codes"] as string[])
+      : undefined;
+
     const result = {
-      success: !!(data as any)?.success,
-      score:
-        typeof (data as any)?.score === "number"
-          ? (data as any).score
-          : undefined,
-      action:
-        typeof (data as any)?.action === "string"
-          ? (data as any).action
-          : undefined,
-      challenge_ts:
-        typeof (data as any)?.challenge_ts === "string"
-          ? (data as any).challenge_ts
-          : undefined,
-      hostname:
-        typeof (data as any)?.hostname === "string"
-          ? (data as any).hostname
-          : undefined,
-      "error-codes": Array.isArray((data as any)?.["error-codes"])
-        ? (data as any)["error-codes"]
-        : undefined,
+      success: !!dataObj?.success,
+      score,
+      action,
+      challenge_ts,
+      hostname,
+      "error-codes": errorCodes,
     };
 
     return result;

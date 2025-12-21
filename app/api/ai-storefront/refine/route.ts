@@ -156,7 +156,10 @@ export async function POST(request: NextRequest) {
     const userPlan = validation.user.plan as SubscriptionPlan | null;
 
     // Enforce plan gating for AI storefront refine, except for SUPER_ADMIN.
-    if (userRole !== "SUPER_ADMIN" && !canUseAiStorefront(userPlan as any)) {
+    if (
+      userRole !== "SUPER_ADMIN" &&
+      !canUseAiStorefront(userPlan as SubscriptionPlan | null)
+    ) {
       return NextResponse.json(
         {
           error:
@@ -381,7 +384,10 @@ export async function POST(request: NextRequest) {
             try {
               // Validate with the strict schema - if it passes, accept it.
               const validated = aiFrontstoreSpecSchema.parse(candidate);
-              const safety = runSafetyChecks(validated);
+              // Cast to the type expected by runSafetyChecks (internal AiFrontstoreSpec)
+              const safety = runSafetyChecks(
+                validated as unknown as Parameters<typeof runSafetyChecks>[0]
+              );
               if (safety.blocked) {
                 return NextResponse.json(
                   {
@@ -591,7 +597,16 @@ export async function POST(request: NextRequest) {
             );
           }
 
-          if (result.spec) spec = result.spec;
+          if (result.spec) {
+            try {
+              spec = aiFrontstoreSpecSchema.parse(result.spec);
+            } catch (parseErr) {
+              console.error(
+                "[AI Storefront Refine] Failed to parse regenerated spec:",
+                parseErr
+              );
+            }
+          }
         } catch (regenError) {
           console.error(
             "[AI Storefront Refine] Full regenerate fallback failed:",
@@ -641,10 +656,11 @@ export async function POST(request: NextRequest) {
       spec.meta.tone = tone;
 
       // Derive buttonStyle and cornerStyle from tone (matching normalizeModelOutputToSpec)
-      // Use broader string types here to avoid mismatches with the narrower
-      // zod-defined union when model outputs unexpected values.
-      let buttonStyle = (spec.meta.buttonStyle || "solid") as string;
-      let cornerStyle = (spec.meta.cornerStyle || "soft") as string;
+      type ButtonStyle = AiFrontstoreSpec["meta"]["buttonStyle"];
+      type CornerStyle = AiFrontstoreSpec["meta"]["cornerStyle"];
+
+      let buttonStyle: ButtonStyle = spec.meta.buttonStyle || "solid";
+      let cornerStyle: CornerStyle = spec.meta.cornerStyle || "soft";
 
       switch (tone) {
         case "playful":
@@ -666,8 +682,8 @@ export async function POST(request: NextRequest) {
           break;
       }
 
-      spec.meta.buttonStyle = buttonStyle as any;
-      spec.meta.cornerStyle = cornerStyle as any;
+      spec.meta.buttonStyle = buttonStyle;
+      spec.meta.cornerStyle = cornerStyle;
     }
 
     // Emphasis tweak: lightweight reordering of sections
@@ -714,7 +730,7 @@ export async function POST(request: NextRequest) {
       spec.sections = reordered.map((section, index) => ({
         ...section,
         order: index,
-      }));
+      })) as AiFrontstoreSpec["sections"];
     }
 
     // Persist refined spec

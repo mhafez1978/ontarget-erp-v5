@@ -12,8 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-
-;
 import { toast } from "sonner";
 
 export default function InitializePricingPage() {

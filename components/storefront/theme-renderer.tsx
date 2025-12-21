@@ -1,7 +1,22 @@
 "use client";
 
-
-import { ShoppingCart, Package, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Star, TrendingUp, Users, Award, ShieldCheck, Lock } from "lucide-react";
+import {
+  ShoppingCart,
+  Package,
+  Mail,
+  Phone,
+  MapPin,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Star,
+  TrendingUp,
+  Users,
+  Award,
+  ShieldCheck,
+  Lock,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -14,21 +29,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-;
 import { ThemeSection } from "@/lib/storefront-themes";
 import { themeComponents } from "@/components/storefront/themes";
 import { TestimonialForm } from "@/components/storefront/testimonial-form";
@@ -186,854 +186,6 @@ export function BaseThemeRenderer({
     // Fallback: ensure leading slash for relative assets
     return `/${value.replace(/^\/+/, "")}`;
   };
-
-  /*
-  // Full override: Boutique Fitness (retro/vintage) layout
-  if (themeId === "fitness-boutique") {
-    const heroSection = sections.find((s) => s.type === "hero");
-    const heroContent = (heroSection?.content as Record<string, unknown>) || {};
-
-    const classesToShow =
-      featuredServices.length > 0
-        ? featuredServices.slice(0, 3)
-        : [
-            {
-              id: "cls1",
-              name: "Retro Strength",
-              description: "Classic lifts with funky energy.",
-            },
-            {
-              id: "cls2",
-              name: "80’s Burnout",
-              description: "Cardio meets neon nostalgia.",
-            },
-            {
-              id: "cls3",
-              name: "Vintage HIIT",
-              description: "High energy. Low boredom.",
-            },
-          ];
-
-    const programsToShow =
-      featuredProducts.length > 0
-        ? featuredProducts.slice(0, 3)
-        : [
-            {
-              id: "prg1",
-              name: "Flex & Flow",
-              description: "Mobility + rhythm in perfect harmony.",
-            },
-            {
-              id: "prg2",
-              name: "RetroCore 6-Week",
-              description: "Vintage aesthetics. Modern core training.",
-            },
-            {
-              id: "prg3",
-              name: "Strength Revival",
-              description: "Build muscle with timeless techniques.",
-            },
-          ];
-
-    const testimonialsToShow =
-      testimonials && testimonials.length > 0
-        ? testimonials.slice(0, 3)
-        : [
-            {
-              id: "t1",
-              customerName: "Member",
-              testimonial: "The best vibe ever!",
-            },
-            {
-              id: "t2",
-              customerName: "Member",
-              testimonial: "Feels like the 80s but better.",
-            },
-            {
-              id: "t3",
-              customerName: "Member",
-              testimonial: "A fitness studio with soul.",
-            },
-          ];
-
-    return (
-      <div className="bg-[#f3e7d8] text-[#3a2c20] font-sans min-h-screen">
-        <div className="text-center bg-[#d36c3b] text-[#fff7e8] py-2 font-bold tracking-wide">
-          ✦ MOVE RETRO. FEEL MODERN. LOVE THE ENERGY.✦
-        </div>
-
-        <header className="relative overflow-hidden">
-          <div className="absolute inset-0">
-            <div className="absolute top-0 left-0 w-full h-full -skew-y-3 bg-linear-to-br from-[#f5c07a]/40 to-[#d36c3b]/20"></div>
-          </div>
-
-          <div className="relative z-10 max-w-7xl mx-auto px-6 py-28 grid md:grid-cols-2 gap-20 items-center">
-            <div className="mt-10">
-              <h2 className="text-5xl md:text-6xl font-extrabold leading-none tracking-tight text-[#3a2c20]">
-                {renderContent(heroContent.title) || "Boutique Fitness"}
-                <span className="block text-[#d36c3b] mt-2">
-                  {renderContent(heroContent.subtitle) || "With Retro Soul"}
-                </span>
-              </h2>
-
-              <p className="mt-6 text-lg max-w-md text-[#4b392a] leading-relaxed">
-                {renderContent(heroContent.description) ||
-                  "Step into a space built for energy, community, and style. RetroFit blends 80s attitude with modern fitness flow."}
-              </p>
-
-              <button className="mt-10 px-10 py-3 bg-[#d36c3b] text-[#fff7e8] rounded-md font-bold text-lg tracking-wide shadow-lg hover:bg-[#c55f33] transition">
-                {renderContent(heroContent.primaryCTA) || "Start Your Journey"}
-              </button>
-            </div>
-
-            <div className="relative transform rotate-1">
-              <div className="bg-[#fff7e8] p-4 border-4 border-[#d36c3b] rounded-xl shadow-xl">
-                <Image
-                  src="https://illustrations.popsy.co/white/fitness-girl.svg"
-                  alt="Retro Fitness Illustration"
-                  width={400}
-                  height={400}
-                  className="rounded-lg drop-shadow-lg"
-                  sizes="(max-width: 768px) 100vw, 400px"
-                  priority
-                />
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <section className="bg-[#fff7e8] border-y-4 border-[#d36c3b] py-6 overflow-hidden">
-          <div className="animate-marquee whitespace-nowrap font-bold text-[#6a5848] text-lg tracking-widest">
-            <span className="mx-10 inline-block">RETROFIT</span>
-            <span className="mx-10 inline-block">PULSE80</span>
-            <span className="mx-10 inline-block">OLD SCHOOL GYM</span>
-            <span className="mx-10 inline-block">WAVE STUDIO</span>
-            <span className="mx-10 inline-block">BODYFLOW</span>
-          </div>
-        </section>
-
-        <section className="py-24 bg-[#f3e7d8]">
-          <div className="max-w-7xl mx-auto px-6">
-            <h3 className="text-4xl font-extrabold text-[#3a2c20] text-center mb-16">
-              Signature <span className="text-[#d36c3b]">Classes</span>
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              {classesToShow.map((cls, i) => (
-                <div
-                  key={cls.id || i}
-                  className={`p-10 bg-[#fff7e8] rounded-xl shadow-xl transform transition ${
-                    i === 1
-                      ? "rotate-2 border-4 border-[#3a2c20]"
-                      : "border-4 border-[#d36c3b]"
-                  } hover:rotate-0`}
-                >
-                  {
-                    [
-                      <Dumbbell
-                        key="d"
-                        className="h-12 w-12 text-[#d36c3b] mx-auto mb-4"
-                      />,
-                      <Flame
-                        key="f"
-                        className="h-12 w-12 text-[#d36c3b] mx-auto mb-4"
-                      />,
-                      <Timer
-                        key="t"
-                        className="h-12 w-12 text-[#d36c3b] mx-auto mb-4"
-                      />,
-                    ][i % 3]
-                  }
-                  <h4 className="text-2xl font-bold">{cls.name}</h4>
-                  <p className="text-[#6a5848] mt-2">
-                    {cls.description ||
-                      "Energy-filled class with vintage vibes."}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-24 bg-[#fff7e8] border-y-4 border-[#d36c3b]">
-          <div className="max-w-6xl mx-auto px-6">
-            <h3 className="text-4xl font-extrabold text-center text-[#3a2c20] mb-16">
-              Boutique <span className="text-[#d36c3b]">Programs</span>
-            </h3>
-
-            <div className="space-y-14">
-              {programsToShow.map((p, i) => (
-                <div
-                  key={p.id || i}
-                  className="grid md:grid-cols-3 gap-6 items-center p-8 bg-[#f3e7d8] border-4 border-[#3a2c20] rounded-xl shadow-md hover:-translate-y-1 transition"
-                >
-                  <p className="text-6xl font-extrabold text-[#d36c3b] text-center md:text-left">
-                    {String(i + 1).padStart(2, "0")}
-                  </p>
-                  <div className="md:col-span-2">
-                    <h4 className="text-2xl font-bold text-[#3a2c20]">
-                      {p.name}
-                    </h4>
-                    <p className="text-[#6a5848] mt-2">
-                      {p.description ||
-                        "Tailored programming to fit your journey."}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-24 bg-[#f3e7d8]">
-          <div className="max-w-7xl mx-auto px-6">
-            <h3 className="text-4xl font-extrabold text-center mb-16">
-              Member <span className="text-[#d36c3b]">Stories</span>
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              {testimonialsToShow.map((quote, i) => (
-                <div
-                  key={quote.id || i}
-                  className="p-10 bg-[#fff7e8] border-4 border-[#d36c3b] rounded-xl shadow-lg"
-                >
-                  <Star className="h-10 w-10 text-yellow-400 mx-auto mb-4" />
-                  <p className="text-xl italic text-[#3a2c20]">
-                    &ldquo;{quote.testimonial || "Amazing experience!"}&rdquo;
-                  </p>
-                  <p className="mt-4 text-[#6a5848] text-sm">
-                    — {quote.customerName || "Member"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-24 bg-[#fff7e8]">
-          <div className="max-w-4xl mx-auto px-6">
-            <div className="border-4 border-[#3a2c20] bg-[#f3e7d8] rounded-xl p-10 shadow-2xl">
-              <h3 className="text-4xl font-extrabold text-center text-[#3a2c20] mb-10">
-                Contact <span className="text-[#d36c3b]">Us</span>
-              </h3>
-
-              <form className="grid gap-6">
-                <input
-                  placeholder="Your Name"
-                  className="p-3 bg-[#fff7e8] border-2 border-[#d36c3b] rounded-md"
-                />
-                <input
-                  placeholder="Your Email"
-                  className="p-3 bg-[#fff7e8] border-2 border-[#d36c3b] rounded-md"
-                />
-                <textarea
-                  placeholder="Your Message"
-                  className="p-3 bg-[#fff7e8] border-2 border-[#d36c3b] rounded-md h-32"
-                />
-                <button className="bg-[#d36c3b] text-white font-bold py-3 rounded-md hover:bg-[#c55f33]">
-                  Send Message
-                </button>
-              </form>
-
-              <div className="mt-10 text-center font-bold space-y-2">
-                <p className="flex items-center justify-center gap-2">
-                  <Phone className="h-5" /> (555) 789-4561
-                </p>
-                <p className="flex items-center justify-center gap-2">
-                  <Mail className="h-5" /> hello@retrofitstudio.com
-                </p>
-                <p className="flex items-center justify-center gap-2">
-                  <MapPin className="h-5" /> 45 Vintage Blvd, Miami FL
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <footer className="py-10 bg-[#3a2c20] text-center text-[#f3e7d8] font-bold tracking-wide border-t-4 border-[#d36c3b]">
-          © {new Date().getFullYear()} {companyName || "RetroFit Studio"} — STAY
-          VINTAGE. STAY STRONG.
-        </footer>
-      </div>
-    );
-  }
-
-  // Full override: Digital Campus layout
-  if (themeId === "education-digital-campus") {
-    const heroSection = sections.find((s) => s.type === "hero");
-    const heroContent = (heroSection?.content as Record<string, unknown>) || {};
-
-    const courses = featuredServices.length
-      ? featuredServices.slice(0, 3)
-      : [
-          {
-            id: "course1",
-            name: "Creative Writing",
-            description: "Build stories, worlds, and imagination.",
-          },
-          {
-            id: "course2",
-            name: "Innovation Lab",
-            description: "Hands-on learning for curious minds.",
-          },
-          {
-            id: "course3",
-            name: "Problem Solving",
-            description: "Learn through puzzles, games, and exploration.",
-          },
-        ];
-
-    const programs = featuredProducts.length
-      ? featuredProducts.slice(0, 3)
-      : [
-          {
-            id: "prg1",
-            name: "STEM Discovery",
-            description: "Explore science, tech, math & the world around you.",
-          },
-          {
-            id: "prg2",
-            name: "Digital Creators Bootcamp",
-            description: "A playful start in design, content & creation.",
-          },
-          {
-            id: "prg3",
-            name: "Future Leaders",
-            description: "Character, teamwork & confidence building.",
-          },
-        ];
-
-    const testimonialsToShow =
-      testimonials && testimonials.length
-        ? testimonials.slice(0, 3)
-        : [
-            {
-              id: "t1",
-              customerName: "Student",
-              testimonial: "DigitalCampus makes learning FUN!",
-            },
-            {
-              id: "t2",
-              customerName: "Parent",
-              testimonial: "My child LOVES the activities!",
-            },
-            {
-              id: "t3",
-              customerName: "Student",
-              testimonial: "The cohorts feel like a friendly classroom.",
-            },
-          ];
-
-    return (
-      <div className="bg-[#f7f9ff] text-[#1d1d1d] font-sans min-h-screen">
-        <div className="text-center bg-[#ffdd33] text-[#1d1d1d] py-2 font-bold tracking-wide border-b-2 border-[#1d75ff]">
-          🎓 LEARN. PLAY. GROW. — New cohorts start every Monday!
-        </div>
-
-        <header className="relative overflow-hidden bg-white">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#ffdd33] rounded-full opacity-50"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#1d75ff] rounded-full opacity-30"></div>
-
-          <div className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-20 items-center">
-            <div>
-              <h2 className="text-5xl md:text-6xl font-extrabold leading-tight text-[#1d75ff]">
-                {renderContent(heroContent.title) || "A Digital Campus"}
-                <span className="block text-[#ffdd33]">
-                  {renderContent(heroContent.subtitle) ||
-                    "Built for Curious Minds"}
-                </span>
-              </h2>
-              <p className="mt-6 text-lg max-w-md text-[#3f3f3f] leading-relaxed">
-                {renderContent(heroContent.description) ||
-                  "Playful learning meets modern online education. Join structured, fun, interactive cohort-based programs designed to help you grow with joy."}
-              </p>
-              <button className="mt-10 px-10 py-3 bg-[#1d75ff] text-white rounded-lg font-bold text-lg shadow-lg hover:bg-[#155ad1] transition">
-                {renderContent(heroContent.primaryCTA) || "Explore Courses"}
-              </button>
-            </div>
-
-            <div>
-              <div className="bg-[#ffdd33] p-4 border-4 border-[#1d75ff] rounded-xl shadow-xl">
-                <Image
-                  src="https://illustrations.popsy.co/blue/sitting-at-desk.svg"
-                  alt="Digital Learning Illustration"
-                  width={400}
-                  height={400}
-                  className="rounded-lg"
-                  sizes="(max-width: 768px) 100vw, 400px"
-                  priority
-                />
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <section className="bg-[#ffdd33] border-y-4 border-[#1d75ff] py-6 overflow-hidden">
-          <div className="animate-marquee whitespace-nowrap font-bold text-[#1d75ff] text-lg tracking-widest">
-            <span className="mx-10 inline-block">LEARNLAB</span>
-            <span className="mx-10 inline-block">BRAINBOOST</span>
-            <span className="mx-10 inline-block">EDUCOVE</span>
-            <span className="mx-10 inline-block">KIDGENIUS</span>
-            <span className="mx-10 inline-block">COHORT.CO</span>
-          </div>
-        </section>
-
-        <section className="py-24 bg-[#f7f9ff]">
-          <div className="max-w-7xl mx-auto px-6">
-            <h3 className="text-4xl font-extrabold text-[#1d75ff] text-center mb-16">
-              Featured <span className="text-[#ffdd33]">Courses</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              {courses.map((course, i) => {
-                const icon = [
-                  <BookOpen
-                    key="b"
-                    className="h-12 w-12 text-[#1d75ff] mx-auto mb-4"
-                  />,
-                  <Lightbulb
-                    key="l"
-                    className="h-12 w-12 text-[#ffdd33] mx-auto mb-4"
-                  />,
-                  <Puzzle
-                    key="p"
-                    className="h-12 w-12 text-[#1d75ff] mx-auto mb-4"
-                  />,
-                ][i % 3];
-                const border =
-                  i === 1
-                    ? "border-4 border-[#ffdd33]"
-                    : "border-4 border-[#1d75ff]";
-                const textColor = i === 1 ? "text-[#ffdd33]" : "text-[#1d75ff]";
-                return (
-                  <div
-                    key={course.id || i}
-                    className={`p-10 bg-white ${border} rounded-xl shadow-xl`}
-                  >
-                    {icon}
-                    <h4 className={`text-2xl font-bold ${textColor}`}>
-                      {course.name}
-                    </h4>
-                    <p className="text-[#3f3f3f] mt-2">
-                      {course.description ||
-                        "Learn through projects, mentorship, and community."}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-24 bg-white border-y-4 border-[#1d75ff]">
-          <div className="max-w-6xl mx-auto px-6">
-            <h3 className="text-4xl font-extrabold text-center text-[#1d75ff] mb-16">
-              Cohort <span className="text-[#ffdd33]">Programs</span>
-            </h3>
-            <div className="space-y-14">
-              {programs.map((p, i) => (
-                <div
-                  key={p.id || i}
-                  className="grid md:grid-cols-3 gap-6 items-center p-8 bg-[#f7f9ff] border-4 border-[#1d75ff] rounded-xl shadow-md hover:-translate-y-1 transition"
-                >
-                  <p className="text-6xl font-extrabold text-[#ffdd33] text-center md:text-left">
-                    {String(i + 1).padStart(2, "0")}
-                  </p>
-                  <div className="md:col-span-2">
-                    <h4 className="text-2xl font-bold text-[#1d75ff]">
-                      {p.name}
-                    </h4>
-                    <p className="text-[#3f3f3f] mt-2">
-                      {p.description ||
-                        "Structured cohorts with mentors and peers to keep you accountable."}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-24 bg-[#f7f9ff]">
-          <div className="max-w-7xl mx-auto px-6">
-            <h3 className="text-4xl font-extrabold text-center mb-16 text-[#1d75ff]">
-              What <span className="text-[#ffdd33]">Students Say</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              {testimonialsToShow.map((quote, i) => (
-                <div
-                  key={quote.id || i}
-                  className="p-10 bg-white border-4 border-[#ffdd33] rounded-xl shadow-lg"
-                >
-                  <Star className="h-10 w-10 text-yellow-400 mx-auto mb-4" />
-                  <p className="text-xl italic text-[#1d1d1d]">
-                    &ldquo;{quote.testimonial || "Great experience!"}&rdquo;
-                  </p>
-                  <p className="mt-4 text-[#3f3f3f] text-sm">
-                    — {quote.customerName || "Student"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-24 bg-white">
-          <div className="max-w-4xl mx-auto px-6">
-            <div className="border-4 border-[#1d75ff] bg-[#f7f9ff] rounded-xl p-10 shadow-2xl">
-              <h3 className="text-4xl font-extrabold text-center text-[#1d75ff] mb-10">
-                Contact <span className="text-[#ffdd33]">Us</span>
-              </h3>
-              <form className="grid gap-6">
-                <input
-                  placeholder="Your Name"
-                  className="p-3 bg-white border-2 border-[#1d75ff] rounded-md"
-                />
-                <input
-                  placeholder="Your Email"
-                  className="p-3 bg-white border-2 border-[#1d75ff] rounded-md"
-                />
-                <textarea
-                  placeholder="Your Message"
-                  className="p-3 bg-white border-2 border-[#1d75ff] rounded-md h-32"
-                />
-                <button className="bg-[#1d75ff] text-white font-bold py-3 rounded-md hover:bg-[#155ad1]">
-                  Send Message
-                </button>
-              </form>
-              <div className="mt-10 text-center font-bold space-y-2 text-[#1d75ff]">
-                <p className="flex items-center justify-center gap-2">
-                  <Phone className="h-5" /> (555) 900-2211
-                </p>
-                <p className="flex items-center justify-center gap-2">
-                  <Mail className="h-5" /> hello@digitalcampus.com
-                </p>
-                <p className="flex items-center justify-center gap-2">
-                  <MapPin className="h-5" /> 200 Learning Ave, Online Campus
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <footer className="py-10 bg-[#1d75ff] text-center text-white font-bold tracking-wide border-t-4 border-[#ffdd33]">
-          © {new Date().getFullYear()} {companyName || "DigitalCampus"} — LEARN.
-          PLAY. GROW.
-        </footer>
-      </div>
-    );
-  }
-
-  // Full override: Construction / Craft & Build (orange/black)
-  if (themeId === "construction-buildcraft") {
-    const projects: Product[] =
-      featuredProducts.length > 0
-        ? featuredProducts.slice(0, 3)
-        : [
-            {
-              id: "proj1",
-              name: "Kitchen Renovation",
-              description: null,
-              price: 0,
-              category: null,
-              quantity: 0,
-              isFeatured: false,
-              isPublished: true,
-              images: [
-                {
-                  id: "proj1-img",
-                  url: "https://images.unsplash.com/photo-1581091215367-59ab6bba336a?auto=format&fit=crop&w=900&q=80",
-                  isFeatured: true,
-                  order: 0,
-                },
-              ],
-            },
-            {
-              id: "proj2",
-              name: "Custom Deck Build",
-              description: null,
-              price: 0,
-              category: null,
-              quantity: 0,
-              isFeatured: false,
-              isPublished: true,
-              images: [
-                {
-                  id: "proj2-img",
-                  url: "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?auto=format&fit=crop&w=900&q=80",
-                  isFeatured: true,
-                  order: 0,
-                },
-              ],
-            },
-            {
-              id: "proj3",
-              name: "Workshop Construction",
-              description: null,
-              price: 0,
-              category: null,
-              quantity: 0,
-              isFeatured: false,
-              isPublished: true,
-              images: [
-                {
-                  id: "proj3-img",
-                  url: "https://images.unsplash.com/photo-1615874959474-d609969a6f01?auto=format&fit=crop&w=900&q=80",
-                  isFeatured: true,
-                  order: 0,
-                },
-              ],
-            },
-          ];
-
-    const servicesList =
-      featuredServices.length > 0
-        ? featuredServices.slice(0, 6)
-        : [
-            {
-              id: "svc1",
-              name: "Home Renovations",
-              description: "Walls, floors, kitchens, bathrooms & more.",
-            },
-            {
-              id: "svc2",
-              name: "Custom Carpentry",
-              description: "Shelving, furniture, woodwork, framing.",
-            },
-            {
-              id: "svc3",
-              name: "Commercial Builds",
-              description: "Office spaces, retail shops, warehouses.",
-            },
-            {
-              id: "svc4",
-              name: "Safety Inspections",
-              description: "Professional safety assessments & fixes.",
-            },
-            {
-              id: "svc5",
-              name: "Emergency Repairs",
-              description: "Same-day service for urgent issues.",
-            },
-            {
-              id: "svc6",
-              name: "Outdoor Projects",
-              description: "Decks, fences, sheds & patio builds.",
-            },
-          ];
-
-    const testimonialsToShow =
-      testimonials && testimonials.length
-        ? testimonials.slice(0, 3)
-        : [
-            {
-              id: "t1",
-              customerName: "Client",
-              testimonial:
-                "Super reliable and professional — fixed our ceiling in a few hours.",
-            },
-            {
-              id: "t2",
-              customerName: "Client",
-              testimonial:
-                "Best deck builders in the area. Strong, clean, and beautiful.",
-            },
-            {
-              id: "t3",
-              customerName: "Client",
-              testimonial:
-                "Quick response, fair pricing, and quality craftsmanship!",
-            },
-          ];
-
-    return (
-      <div className="font-sans bg-[#0f0f0f] text-[#f5f5f5]">
-        <div className="bg-black text-[#ff6b00] text-center py-2 font-semibold border-b border-[#ff6b00]">
-          ⚠️ Need it done fast? Same-day repairs available!
-        </div>
-
-        <section className="relative py-32 bg-[#0f0f0f] text-center overflow-hidden">
-          <div className="absolute inset-0 opacity-[0.18] bg-[url('https://images.unsplash.com/photo-1520975936071-d2f3f1c3d6b8')] bg-cover bg-center"></div>
-          <div className="absolute left-1/2 top-1/3 -translate-x-1/2 bg-[#ff6b00] blur-[180px] opacity-20 w-[600px] h-[600px] rounded-full"></div>
-          <div className="absolute top-0 left-0 w-full h-10 bg-[linear-gradient(45deg,#ff6b00_25%,black_25%,black_50%,#ff6b00_50%,#ff6b00_75%,black_75%)] bg-size[45px_45px] opacity-25"></div>
-
-          <div className="relative max-w-3xl mx-auto px-6">
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-10 rotate-[-20deg]">
-              <svg
-                width="140"
-                height="140"
-                fill="none"
-                stroke="#ff6b00"
-                strokeWidth="6"
-              >
-                <path d="M20 70 L120 70 M70 20 L70 120" />
-              </svg>
-            </div>
-
-            <h1 className="text-5xl md:text-7xl font-extrabold leading-tight text-white drop-shadow-xl">
-              Built Tough.
-              <span className="block text-[#ff6b00]">Made to Last.</span>
-              <span className="block text-white">Crafted by Experts.</span>
-            </h1>
-
-            <p className="mt-8 text-lg md:text-xl max-w-2xl mx-auto text-gray-300 leading-relaxed">
-              Premium renovations, repairs, and custom craftsmanship for homes
-              and businesses. Reliable. Precise. Built with pride.
-            </p>
-
-            <a
-              href="#contact"
-              className="inline-block mt-12 bg-[#ff6b00] text-black font-extrabold px-12 py-4 rounded-md text-lg shadow-[0_0_25px rgba(255,107,0,0.5)] hover:bg-[#e55f00] transition border-4 border-black"
-            >
-              Request a Free Quote →
-            </a>
-          </div>
-
-          <div className="absolute bottom-0 left-0 w-full h-10 bg-[linear-gradient(45deg,#ff6b00_25%,black_25%,black_50%,#ff6b00_50%,#ff6b00_75%,black_75%)] bg-[length:45px_45px] opacity-25"></div>
-        </section>
-
-        <section className="py-14 bg-[#0f0f0f] border-y-4 border-[#ff6b00]">
-          <div className="max-w-7xl mx-auto px-6 flex gap-10 items-center justify-center flex-wrap opacity-70">
-            {["DEWALT", "RIDGID", "STIHL", "MILWAUKEE", "HUSQVARNA"].map(
-              (b) => (
-                <span
-                  key={b}
-                  className="text-xl md:text-2xl font-extrabold tracking-widest text-[#ff6b00]"
-                >
-                  {b}
-                </span>
-              )
-            )}
-          </div>
-        </section>
-
-        <section id="projects" className="py-24 bg-[#151515]">
-          <h3 className="text-4xl font-extrabold text-center text-[#ff6b00] mb-14">
-            Recent Projects
-          </h3>
-          <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-10">
-            {projects.map((p, i) => (
-              <div
-                key={p.id || i}
-                className="bg-black rounded-xl shadow-xl overflow-hidden border-4 border-[#ff6b00]"
-              >
-                <div className="relative h-64 w-full">
-                  <Image
-                    src={p.images?.[0]?.url || ""}
-                    alt={p.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                </div>
-                <div className="p-6">
-                  <h4 className="text-xl font-extrabold text-[#ff6b00]">
-                    {p.name}
-                  </h4>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          id="services"
-          className="py-24 bg-black border-y-4 border-[#ff6b00]"
-        >
-          <h3 className="text-4xl font-extrabold text-center text-[#ff6b00] mb-12">
-            Our Expertise
-          </h3>
-          <div className="max-w-6xl mx-auto px-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
-            {servicesList.map((s, i) => {
-              const icon = [
-                <Hammer key="h1" className="h-12 w-12 text-[#ff6b00]" />,
-                <Wrench key="w1" className="h-12 w-12 text-[#ff6b00]" />,
-                <Drill key="d1" className="h-12 w-12 text-[#ff6b00]" />,
-                <HardHat key="hh" className="h-12 w-12 text-[#ff6b00]" />,
-              ][i % 4];
-              return (
-                <div
-                  key={s.id || i}
-                  className="bg-[#151515] p-8 rounded-xl shadow-xl text-center border-4 border-[#ff6b00]"
-                >
-                  <div className="flex justify-center mb-4">{icon}</div>
-                  <h4 className="text-xl font-bold text-[#ff6b00] mb-2">
-                    {s.name}
-                  </h4>
-                  <p className="text-gray-300">
-                    {s.description || "Quality, reliable craftsmanship."}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="py-24 bg-[#151515]">
-          <h3 className="text-4xl font-extrabold text-center text-[#ff6b00] mb-12">
-            What Clients Say
-          </h3>
-          <div className="flex gap-6 overflow-x-auto px-6 pb-2">
-            {testimonialsToShow.map((t, i) => (
-              <div
-                key={t.id || i}
-                className="bg-black min-w-[320px] p-8 rounded-xl border-l-8 border-[#ff6b00] shadow-xl"
-              >
-                <p className="italic text-gray-200">
-                  &ldquo;{t.testimonial}&rdquo;
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          id="contact"
-          className="py-24 bg-black text-white border-t-4 border-[#ff6b00]"
-        >
-          <h3 className="text-4xl font-extrabold text-center text-[#ff6b00] mb-10">
-            Contact Us
-          </h3>
-          <div className="max-w-3xl mx-auto px-6">
-            <form className="grid gap-6 bg-[#151515] p-10 rounded-xl border-4 border-[#ff6b00] shadow-xl">
-              <input
-                className="p-3 rounded bg-[#303030] text-white"
-                placeholder="Your Name"
-              />
-              <input
-                className="p-3 rounded bg-[#303030] text-white"
-                placeholder="Email"
-              />
-              <textarea
-                className="p-3 rounded bg-[#303030] text-white h-32"
-                placeholder="Message"
-              />
-              <button className="bg-[#ff6b00] text-black py-3 font-extrabold rounded hover:bg-[#e56200] transition">
-                Send Message
-              </button>
-            </form>
-            <div className="text-center mt-8 text-lg space-y-2">
-              <p className="flex justify-center gap-2">
-                <Phone className="h-5 text-[#ff6b00]" /> (555) 987-BUILD
-              </p>
-              <p className="flex justify-center gap-2">
-                <Mail className="h-5 text-[#ff6b00]" /> contact@craftbuild.com
-              </p>
-              <p className="flex justify-center gap-2">
-                <MapPin className="h-5 text-[#ff6b00]" /> 45 Builder Road,
-                Springfield
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <footer className="py-10 bg-[#0e0e0e] text-center text-[#ff6b00] font-semibold border-t-2 border-[#261400]">
-          © {new Date().getFullYear()} {companyName || "Craft & Build Co."} —
-          Built Strong.
-        </footer>
-      </div>
-    );
-  }
-  */
 
   const renderSection = (section: ThemeSection) => {
     if (!section.enabled) return null;
@@ -3174,8 +2326,10 @@ export function BaseThemeRenderer({
 
       case "highlights":
         // Feature/benefits highlights
-        const highlights = Array.isArray(content.items)
-          ? content.items
+        const highlights: Array<Record<string, unknown>> = Array.isArray(
+          content.items
+        )
+          ? (content.items as Array<Record<string, unknown>>)
           : [
               {
                 title: "Quality",
@@ -3198,26 +2352,36 @@ export function BaseThemeRenderer({
             <div className="container mx-auto px-4">
               <div className="text-center mb-12">
                 <h2 className="text-4xl font-bold mb-4">
-                  {renderContent(content.heading || "Why Choose Us")}
+                  {
+                    renderContent(
+                      content.heading || "Why Choose Us"
+                    ) as React.ReactNode
+                  }
                 </h2>
                 {content.description && (
                   <p className="text-lg opacity-80 max-w-2xl mx-auto">
-                    {renderContent(content.description)}
+                    {renderContent(content.description) as React.ReactNode}
                   </p>
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {highlights.map((item: any, idx: number) => (
-                  <Card key={idx}>
-                    <CardContent className="p-6 text-center">
-                      <div className="text-4xl mb-4">{item.icon || "✨"}</div>
-                      <h3 className="text-xl font-semibold mb-2">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm opacity-80">{item.description}</p>
-                    </CardContent>
-                  </Card>
-                ))}
+                {highlights.map(
+                  (item: Record<string, unknown>, idx: number) => (
+                    <Card key={idx}>
+                      <CardContent className="p-6 text-center">
+                        <div className="text-4xl mb-4">
+                          {String(item.icon || "✨")}
+                        </div>
+                        <h3 className="text-xl font-semibold mb-2">
+                          {item.title as React.ReactNode}
+                        </h3>
+                        <p className="text-sm opacity-80">
+                          {item.description as React.ReactNode}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )
+                )}
               </div>
             </div>
           </section>
@@ -3243,39 +2407,60 @@ export function BaseThemeRenderer({
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {portfolioItems.map((project: any, idx: number) => (
-                  <Card key={idx} className="overflow-hidden group">
-                    {project.image && (
-                      <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={project.image}
-                          alt={project.title || "Project"}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-                    <CardContent className="p-6">
-                      {project.category && (
-                        <span className="text-xs font-semibold uppercase tracking-wider opacity-70">
-                          {project.category}
-                        </span>
-                      )}
-                      <h3 className="text-xl font-semibold mt-2 mb-2">
-                        {project.title}
-                      </h3>
-                      {project.client && (
-                        <p className="text-sm opacity-60 mb-2">
-                          Client: {project.client}
-                        </p>
-                      )}
-                      {project.description && (
-                        <p className="text-sm opacity-80">
-                          {project.description}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                {(portfolioItems as Array<Record<string, unknown>>).map(
+                  (project, idx: number) => {
+                    const imageUrl =
+                      typeof project.image === "string" ? project.image : null;
+                    const title =
+                      typeof project.title === "string" ? project.title : "";
+                    const category =
+                      typeof project.category === "string"
+                        ? project.category
+                        : null;
+                    const client =
+                      typeof project.client === "string"
+                        ? project.client
+                        : null;
+                    const description =
+                      typeof project.description === "string"
+                        ? project.description
+                        : null;
+
+                    return (
+                      <Card key={idx} className="overflow-hidden group">
+                        {imageUrl && (
+                          <div className="relative h-48 overflow-hidden">
+                            <Image
+                              src={imageUrl}
+                              alt={title || "Project"}
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-300"
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                            />
+                          </div>
+                        )}
+                        <CardContent className="p-6">
+                          {category && (
+                            <span className="text-xs font-semibold uppercase tracking-wider opacity-70">
+                              {category}
+                            </span>
+                          )}
+                          <h3 className="text-xl font-semibold mt-2 mb-2">
+                            {title}
+                          </h3>
+                          {client && (
+                            <p className="text-sm opacity-60 mb-2">
+                              Client: {client}
+                            </p>
+                          )}
+                          {description && (
+                            <p className="text-sm opacity-80">{description}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+                )}
               </div>
             </div>
           </section>
@@ -3334,8 +2519,10 @@ export function BaseThemeRenderer({
 
       case "faq":
         // FAQ section
-        const faqItems = Array.isArray(content.items)
-          ? content.items
+        const faqItems: Array<Record<string, unknown>> = Array.isArray(
+          content.items
+        )
+          ? (content.items as Array<Record<string, unknown>>)
           : [
               {
                 question: "What are your business hours?",
@@ -3351,24 +2538,26 @@ export function BaseThemeRenderer({
             <div className="container mx-auto px-4 max-w-3xl">
               <div className="text-center mb-12">
                 <h2 className="text-4xl font-bold mb-4">
-                  {renderContent(
-                    content.heading || "Frequently Asked Questions"
-                  )}
+                  {
+                    renderContent(
+                      content.heading || "Frequently Asked Questions"
+                    ) as string
+                  }
                 </h2>
                 {content.description && (
                   <p className="text-lg opacity-80">
-                    {renderContent(content.description)}
+                    {renderContent(content.description) as string}
                   </p>
                 )}
               </div>
               <div className="space-y-4">
-                {faqItems.map((item: any, idx: number) => (
+                {faqItems.map((item, idx: number) => (
                   <Card key={idx}>
                     <CardContent className="p-6">
                       <h3 className="font-semibold text-lg mb-2">
-                        {item.question}
+                        {String(item.question || "")}
                       </h3>
-                      <p className="opacity-80">{item.answer}</p>
+                      <p className="opacity-80">{String(item.answer || "")}</p>
                     </CardContent>
                   </Card>
                 ))}

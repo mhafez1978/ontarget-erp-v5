@@ -5,7 +5,10 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // GET /api/company/[companyId]/locations - Fetch all locations for a company
-export async function GET(request: NextRequest, context: any) {
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ companyId: string }> }
+) {
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);
@@ -58,7 +61,10 @@ export async function GET(request: NextRequest, context: any) {
 }
 
 // POST /api/company/[companyId]/locations - Create a new location
-export async function POST(request: NextRequest, context: any) {
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ companyId: string }> }
+) {
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);

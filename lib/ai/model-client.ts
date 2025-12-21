@@ -183,12 +183,15 @@ export async function callStorefrontModel<T>(
             throw new Error("No JSON found in content");
           }
         }
-      } catch (parseError) {
-        console.error(
-          "[AI Storefront] Failed to parse Anthropic JSON content (first 500 chars):",
-          trimmedContent.substring(0, 500)
+      } catch (error) {
+        console.log(
+          error instanceof Error ? error.message : JSON.stringify(error)
         );
-        throw new Error("[AI Storefront] Failed to parse model JSON output");
+        throw new Error(
+          error instanceof Error
+            ? error.message
+            : "Failed to parse model JSON output"
+        );
       }
     }
 
@@ -417,7 +420,7 @@ export async function streamStorefrontModel(
         ? trimmed.replace(/^data:\s*/, "")
         : trimmed;
       try {
-        const parsed = JSON.parse(m) as any;
+        const parsed = JSON.parse(m) as Record<string, unknown>;
         // OpenAI delta tokens path
         const choice = Array.isArray(parsed.choices) ? parsed.choices[0] : null;
         const delta = choice?.delta?.content || choice?.message?.content;
@@ -425,7 +428,8 @@ export async function streamStorefrontModel(
           full += delta;
           onToken(delta);
         }
-      } catch (e) {
+      } catch (e: unknown) {
+        console.error("Failed to parse streaming chunk:", e);
         // not JSON, maybe partial chunk - treat as raw
         full += m;
         onToken(m);

@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MfaLoginDialog } from "@/components/mfa-login-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-;
 import { toast } from "sonner";
 
 function MfaLoginPageContent() {

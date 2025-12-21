@@ -111,10 +111,7 @@ export async function GET(request: NextRequest) {
         const rootCompany = await db.company.findFirst({
           where: { isRoot: true },
         });
-        if (
-          rootCompany &&
-          !companies.some((c: any) => c.id === rootCompany.id)
-        ) {
+        if (rootCompany && !companies.some((c) => c.id === rootCompany.id)) {
           companies.unshift(rootCompany);
         }
       }

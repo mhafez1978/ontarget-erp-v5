@@ -211,8 +211,7 @@ export class TaxCalculator {
     grossPay: Decimal,
     taxConfig: TaxConfig,
     yearToDateGross: number = 0,
-    // Optional filing status for jurisdictions where thresholds vary by filing status
-    _filingStatus?: string
+    filingStatus?: string
   ): { medicare: number; medicareAdditional: number } {
     const medicareConfig = taxConfig.payrollTaxes.medicare;
     if (!medicareConfig) return { medicare: 0, medicareAdditional: 0 };
@@ -223,12 +222,25 @@ export class TaxCalculator {
     // Additional Medicare Tax (0.9% for high earners)
     let medicareAdditional = 0;
     if (medicareConfig.additionalRate && medicareConfig.additionalThreshold) {
+      // Adjust threshold based on filing status (US-specific)
+      let adjustedThreshold = medicareConfig.additionalThreshold;
+      if (filingStatus === "MARRIED_JOINT") {
+        adjustedThreshold = 250000;
+      } else if (filingStatus === "MARRIED_SEPARATE") {
+        adjustedThreshold = 125000;
+      } else if (
+        filingStatus === "SINGLE" ||
+        filingStatus === "HEAD_OF_HOUSEHOLD"
+      ) {
+        adjustedThreshold = 200000;
+      }
+
       const newYtdGross = yearToDateGross + gross;
-      if (newYtdGross > medicareConfig.additionalThreshold) {
+      if (newYtdGross > adjustedThreshold) {
         const amountOverThreshold =
-          yearToDateGross >= medicareConfig.additionalThreshold
+          yearToDateGross >= adjustedThreshold
             ? gross
-            : newYtdGross - medicareConfig.additionalThreshold;
+            : newYtdGross - adjustedThreshold;
         medicareAdditional =
           amountOverThreshold * (medicareConfig.additionalRate / 100);
       }

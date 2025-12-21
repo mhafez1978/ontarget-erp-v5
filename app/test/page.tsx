@@ -1,15 +1,15 @@
 "use client";
 
-
-import { Hammer, HardHat, Phone, Mail, MapPin, Wrench, Drill } from "lucide-react";
+import {
+  Hammer,
+  HardHat,
+  Phone,
+  Mail,
+  MapPin,
+  Wrench,
+  Drill,
+} from "lucide-react";
 import Image from "next/image";
-
-
-
-
-
-
-;
 
 export default function CraftAndBuildOrangeBlack() {
   return (
@@ -116,7 +116,7 @@ export default function CraftAndBuildOrangeBlack() {
         <div
           className="absolute bottom-0 left-0 w-full h-10 
         bg-[linear-gradient(45deg,#ff6b00_25%,black_25%,black_50%,#ff6b00_50%,#ff6b00_75%,black_75%)]
-        bg-[length:45px_45px] opacity-25"
+        bg-size-[45px_45px] opacity-25"
         ></div>
       </section>
 

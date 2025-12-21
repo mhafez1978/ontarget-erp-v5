@@ -1,16 +1,11 @@
 "use client";
 
-
 import { LogOut, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 
-
-
-
-;
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +15,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { getRoleMenuItems } from "@/components/dashboard-menus/main-dashboard-menu";
 import { getProxiedImageUrl } from "@/lib/image-proxy";
-import { VisitorTracker } from "@/components/visitor-tracker";
 import { LogoImage } from "@/components/logo-image";
 
 interface DashboardLayoutProps {
@@ -429,7 +423,6 @@ export function DashboardLayout({
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
-        <VisitorTracker />
         <div className={cn("container p-6 pt-20 lg:pt-6", containerClassName)}>
           {children}
         </div>

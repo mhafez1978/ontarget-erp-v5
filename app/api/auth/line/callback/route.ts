@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    let isNewUser = false;
+    const isNewUser = false;
 
     if (user) {
       // User exists - check if they can login with OAuth

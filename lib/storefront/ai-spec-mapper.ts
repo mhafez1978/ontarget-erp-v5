@@ -83,4 +83,6 @@ export function mapAiSpecToThemeSections(
   return cloneSections;
 }
 
-export default { mapAiSpecToThemeSections };
+const aiSpecMapper = { mapAiSpecToThemeSections };
+
+export default aiSpecMapper;

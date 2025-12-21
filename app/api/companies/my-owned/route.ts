@@ -12,7 +12,33 @@ export async function GET(request: NextRequest) {
 
     const { user } = validation;
 
-    let companies: any[] = [];
+    let companies: Array<{
+      id: string;
+      name: string;
+      slug?: string | null;
+      slogan?: string | null;
+      description?: string | null;
+      logo?: string | null;
+      email?: string | null;
+      salesEmail?: string | null;
+      supportEmail?: string | null;
+      phone?: string | null;
+      website?: string | null;
+      addressLine1?: string | null;
+      addressLine2?: string | null;
+      city?: string | null;
+      state?: string | null;
+      country?: string | null;
+      countryCode?: string | null;
+      postalCode?: string | null;
+      isRoot: boolean;
+      createdAt: Date;
+      memberCount?: number;
+      _count?: {
+        members: number;
+        staff: number;
+      };
+    }> = [];
 
     // SUPER_ADMIN / ADMIN: aggregate owned, memberships, and staff companies
     if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
@@ -122,21 +148,24 @@ export async function GET(request: NextRequest) {
       });
 
       if (userWithCompanies) {
-        const map = new Map<string, any>();
+        const map = new Map<
+          string,
+          (typeof userWithCompanies.ownedCompanies)[0] & { memberCount: number }
+        >();
         userWithCompanies.ownedCompanies.forEach((c) => {
           // For owned companies, memberCount includes owner (1) + members + staff
           const memberCount =
             1 + (c._count?.members || 0) + (c._count?.staff || 0);
           map.set(c.id, { ...c, memberCount });
         });
-        userWithCompanies.companyMemberships.forEach((m: any) => {
+        userWithCompanies.companyMemberships.forEach((m) => {
           const company = m.company;
           // For memberships, don't add 1 because owner is counted separately
           const memberCount =
             (company._count?.members || 0) + (company._count?.staff || 0);
           map.set(company.id, { ...company, memberCount });
         });
-        userWithCompanies.companyStaff.forEach((s: any) => {
+        userWithCompanies.companyStaff.forEach((s) => {
           const company = s.company;
           // For staff companies, don't add 1 because owner is counted separately
           const memberCount =

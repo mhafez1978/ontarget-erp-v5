@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ConditionalNavbar } from "@/components/conditional-navbar";
 import { Toaster } from "@/components/ui/sonner";
 import { SWRProvider } from "@/lib/swr-provider";
+import { VisitorTracker } from "@/components/visitor-tracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SWRProvider>
+            <VisitorTracker />
             <ConditionalNavbar />
             {children}
             <Toaster />

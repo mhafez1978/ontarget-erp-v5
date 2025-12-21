@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import { trackLoginMethod } from "@/lib/account-tracking";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
-import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
