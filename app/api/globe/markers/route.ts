@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// Revalidate cache every 10 seconds for faster updates
-export const revalidate = 10;
+// Revalidate cache every 60 seconds for faster updates
+export const revalidate = 60;
 
 // Type definition for globe markers
 type GlobeMarker = {

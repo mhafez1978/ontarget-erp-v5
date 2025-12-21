@@ -70,7 +70,6 @@ function GlobeMarkersComponent({ className }: { className?: string }) {
 
         if (!mounted) return;
 
-        console.log("Raw marker data from API:", data);
         const m = data
           .filter(
             (d) => Number.isFinite(d.latitude) && Number.isFinite(d.longitude)
@@ -81,7 +80,6 @@ function GlobeMarkersComponent({ className }: { className?: string }) {
             color: hexToRgbNormalized(d.color ?? "#fb6421"),
             isRoot: d.isRoot === true,
           }));
-        console.log("Transformed markers for Globe:", m);
         setMarkers(m);
       } catch (err) {
         console.error("Failed to fetch globe markers:", err);
@@ -97,13 +95,11 @@ function GlobeMarkersComponent({ className }: { className?: string }) {
 
     // Set up polling to refetch markers every 30 seconds
     const pollInterval = setInterval(() => {
-      console.log("Polling for new globe markers...");
       fetchMarkers();
     }, 30000); // 30 seconds
 
     // Refetch when window regains focus
     const handleFocus = () => {
-      console.log("Window focused, refetching globe markers...");
       fetchMarkers();
     };
     window.addEventListener("focus", handleFocus);
