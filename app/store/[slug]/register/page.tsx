@@ -1,5 +1,7 @@
 "use client";
 
+
+import { UserPlus, Mail, Lock, User, Loader2, Eye, EyeOff, Store } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -14,16 +16,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  UserPlus,
-  Mail,
-  Lock,
-  User,
-  Loader2,
-  Eye,
-  EyeOff,
-  Store,
-} from "lucide-react";
+
+
+
+
+
+
+
+;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import Image from "next/image";
 

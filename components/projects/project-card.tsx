@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Calendar, CheckCircle2, User2, Users, MoreVertical, Edit, Trash2, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,16 +13,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import {
-  Calendar,
-  CheckCircle2,
-  User2,
-  Users,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Eye,
-} from "lucide-react";
+
+
+
+
+
+
+
+;
 import { useRouter } from "next/navigation";
 
 // Project type (matches API response)

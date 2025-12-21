@@ -1,5 +1,7 @@
 "use client";
 
+
+import { ShoppingCart, Package, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Star, TrendingUp, Users, Award, ShieldCheck, Lock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -12,23 +14,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  ShoppingCart,
-  Package,
-  Mail,
-  Phone,
-  MapPin,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-  Star,
-  TrendingUp,
-  Users,
-  Award,
-  ShieldCheck,
-  Lock,
-} from "lucide-react";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;
 import { ThemeSection } from "@/lib/storefront-themes";
 import { themeComponents } from "@/components/storefront/themes";
 import { TestimonialForm } from "@/components/storefront/testimonial-form";

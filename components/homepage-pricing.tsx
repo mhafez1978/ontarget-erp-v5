@@ -1,8 +1,10 @@
 "use client";
 
+
+import { Check } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 
 interface PricingData {
@@ -84,7 +86,7 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
             }`}
           >
             Annual
-            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+            <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs px-2 py-1 rounded font-semibold">
               Save
             </span>
           </button>

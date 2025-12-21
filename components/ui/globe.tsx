@@ -92,14 +92,19 @@ export function Globe({
 
         // Update marker sizes dynamically with individual phases
         if (config.markers && Array.isArray(config.markers)) {
-          state.markers = config.markers.map((marker: any, index: number) => {
-            const phase = markerPhases[index] || 0;
-            const pulseScale = 1 + Math.sin(animationTime + phase) * 0.3; // Each marker has its own phase
-            return {
-              ...marker,
-              size: (marker.size || 0.03) * pulseScale,
-            };
-          });
+          state.markers = config.markers.map(
+            (
+              marker: { location: [number, number]; size?: number },
+              index: number
+            ) => {
+              const phase = markerPhases[index] || 0;
+              const pulseScale = 1 + Math.sin(animationTime + phase) * 0.3; // Each marker has its own phase
+              return {
+                ...marker,
+                size: (marker.size || 0.03) * pulseScale,
+              };
+            }
+          );
         }
       },
     });

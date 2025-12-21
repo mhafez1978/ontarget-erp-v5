@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -11,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+;
 import { toast } from "sonner";
 
 interface Team {

@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Loader2, Database, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Database, CheckCircle2 } from "lucide-react";
+
+
+;
 import { toast } from "sonner";
 
 export default function InitializePricingPage() {

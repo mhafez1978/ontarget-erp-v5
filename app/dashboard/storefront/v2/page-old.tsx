@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Sparkles, Send, Loader2, Smartphone, Monitor, Save, Wand2, MessageSquare } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/dashboard-layout";
@@ -11,16 +13,14 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { mapAiSpecToThemeSections as mapAiSpecToThemeSectionsShared } from "@/lib/storefront/ai-spec-mapper";
-import {
-  Sparkles,
-  Send,
-  Loader2,
-  Smartphone,
-  Monitor,
-  Save,
-  Wand2,
-  MessageSquare,
-} from "lucide-react";
+
+
+
+
+
+
+
+;
 import type { AiFrontstoreSpec } from "@/lib/ai/ai-storefront-types";
 import type { ThemeSection } from "@/lib/storefront-themes";
 

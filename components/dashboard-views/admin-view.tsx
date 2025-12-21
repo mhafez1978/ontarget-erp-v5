@@ -1,3 +1,4 @@
+import { ScrollText } from "lucide-react";
 import { AuditLog } from "@/components/audit-log";
 import {
   Accordion,
@@ -5,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ScrollText } from "lucide-react";
+;
 import { ClockInOutWidget } from "@/components/clock-in-out-widget";
 
 interface AdminViewProps {

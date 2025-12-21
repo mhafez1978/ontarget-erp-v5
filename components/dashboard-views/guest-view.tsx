@@ -1,3 +1,4 @@
+import { MapPin } from "lucide-react";
 import { GeoTrackingDisplay } from "@/components/geo-tracking-display";
 import {
   Accordion,
@@ -5,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { MapPin } from "lucide-react";
+;
 
 interface GuestViewProps {
   userName?: string | null;

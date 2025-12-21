@@ -1,5 +1,8 @@
-import Link from "next/link";
 import { Dumbbell, Flame, Timer } from "lucide-react";
+import Link from "next/link";
+
+
+;
 import { Button } from "@/components/ui/button";
 import type { ThemeRendererProps } from "../theme-renderer";
 import { BaseThemeRenderer } from "../theme-renderer";

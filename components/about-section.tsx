@@ -1,13 +1,13 @@
 "use client";
 
-import {
-  Code2,
-  Cloud,
-  Award,
-  Heart,
-  Briefcase,
-  GraduationCap,
-} from "lucide-react";
+
+
+
+
+
+
+import { Code2, Cloud, Award, Heart, Briefcase, GraduationCap } from "lucide-react";
+;
 
 export function AboutSection() {
   return (

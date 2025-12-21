@@ -1,12 +1,18 @@
 "use client";
 
+
+import { ShoppingCart, Check, Star, ArrowRight, Play } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Marquee } from "@/components/ui/marquee";
-import { ShoppingCart, Check, Star, ArrowRight, Play } from "lucide-react";
+
+
+
+
+;
 import { toast } from "sonner";
 import type {
   AiFrontstoreSpec,

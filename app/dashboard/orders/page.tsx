@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Package, Search, Eye, Loader2, DollarSign, ShoppingCart, TrendingUp, Clock, Plus, X, Trash } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import {
@@ -37,19 +39,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import {
-  Package,
-  Search,
-  Eye,
-  Loader2,
-  DollarSign,
-  ShoppingCart,
-  TrendingUp,
-  Clock,
-  Plus,
-  X,
-  Trash,
-} from "lucide-react";
+
+
+
+
+
+
+
+
+
+
+;
 import Image from "next/image";
 import { format } from "date-fns";
 

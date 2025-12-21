@@ -1,10 +1,12 @@
 "use client";
 
+
+import { Folder } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { HierarchicalFileExplorer } from "@/components/hierarchical-file-explorer";
-import { Folder } from "lucide-react";
+;
 
 export default function FilesPage() {
   const router = useRouter();

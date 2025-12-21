@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Check, Loader2, CreditCard, ChevronLeft, CheckCircle2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -12,16 +14,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Check,
-  Loader2,
-  CreditCard,
-  ChevronLeft,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  AlertCircle,
-} from "lucide-react";
+
+
+
+
+
+
+
+
 import { toast } from "sonner";
 import { PLAN_LIMITS, getTotalUserLimit } from "@/lib/plan-limits";
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
@@ -809,7 +809,7 @@ export default function SelectPlanPage() {
             }`}
           >
             Annual
-            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+            <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs px-2 py-1 rounded font-semibold">
               Save
             </span>
           </button>

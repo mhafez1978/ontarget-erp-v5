@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
   Sheet,
@@ -19,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+;
 import { toast } from "sonner";
 
 interface ChangeTeamRoleDialogProps {

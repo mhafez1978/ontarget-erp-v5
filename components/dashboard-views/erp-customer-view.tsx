@@ -1,8 +1,11 @@
 "use client";
 
+
+import { Building2, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Building2, Loader2 } from "lucide-react";
+
+;
 import { CreateCompanyModal } from "@/components/create-company-modal";
 import { getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import { Card } from "../ui/card";

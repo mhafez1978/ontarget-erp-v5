@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Loader2, Briefcase, X, Upload, Star } from "lucide-react";
 import { useState, useRef } from "react";
 import Image from "next/image";
 import {
@@ -20,7 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Briefcase, X, Upload, Star } from "lucide-react";
+
+
+
+
+;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import { z } from "zod";
 import {

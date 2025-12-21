@@ -1,7 +1,10 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Mail, Send } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+;
 import SuperAdminTemplatesView from "@/components/templates-views/super-admin-templates-view";
 import EmailCustomersTab from "@/components/hub-views/email-customers-tab";
 

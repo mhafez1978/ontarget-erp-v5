@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 // Revalidate cache every 60 seconds for faster updates
 export const revalidate = 60;
 
+// Enable edge runtime for faster cold starts
+export const runtime = "nodejs";
+
 // Type definition for globe markers
 type GlobeMarker = {
   id: string;
@@ -43,7 +46,7 @@ export async function GET() {
     // Process each company and add markers for locations
     companies.forEach((company) => {
       const isRoot = company.isRoot;
-      const size = 0.03; // Smaller, consistent marker size
+      const size = 0.05; // Smaller, consistent marker size
       // Root company locations = purple (#9333ea), Subscriber locations = green (#10b981)
       const defaultColor = isRoot ? "#9333ea" : "#10b981";
       const customColor =

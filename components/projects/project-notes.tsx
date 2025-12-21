@@ -1,5 +1,7 @@
 "use client";
 
+
+import { StickyNote, Plus, Trash2, Edit, X, Save, Clock, User2 } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,16 +9,14 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TimeTracker } from "@/components/projects/time-tracker";
 import { toast } from "sonner";
-import {
-  StickyNote,
-  Plus,
-  Trash2,
-  Edit,
-  X,
-  Save,
-  Clock,
-  User2,
-} from "lucide-react";
+
+
+
+
+
+
+
+;
 
 interface ProjectNote {
   id: string;

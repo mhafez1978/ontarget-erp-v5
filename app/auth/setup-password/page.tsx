@@ -1,12 +1,16 @@
 "use client";
 
+
+import { Lock, Eye, EyeOff } from "lucide-react";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Lock, Eye, EyeOff } from "lucide-react";
+
+
+;
 
 function SetupPasswordForm() {
   const router = useRouter();

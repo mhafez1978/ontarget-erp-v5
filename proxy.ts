@@ -170,6 +170,82 @@ async function safeFetch(url: string, options: RequestInit = {}) {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const response = NextResponse.next();
+
+  // Add cache control headers for static assets
+  if (
+    pathname.startsWith("/_next/static/") ||
+    pathname.startsWith("/images/") ||
+    pathname.startsWith("/fonts/") ||
+    /\.(jpg|jpeg|png|gif|svg|ico|webp|avif|woff|woff2|ttf|otf)$/.test(pathname)
+  ) {
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=31536000, immutable"
+    );
+    return response;
+  }
+
+  // Cache API routes with shorter duration
+  if (pathname.startsWith("/api/")) {
+    if (
+      pathname.startsWith("/api/globe/markers") ||
+      pathname.startsWith("/api/storefront/")
+    ) {
+      response.headers.set(
+        "Cache-Control",
+        "public, s-maxage=10, stale-while-revalidate=30"
+      );
+    }
+  }
+
+  // Security headers
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Cross-Origin-Opener-Policy",
+    "same-origin-allow-popups"
+  );
+  response.headers.set("Cross-Origin-Embedder-Policy", "require-corp");
+  response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+
+  // Content Security Policy
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://maps.googleapis.com https://photon.komoot.io",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https: http:",
+    "media-src 'self' blob:",
+    "connect-src 'self' https://api.stripe.com https://photon.komoot.io https://maps.googleapis.com https://accounts.google.com https://github.com https://login.microsoftonline.com https://api.line.me https://www.linkedin.com https://open.weixin.qq.com https://login.yahoo.com https://oauth.yandex.com wss: ws:",
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://github.com https://login.microsoftonline.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self' https://accounts.google.com https://github.com https://login.microsoftonline.com https://access.line.me https://www.linkedin.com https://api.login.yahoo.com https://oauth.yandex.com",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ].join("; ");
+  response.headers.set("Content-Security-Policy", csp);
+
+  // HSTS (HTTP Strict Transport Security)
+  // Only enable in production with HTTPS
+  const isProduction = process.env.NODE_ENV === "production";
+  const isHttps = request.nextUrl.protocol === "https:";
+  if (isProduction && isHttps) {
+    // Start with 1 day (86400 seconds), increase to 1 year (31536000) after testing
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains"
+    );
+  }
+
+  // Performance hints
+  response.headers.set(
+    "Link",
+    "</fonts/geist-sans.woff2>; rel=preload; as=font; crossorigin=anonymous"
+  );
 
   // Skip setup check for API routes, static files, and setup page itself
   if (
@@ -179,7 +255,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/onboarding") ||
     pathname.includes(".")
   ) {
-    return NextResponse.next();
+    return response;
   }
 
   // 1. Determine the Public Base URL for Redirects
@@ -213,12 +289,26 @@ export async function proxy(request: NextRequest) {
 
       // If setup is needed and user is not on setup page, redirect to setup
       if (data.needsSetup && pathname !== "/setup") {
-        return NextResponse.redirect(new URL("/setup", publicBaseUrl));
+        const redirectResponse = NextResponse.redirect(
+          new URL("/setup", publicBaseUrl)
+        );
+        // Copy headers to redirect response
+        response.headers.forEach((value, key) => {
+          redirectResponse.headers.set(key, value);
+        });
+        return redirectResponse;
       }
 
       // If setup is complete and user is on setup page, redirect to home
       if (data.hasSetup && pathname === "/setup") {
-        return NextResponse.redirect(new URL("/", publicBaseUrl));
+        const redirectResponse = NextResponse.redirect(
+          new URL("/", publicBaseUrl)
+        );
+        // Copy headers to redirect response
+        response.headers.forEach((value, key) => {
+          redirectResponse.headers.set(key, value);
+        });
+        return redirectResponse;
       }
     }
 
@@ -252,15 +342,21 @@ export async function proxy(request: NextRequest) {
 
           if (onboardingData.needsOnboarding && onboardingData.onboardingUrl) {
             // Redirect using the Public URL
-            return NextResponse.redirect(
+            const redirectResponse = NextResponse.redirect(
               new URL(onboardingData.onboardingUrl, publicBaseUrl)
             );
+            // Copy headers to redirect response
+            response.headers.forEach((value, key) => {
+              redirectResponse.headers.set(key, value);
+            });
+            return redirectResponse;
           }
         }
       } catch (error) {
         console.error("Proxy onboarding check failed:", error);
       }
     }
+    response;
   } catch (error) {
     console.error("Middleware setup check failed (unexpected error):", error);
   }

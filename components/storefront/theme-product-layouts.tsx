@@ -1,5 +1,7 @@
 "use client";
 
+
+import { ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart } from "lucide-react";
+;
 import { BorderBeam } from "@/components/ui/border-beam";
 import { useCart } from "@/contexts/cart-context";
 

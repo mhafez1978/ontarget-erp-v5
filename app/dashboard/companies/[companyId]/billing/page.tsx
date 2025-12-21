@@ -1,8 +1,10 @@
 "use client";
 
+
+import { Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
-import { Loader2 } from "lucide-react";
+;
 
 export default function CompanyBillingPage({
   params,

@@ -6,9 +6,12 @@
     "dev": "next dev",
     "generatedb": "npx prisma generate",
     "build": "next build",
+    "build:analyze": "cross-env ANALYZE=true next build",
     "start": "next start",
     "lint": "eslint",
     "lint:tailwind": "node -r ts-node/register ./scripts/check-tailwind.ts",
+    "perf:audit": "npx tsx scripts/performance-audit.ts",
+    "perf:fix-icons": "npx tsx scripts/fix-lucide-imports.ts",
     "test": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register --exclude \"tests/integration/**/*.test.ts\" \"tests/**/*.test.ts\"",
     "test:integration": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register \"tests/integration/**/*.test.ts\"",
     "test:contact-map": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register \"tests/storefront/contact-map.test.ts\" --timeout 30000",
@@ -93,6 +96,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.1.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/canvas-confetti": "^1.9.0",
@@ -106,6 +110,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "baseline-browser-mapping": "^2.9.2",
     "chai": "^4.3.10",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",

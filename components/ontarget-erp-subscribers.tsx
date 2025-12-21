@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Building2, Users, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -16,7 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Building2, Users, Loader2 } from "lucide-react";
+
+
+;
 import { Button } from "@/components/ui/button";
 
 interface CompanyData {

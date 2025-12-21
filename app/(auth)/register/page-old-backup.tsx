@@ -1,5 +1,7 @@
 "use client";
 
+
+import { UserPlus, Mail, Lock, User, Loader2, Eye, EyeOff, CheckCircle2, CreditCard } from "lucide-react";
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,17 +16,15 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  UserPlus,
-  Mail,
-  Lock,
-  User,
-  Loader2,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  CreditCard,
-} from "lucide-react";
+
+
+
+
+
+
+
+
+;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import {
   PLAN_PRICING,

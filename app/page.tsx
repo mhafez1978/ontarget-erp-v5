@@ -1,24 +1,53 @@
+import { ArrowRight, BarChart3, Users, Shield, Globe2, Sparkles } from "lucide-react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  BarChart3,
-  Users,
-  Shield,
-  Globe2,
-  Sparkles,
-} from "lucide-react";
+import dynamic from "next/dynamic";
+
+
+
+
+
+
 import { Button } from "@/components/ui/button";
 import { VisitorTracker } from "@/components/visitor-tracker";
 import { ContactSection } from "@/components/contact-section";
 import { db } from "@/lib/db";
-import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
 import { TestimonialForm } from "@/components/storefront/testimonial-form";
 import Image from "next/image";
-import { Marquee } from "@/components/ui/marquee";
-import { GlobeMarkers } from "@/components/globe/globe-markers";
-import { HomepagePricing } from "@/components/homepage-pricing";
 
-export const revalidate = 0; // Disable caching for pricing updates
+// Lazy load heavy components
+const GlobeMarkers = dynamic(
+  () =>
+    import("@/components/globe/globe-markers").then((mod) => ({
+      default: mod.GlobeMarkers,
+    })),
+  {
+    loading: () => (
+      <div className="w-full h-[600px] flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">
+          Loading globe...
+        </div>
+      </div>
+    ),
+  }
+);
+
+const Marquee = dynamic(() =>
+  import("@/components/ui/marquee").then((mod) => ({ default: mod.Marquee }))
+);
+
+const HomepagePricing = dynamic(() =>
+  import("@/components/homepage-pricing").then((mod) => ({
+    default: mod.HomepagePricing,
+  }))
+);
+
+const AiStorefrontRenderer = dynamic(() =>
+  import("@/components/storefront/ai-storefront-renderer").then((mod) => ({
+    default: mod.AiStorefrontRenderer,
+  }))
+);
+
+export const revalidate = 60; // Cache for 1 minute instead of disabling completely
 
 export default async function HomePage() {
   const rootCompany = await db.company.findFirst({

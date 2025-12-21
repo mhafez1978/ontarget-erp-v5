@@ -1,6 +1,9 @@
+import { BookOpen, Lightbulb, Puzzle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Lightbulb, Puzzle } from "lucide-react";
+
+
+;
 import { Button } from "@/components/ui/button";
 import type { ThemeRendererProps } from "../theme-renderer";
 import { BaseThemeRenderer } from "../theme-renderer";

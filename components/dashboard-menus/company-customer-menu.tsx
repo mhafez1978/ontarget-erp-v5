@@ -1,11 +1,10 @@
-import {
-  LayoutDashboard,
-  ShoppingCart,
-  FileText,
-  Building2,
-  Settings,
-  User,
-} from "lucide-react";
+import { LayoutDashboard, ShoppingCart, FileText, Building2, Settings, User } from "lucide-react";
+
+
+
+
+
+;
 
 export const companyCustomerMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

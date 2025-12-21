@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Calendar, User2, Users, Clock, Target, AlertCircle, Mail, Edit } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,16 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Calendar,
-  User2,
-  Users,
-  Clock,
-  Target,
-  AlertCircle,
-  Mail,
-  Edit,
-} from "lucide-react";
+
+
+
+
+
+
+
+;
 import { InlineEditSection } from "@/components/projects/inline-edit-section";
 import { useState, useEffect } from "react";
 
