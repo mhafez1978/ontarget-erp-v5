@@ -37,7 +37,6 @@ const nextConfig: NextConfig = {
       "motion",
       "date-fns",
     ],
-    webVitalsAttribution: ["CLS", "LCP", "FCP", "FID", "TTFB", "INP"],
   },
 
   images: {
