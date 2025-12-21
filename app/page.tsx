@@ -1,4 +1,3 @@
-import dynamic from "next/dynamic";
 import { cache } from "react";
 import { VisitorTracker } from "@/components/visitor-tracker";
 import { HeroSection } from "@/components/homepage/HeroSection";
@@ -7,39 +6,9 @@ import { ContactSection } from "@/components/contact-section";
 import { PowerfulFeaturesSection } from "@/components/homepage/powerful-features-section";
 import { ApprovedTestimonials } from "@/components/homepage/ApprovedTestimonials";
 import { Footer } from "@/components/homepage/Footer";
+import { HomepagePricing } from "@/components/homepage-pricing";
+import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
 import { db } from "@/lib/db";
-
-const HomepagePricing = dynamic(
-  () =>
-    import("@/components/homepage-pricing").then((mod) => ({
-      default: mod.HomepagePricing,
-    })),
-  {
-    loading: () => (
-      <div className="w-full h-[500px] flex items-center justify-center bg-muted/20 rounded-lg">
-        <div className="animate-pulse text-muted-foreground">
-          Loading pricing...
-        </div>
-      </div>
-    ),
-  }
-);
-
-const AiStorefrontRenderer = dynamic(
-  () =>
-    import("@/components/storefront/ai-storefront-renderer").then((mod) => ({
-      default: mod.AiStorefrontRenderer,
-    })),
-  {
-    loading: () => (
-      <div className="w-full min-h-screen flex items-center justify-center bg-muted/20">
-        <div className="animate-pulse text-muted-foreground">
-          Loading AI storefront...
-        </div>
-      </div>
-    ),
-  }
-);
 
 // Cached data fetching functions - prevents duplicate queries
 const getRootCompany = cache(async () => {
