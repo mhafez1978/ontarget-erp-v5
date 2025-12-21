@@ -1,5 +1,17 @@
 import { ThemeSection } from "@/lib/storefront-themes";
 
+type SectionContent = {
+  title?: string;
+  heading?: string;
+  subtitle?: string;
+  description?: string;
+  primaryCTA?: string;
+  ctaText?: string;
+  layout?: string;
+  id?: string;
+  [key: string]: unknown;
+};
+
 export type SectionChange = {
   action: "added" | "removed" | "modified";
   key: string;
@@ -16,18 +28,24 @@ function sectionKey(s: ThemeSection) {
   if (s.id) return `${s.type}:id:${s.id}`;
   const title =
     (s.content &&
-      (s.content.title || s.content.heading || (s.content as any).id)) ||
+      (s.content.title ||
+        s.content.heading ||
+        (s.content as SectionContent).id)) ||
     null;
   return `${s.type}:${title ?? s.order}`;
 }
 
-function shallowChanged(a: any, b: any) {
+function shallowChanged(a: unknown, b: unknown) {
   if (a === b) return false;
   if (typeof a !== typeof b) return true;
   if (a && b && typeof a === "object") {
     const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
     for (const k of keys) {
-      if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) return true;
+      if (
+        JSON.stringify((a as Record<string, unknown>)[k]) !==
+        JSON.stringify((b as Record<string, unknown>)[k])
+      )
+        return true;
     }
     return false;
   }
@@ -37,11 +55,15 @@ function shallowChanged(a: any, b: any) {
 function summarizeChange(oldS: ThemeSection | null, newS: ThemeSection | null) {
   if (!oldS && newS)
     return `Added ${newS.type} section${
-      (newS.content as any).title ? `: ${(newS.content as any).title}` : ""
+      (newS.content as SectionContent).title
+        ? `: ${(newS.content as SectionContent).title}`
+        : ""
     }`;
   if (oldS && !newS)
     return `Removed ${oldS.type} section${
-      (oldS.content as any).title ? `: ${(oldS.content as any).title}` : ""
+      (oldS.content as SectionContent).title
+        ? `: ${(oldS.content as SectionContent).title}`
+        : ""
     }`;
   if (oldS && newS) {
     // Build a short human readable summary by checking a few common keys
@@ -56,8 +78,8 @@ function summarizeChange(oldS: ThemeSection | null, newS: ThemeSection | null) {
       "layout",
     ];
     for (const f of fields) {
-      const o = (oldS.content as any)[f];
-      const n = (newS.content as any)[f];
+      const o = (oldS.content as SectionContent)[f];
+      const n = (newS.content as SectionContent)[f];
       if (typeof o === "string" || typeof n === "string") {
         if ((o || "") !== (n || "")) {
           changes.push(
@@ -72,8 +94,8 @@ function summarizeChange(oldS: ThemeSection | null, newS: ThemeSection | null) {
       const nKeys = Object.keys(newS.content || {});
       const all = new Set([...oKeys, ...nKeys]);
       for (const k of all) {
-        const ok = (oldS.content as any)[k];
-        const nk = (newS.content as any)[k];
+        const ok = (oldS.content as SectionContent)[k];
+        const nk = (newS.content as SectionContent)[k];
         if (JSON.stringify(ok) !== JSON.stringify(nk)) {
           changes.push(k);
         }
@@ -81,7 +103,9 @@ function summarizeChange(oldS: ThemeSection | null, newS: ThemeSection | null) {
     }
     const prefix = `Modified ${newS.type} section`;
     return `${prefix}${
-      (newS.content as any).title ? `: ${(newS.content as any).title}` : ""
+      (newS.content as SectionContent).title
+        ? `: ${(newS.content as SectionContent).title}`
+        : ""
     } — ${changes.slice(0, 3).join(", ")}`;
   }
   return "Changed section";
@@ -140,7 +164,11 @@ export function computeSectionDiffs(
 
   // Sort for deterministic output: added, modified, removed, then by type
   changes.sort((a, b) => {
-    const order = { added: 0, modified: 1, removed: 2 } as any;
+    const order: Record<SectionChange["action"], number> = {
+      added: 0,
+      modified: 1,
+      removed: 2,
+    };
     if (order[a.action] !== order[b.action])
       return order[a.action] - order[b.action];
     if (a.type < b.type) return -1;
@@ -157,7 +185,9 @@ export function humanReadableSummary(changes: SectionChange[]) {
   return parts.join("; ");
 }
 
-export default {
+const sectionDiffs = {
   computeSectionDiffs,
   humanReadableSummary,
 };
+
+export default sectionDiffs;

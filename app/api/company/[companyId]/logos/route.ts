@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { writeFile, unlink, readdir, mkdir } from "fs/promises";
-import { join, extname, resolve } from "path";
+import { writeFile, readdir, mkdir } from "fs/promises";
+import { extname, resolve } from "path";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { getStorageConfig } from "@/lib/storage-config";
@@ -16,29 +16,6 @@ async function hasStorageConfigured(): Promise<{
   basePath: string;
 } | null> {
   return getStorageConfig();
-}
-/**
- * Extract filename from common urls like /uploads/logos/{id}/{file} or full URLs
- */
-function filenameFromUrl(url?: string | null): string | null {
-  if (!url) return null;
-  try {
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      const p = new URL(url).pathname;
-      return p.split("/").pop() || null;
-    }
-
-    // Also handle data: urls
-    if (url.startsWith("data:")) {
-      return null;
-    }
-
-    // Fallback: path-like url
-    const parts = url.split("/");
-    return parts.pop() || null;
-  } catch (_error) {
-    return null;
-  }
 }
 
 /**

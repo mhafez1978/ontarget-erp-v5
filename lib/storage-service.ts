@@ -358,9 +358,10 @@ export async function uploadDocument(
   primaryPath: string;
   backupPath?: string;
   storageProvider: string;
+  mimeType: string;
 }> {
-  // mimeType is accepted so callers can provide the file's content-type (used by UI icons or downstream
-  // processors). It's optional to avoid forcing callers that don't have a value.
+  // Detect mimeType if not provided
+  const detectedMimeType = mimeType || getMimeTypeFromExtension(fileName);
 
   const storage = await getCompanyStorage(companyId);
   const company = await db.company.findUnique({
@@ -419,6 +420,7 @@ export async function uploadDocument(
     primaryPath: primaryFullPath,
     backupPath: backupFullPath,
     storageProvider: storage.primary.provider,
+    mimeType: detectedMimeType,
   };
 }
 

@@ -1,6 +1,5 @@
 "use client";
 
-
 import { LogIn, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -17,11 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-
-
-
-
-;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 
 export default function LoginPage() {

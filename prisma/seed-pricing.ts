@@ -1,10 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const db = new PrismaClient();
 
 async function seedPricing() {
-  console.log("Seeding plan pricing...");
-
   const pricingData = [
     {
       plan: "ESSENTIAL",
@@ -48,7 +46,7 @@ async function seedPricing() {
   ];
 
   for (const pricing of pricingData) {
-    await prisma.planPricing.upsert({
+    await db.planPricing.upsert({
       where: { plan: pricing.plan },
       update: pricing,
       create: pricing,
@@ -65,5 +63,5 @@ seedPricing()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });

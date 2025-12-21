@@ -1,5 +1,4 @@
 import { cache } from "react";
-import { VisitorTracker } from "@/components/visitor-tracker";
 import { HeroSection } from "@/components/homepage/HeroSection";
 import { CTA1Section } from "@/components/homepage/CTA1Section";
 import { ContactSection } from "@/components/contact-section";
@@ -83,7 +82,6 @@ export default async function HomePage() {
   if (aiEnabled && rootCompany?.aiStorefrontSpec) {
     return (
       <div className="flex flex-col min-h-screen">
-        <VisitorTracker />
         <AiStorefrontRenderer
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           spec={rootCompany.aiStorefrontSpec as any}
@@ -96,7 +94,6 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <VisitorTracker />
       {/* Hero Section */}
       <HeroSection />
       {/* Features Section */}

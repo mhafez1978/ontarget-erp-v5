@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+// Define a more specific schema for section content values
+const sectionContentValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(z.string()),
+  z.array(z.record(z.string(), z.unknown())),
+  z.record(z.string(), z.unknown()),
+  z.undefined(),
+]);
+
 export const aiFrontstoreSectionTypeSchema = z.enum([
   "announcement-bar",
   "header",
@@ -24,7 +35,7 @@ export const aiFrontstoreSectionSchema = z.object({
   className: z.string().optional(),
   type: aiFrontstoreSectionTypeSchema,
   order: z.number().int(),
-  content: z.record(z.string(), z.unknown()),
+  content: z.record(z.string(), sectionContentValueSchema),
   layout: z
     .object({
       contentWidth: z.enum(["narrow", "medium", "wide", "full"]).optional(),

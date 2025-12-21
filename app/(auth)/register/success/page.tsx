@@ -4,7 +4,6 @@
 import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-;
 
 export default function RegisterSuccessPage() {
   const router = useRouter();

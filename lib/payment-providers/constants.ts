@@ -14,6 +14,7 @@ export enum PaymentProviderName {
   PAYPAL = "paypal",
   SQUARE = "square",
   AUTHORIZE_NET = "authorize_net",
+  PAYMOB = "paymob",
 }
 
 // Request timeout (30 seconds)
@@ -22,3 +23,5 @@ export const PAYMENT_API_TIMEOUT_MS = 30000;
 // Environment variables
 export const PAYPAL_BASE_URL_SANDBOX = "https://api-m.sandbox.paypal.com";
 export const PAYPAL_BASE_URL_LIVE = "https://api-m.paypal.com";
+
+export const PAYMOB_BASE_URL = "https://accept.paymob.com/api";

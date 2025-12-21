@@ -12,7 +12,6 @@ import {
   WebhookVerification,
 } from "./base";
 import {
-  CENTS_PER_DOLLAR,
   PaymentProviderName,
   PAYPAL_BASE_URL_SANDBOX,
   PAYPAL_BASE_URL_LIVE,
@@ -221,10 +220,13 @@ export class PayPalProvider extends PaymentProvider {
       const accessToken = await this.getAccessToken();
 
       // Parse the webhook payload with error handling
-      let event: any;
+      let event: Record<string, unknown>;
       try {
         event = JSON.parse(payload);
-      } catch (parseError) {
+      } catch (error) {
+        console.log(
+          error instanceof Error ? error.message : JSON.stringify(error)
+        );
         return {
           isValid: false,
           errorMessage: "Invalid JSON payload",

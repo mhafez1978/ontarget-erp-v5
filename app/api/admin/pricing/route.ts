@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const pricing = await db.planPricing.findMany({
       orderBy: { monthlyPrice: "asc" },

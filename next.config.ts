@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
 
 // Bundle analyzer (run with: npm run build:analyze)
-const withBundleAnalyzer = require("@next/bundle-analyzer")({
+const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
 
@@ -93,6 +94,11 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "robohash.org",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
         pathname: "/**",
       },
     ],

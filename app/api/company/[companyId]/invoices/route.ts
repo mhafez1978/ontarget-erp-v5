@@ -46,9 +46,14 @@ export async function GET(
       Math.max(1, Number(url.searchParams.get("pageSize") || "20"))
     );
 
-    const where: any = { companyId };
+    const where: {
+      companyId: string;
+      status?: import("@prisma/client").InvoiceStatus;
+    } = { companyId };
     const status = url.searchParams.get("status");
-    if (status) where.status = status.toUpperCase();
+    if (status)
+      where.status =
+        status.toUpperCase() as import("@prisma/client").InvoiceStatus;
 
     const [invoices, total] = await Promise.all([
       db.invoice.findMany({

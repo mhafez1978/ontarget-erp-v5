@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const db = new PrismaClient();
+import { db } from "@/lib/db";
 
 async function seedPricing() {
   try {
@@ -63,7 +61,7 @@ async function seedPricing() {
     ];
 
     for (const pricing of defaultPricing) {
-      const result = await db.planPricing.upsert({
+      await db.planPricing.upsert({
         where: { plan: pricing.plan },
         update: pricing,
         create: pricing,

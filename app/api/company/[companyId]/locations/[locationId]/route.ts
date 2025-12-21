@@ -5,7 +5,10 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 
 // PATCH /api/company/[companyId]/locations/[locationId] - Update a location
-export async function PATCH(request: NextRequest, context: any) {
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ companyId: string; locationId: string }> }
+) {
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);
@@ -214,7 +217,10 @@ export async function PATCH(request: NextRequest, context: any) {
 }
 
 // DELETE /api/company/[companyId]/locations/[locationId] - Delete a location
-export async function DELETE(request: NextRequest, context: any) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ companyId: string; locationId: string }> }
+) {
   try {
     // Validate session
     const validation = await validateSessionForAPI(request);

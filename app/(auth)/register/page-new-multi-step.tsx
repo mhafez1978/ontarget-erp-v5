@@ -1,25 +1,25 @@
 "use client";
 
-
-import { Mail, Lock, User, Loader2, Eye, EyeOff, CheckCircle2, ArrowRight, Check, ShieldCheck, Quote, Building2 } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  User,
+  Loader2,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  ArrowRight,
+  Check,
+  ShieldCheck,
+  Quote,
+  Building2,
+} from "lucide-react";
 import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-
-
-
-
-
-
-
-
-
-
-;
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { PaymentForm } from "@/components/payment-form";
@@ -63,17 +63,6 @@ function RegisterForm() {
   const [clientSecret, setClientSecret] = useState<string>("");
   const [customerId, setCustomerId] = useState<string>("");
   const [paymentMethodId, setPaymentMethodId] = useState<string>("");
-  const [paymentSummary, setPaymentSummary] = useState<{
-    brand?: string;
-    last4?: string;
-  }>({});
-  const [cardData, setCardData] = useState({
-    cardNumber: "",
-    cardHolder: "",
-    expiryDate: "",
-    cvv: "",
-    cardBrand: "visa" as "visa" | "mastercard" | "amex" | "discover",
-  });
   const [isPaymentValid, setIsPaymentValid] = useState(false);
   const [billingAddress, setBillingAddress] = useState<AddressData>({
     addressLine1: "",
@@ -688,14 +677,9 @@ function RegisterForm() {
             }}
           >
             <PaymentForm
-              onCardDataChange={setCardData}
               onValidationChange={setIsPaymentValid}
-              onPaymentMethodCreated={(id, details) => {
+              onPaymentMethodCreated={(id) => {
                 setPaymentMethodId(id);
-                setPaymentSummary({
-                  brand: details?.brand,
-                  last4: details?.last4,
-                });
               }}
             />
           </Elements>

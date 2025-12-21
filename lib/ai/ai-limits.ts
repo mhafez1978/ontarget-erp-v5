@@ -12,7 +12,7 @@ export const AI_STOREFRONT_MONTHLY_LIMITS: Record<
   GUEST: 0,
   COMPANY_CUSTOMER: 0,
   ESSENTIAL: 0,
-  GROWTH: 6,
+  GROWTH: 10,
   ENTERPRISE: 20,
 };
 
@@ -22,4 +22,3 @@ export function getAiStorefrontMonthlyLimit(
   if (!plan) return 0;
   return AI_STOREFRONT_MONTHLY_LIMITS[plan] ?? 0;
 }
-
