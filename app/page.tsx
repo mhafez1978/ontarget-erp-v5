@@ -1,12 +1,42 @@
 import { cache } from "react";
+import dynamic from "next/dynamic";
 import { HeroSection } from "@/components/homepage/HeroSection";
-import { CTA1Section } from "@/components/homepage/CTA1Section";
-import { ContactSection } from "@/components/contact-section";
-import { PowerfulFeaturesSection } from "@/components/homepage/powerful-features-section";
-import { ApprovedTestimonials } from "@/components/homepage/ApprovedTestimonials";
-import { Footer } from "@/components/homepage/Footer";
-import { HomepagePricing } from "@/components/homepage-pricing";
-import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
+
+// Lazy load below-the-fold components to reduce initial JS
+const CTA1Section = dynamic(() =>
+  import("@/components/homepage/CTA1Section").then((m) => ({
+    default: m.CTA1Section,
+  }))
+);
+const ContactSection = dynamic(() =>
+  import("@/components/contact-section").then((m) => ({
+    default: m.ContactSection,
+  }))
+);
+const PowerfulFeaturesSection = dynamic(() =>
+  import("@/components/homepage/powerful-features-section").then((m) => ({
+    default: m.PowerfulFeaturesSection,
+  }))
+);
+const ApprovedTestimonials = dynamic(() =>
+  import("@/components/homepage/ApprovedTestimonials").then((m) => ({
+    default: m.ApprovedTestimonials,
+  }))
+);
+const Footer = dynamic(() =>
+  import("@/components/homepage/Footer").then((m) => ({ default: m.Footer }))
+);
+const HomepagePricing = dynamic(() =>
+  import("@/components/homepage-pricing").then((m) => ({
+    default: m.HomepagePricing,
+  }))
+);
+const AiStorefrontRenderer = dynamic(() =>
+  import("@/components/storefront/ai-storefront-renderer").then((m) => ({
+    default: m.AiStorefrontRenderer,
+  }))
+);
+
 import { db } from "@/lib/db";
 
 // Cached data fetching functions - prevents duplicate queries
