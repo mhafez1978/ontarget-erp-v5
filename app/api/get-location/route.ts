@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import { db } from "@/lib/db";
 // Small in-memory TTL cache for recent lookups to reduce provider calls.
 // Use globalThis to survive hot module reloads in development.
 type CacheItem = { payload: unknown; expiresAt: number };
@@ -38,6 +38,16 @@ export function __clearGetLocationCache() {
 
 export async function GET(request: NextRequest) {
   try {
+    // Get provider settings from database
+    const settings = await db.geoTrackingSetting.findFirst();
+
+    if (!settings || !settings.enabled) {
+      return NextResponse.json(
+        { error: "Geo tracking is disabled" },
+        { status: 403 }
+      );
+    }
+
     // Get client IP from headers (forwarded by proxy/load balancer)
     const forwardedFor = request.headers.get("x-forwarded-for");
     const realIp = request.headers.get("x-real-ip");
@@ -45,12 +55,6 @@ export async function GET(request: NextRequest) {
     // x-forwarded-for can contain multiple IPs (client, proxy1, proxy2...)
     // The first one is the real client IP
     const clientIp = forwardedFor?.split(",")[0]?.trim() || realIp;
-
-    // Build the URL - if we have a client IP, query it specifically
-    // Otherwise, ipapi.co will detect the server's IP
-    const apiUrl = clientIp
-      ? `https://ipapi.co/${clientIp}/json/`
-      : "https://ipapi.co/json/";
 
     // Cache key - prefer client IP but fall back to server-level key
     const origin = request?.nextUrl?.origin || "unknown";
@@ -63,12 +67,52 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cached);
     }
 
-    // Fetch from ipapi.co - this will return location for the specified IP
-    const response = await fetch(apiUrl, {
-      headers: {
-        "User-Agent": "NextJS-App",
-      },
-    });
+    // Build API URL based on provider
+    let apiUrl: string;
+    const headers: HeadersInit = {
+      "User-Agent": "OnTarget-ERP",
+    };
+
+    switch (settings.provider) {
+      case "IP_API":
+        apiUrl = clientIp
+          ? `http://ip-api.com/json/${clientIp}?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,query`
+          : "http://ip-api.com/json/?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,query";
+        break;
+
+      case "IPINFO":
+        if (!settings.apiKey) {
+          return NextResponse.json(
+            { error: "IPinfo.io API key not configured" },
+            { status: 500 }
+          );
+        }
+        apiUrl = clientIp
+          ? `https://ipinfo.io/${clientIp}/json?token=${settings.apiKey}`
+          : `https://ipinfo.io/json?token=${settings.apiKey}`;
+        break;
+
+      case "IPGEOLOCATION":
+        if (!settings.apiKey) {
+          return NextResponse.json(
+            { error: "IP Geolocation API key not configured" },
+            { status: 500 }
+          );
+        }
+        apiUrl = clientIp
+          ? `https://api.ipgeolocation.io/ipgeo?apiKey=${settings.apiKey}&ip=${clientIp}`
+          : `https://api.ipgeolocation.io/ipgeo?apiKey=${settings.apiKey}`;
+        break;
+
+      default:
+        return NextResponse.json(
+          { error: "Invalid geo tracking provider" },
+          { status: 500 }
+        );
+    }
+
+    // Fetch from provider
+    const response = await fetch(apiUrl, { headers });
 
     if (!response.ok) {
       // Rate limited or API error - try to at least return the client IP
@@ -95,17 +139,80 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const data = await response.json();
+    const apiData = await response.json();
+
+    // Normalize response based on provider
+    let data: Record<string, unknown>;
+
+    switch (settings.provider) {
+      case "IP_API":
+        if (apiData.status === "fail") {
+          return NextResponse.json(
+            { error: apiData.message || "API request failed" },
+            { status: 400 }
+          );
+        }
+        data = {
+          ip: apiData.query,
+          ipv4: !apiData.query?.includes(":") ? apiData.query : null,
+          ipv6: apiData.query?.includes(":") ? apiData.query : null,
+          city: apiData.city,
+          region: apiData.regionName || apiData.region,
+          country_name: apiData.country,
+          country_code: apiData.countryCode,
+          latitude: apiData.lat,
+          longitude: apiData.lon,
+          timezone: apiData.timezone,
+        };
+        break;
+
+      case "IPINFO":
+        data = {
+          ip: apiData.ip,
+          ipv4: !apiData.ip?.includes(":") ? apiData.ip : null,
+          ipv6: apiData.ip?.includes(":") ? apiData.ip : null,
+          city: apiData.city,
+          region: apiData.region,
+          country_name: apiData.country,
+          country_code: apiData.country,
+          latitude: apiData.loc?.split(",")[0],
+          longitude: apiData.loc?.split(",")[1],
+          timezone: apiData.timezone,
+        };
+        break;
+
+      case "IPGEOLOCATION":
+        data = {
+          ip: apiData.ip,
+          ipv4: !apiData.ip?.includes(":") ? apiData.ip : null,
+          ipv6: apiData.ip?.includes(":") ? apiData.ip : null,
+          city: apiData.city,
+          region: apiData.state_prov,
+          country_name: apiData.country_name,
+          country_code: apiData.country_code2,
+          latitude: apiData.latitude,
+          longitude: apiData.longitude,
+          timezone: apiData.time_zone?.name,
+        };
+        break;
+
+      default:
+        return NextResponse.json(
+          { error: "Invalid provider" },
+          { status: 500 }
+        );
+    }
 
     // Determine if the IP is IPv4 or IPv6
-    const isIPv6 = data.ip && data.ip.includes(":");
+    const ipString = String(data.ip || "");
+    const isIPv6 = ipString.includes(":");
     // console.log(
     //   `Primary IP from ipapi.co: ${data.ip} (${isIPv6 ? "IPv6" : "IPv4"})`
     // );
 
     // Try to get IPv4 address as well if current is IPv6
-    let ipv4 = isIPv6 ? null : data.ip;
-    const ipv6 = isIPv6 ? data.ip : null;
+    let ipv4 = isIPv6 ? null : ipString;
+    const ipv6 = isIPv6 ? ipString : null;
 
     // If we got IPv6, try to also fetch IPv4 from multiple services
     if (isIPv6 && ipv4 === null) {
@@ -189,17 +296,17 @@ export async function GET(request: NextRequest) {
 
     // Convert country code to flag emoji
     const flag = data.country_code
-      ? countryCodeToFlag(data.country_code)
+      ? countryCodeToFlag(String(data.country_code))
       : null;
 
     const payload = {
-      ip: data.ip || "Unknown",
+      ip: String(data.ip || "Unknown"),
       ipv4: ipv4,
       ipv6: ipv6,
-      city: data.city || null,
-      region: data.region || null,
-      country_name: data.country_name || null,
-      country_code: data.country_code || null,
+      city: data.city ? String(data.city) : null,
+      region: data.region ? String(data.region) : null,
+      country_name: data.country_name ? String(data.country_name) : null,
+      country_code: data.country_code ? String(data.country_code) : null,
       flag,
       latitude: data.latitude || null,
       longitude: data.longitude || null,
