@@ -452,7 +452,10 @@ export async function POST(request: NextRequest) {
     try {
       if (heroSize && result.spec && typeof result.spec === "object") {
         // Normalize spec to an object shape then safely merge meta
-        const specObj = result.spec as Record<string, unknown> | null;
+        const specObj = result.spec as unknown as Record<
+          string,
+          unknown
+        > | null;
         const prevMeta =
           (specObj?.meta as Record<string, unknown> | undefined) || {};
         specObj!.meta = { ...prevMeta, heroSize } as unknown;

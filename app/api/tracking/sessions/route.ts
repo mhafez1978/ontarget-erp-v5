@@ -1,3 +1,7 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { lookupGeoByIp, countryCodeToFlag } from "@/lib/ip-lookup";
+
 interface ActiveSession {
   id: string;
   userName: string | null;
@@ -11,94 +15,86 @@ interface ActiveSession {
   sessionIpAddress: string | null;
   sessionIpv4: string | null;
   sessionIpv6: string | null;
-  createdAt: string;
   expiresAt: string;
 }
 
+async function enrichSessionGeo(session: {
+  sessionCity: string | null;
+  sessionState: string | null;
+  sessionCountry: string | null;
+  sessionCountryFlag: string | null;
+  sessionIpv4: string | null;
+  sessionIpv6: string | null;
+  sessionIpAddress: string | null;
+}) {
+  let { sessionCity, sessionState, sessionCountry, sessionCountryFlag } =
+    session;
+
+  // Skip if we already have location data
+  if (sessionCity && sessionCountry) {
+    return { sessionCity, sessionState, sessionCountry, sessionCountryFlag };
+  }
+
+  // Try geo lookup if we have an IP
+  const ipForLookup =
+    session.sessionIpv4 || session.sessionIpv6 || session.sessionIpAddress;
+  if (!ipForLookup) {
+    return { sessionCity, sessionState, sessionCountry, sessionCountryFlag };
+  }
+
+  try {
+    const geo = await lookupGeoByIp(ipForLookup);
+    if (geo) {
+      sessionCity = geo.city || sessionCity;
+      sessionState = geo.region || sessionState;
+      sessionCountry = geo.country || sessionCountry;
+      sessionCountryFlag =
+        sessionCountryFlag || countryCodeToFlag(geo.countryCode) || null;
+    }
+  } catch (error) {
+    console.error("Geo lookup failed for session IP:", ipForLookup, error);
+  }
+
+  return { sessionCity, sessionState, sessionCountry, sessionCountryFlag };
+}
+
+/**
+ * GET /api/tracking/sessions
+ * Fetches all active user sessions with geo enrichment
+ */
 export async function GET() {
   try {
-    // Get active sessions (not expired)
-    const now = new Date();
-
     const sessions = await db.session.findMany({
-      where: {
-        expires: {
-          gt: now,
-        },
-      },
+      where: { expires: { gt: new Date() } },
       include: {
         user: {
           include: {
             companyMemberships: {
               take: 1,
-              orderBy: {
-                joinedAt: "desc",
-              },
-              include: {
-                company: true,
-              },
+              orderBy: { joinedAt: "desc" },
+              include: { company: true },
             },
           },
         },
       },
-      orderBy: {
-        id: "desc",
-      },
+      orderBy: { id: "desc" },
     });
 
-    const formattedSessions = await Promise.all(
+    const formattedSessions: ActiveSession[] = await Promise.all(
       sessions.map(async (session) => {
-        let sessionCity = session.sessionCity;
-        let sessionState = session.sessionState;
-        let sessionCountry = session.sessionCountry;
-        let sessionCountryFlag = session.sessionCountryFlag;
-
-        if (
-          !sessionCity &&
-          !sessionCountry &&
-          (session.sessionIpv4 ||
-            session.sessionIpv6 ||
-            session.sessionIpAddress)
-        ) {
-          const ipForLookup =
-            session.sessionIpv4 ||
-            session.sessionIpv6 ||
-            session.sessionIpAddress;
-          try {
-            const geo = await lookupGeoByIp(ipForLookup);
-            if (geo) {
-              sessionCity = geo.city || sessionCity;
-              sessionState = geo.region || sessionState;
-              sessionCountry = geo.country || sessionCountry;
-              sessionCountryFlag =
-                sessionCountryFlag ||
-                countryCodeToFlag(geo.countryCode) ||
-                null;
-            }
-          } catch (error) {
-            console.error(
-              "Geo lookup failed for active session:",
-              ipForLookup,
-              error
-            );
-          }
-        }
+        const geoData = await enrichSessionGeo(session);
+        const membership = session.user?.companyMemberships[0];
 
         return {
           id: session.id,
           userName: session.user?.name || null,
           userEmail: session.user?.email || null,
-          companyName:
-            session.user?.companyMemberships[0]?.company?.name || null,
+          companyName: membership?.company?.name || null,
           role: session.user?.role || "GUEST",
-          sessionCity,
-          sessionState,
-          sessionCountry,
-          sessionCountryFlag,
+          ...geoData,
           sessionIpAddress: session.sessionIpAddress,
           sessionIpv4: session.sessionIpv4,
           sessionIpv6: session.sessionIpv6,
-          createdAt: session.createdAt.toISOString(),
           expiresAt: session.expires.toISOString(),
         };
       })

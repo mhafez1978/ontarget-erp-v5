@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Key, Shield, Clock, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -14,11 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-
-
-
-
-import Link as LinkIcon from "lucide-react/dist/esm/icons/link as link-icon";;
+import { Link } from "lucide-react";
 import { toast } from "sonner";
 
 interface AccountInfo {
@@ -310,7 +305,7 @@ export function LoginMethodsCard() {
 
             {loginMethods.length === 0 && (
               <div className="text-center py-8">
-                <LinkIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <Link className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-sm text-muted-foreground">
                   No login methods found. This should not happen.
                 </p>
@@ -321,7 +316,7 @@ export function LoginMethodsCard() {
           {/* Add New Method Button */}
           <div className="mt-6 pt-6 border-t">
             <Button variant="outline" className="w-full">
-              <LinkIcon className="h-4 w-4 mr-2" />
+              <Link className="h-4 w-4 mr-2" />
               Link Another Account
             </Button>
           </div>

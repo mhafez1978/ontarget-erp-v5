@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   generateEtags: false,
   // Security headers for better Lighthouse best practices score
-
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400, // Cache images for 24 hours
@@ -109,10 +108,6 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
-  },
-  typescript: {
-    // allow production builds even with TS type errors (use with caution)
-    ignoreBuildErrors: true,
   },
 };
 
