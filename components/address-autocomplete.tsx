@@ -584,6 +584,7 @@ interface AddressAutocompleteProps {
   value: AddressData;
   onChange: (address: AddressData) => void;
   required?: boolean;
+  disabled?: boolean;
 }
 
 export function AddressAutocomplete({
@@ -591,6 +592,7 @@ export function AddressAutocomplete({
   value,
   onChange,
   required = false,
+  disabled = false,
 }: AddressAutocompleteProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
@@ -743,6 +745,7 @@ export function AddressAutocomplete({
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10"
+            disabled={disabled}
           />
 
           {isSearching && (
@@ -817,6 +820,7 @@ export function AddressAutocomplete({
             type="text"
             placeholder="123 Main Street"
             value={safeValue.addressLine1}
+            disabled={disabled}
             onChange={(e) => {
               if (typeof onChange === "function") {
                 onChange({ ...safeValue, addressLine1: e.target.value });
@@ -832,6 +836,7 @@ export function AddressAutocomplete({
             type="text"
             placeholder="Apt 4B"
             value={safeValue.addressLine2}
+            disabled={disabled}
             onChange={(e) => {
               if (typeof onChange === "function") {
                 onChange({ ...safeValue, addressLine2: e.target.value });
@@ -847,6 +852,7 @@ export function AddressAutocomplete({
             type="text"
             placeholder="New York"
             value={safeValue.city}
+            disabled={disabled}
             onChange={(e) => {
               if (typeof onChange === "function") {
                 onChange({ ...safeValue, city: e.target.value });
@@ -862,6 +868,7 @@ export function AddressAutocomplete({
             type="text"
             placeholder="New York"
             value={safeValue.state}
+            disabled={disabled}
             onChange={(e) => {
               if (typeof onChange === "function") {
                 onChange({ ...safeValue, state: e.target.value });
@@ -883,6 +890,7 @@ export function AddressAutocomplete({
               type="text"
               placeholder="United States"
               value={safeValue.country}
+              disabled={disabled}
               onChange={(e) => {
                 if (typeof onChange === "function") {
                   onChange({ ...safeValue, country: e.target.value });
@@ -900,6 +908,7 @@ export function AddressAutocomplete({
             type="text"
             placeholder="10001"
             value={safeValue.postalCode}
+            disabled={disabled}
             onChange={(e) => {
               if (typeof onChange === "function") {
                 onChange({ ...safeValue, postalCode: e.target.value });
