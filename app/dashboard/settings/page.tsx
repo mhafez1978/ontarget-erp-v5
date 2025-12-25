@@ -1,7 +1,22 @@
 "use client";
 
-
-import { MapPin, Info, Key, CheckCircle2, XCircle, TrendingUp, Database, Users, Mail, Eye, EyeOff, UsersRound, Sparkles, CreditCard, Lock } from "lucide-react";
+import {
+  MapPin,
+  Info,
+  Key,
+  CheckCircle2,
+  XCircle,
+  TrendingUp,
+  Database,
+  Users,
+  Mail,
+  Eye,
+  EyeOff,
+  UsersRound,
+  Sparkles,
+  CreditCard,
+  Lock,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -17,20 +32,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-;
+import { GeoTrackingProviderCards } from "@/components/geo-tracking-provider-cards";
 import PaymentProviderCards from "@/components/payment-provider-cards";
 import { StorageProviderCards } from "@/components/storage-provider-cards";
 import { EmailProviderCards } from "@/components/email-provider-cards";
@@ -765,123 +767,8 @@ export default function SettingsPage() {
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="space-y-6 pt-4">
-                {/* Toggle */}
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-1 flex-1">
-                    <Label
-                      htmlFor="geo-tracking"
-                      className="text-base font-medium"
-                    >
-                      Enable Geo Tracking
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Track visitor and user locations when they visit or log in
-                    </p>
-                  </div>
-                  <Switch
-                    id="geo-tracking"
-                    checked={geoTrackingEnabled}
-                    onCheckedChange={handleGeoTrackingToggle}
-                    disabled={isLoading}
-                  />
-                </div>
-
-                {/* API Information */}
-                <div className="rounded-lg bg-muted p-6 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Info className="h-5 w-5 text-primary mt-0.5" />
-                    <div className="space-y-2 flex-1">
-                      <h3 className="font-semibold text-base">
-                        About Geo Tracking API
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        This feature uses <strong>ipapi.co</strong> - a free
-                        geolocation API that provides accurate location data
-                        without requiring an API key.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <h4 className="font-medium mb-1">Features:</h4>
-                      <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
-                        <li>
-                          Free tier: 30,000 requests per month (1,000/day)
-                        </li>
-                        <li>No API key required</li>
-                        <li>
-                          Tracks: IP address, city, state/province, country,
-                          country flag
-                        </li>
-                        <li>Automatic rate limiting protection</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="font-medium mb-1">How it works:</h4>
-                      <ul className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
-                        <li>
-                          <strong>Visitors:</strong> When someone lands on your
-                          frontpage, their location is captured and stored as a
-                          guest visit
-                        </li>
-                        <li>
-                          <strong>Users:</strong> When users log in, their
-                          current session location is tracked in real-time
-                        </li>
-                        <li>
-                          <strong>Session End:</strong> When a user logs out,
-                          their session location data is transferred to their
-                          user profile as &quot;last login&quot; information
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="font-medium mb-1">Data Collected:</h4>
-                      <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
-                        <li>IP Address</li>
-                        <li>City</li>
-                        <li>State/Province</li>
-                        <li>Country Name</li>
-                        <li>Country Flag Emoji</li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open("https://ipapi.co/", "_blank")}
-                    >
-                      Learn More About ipapi.co
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Status</p>
-                      <p className="text-xs text-muted-foreground">
-                        {geoTrackingEnabled
-                          ? "Geo tracking is currently active"
-                          : "Geo tracking is currently inactive"}
-                      </p>
-                    </div>
-                    <div
-                      className={`h-3 w-3 rounded-full ${
-                        geoTrackingEnabled
-                          ? "bg-green-500 animate-pulse"
-                          : "bg-gray-300"
-                      }`}
-                    />
-                  </div>
-                </div>
+              <div className="pt-4">
+                <GeoTrackingProviderCards />
               </div>
             </AccordionContent>
           </AccordionItem>

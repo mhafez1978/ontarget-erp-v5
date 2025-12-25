@@ -776,9 +776,14 @@ model AuditLog {
 model GeoTrackingSetting {
   id        String   @id @default(cuid())
   enabled   Boolean  @default(false)
-  apiUrl    String   @default("https://ipapi.co/json/")
+  provider  String   @default("IP_API") // "IP_API", "IPINFO", "IPGEOLOCATION"
+  apiKey    String?  @db.Text // Encrypted API key (required for IPINFO and IPGEOLOCATION)
+  apiUrl    String?  // Custom API URL override
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([enabled])
+  @@index([provider])
 }
 
 // OAuth Provider Settings (currently system-wide, can be made per-company in future)
