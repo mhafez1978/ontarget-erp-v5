@@ -31,7 +31,8 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-        testUrl = `https://ipinfo.io/json?token=${apiKey}`;
+        headers["Authorization"] = `Bearer ${apiKey}`;
+        testUrl = `https://ipinfo.io/json`;
         break;
 
       case "IPGEOLOCATION":
