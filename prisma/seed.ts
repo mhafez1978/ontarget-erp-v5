@@ -3,7 +3,7 @@
  To avoid TypeScript/ts-node permission problems, a JS seed is available at
  `prisma/seed.mjs` and package.json's `seed` script calls it. Prefer `npm run seed`.
 */
-import { db as prisma } from "../scripts/db.mjs";
+import { db as prisma } from "../lib/db";
 
 async function main() {
   console.log("Starting seed...");
