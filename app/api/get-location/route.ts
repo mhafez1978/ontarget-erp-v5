@@ -87,9 +87,10 @@ export async function GET(request: NextRequest) {
             { status: 500 }
           );
         }
+        headers["Authorization"] = `Bearer ${settings.apiKey}`;
         apiUrl = clientIp
-          ? `https://ipinfo.io/${clientIp}/json?token=${settings.apiKey}`
-          : `https://ipinfo.io/json?token=${settings.apiKey}`;
+          ? `https://ipinfo.io/${clientIp}/json`
+          : `https://ipinfo.io/json`;
         break;
 
       case "IPGEOLOCATION":

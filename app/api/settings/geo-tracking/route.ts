@@ -6,11 +6,22 @@ export async function GET(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
 
-    if (!validation.valid || validation.user.role !== "SUPER_ADMIN") {
+    if (!validation.valid) {
+      console.error("[Geo Tracking GET] Validation failed:", validation.reason);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (validation.user.role !== "SUPER_ADMIN") {
+      console.error(
+        "[Geo Tracking GET] User is not SUPER_ADMIN:",
+        validation.user.role
+      );
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const settings = await db.geoTrackingSetting.findFirst();
+
+    console.log("[Geo Tracking GET] Settings:", settings);
 
     return NextResponse.json({
       enabled: settings?.enabled || false,
@@ -19,6 +30,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching geo tracking settings:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
     return NextResponse.json(
       { error: "Failed to fetch settings" },
       { status: 500 }
@@ -28,13 +40,33 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const validation = await validateSessionForAPI(request);
+    console.log("[Geo Tracking POST] Starting...");
 
-    if (!validation.valid || validation.user.role !== "SUPER_ADMIN") {
+    const validation = await validateSessionForAPI(request);
+    console.log("[Geo Tracking POST] Validation result:", {
+      valid: validation.valid,
+      role: validation.valid ? validation.user.role : "N/A",
+    });
+
+    if (!validation.valid) {
+      console.error(
+        "[Geo Tracking POST] Validation failed:",
+        validation.reason
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (validation.user.role !== "SUPER_ADMIN") {
+      console.error(
+        "[Geo Tracking POST] User is not SUPER_ADMIN:",
+        validation.user.role
+      );
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
+    console.log("[Geo Tracking POST] Request body:", body);
+
     const { enabled, provider, apiKey } = body;
 
     // Validate provider
@@ -71,8 +103,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error saving geo tracking settings:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "N/A");
+    console.error("Error details:", JSON.stringify(error, null, 2));
     return NextResponse.json(
-      { error: "Failed to save settings" },
+      {
+        error: "Failed to save settings",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
