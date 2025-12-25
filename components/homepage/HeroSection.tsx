@@ -1,24 +1,24 @@
 import { Sparkles, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import dynamic from "next/dynamic";
+// import dynamic from "next/dynamic";
 
 // Lazy load heavy components with proper loading states
-const GlobeMarkers = dynamic(
-  () =>
-    import("@/components/globe/globe-markers").then((mod) => ({
-      default: mod.GlobeMarkers,
-    })),
-  {
-    loading: () => (
-      <div className="w-full h-[600px] flex items-center justify-center bg-muted/20 rounded-lg">
-        <div className="animate-pulse text-muted-foreground">
-          Loading globe...
-        </div>
-      </div>
-    ),
-  }
-);
+// const GlobeMarkers = dynamic(
+//   () =>
+//     import("@/components/globe/globe-markers").then((mod) => ({
+//       default: mod.GlobeMarkers,
+//     })),
+//   {
+//     loading: () => (
+//       <div className="w-full h-[600px] flex items-center justify-center bg-muted/20 rounded-lg">
+//         <div className="animate-pulse text-muted-foreground">
+//           Loading globe...
+//         </div>
+//       </div>
+//     ),
+//   }
+// );
 
 export function HeroSection() {
   return (
@@ -65,9 +65,7 @@ export function HeroSection() {
 
         {/* Globe (magic UI) */}
         <div className=" flex justify-center relative">
-          <div className="w-full max-w-4xl">
-            <GlobeMarkers />
-          </div>
+          <div className="w-full max-w-4xl">{/* <GlobeMarkers /> */}</div>
         </div>
 
         {/* Stats */}
