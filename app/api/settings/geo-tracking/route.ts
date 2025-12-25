@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
       await db.geoTrackingSetting.update({
         where: { id: existing.id },
         data: {
-          enabled: enabled ?? existing.enabled,
-          provider: provider ?? existing.provider,
-          apiKey: apiKey || existing.apiKey,
+          enabled: enabled !== undefined ? enabled : existing.enabled,
+          provider: provider || existing.provider,
+          apiKey: apiKey !== undefined ? apiKey || null : existing.apiKey,
           updatedAt: new Date(),
         },
       });
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       await db.geoTrackingSetting.create({
         data: {
           enabled: enabled ?? false,
-          provider: provider ?? "IP_API",
+          provider: provider || "IP_API",
           apiKey: apiKey || null,
         },
       });
