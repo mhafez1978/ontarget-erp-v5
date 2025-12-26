@@ -1,7 +1,16 @@
 "use client";
 
-
-import { CreditCard, Building2, Activity, FileText, CheckCircle2, XCircle, Loader2, Eye, EyeOff } from "lucide-react";
+import {
+  CreditCard,
+  Building2,
+  Activity,
+  FileText,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/dashboard-layout";
@@ -25,15 +34,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-
-
-
-
-
-
-
-
-;
 
 interface PaymentGateway {
   id: string;
@@ -344,7 +344,9 @@ export default function PaymentsPage() {
             Payment Management
           </h1>
           <p className="text-muted-foreground">
-            Manage bank accounts, transactions, and invoices. For payment gateway configuration, go to Settings → Payment Provider Configuration.
+            Manage bank accounts, transactions, and invoices. For payment
+            gateway configuration, go to Settings → Payment Provider
+            Configuration.
           </p>
         </div>
 
