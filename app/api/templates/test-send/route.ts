@@ -3,17 +3,64 @@ import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { sendEmail } from "@/lib/email-service";
 
-const sampleData: Record<string, string> = {
-  userName: "John Doe",
-  email: "john.doe@example.com",
-  staffName: "Jane Smith",
-  companyName: "OnTarget Brands Inc",
-  role: "Manager",
-  resetUrl: "https://example.com/reset-password?token=sample_token_abc123",
-  loginUrl: "https://example.com/login",
-  temporaryPassword: "TempPass123!",
-  currentYear: new Date().getFullYear().toString(),
-};
+/**
+ * Generate sample data with actual company information
+ */
+async function getSampleData(userId: string): Promise<Record<string, string>> {
+  // Try to get user's company or fall back to root company
+  let company = await db.company.findFirst({
+    where: {
+      OR: [
+        { ownerId: userId },
+        {
+          members: {
+            some: { userId: userId },
+          },
+        },
+      ],
+    },
+    select: {
+      id: true,
+      name: true,
+      logo: true,
+    },
+  });
+
+  // If no company found, use root company
+  if (!company) {
+    company = await db.company.findFirst({
+      where: { isRoot: true },
+      select: {
+        id: true,
+        name: true,
+        logo: true,
+      },
+    });
+  }
+
+  const companyName = company?.name || "OnTarget ERP";
+  const companyLogo = company?.logo || "";
+
+  return {
+    userName: "John Doe",
+    email: "john.doe@example.com",
+    staffName: "Jane Smith",
+    companyName,
+    companyLogo,
+    role: "Manager",
+    resetUrl: `${
+      process.env.NEXT_PUBLIC_APP_URL || "https://ontargetbrands.com"
+    }/reset-password?token=sample_token_abc123`,
+    loginUrl: `${
+      process.env.NEXT_PUBLIC_APP_URL || "https://ontargetbrands.com"
+    }/login`,
+    verificationUrl: `${
+      process.env.NEXT_PUBLIC_APP_URL || "https://ontargetbrands.com"
+    }/verify-email?token=sample_token_abc123`,
+    temporaryPassword: "TempPass123!",
+    currentYear: new Date().getFullYear().toString(),
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,6 +92,9 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Get sample data with real company information
+    const sampleData = await getSampleData(user.id);
 
     // Replace variables with sample data
     let subject = template.subject;
