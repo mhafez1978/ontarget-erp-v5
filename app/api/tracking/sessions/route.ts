@@ -15,6 +15,7 @@ interface ActiveSession {
   sessionIpAddress: string | null;
   sessionIpv4: string | null;
   sessionIpv6: string | null;
+  createdAt: string;
   expiresAt: string;
 }
 
@@ -85,6 +86,12 @@ export async function GET() {
         const geoData = await enrichSessionGeo(session);
         const membership = session.user?.companyMemberships[0];
 
+        // Calculate approximate createdAt from expires (sessions last 30 days)
+        const expiresDate = new Date(session.expires);
+        const createdAtApprox = new Date(
+          expiresDate.getTime() - 30 * 24 * 60 * 60 * 1000
+        );
+
         return {
           id: session.id,
           userName: session.user?.name || null,
@@ -95,6 +102,7 @@ export async function GET() {
           sessionIpAddress: session.sessionIpAddress,
           sessionIpv4: session.sessionIpv4,
           sessionIpv6: session.sessionIpv6,
+          createdAt: createdAtApprox.toISOString(),
           expiresAt: session.expires.toISOString(),
         };
       })
