@@ -341,10 +341,10 @@ export default function PaymentsPage() {
       <div className="container mx-auto py-10">
         <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight">
-            Payment Settings
+            Payment Management
           </h1>
           <p className="text-muted-foreground">
-            Configure payment gateways, bank accounts, and manage transactions
+            Manage bank accounts, transactions, and invoices. For payment gateway configuration, go to Settings → Payment Provider Configuration.
           </p>
         </div>
 
@@ -387,12 +387,8 @@ export default function PaymentsPage() {
             </CardHeader>
           </Card>
         ) : (
-          <Tabs defaultValue="gateways" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="gateways">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Payment Gateways
-              </TabsTrigger>
+          <Tabs defaultValue="accounts" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="accounts">
                 <Building2 className="mr-2 h-4 w-4" />
                 Bank Accounts
@@ -407,229 +403,7 @@ export default function PaymentsPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Payment Gateways Tab */}
-            <TabsContent value="gateways" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Gateway Configuration</CardTitle>
-                  <CardDescription>
-                    Configure payment providers to accept payments from
-                    customers
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="provider">Payment Provider</Label>
-                    <Select
-                      value={selectedProvider}
-                      onValueChange={setSelectedProvider}
-                    >
-                      <SelectTrigger id="provider">
-                        <SelectValue placeholder="Select provider" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="stripe">Stripe</SelectItem>
-                        <SelectItem value="paypal">PayPal</SelectItem>
-                        <SelectItem value="square">
-                          Square (Coming Soon)
-                        </SelectItem>
-                        <SelectItem value="authorize_net">
-                          Authorize.Net (Coming Soon)
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="testMode"
-                      checked={gatewayConfig.isTestMode}
-                      onCheckedChange={(checked) =>
-                        setGatewayConfig({
-                          ...gatewayConfig,
-                          isTestMode: checked,
-                        })
-                      }
-                    />
-                    <Label htmlFor="testMode">Test Mode (Sandbox)</Label>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="publicKey">
-                      {selectedProvider === "stripe"
-                        ? "Publishable Key"
-                        : "Client ID"}
-                    </Label>
-                    <Input
-                      id="publicKey"
-                      placeholder={
-                        selectedProvider === "stripe"
-                          ? "pk_test_..."
-                          : "Client ID"
-                      }
-                      value={gatewayConfig.publicKey}
-                      onChange={(e) =>
-                        setGatewayConfig({
-                          ...gatewayConfig,
-                          publicKey: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="secretKey">
-                      {selectedProvider === "stripe"
-                        ? "Secret Key"
-                        : "Client Secret"}
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="secretKey"
-                        type={showSecretKey ? "text" : "password"}
-                        placeholder={
-                          selectedProvider === "stripe"
-                            ? "sk_test_..."
-                            : "Client Secret"
-                        }
-                        value={gatewayConfig.secretKey}
-                        onChange={(e) =>
-                          setGatewayConfig({
-                            ...gatewayConfig,
-                            secretKey: e.target.value,
-                          })
-                        }
-                        className="pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowSecretKey(!showSecretKey)}
-                      >
-                        {showSecretKey ? (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-gray-400" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="webhookSecret">Webhook Secret</Label>
-                    <div className="relative">
-                      <Input
-                        id="webhookSecret"
-                        type={showWebhookSecret ? "text" : "password"}
-                        placeholder="whsec_..."
-                        value={gatewayConfig.webhookSecret}
-                        onChange={(e) =>
-                          setGatewayConfig({
-                            ...gatewayConfig,
-                            webhookSecret: e.target.value,
-                          })
-                        }
-                        className="pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowWebhookSecret(!showWebhookSecret)}
-                      >
-                        {showWebhookSecret ? (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-gray-400" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Button onClick={handleSaveGateway}>
-                      Save Configuration
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleTestConnection}
-                      disabled={testingConnection}
-                    >
-                      {testingConnection ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Testing...
-                        </>
-                      ) : (
-                        "Test Connection"
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Configured Gateways */}
-              {gateways.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configured Gateways</CardTitle>
-                    <CardDescription>
-                      Payment gateways configured for this company
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {gateways.map((gateway) => (
-                        <div
-                          key={gateway.id}
-                          className="flex items-center justify-between p-4 border rounded-lg"
-                        >
-                          <div className="space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-medium capitalize">
-                                {gateway.provider}
-                              </h4>
-                              {gateway.isTestMode && (
-                                <Badge variant="secondary">Test Mode</Badge>
-                              )}
-                              {gateway.lastTestResult === "success" ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              ) : gateway.lastTestResult === "failed" ? (
-                                <XCircle className="h-4 w-4 text-red-500" />
-                              ) : null}
-                            </div>
-                            {gateway.publicKey && (
-                              <p className="text-sm text-muted-foreground">
-                                {gateway.publicKey.slice(0, 20)}...
-                              </p>
-                            )}
-                            {gateway.lastTestedAt && (
-                              <p className="text-xs text-muted-foreground">
-                                Last tested:{" "}
-                                {new Date(
-                                  gateway.lastTestedAt
-                                ).toLocaleString()}
-                              </p>
-                            )}
-                          </div>
-                          <Switch
-                            checked={gateway.isEnabled}
-                            onCheckedChange={(checked) =>
-                              handleToggleGateway(gateway.id, checked)
-                            }
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            {/* Bank Accounts Tab */}
+            {/* Bank Accounts Tab - now the default */}
             <TabsContent value="accounts" className="space-y-4">
               <Card>
                 <CardHeader>
