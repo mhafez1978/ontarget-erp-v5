@@ -307,7 +307,7 @@ export default function SetupPage() {
                 <Input
                   id="companyName"
                   type="text"
-                  placeholder="Acme Corporation"
+                  placeholder="OnTarget Brands Inc"
                   value={formData.companyName}
                   onChange={(e) => {
                     setFormData({ ...formData, companyName: e.target.value });

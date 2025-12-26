@@ -1,7 +1,13 @@
 "use client";
 
-
-import { Building2, Loader2, ArrowRight, ArrowLeft, CheckCircle2, Plus } from "lucide-react";
+import {
+  Building2,
+  Loader2,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  Plus,
+} from "lucide-react";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +20,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-
-
-
-
-;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import confetti from "canvas-confetti";
 import {
@@ -167,7 +168,7 @@ export function CreateCompanyModal({
               <Label htmlFor="name">Company Name *</Label>
               <Input
                 id="name"
-                placeholder="Acme Corporation"
+                placeholder="OnTarget Brands Inc"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
