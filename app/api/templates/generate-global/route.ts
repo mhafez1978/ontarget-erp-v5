@@ -13,15 +13,15 @@ const ALL_TEMPLATES = [...TRANSACTIONAL_TEMPLATES, ...SEASONAL_TEMPLATES];
  */
 function generateSampleVariables(): Record<string, string> {
   const sampleVars: Record<string, string> = {
-    companyName: "Your Company Name",
+    companyName: "OnTarget ERP",
     currentYear: new Date().getFullYear().toString(),
     userName: "John Doe",
     staffName: "John Doe",
     email: "user@example.com",
-    loginUrl: "https://app.example.com/login",
-    resetUrl: "https://app.example.com/reset-password",
-    verificationUrl: "https://app.example.com/verify-email",
-    saleUrl: "https://app.example.com/sale",
+    loginUrl: "https://ontargetbrands.com/login",
+    resetUrl: "https://ontargetbrands.com/reset-password",
+    verificationUrl: "https://ontargetbrands.com/verify-email",
+    saleUrl: "https://ontargetbrands.com/sale",
     role: "Staff Member",
     temporaryPassword: "TempPass123!",
     supportEmail: "support@example.com",
