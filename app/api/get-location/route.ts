@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { countryCodeToFlag } from "@/lib/ip-lookup";
 // Small in-memory TTL cache for recent lookups to reduce provider calls.
 // Use globalThis to survive hot module reloads in development.
 type CacheItem = { payload: unknown; expiresAt: number };
@@ -37,9 +38,11 @@ export function __clearGetLocationCache() {
 }
 
 export async function GET(request: NextRequest) {
+  console.log("====== GET LOCATION API CALLED ======");
   try {
     // Get provider settings from database
     const settings = await db.geoTrackingSetting.findFirst();
+    console.log("GET LOCATION - Settings:", JSON.stringify(settings, null, 2));
 
     if (!settings || !settings.enabled) {
       return NextResponse.json(
@@ -63,9 +66,12 @@ export async function GET(request: NextRequest) {
     // Check cache first
     const cached = getCached(cacheKey);
     if (cached) {
+      console.log(`[Get Location] Returning CACHED response for ${cacheKey}`);
       // Return cached payload directly
       return NextResponse.json(cached);
     }
+
+    console.log(`[Get Location] NO CACHE for ${cacheKey}, fetching fresh data`);
 
     // Build API URL based on provider
     let apiUrl: string;
@@ -113,8 +119,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch from provider
+    console.log(`[Get Location] Fetching from ${settings.provider}:`, apiUrl);
+    console.log(`[Get Location] Headers:`, headers);
     const response = await fetch(apiUrl, { headers });
 
+    console.log(`[Get Location] Response status:`, response.status);
     if (!response.ok) {
       // Rate limited or API error - try to at least return the client IP
       const fallbackIp = clientIp || "127.0.0.1";
@@ -141,6 +150,10 @@ export async function GET(request: NextRequest) {
     }
 
     const apiData = await response.json();
+    console.log(
+      `[Get Location] Raw API response:`,
+      JSON.stringify(apiData, null, 2)
+    );
 
     // Normalize response based on provider
     let data: Record<string, unknown>;
@@ -161,6 +174,7 @@ export async function GET(request: NextRequest) {
           region: apiData.regionName || apiData.region,
           country_name: apiData.country,
           country_code: apiData.countryCode,
+          flag: countryCodeToFlag(apiData.countryCode) || null,
           latitude: apiData.lat,
           longitude: apiData.lon,
           timezone: apiData.timezone,
@@ -168,18 +182,36 @@ export async function GET(request: NextRequest) {
         break;
 
       case "IPINFO":
-        data = {
-          ip: apiData.ip,
-          ipv4: !apiData.ip?.includes(":") ? apiData.ip : null,
-          ipv6: apiData.ip?.includes(":") ? apiData.ip : null,
-          city: apiData.city,
-          region: apiData.region,
-          country_name: apiData.country,
-          country_code: apiData.country,
-          latitude: apiData.loc?.split(",")[0],
-          longitude: apiData.loc?.split(",")[1],
-          timezone: apiData.timezone,
-        };
+        // Handle bogon (localhost/private IPs)
+        if (apiData.bogon === true) {
+          data = {
+            ip: apiData.ip,
+            ipv4: !apiData.ip?.includes(":") ? apiData.ip : null,
+            ipv6: apiData.ip?.includes(":") ? apiData.ip : null,
+            city: "Localhost",
+            region: null,
+            country_name: "Local Development",
+            country_code: "LOCAL",
+            flag: "🏠",
+            latitude: null,
+            longitude: null,
+            timezone: null,
+          };
+        } else {
+          data = {
+            ip: apiData.ip,
+            ipv4: !apiData.ip?.includes(":") ? apiData.ip : null,
+            ipv6: apiData.ip?.includes(":") ? apiData.ip : null,
+            city: apiData.city,
+            region: apiData.region,
+            country_name: apiData.country,
+            country_code: apiData.country,
+            flag: countryCodeToFlag(apiData.country) || null,
+            latitude: apiData.loc?.split(",")[0],
+            longitude: apiData.loc?.split(",")[1],
+            timezone: apiData.timezone,
+          };
+        }
         break;
 
       case "IPGEOLOCATION":
@@ -191,6 +223,7 @@ export async function GET(request: NextRequest) {
           region: apiData.state_prov,
           country_name: apiData.country_name,
           country_code: apiData.country_code2,
+          flag: countryCodeToFlag(apiData.country_code2) || null,
           latitude: apiData.latitude,
           longitude: apiData.longitude,
           timezone: apiData.time_zone?.name,
@@ -198,11 +231,17 @@ export async function GET(request: NextRequest) {
         break;
 
       default:
+        console.error(`[Get Location] Unknown provider: ${settings.provider}`);
         return NextResponse.json(
           { error: "Invalid provider" },
           { status: 500 }
         );
     }
+
+    console.log(
+      `[Get Location] Normalized data:`,
+      JSON.stringify(data, null, 2)
+    );
 
     // Determine if the IP is IPv4 or IPv6
     const ipString = String(data.ip || "");
@@ -347,15 +386,4 @@ export async function GET(request: NextRequest) {
       flag: isLocalhost ? "🏠" : null,
     });
   }
-}
-
-function countryCodeToFlag(countryCode: string): string {
-  if (!countryCode || countryCode.length !== 2) return "";
-
-  const codePoints = countryCode
-    .toUpperCase()
-    .split("")
-    .map((char) => 127397 + char.charCodeAt(0));
-
-  return String.fromCodePoint(...codePoints);
 }
