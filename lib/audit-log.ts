@@ -56,18 +56,9 @@ export async function createAuditLog(params: CreateAuditLogParams) {
       }
     }
 
-    if (!city && !country) {
-      const lookupIp = ipv4 || ipv6 || ipAddress || null;
-      const geo = await lookupGeoByIp(lookupIp);
-      if (geo) {
-        ipAddress = ipAddress ?? geo.ip ?? null;
-        city = city ?? geo.city ?? null;
-        state = state ?? geo.region ?? null;
-        country = country ?? geo.country ?? null;
-        countryFlag =
-          countryFlag ?? countryCodeToFlag(geo.countryCode) ?? countryFlag;
-      }
-    }
+    // Don't do geo lookup here - it's better to pass geo data when creating audit logs
+    // or rely on session data. The old lookupGeoByIp uses ipapi.co which has limits.
+    // Instead, callers should use /api/get-location or pass geo data directly.
 
     const auditLog = await db.auditLog.create({
       data: {
