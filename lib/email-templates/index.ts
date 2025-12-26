@@ -80,58 +80,63 @@ export function createEmailShell(options: {
     </style>
     <![endif]-->
   </head>
-  <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+  <body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f7fa; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
     <!-- Wrapper -->
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f0f2f5; padding: 20px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f7fa; padding: 50px 20px;">
       <tr>
         <td align="center">
           <!-- Main Container -->
-          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); max-width: 600px;">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06); max-width: 600px;">
             
             <!-- Header with Logo and Gradient -->
             <tr>
-              <td style="background: ${headerGradient}; padding: 50px 30px; text-align: center; position: relative;">
+              <td style="background: ${headerGradient}; padding: 60px 40px 55px; text-align: center; position: relative;">
                 ${
                   companyLogo
                     ? `
-                <div style="margin-bottom: 24px;">
-                  <img src="${companyLogo}" alt="${companyName}" style="max-width: 220px; height: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+                <div style="margin-bottom: 30px;">
+                  <img src="${companyLogo}" alt="${companyName}" style="max-width: 200px; height: auto; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.2);" />
                 </div>
                 `
                     : ""
                 }
-                <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.2); letter-spacing: -0.5px;">
-                  ${headerIcon ? headerIcon + " " : ""}${headerTitle}
+                <h1 style="color: #ffffff; margin: 0; font-size: 40px; font-weight: 800; text-shadow: 0 4px 12px rgba(0,0,0,0.15); letter-spacing: -0.8px; line-height: 1.2;">
+                  ${
+                    headerIcon
+                      ? `<span style="font-size: 48px; display: block; margin-bottom: 12px;">${headerIcon}</span>`
+                      : ""
+                  }${headerTitle}
                 </h1>
               </td>
             </tr>
 
             <!-- Body Content -->
             <tr>
-              <td style="padding: 50px 40px;">
+              <td style="padding: 55px 45px;">
                 ${bodyContent}
               </td>
             </tr>
 
             <!-- Footer -->
             <tr>
-              <td style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 30px 40px; text-align: center; border-top: 1px solid #dee2e6;">
-                <p style="font-size: 13px; color: #6c757d; margin: 0 0 8px; font-weight: 600;">
+              <td style="background: linear-gradient(180deg, #f8f9fa 0%, #f1f3f5 100%); padding: 35px 45px; text-align: center; border-top: 1px solid #e9ecef;">
+                <p style="font-size: 14px; color: #495057; margin: 0 0 10px; font-weight: 700; letter-spacing: 0.3px;">
                   ${companyName}
                 </p>
-                <p style="font-size: 11px; color: #adb5bd; margin: 0;">
-                  Powered by OnTarget ERP • © ${currentYear} All rights reserved
+                <p style="font-size: 12px; color: #868e96; margin: 0; line-height: 1.6;">
+                  Powered by OnTarget ERP<br/>
+                  © ${currentYear} All rights reserved
                 </p>
               </td>
             </tr>
 
           </table>
           
-          <!-- Footer Links (outside main container) -->
-          <table width="600" cellpadding="0" cellspacing="0" border="0" style="margin-top: 20px; max-width: 600px;">
+          <!-- Footer Info -->
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px; max-width: 600px;">
             <tr>
               <td style="text-align: center; padding: 20px;">
-                <p style="font-size: 12px; color: #6c757d; margin: 0;">
+                <p style="font-size: 12px; color: #868e96; margin: 0; line-height: 1.6;">
                   This email was sent by ${companyName}
                 </p>
               </td>
@@ -156,31 +161,35 @@ export function createContentBlock(
   const styles = {
     default: {
       bg: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
-      border: "#dee2e6",
+      border: "#ced4da",
       text: "#495057",
+      icon: "ℹ️",
     },
     info: {
       bg: "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)",
       border: "#2196F3",
-      text: "#1565C0",
+      text: "#0d47a1",
+      icon: "💡",
     },
     warning: {
       bg: "linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)",
-      border: "#FFA000",
-      text: "#F57C00",
+      border: "#ff9800",
+      text: "#e65100",
+      icon: "⚠️",
     },
     success: {
       bg: "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)",
       border: "#4CAF50",
-      text: "#2E7D32",
+      text: "#1b5e20",
+      icon: "✅",
     },
   };
 
   const s = styles[style];
 
   return `
-    <div style="background: ${s.bg}; border-left: 4px solid ${s.border}; border-radius: 8px; padding: 20px; margin: 25px 0;">
-      <p style="font-size: 15px; color: ${s.text}; line-height: 1.7; margin: 0;">
+    <div style="background: ${s.bg}; border-left: 5px solid ${s.border}; border-radius: 12px; padding: 24px 28px; margin: 28px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+      <p style="font-size: 15px; color: ${s.text}; line-height: 1.7; margin: 0; font-weight: 500;">
         ${content}
       </p>
     </div>
@@ -196,12 +205,19 @@ export function createCTAButton(
   gradient: string = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
 ): string {
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 35px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 40px 0;">
       <tr>
         <td align="center">
-          <a href="${url}" style="display: inline-block; padding: 18px 50px; background: ${gradient}; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 17px; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); letter-spacing: 0.3px;">
+          <a href="${url}" style="display: inline-block; padding: 18px 55px; background: ${gradient}; color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 17px; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35), 0 2px 8px rgba(0,0,0,0.08); letter-spacing: 0.3px; transition: all 0.3s ease;">
             ${text}
           </a>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding-top: 16px;">
+          <p style="font-size: 13px; color: #868e96; margin: 0;">
+            Or copy this link: <a href="${url}" style="color: #667eea; text-decoration: none; font-weight: 600;">${url}</a>
+          </p>
         </td>
       </tr>
     </table>
@@ -218,12 +234,12 @@ export function createCredentialsBox(
     .map(
       (item) => `
     <tr>
-      <td style="font-size: 14px; color: #6c757d; padding: 12px 0; vertical-align: top; width: 120px;">
+      <td style="font-size: 14px; color: #6c757d; padding: 14px 0; vertical-align: top; width: 140px; font-weight: 600;">
         ${item.label}
       </td>
-      <td style="font-size: 14px; color: #212529; font-weight: 600; padding: 12px 0; ${
+      <td style="font-size: 15px; color: #212529; font-weight: 700; padding: 14px 0; ${
         item.isPassword
-          ? 'font-family: "Courier New", monospace; background-color: #fff; padding: 12px 16px; border-radius: 6px; border: 1px solid #dee2e6;'
+          ? 'font-family: "Courier New", monospace; background-color: #fff; padding: 14px 18px; border-radius: 8px; border: 2px solid #e9ecef; box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);'
           : ""
       }">
         ${item.value}
@@ -234,9 +250,9 @@ export function createCredentialsBox(
     .join("");
 
   return `
-    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; padding: 30px; margin: 30px 0; border: 2px solid #dee2e6;">
-      <p style="font-size: 15px; color: #495057; margin: 0 0 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">
-        🔐 YOUR CREDENTIALS
+    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 32px; margin: 32px 0; border: 2px solid #dee2e6; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+      <p style="font-size: 15px; color: #495057; margin: 0 0 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+        🔐 YOUR LOGIN CREDENTIALS
       </p>
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         ${rows}
