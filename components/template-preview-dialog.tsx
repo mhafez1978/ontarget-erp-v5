@@ -32,7 +32,7 @@ const sampleData: Record<string, string> = {
   userName: "John Doe",
   email: "john.doe@example.com",
   staffName: "Jane Smith",
-  companyName: "Acme Corporation",
+  companyName: "OnTarget Brands Inc",
   role: "Manager",
   resetUrl: "https://example.com/reset-password?token=abc123",
   loginUrl: "https://example.com/login",

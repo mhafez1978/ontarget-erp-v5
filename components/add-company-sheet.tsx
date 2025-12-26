@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Building2 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -14,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import {
   AddressAutocomplete,
@@ -128,7 +126,7 @@ export function AddCompanySheet({
             <Input
               id="name"
               type="text"
-              placeholder="Acme Corporation"
+              placeholder="OnTarget Brands Inc"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
