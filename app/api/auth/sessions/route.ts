@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
       ipAddress: s.sessionIpAddress || "Unknown",
       country: s.sessionCountry,
       countryFlag: s.sessionCountryFlag,
+      userAgent: s.sessionUserAgent,
       createdAt: s.expires, // Using expires as a proxy for created date
       expiresAt: s.expires,
     }));

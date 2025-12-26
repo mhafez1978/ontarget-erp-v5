@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
       ipAddress: s.sessionIpAddress || "Unknown",
       country: s.sessionCountry,
       countryFlag: s.sessionCountryFlag,
+      userAgent: s.sessionUserAgent,
       createdAt: s.expires, // Using expires as proxy for created
       expiresAt: s.expires,
       userId: s.user.id,
