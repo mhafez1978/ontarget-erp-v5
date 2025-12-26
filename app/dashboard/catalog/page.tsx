@@ -18,6 +18,7 @@ function getRoleCatalogView(role: string, userName?: string | null) {
       return <AdminCatalogView userName={userName} />;
     case "MANAGER":
       return <ManagerCatalogView userName={userName} />;
+    case "ERP_CUSTOMER":
     case "COMPANY_CUSTOMER":
       // Company customers see the same catalog view as managers (read-only)
       return <ManagerCatalogView userName={userName} />;
@@ -62,6 +63,7 @@ export default function CatalogPage() {
           "SUPER_ADMIN",
           "ADMIN",
           "MANAGER",
+          "ERP_CUSTOMER",
           "COMPANY_CUSTOMER",
         ];
 

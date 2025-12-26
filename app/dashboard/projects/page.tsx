@@ -24,6 +24,7 @@ function getRoleProjectsView(role: string) {
       return <StaffProjectsView />;
     case "CONTRACTOR":
       return <ContractorProjectsView />;
+    case "ERP_CUSTOMER":
     case "COMPANY_CUSTOMER":
       // Company customers only see projects where they are the customer
       return <ContractorProjectsView />;
@@ -77,6 +78,7 @@ export default function ProjectsPage() {
           "MANAGER",
           "STAFF",
           "CONTRACTOR",
+          "ERP_CUSTOMER",
           "COMPANY_CUSTOMER",
         ];
 

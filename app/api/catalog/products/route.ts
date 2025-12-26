@@ -63,8 +63,13 @@ export async function GET(request: NextRequest) {
         success: true,
         products,
       });
-    } else if (user.role === "ADMIN") {
-      // Admin can only access products from companies they own or are members of
+    } else if (
+      user.role === "ADMIN" ||
+      user.role === "MANAGER" ||
+      user.role === "ERP_CUSTOMER" ||
+      user.role === "COMPANY_CUSTOMER"
+    ) {
+      // ADMIN/MANAGER/ERP_CUSTOMER/COMPANY_CUSTOMER can access products from companies they're members of
       const company = await db.company.findFirst({
         where: {
           id: companyId,
@@ -74,7 +79,13 @@ export async function GET(request: NextRequest) {
               members: {
                 some: {
                   userId,
-                  role: "ADMIN",
+                },
+              },
+            },
+            {
+              staff: {
+                some: {
+                  userId,
                 },
               },
             },

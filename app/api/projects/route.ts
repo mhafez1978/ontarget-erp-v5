@@ -89,10 +89,10 @@ export async function GET(req: NextRequest) {
     // Check if user has access to this company
     // SUPER_ADMIN & ADMIN: Must own the company OR be a member/staff of the company
     // MANAGER/STAFF/CONTRACTOR: Must be in company staff (see projects via team membership)
-    // COMPANY_CUSTOMER: Can access via project customer relationship
+    // ERP_CUSTOMER/COMPANY_CUSTOMER: Can access via project customer relationship
     let hasAccess = false;
 
-    if (user.role === "COMPANY_CUSTOMER") {
+    if (user.role === "ERP_CUSTOMER" || user.role === "COMPANY_CUSTOMER") {
       // Check if customer has any projects in this company
       const customerProject = await db.project.findFirst({
         where: {
@@ -153,8 +153,11 @@ export async function GET(req: NextRequest) {
           projects: [],
         });
       }
-    } else if (user.role === "COMPANY_CUSTOMER") {
-      // COMPANY_CUSTOMER: Only see projects where they are the customer
+    } else if (
+      user.role === "ERP_CUSTOMER" ||
+      user.role === "COMPANY_CUSTOMER"
+    ) {
+      // ERP_CUSTOMER/COMPANY_CUSTOMER: Only see projects where they are the customer
       where.customerId = userId;
     }
     // SUPER_ADMIN, ADMIN: See all projects in the company (no additional filter needed)
