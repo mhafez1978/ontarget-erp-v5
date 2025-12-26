@@ -48,6 +48,7 @@ export interface SessionData {
   sessionState: string | null;
   sessionCountry: string | null;
   sessionCountryFlag: string | null;
+  sessionUserAgent: string | null;
 }
 
 export interface CreateSessionOptions {
