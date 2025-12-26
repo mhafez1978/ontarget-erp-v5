@@ -89,18 +89,34 @@ export async function GET(req: NextRequest) {
     // Check if user has access to this company
     // SUPER_ADMIN & ADMIN: Must own the company OR be a member/staff of the company
     // MANAGER/STAFF/CONTRACTOR: Must be in company staff (see projects via team membership)
-    const company = await db.company.findFirst({
-      where: {
-        id: companyId,
-        OR: [
-          { ownerId: userId },
-          { members: { some: { userId } } },
-          { staff: { some: { userId } } },
-        ],
-      },
-    });
+    // COMPANY_CUSTOMER: Can access via project customer relationship
+    let hasAccess = false;
 
-    if (!company) {
+    if (user.role === "COMPANY_CUSTOMER") {
+      // Check if customer has any projects in this company
+      const customerProject = await db.project.findFirst({
+        where: {
+          companyId,
+          customerId: userId,
+        },
+        select: { id: true },
+      });
+      hasAccess = !!customerProject;
+    } else {
+      const company = await db.company.findFirst({
+        where: {
+          id: companyId,
+          OR: [
+            { ownerId: userId },
+            { members: { some: { userId } } },
+            { staff: { some: { userId } } },
+          ],
+        },
+      });
+      hasAccess = !!company;
+    }
+
+    if (!hasAccess) {
       return NextResponse.json(
         { error: "You don't have access to this company" },
         { status: 403 }
@@ -137,6 +153,9 @@ export async function GET(req: NextRequest) {
           projects: [],
         });
       }
+    } else if (user.role === "COMPANY_CUSTOMER") {
+      // COMPANY_CUSTOMER: Only see projects where they are the customer
+      where.customerId = userId;
     }
     // SUPER_ADMIN, ADMIN: See all projects in the company (no additional filter needed)
 

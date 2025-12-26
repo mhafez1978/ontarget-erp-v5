@@ -18,6 +18,9 @@ function getRoleCatalogView(role: string, userName?: string | null) {
       return <AdminCatalogView userName={userName} />;
     case "MANAGER":
       return <ManagerCatalogView userName={userName} />;
+    case "COMPANY_CUSTOMER":
+      // Company customers see the same catalog view as managers (read-only)
+      return <ManagerCatalogView userName={userName} />;
     default:
       // For roles without catalog access, show unauthorized message
       return (
@@ -55,7 +58,12 @@ export default function CatalogPage() {
 
       if (data.authenticated && data.user) {
         // Check if user has access to catalog page
-        const allowedRoles = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+        const allowedRoles = [
+          "SUPER_ADMIN",
+          "ADMIN",
+          "MANAGER",
+          "COMPANY_CUSTOMER",
+        ];
 
         if (!allowedRoles.includes(data.user.role)) {
           // Redirect unauthorized users back to dashboard
