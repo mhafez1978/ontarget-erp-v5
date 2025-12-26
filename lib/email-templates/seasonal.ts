@@ -38,7 +38,7 @@ export const SEASONAL_TEMPLATES: TemplateDefinition[] = [
         label: "Main Headline",
         type: "text",
         placeholder: "Create an attention-grabbing headline...",
-        defaultValue: "BLACK FRIDAY MEGA SALE! 🎉",
+        defaultValue: "BLACK FRIDAY IS HERE! 🎉",
         maxLength: 100,
         required: true,
       },
@@ -48,7 +48,7 @@ export const SEASONAL_TEMPLATES: TemplateDefinition[] = [
         type: "text",
         placeholder: "Describe your Black Friday offer...",
         defaultValue:
-          "The biggest sale of the year is here! Enjoy massive discounts on everything in our store.",
+          "The most anticipated sale of the year has arrived! Get ready for massive savings on everything—this is your chance to score incredible deals you won't find anywhere else.",
         maxLength: 500,
         required: true,
       },
@@ -57,7 +57,7 @@ export const SEASONAL_TEMPLATES: TemplateDefinition[] = [
         label: "Button Text",
         type: "button",
         placeholder: "Button text",
-        defaultValue: "🛍️ Shop Black Friday Deals",
+        defaultValue: "🛍️ Shop Black Friday Now",
         maxLength: 50,
         required: true,
       },
@@ -65,39 +65,41 @@ export const SEASONAL_TEMPLATES: TemplateDefinition[] = [
     shellHtml: (blocks, vars) => {
       const bodyContent = `
         <div style="text-align: center; padding: 30px 0;">
-          <h1 style="font-size: 36px; color: #000000; margin: 0 0 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">
-            ${blocks.headline || "BLACK FRIDAY MEGA SALE! 🎉"}
+          <h1 style="font-size: 38px; color: #000000; margin: 0 0 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; line-height: 1.2;">
+            ${blocks.headline || "BLACK FRIDAY IS HERE! 🎉"}
           </h1>
-          <div style="font-size: 48px; font-weight: 900; background: linear-gradient(135deg, #000000 0%, #434343 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 20px 0;">
+          <div style="font-size: 56px; font-weight: 900; background: linear-gradient(135deg, #000000 0%, #434343 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 24px 0; line-height: 1;">
             ${vars.discountPercentage}% OFF
           </div>
+          <p style="font-size: 18px; color: #495057; margin: 12px 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;">
+            Everything Must Go!
+          </p>
         </div>
 
-        <p style="font-size: 18px; color: #212529; line-height: 1.8; margin: 0 0 25px; text-align: center;">
+        <p style="font-size: 18px; color: #212529; line-height: 1.8; margin: 32px 0; text-align: center;">
           ${
             blocks.message ||
-            "The biggest sale of the year is here! Enjoy massive discounts on everything."
+            "The most anticipated sale of the year has arrived! Get ready for massive savings on everything—this is your chance to score incredible deals you won't find anywhere else."
           }
         </p>
 
         ${createContentBlock(
-          `<strong>🎁 Promo Code:</strong> <span style="font-size: 24px; font-weight: 700; color: #000000;">${
+          `<div style="text-align: center;"><strong>🎁 Your Exclusive Code:</strong><br/><span style="font-size: 28px; font-weight: 900; color: #000000; letter-spacing: 2px; display: block; margin: 12px 0;">${
             vars.promoCode || "BLACKFRIDAY"
-          }</span><br/><br/>
-          <strong>⏰ Limited Time:</strong> Sale ends ${
+          }</span><strong>⏰ Hurry! Ends ${
             vars.expiryDate || "11/30"
-          }`,
+          }</strong></div>`,
           "warning"
         )}
 
         ${createCTAButton(
-          blocks.ctaText || "🛍️ Shop Black Friday Deals",
+          blocks.ctaText || "🛍️ Shop Black Friday Now",
           vars.saleUrl,
           "linear-gradient(135deg, #000000 0%, #434343 100%)"
         )}
 
-        <p style="font-size: 13px; color: #6c757d; line-height: 1.6; margin: 25px 0 0; text-align: center;">
-          Don't miss out! This offer won't last long. ⚡
+        <p style="font-size: 14px; color: #6c757d; line-height: 1.6; margin: 32px 0 0; text-align: center; font-weight: 600;">
+          ⚡ Limited quantities available. Shop now before items sell out!
         </p>
       `;
 
@@ -159,7 +161,7 @@ ${vars.companyName} • Powered by OnTarget ERP
         label: "Holiday Greeting",
         type: "text",
         placeholder: "Write a warm holiday message...",
-        defaultValue: "Wishing you a Merry Christmas and Happy Holidays! 🎅",
+        defaultValue: "Wishing you a Merry Christmas and joyful holidays! 🎅✨",
         maxLength: 200,
         required: true,
       },
@@ -169,7 +171,7 @@ ${vars.companyName} • Powered by OnTarget ERP
         type: "text",
         placeholder: "Describe your Christmas offer...",
         defaultValue:
-          "Celebrate the season with our special holiday discounts! Perfect gifts for everyone on your list.",
+          "Celebrate the season of giving with our special holiday discounts! Whether you're shopping for loved ones or treating yourself, we've got the perfect gifts at unbeatable prices.",
         maxLength: 500,
         required: true,
       },
@@ -186,15 +188,15 @@ ${vars.companyName} • Powered by OnTarget ERP
     shellHtml: (blocks, vars) => {
       const bodyContent = `
         <div style="text-align: center; padding: 30px 0;">
-          <h1 style="font-size: 36px; color: #c41e3a; margin: 0 0 15px; font-weight: 800;">
-            🎄 ${blocks.greeting || "Merry Christmas!"} 🎄
+          <h1 style="font-size: 40px; color: #c41e3a; margin: 0 0 20px; font-weight: 800; line-height: 1.2;">
+            🎄 ${blocks.greeting || "Merry Christmas and joyful holidays! 🎅✨"}
           </h1>
         </div>
 
-        <p style="font-size: 18px; color: #212529; line-height: 1.8; margin: 0 0 25px; text-align: center;">
+        <p style="font-size: 18px; color: #212529; line-height: 1.8; margin: 0 0 32px; text-align: center;">
           ${
             blocks.message ||
-            "Celebrate the season with our special holiday discounts!"
+            "Celebrate the season of giving with our special holiday discounts! Whether you're shopping for loved ones or treating yourself, we've got the perfect gifts at unbeatable prices."
           }
         </p>
 

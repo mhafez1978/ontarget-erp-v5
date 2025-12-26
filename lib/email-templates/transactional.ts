@@ -37,7 +37,8 @@ export const TRANSACTIONAL_TEMPLATES: TemplateDefinition[] = [
         label: "Welcome Message",
         type: "text",
         placeholder: "Write a welcoming message for your new team member...",
-        defaultValue: "Welcome to the team! We're excited to have you join us.",
+        defaultValue:
+          "We're thrilled to welcome you to the team! This is the beginning of an exciting journey together.",
         maxLength: 500,
         required: true,
       },
@@ -48,7 +49,7 @@ export const TRANSACTIONAL_TEMPLATES: TemplateDefinition[] = [
         placeholder:
           "Add any specific instructions for the new staff member...",
         defaultValue:
-          "Your account has been created and you're ready to get started. Use the credentials below to log in.",
+          "Your account is all set up and ready to go. Use the secure credentials below to access your dashboard and explore the platform.",
         maxLength: 500,
       },
       {
@@ -56,26 +57,26 @@ export const TRANSACTIONAL_TEMPLATES: TemplateDefinition[] = [
         label: "Button Text",
         type: "button",
         placeholder: "Button text",
-        defaultValue: "🚀 Login to Dashboard",
+        defaultValue: "🚀 Access My Dashboard",
         maxLength: 50,
         required: true,
       },
     ],
     shellHtml: (blocks, vars) => {
       const bodyContent = `
-        <p style="font-size: 20px; color: #212529; margin: 0 0 25px; font-weight: 600;">
-          Hello ${vars.staffName},
+        <p style="font-size: 22px; color: #212529; margin: 0 0 16px; font-weight: 700; line-height: 1.3;">
+          Hello ${vars.staffName}! 👋
         </p>
-        <p style="font-size: 16px; color: #495057; line-height: 1.8; margin: 0 0 25px;">
+        <p style="font-size: 17px; color: #495057; line-height: 1.8; margin: 0 0 28px;">
           ${
             blocks.greeting ||
-            "Welcome to the team! We're excited to have you join us."
+            "We're thrilled to welcome you to the team! This is the beginning of an exciting journey together."
           }
         </p>
-        <p style="font-size: 16px; color: #495057; line-height: 1.8; margin: 0 0 25px;">
+        <p style="font-size: 16px; color: #495057; line-height: 1.8; margin: 0 0 32px;">
           ${
             blocks.instructions ||
-            "Your account has been created and you're ready to get started."
+            "Your account is all set up and ready to go. Use the secure credentials below to access your dashboard and explore the platform."
           }
         </p>
 
@@ -90,17 +91,17 @@ export const TRANSACTIONAL_TEMPLATES: TemplateDefinition[] = [
         ])}
 
         ${createContentBlock(
-          "<strong>⚠️ Security Notice:</strong><br/>Please change your password after your first login. Choose a strong password with uppercase, lowercase, numbers, and special characters.",
+          "<strong>🔒 Important Security Step:</strong><br/>For your safety, please change this temporary password immediately after your first login. Create a strong password using a mix of uppercase letters, lowercase letters, numbers, and special characters.",
           "warning"
         )}
 
         ${createCTAButton(
-          blocks.ctaText || "🚀 Login to Dashboard",
+          blocks.ctaText || "🚀 Access My Dashboard",
           vars.loginUrl
         )}
 
-        <p style="font-size: 14px; color: #6c757d; line-height: 1.6; margin: 25px 0 0; text-align: center;">
-          Need help? Contact your manager or IT support team.
+        <p style="font-size: 14px; color: #868e96; line-height: 1.6; margin: 32px 0 0; text-align: center;">
+          Questions or need assistance? Don't hesitate to reach out to your manager or IT support team.
         </p>
       `;
 
@@ -150,7 +151,7 @@ ${vars.companyName} • Powered by OnTarget ERP
     category: "TRANSACTIONAL" as EmailTemplateCategory,
     name: "Password Reset Request",
     description: "Sent when a user requests to reset their password",
-    subject: "Reset Your Password - {{companyName}} 🔒",
+    subject: "🔒 Password Reset Request - {{companyName}}",
     variables: [
       "userName",
       "resetUrl",
@@ -166,7 +167,7 @@ ${vars.companyName} • Powered by OnTarget ERP
         type: "text",
         placeholder: "Customize the password reset message...",
         defaultValue:
-          "We received a request to reset your password. Click the button below to create a new password.",
+          "We received a request to reset your password. No worries—it happens! Click the button below to create a new secure password.",
         maxLength: 500,
         required: true,
       },
@@ -182,31 +183,34 @@ ${vars.companyName} • Powered by OnTarget ERP
     ],
     shellHtml: (blocks, vars) => {
       const bodyContent = `
-        <p style="font-size: 20px; color: #212529; margin: 0 0 25px; font-weight: 600;">
+        <p style="font-size: 22px; color: #212529; margin: 0 0 16px; font-weight: 700; line-height: 1.3;">
           Hello ${vars.userName},
         </p>
-        <p style="font-size: 16px; color: #495057; line-height: 1.8; margin: 0 0 25px;">
-          ${blocks.message || "We received a request to reset your password."}
+        <p style="font-size: 17px; color: #495057; line-height: 1.8; margin: 0 0 32px;">
+          ${
+            blocks.message ||
+            "We received a request to reset your password. No worries—it happens! Click the button below to create a new secure password."
+          }
         </p>
 
         ${createCTAButton(
           blocks.ctaText || "🔒 Reset My Password",
           vars.resetUrl,
-          "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+          "linear-gradient(135deg, #f43f5e 0%, #dc2626 100%)"
         )}
 
         ${createContentBlock(
-          "<strong>🕐 Time Sensitive:</strong><br/>This link will expire in 1 hour for security reasons.",
+          "<strong>⏰ Time-Sensitive Link:</strong><br/>This password reset link will expire in <strong>1 hour</strong> for your security. If you need a new link, simply request another password reset.",
           "info"
         )}
 
         ${createContentBlock(
-          "<strong>🛡️ Didn't request this?</strong><br/>If you didn't request a password reset, please ignore this email. Your password will remain unchanged.",
+          "<strong>🛡️ Didn't request this?</strong><br/>If you didn't initiate this password reset, you can safely ignore this email. Your current password will remain unchanged and secure.",
           "default"
         )}
 
-        <p style="font-size: 13px; color: #adb5bd; line-height: 1.6; margin: 35px 0 0; text-align: center; border-top: 1px solid #e9ecef; padding-top: 20px;">
-          For security reasons, this link can only be used once.
+        <p style="font-size: 13px; color: #adb5bd; line-height: 1.6; margin: 40px 0 0; text-align: center; border-top: 1px solid #e9ecef; padding-top: 24px;">
+          For your security, this reset link can only be used once and expires after one hour.
         </p>
       `;
 
@@ -249,7 +253,7 @@ ${vars.companyName} • Powered by OnTarget ERP
     category: "TRANSACTIONAL" as EmailTemplateCategory,
     name: "Email Verification",
     description: "Sent to verify a user's email address",
-    subject: "Verify Your Email Address - {{companyName}} ✉️",
+    subject: "✉️ Verify Your Email Address - {{companyName}}",
     variables: [
       "userName",
       "verificationUrl",
@@ -265,7 +269,7 @@ ${vars.companyName} • Powered by OnTarget ERP
         type: "text",
         placeholder: "Customize the verification message...",
         defaultValue:
-          "Thanks for signing up! Please verify your email address to activate your account and get started.",
+          "Thanks for signing up! We're excited to have you on board. Just one quick step—please verify your email address to activate your account and unlock all features.",
         maxLength: 500,
         required: true,
       },
@@ -274,25 +278,25 @@ ${vars.companyName} • Powered by OnTarget ERP
         label: "Button Text",
         type: "button",
         placeholder: "Button text",
-        defaultValue: "✉️ Verify My Email",
+        defaultValue: "✉️ Verify My Email Address",
         maxLength: 50,
         required: true,
       },
     ],
     shellHtml: (blocks, vars) => {
       const bodyContent = `
-        <p style="font-size: 20px; color: #212529; margin: 0 0 25px; font-weight: 600;">
-          Hello ${vars.userName},
+        <p style="font-size: 22px; color: #212529; margin: 0 0 16px; font-weight: 700; line-height: 1.3;">
+          Welcome ${vars.userName}! 🎉
         </p>
-        <p style="font-size: 16px; color: #495057; line-height: 1.8; margin: 0 0 25px;">
+        <p style="font-size: 17px; color: #495057; line-height: 1.8; margin: 0 0 32px;">
           ${
             blocks.message ||
-            "Thanks for signing up! Please verify your email address to activate your account."
+            "Thanks for signing up! We're excited to have you on board. Just one quick step—please verify your email address to activate your account and unlock all features."
           }
         </p>
 
         ${createCTAButton(
-          blocks.ctaText || "✉️ Verify My Email",
+          blocks.ctaText || "✉️ Verify My Email Address",
           vars.verificationUrl,
           "linear-gradient(135deg, #10b981 0%, #059669 100%)"
         )}
