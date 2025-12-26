@@ -28,11 +28,13 @@
 # misc
 .DS_Store
 *.pem
-*.sql
 *.log
 check*.mjs
 test*.mjs
 seed*.mjs
+
+# Allow Prisma migration SQL files
+!prisma/migrations/**/*.sql
 seed-pricing.mjs
 
 
