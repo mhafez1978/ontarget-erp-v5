@@ -9,23 +9,40 @@ import type { TemplateDefinition } from "@/lib/email-templates";
 const ALL_TEMPLATES = [...TRANSACTIONAL_TEMPLATES, ...SEASONAL_TEMPLATES];
 
 /**
- * Generate sample variables for template preview
+ * Generate sample variables for template preview with actual company data
  */
-function generateSampleVariables(): Record<string, string> {
+async function generateSampleVariables(): Promise<Record<string, string>> {
+  // Get root company for global templates
+  const rootCompany = await db.company.findFirst({
+    where: { isRoot: true },
+    select: {
+      id: true,
+      name: true,
+      logo: true,
+      email: true,
+    },
+  });
+
+  const companyName = rootCompany?.name || "OnTarget ERP";
+  const companyLogo = rootCompany?.logo || "";
+  const companyEmail = rootCompany?.email || "support@ontargetbrands.com";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL || "https://ontargetbrands.com";
+
   const sampleVars: Record<string, string> = {
-    companyName: "OnTarget ERP",
+    companyName,
+    companyLogo,
     currentYear: new Date().getFullYear().toString(),
     userName: "John Doe",
     staffName: "John Doe",
     email: "user@example.com",
-    loginUrl: "https://ontargetbrands.com/login",
-    resetUrl: "https://ontargetbrands.com/reset-password",
-    verificationUrl: "https://ontargetbrands.com/verify-email",
-    saleUrl: "https://ontargetbrands.com/sale",
+    loginUrl: `${baseUrl}/login`,
+    resetUrl: `${baseUrl}/reset-password`,
+    verificationUrl: `${baseUrl}/verify-email`,
+    saleUrl: `${baseUrl}/sale`,
     role: "Staff Member",
     temporaryPassword: "TempPass123!",
-    supportEmail: "support@example.com",
-    companyLogo: "",
+    supportEmail: companyEmail,
     discountPercentage: "25",
     promoCode: "SAVE25",
     expiryDate: new Date(
@@ -87,6 +104,9 @@ export async function POST(request: NextRequest) {
       templateTypes.includes(template.type)
     );
 
+    // Generate sample variables once with real company data
+    const sampleVars = await generateSampleVariables();
+
     for (const template of templatesToCreate) {
       // Check if template already exists
       const existing = await db.emailTemplate.findFirst({
@@ -101,8 +121,7 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Generate the HTML shell with default values
-      const sampleVars = generateSampleVariables();
+      // Generate the HTML shell with default values and real company data
       const defaultBlocks = generateDefaultBlocks(template);
       const bodyHtml = template.shellHtml(defaultBlocks, sampleVars);
       const bodyText = template.textVersion(defaultBlocks, sampleVars);
