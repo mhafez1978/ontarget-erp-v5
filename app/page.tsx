@@ -61,12 +61,8 @@ const getPricingData = cache(async () => {
 
 const getTestimonials = cache(async (companyId: string) => {
   return db.testimonial.findMany({
-    where: { companyId, status: "APPROVED" },
-    orderBy: [
-      { isFeatured: "desc" },
-      { displayOrder: "asc" },
-      { createdAt: "desc" },
-    ],
+    where: { companyId, status: "APPROVED", isFeatured: true },
+    orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
     take: 24,
     select: {
       id: true,
