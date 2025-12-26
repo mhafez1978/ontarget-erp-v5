@@ -33,30 +33,32 @@ export async function getGeoLocation(): Promise<GeoLocation | null> {
     });
 
     if (!response.ok) {
-      console.warn(
-        "Geo-tracking API rate limited or unavailable, using fallback"
+      console.error(
+        `[Geo Tracking] API returned ${response.status} ${response.statusText}`
       );
-      // Parse the error response which includes fallback data
       try {
-        const fallbackData = await response.json();
-        return fallbackData;
-      } catch {
-        // If parsing fails, return localhost fallback
-        return {
-          ip: "127.0.0.1",
-          ipv4: "127.0.0.1",
-          ipv6: null,
-          city: "Localhost",
-          region: null,
-          country: "Local Development",
-          country_name: "Local Development",
-          country_code: null,
-          flag: "🏠",
-          latitude: null,
-          longitude: null,
-          timezone: null,
-        };
+        const errorData = await response.json();
+        console.error("[Geo Tracking] Error details:", errorData);
+      } catch (e) {
+        console.error("[Geo Tracking] Could not parse error response", e);
       }
+
+      console.warn("Geo-tracking API unavailable, using fallback");
+      // Return localhost fallback
+      return {
+        ip: "127.0.0.1",
+        ipv4: "127.0.0.1",
+        ipv6: null,
+        city: "Localhost",
+        region: null,
+        country: "Local Development",
+        country_name: "Local Development",
+        country_code: null,
+        flag: "🏠",
+        latitude: null,
+        longitude: null,
+        timezone: null,
+      };
     }
 
     const data = await response.json();
