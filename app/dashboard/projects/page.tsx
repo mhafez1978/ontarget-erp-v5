@@ -24,6 +24,9 @@ function getRoleProjectsView(role: string) {
       return <StaffProjectsView />;
     case "CONTRACTOR":
       return <ContractorProjectsView />;
+    case "COMPANY_CUSTOMER":
+      // Company customers only see projects where they are the customer
+      return <ContractorProjectsView />;
     default:
       // For roles without projects access, show unauthorized message
       return (
@@ -74,6 +77,7 @@ export default function ProjectsPage() {
           "MANAGER",
           "STAFF",
           "CONTRACTOR",
+          "COMPANY_CUSTOMER",
         ];
 
         if (!allowedRoles.includes(data.user.role)) {
