@@ -196,6 +196,13 @@ export default function SettingsPage() {
           return;
         }
 
+        // Only allow specific roles to access settings
+        const allowedRoles = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+        if (!allowedRoles.includes(data.user.role)) {
+          router.push("/dashboard");
+          return;
+        }
+
         setUser({
           name: data.user.name,
           email: data.user.email,
