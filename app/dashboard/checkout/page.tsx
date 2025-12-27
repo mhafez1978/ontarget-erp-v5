@@ -97,29 +97,29 @@ export default function CheckoutPage() {
     fetchUser();
   }, [fetchUser]);
 
-    // Check payment gateway status when cart has items
-    if (!loading && items.length > 0) {
-      const companyId = items[0].companyId;
-      if (companyId) {
-        setCheckingGateway(true);
-        fetch(`/api/checkout/gateway-status?companyId=${companyId}`)
-          .then((res) => res.json())
-          .then((data) => {
-            setGatewayStatus(data);
-            if (!data.configured || !data.enabled) {
-              toast.warning("Payment gateway not configured", {
-                description: data.message,
-              });
-            }
-          })
-          .catch((err) => {
-            console.error("Error checking gateway status:", err);
-          })
-          .finally(() => {
-            setCheckingGateway(false);
-          });
-      }
+  // Check payment gateway status when cart has items
+  if (!loading && items.length > 0) {
+    const companyId = items[0].companyId;
+    if (companyId) {
+      setCheckingGateway(true);
+      fetch(`/api/checkout/gateway-status?companyId=${companyId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setGatewayStatus(data);
+          if (!data.configured || !data.enabled) {
+            toast.warning("Payment gateway not configured", {
+              description: data.message,
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Error checking gateway status:", err);
+        })
+        .finally(() => {
+          setCheckingGateway(false);
+        });
     }
+  }
 
   useEffect(() => {
     // Redirect if cart is empty
@@ -201,18 +201,25 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      toast.er
+      toast.er;
 
-        {/* Payment Gateway Warning */}
-        {gatewayStatus && (!gatewayStatus.configured || !gatewayStatus.enabled) && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Payment Gateway Not Available</AlertTitle>
-            <AlertDescription>
-              {gatewayStatus.message}. Please contact the company to complete your order.
-            </AlertDescription>
-          </Alert>
-        )}ror("Failed to place order. Please try again.");
+      {
+        /* Payment Gateway Warning */
+      }
+      {
+        gatewayStatus &&
+          (!gatewayStatus.configured || !gatewayStatus.enabled) && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Payment Gateway Not Available</AlertTitle>
+              <AlertDescription>
+                {gatewayStatus.message}. Please contact the company to complete
+                your order.
+              </AlertDescription>
+            </Alert>
+          );
+      }
+      ror("Failed to place order. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -525,9 +532,9 @@ export default function CheckoutPage() {
                     <span className="text-muted-foreground">Tax (8%)</span>
                     <span className="font-medium">${tax.toFixed(2)}</span>
                   </div>
-                  <Separator /> || checkingGateway || (gatewayStatus && (!gatewayStatus.configured || !gatewayStatus.enabled))}
-                >
-                  {submitting ? "Processing..." : checkingGateway ? "Check
+                  <Separator />
+                  <div className="flex justify-between font-semibold">
+                    <span>Total</span>
                     <span className="text-primary">${total.toFixed(2)}</span>
                   </div>
                 </div>
@@ -536,9 +543,22 @@ export default function CheckoutPage() {
                   className="w-full"
                   size="lg"
                   onClick={handleSubmitOrder}
-                  disabled={submitting}
+                  disabled={
+                    submitting ||
+                    checkingGateway ||
+                    (gatewayStatus &&
+                      (!gatewayStatus.configured || !gatewayStatus.enabled))
+                  }
                 >
-                  {submitting ? "Processing..." : "Place Order"}
+                  {submitting
+                    ? "Processing..."
+                    : checkingGateway
+                    ? "Checking Gateway..."
+                    : gatewayStatus && !gatewayStatus.configured
+                    ? "No Payment Gateway"
+                    : gatewayStatus && !gatewayStatus.enabled
+                    ? "Payment Gateway Disabled"
+                    : "Place Order"}
                 </Button>
 
                 <Button
