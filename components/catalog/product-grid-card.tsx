@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
-import { Image as ImageIcon, Copy, Pencil, Trash2, Star } from "lucide-react";
+import { Image as ImageIcon, Copy, Pencil, Trash2, Star, ShoppingCart } from "lucide-react";
+import { useCart } from "@/contexts/cart-context";
 
 interface ProductImage {
   id: string;
@@ -52,6 +53,8 @@ interface ProductGridCardProps {
   onTogglePublished: (id: string, currentValue: boolean) => void;
   onToggleFeatured: (id: string, currentValue: boolean) => void;
   onToggleActive: (id: string, currentValue: boolean) => void;
+  readOnly?: boolean;
+  onAddToCart?: (product: Product) => void;
 }
 
 export function ProductGridCard({
@@ -62,6 +65,9 @@ export function ProductGridCard({
   onTogglePublished,
   onToggleFeatured,
   onToggleActive,
+  onAddToCart,
+}: ProductGridCardProps) {
+  const { addItem } = useCart();
 }: ProductGridCardProps) {
   const getFeaturedImage = (): string | null => {
     const featured = product.images.find((img) => img.isFeatured);
@@ -90,39 +96,41 @@ export function ProductGridCard({
         )}
 
         {/* Action Buttons */}
-        <div className="absolute top-2 right-2 z-20 flex gap-1">
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-8 w-8 bg-purple-500 hover:bg-purple-600 dark:bg-green-500 dark:hover:bg-green-600 text-white shadow-lg"
-            onClick={() => onDuplicate(product)}
-            title="Duplicate"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-          {onEdit && (
+        {!readOnly && (
+          <div className="absolute top-2 right-2 z-20 flex gap-1">
             <Button
               variant="secondary"
               size="icon"
               className="h-8 w-8 bg-purple-500 hover:bg-purple-600 dark:bg-green-500 dark:hover:bg-green-600 text-white shadow-lg"
-              onClick={() => onEdit(product)}
-              title="Edit"
+              onClick={() => onDuplicate(product)}
+              title="Duplicate"
             >
-              <Pencil className="h-4 w-4" />
+              <Copy className="h-4 w-4" />
             </Button>
-          )}
-          {onDelete && (
-            <Button
-              variant="destructive"
-              size="icon"
-              className="h-8 w-8 shadow-lg"
-              onClick={() => onDelete(product.id)}
-              title="Delete"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+            {onEdit && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 bg-purple-500 hover:bg-purple-600 dark:bg-green-500 dark:hover:bg-green-600 text-white shadow-lg"
+                onClick={() => onEdit(product)}
+                title="Edit"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="destructive"
+                size="icon"
+                className="h-8 w-8 shadow-lg"
+                onClick={() => onDelete(product.id)}
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Featured Badge */}
         {product.isFeatured && (
@@ -173,43 +181,69 @@ export function ProductGridCard({
           <div className="text-xs text-muted-foreground">
             {[product.city, product.state].filter(Boolean).join(", ")}
           </div>
+        )}Add to Cart Button for Customers */}
+        {readOnly && (
+          <Button
+            className="w-full"
+            onClick={() => {
+              const featuredImage = product.images.find((img) => img.isFeatured)?.url || product.images[0]?.url;
+              addItem({
+                id: product.id,
+                type: "product",
+                name: product.name,
+                price: product.price,
+                image: featuredImage,
+                description: product.description,
+                companyId: product.company.id,
+              });
+            }}
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Add to Cart
+          </Button>
         )}
 
+        {/* 
+
         {/* Toggle Switches */}
-        <div className="pt-3 border-t space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium cursor-pointer">Active</label>
-            <Switch
-              checked={product.isActive}
-              onCheckedChange={() =>
-                onToggleActive(product.id, product.isActive)
-              }
-            />
+        {!readOnly && (
+          <div className="pt-3 border-t space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium cursor-pointer">
+                Active
+              </label>
+              <Switch
+                checked={product.isActive}
+                onCheckedChange={() =>
+                  onToggleActive(product.id, product.isActive)
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium cursor-pointer">
+                Published
+              </label>
+              <Switch
+                checked={product.isPublished}
+                onCheckedChange={() =>
+                  onTogglePublished(product.id, product.isPublished)
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium cursor-pointer flex items-center gap-1">
+                <Star className="h-3 w-3" />
+                Featured
+              </label>
+              <Switch
+                checked={product.isFeatured}
+                onCheckedChange={() =>
+                  onToggleFeatured(product.id, product.isFeatured)
+                }
+              />
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium cursor-pointer">
-              Published
-            </label>
-            <Switch
-              checked={product.isPublished}
-              onCheckedChange={() =>
-                onTogglePublished(product.id, product.isPublished)
-              }
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium cursor-pointer flex items-center gap-1">
-              <Star className="h-3 w-3" />
-              Featured
-            </label>
-            <Switch
-              checked={product.isFeatured}
-              onCheckedChange={() =>
-                onToggleFeatured(product.id, product.isFeatured)
-              }
-            />
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

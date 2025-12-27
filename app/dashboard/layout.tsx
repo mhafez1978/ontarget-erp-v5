@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { OnboardingCheck } from "@/components/onboarding-check";
+import { CartProvider } from "@/contexts/cart-context";
 
 export default function DashboardLayout({
   children,
@@ -45,9 +46,9 @@ export default function DashboardLayout({
   }
 
   return (
-    <>
+    <CartProvider>
       <OnboardingCheck />
       {children}
-    </>
+    </CartProvider>
   );
 }
