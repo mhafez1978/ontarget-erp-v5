@@ -65,10 +65,11 @@ export function ProductGridCard({
   onTogglePublished,
   onToggleFeatured,
   onToggleActive,
+  readOnly = false,
   onAddToCart,
 }: ProductGridCardProps) {
   const { addItem } = useCart();
-}: ProductGridCardProps) {
+  
   const getFeaturedImage = (): string | null => {
     const featured = product.images.find((img) => img.isFeatured);
     return featured?.url || product.images[0]?.url || null;

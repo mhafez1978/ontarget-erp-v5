@@ -70,10 +70,11 @@ export function ServiceGridCard({
   onTogglePublished,
   onToggleFeatured,
   onToggleActive,
+  readOnly = false,
   onAddToCart,
 }: ServiceGridCardProps) {
   const { addItem } = useCart();
-}: ServiceGridCardProps) {
+
   const getFeaturedImage = (): string | null => {
     const featured = service.images.find((img) => img.isFeatured);
     return featured?.url || service.images[0]?.url || null;
@@ -194,7 +195,9 @@ export function ServiceGridCard({
           <Button
             className="w-full"
             onClick={() => {
-              const featuredImage = service.images.find((img) => img.isFeatured)?.url || service.images[0]?.url;
+              const featuredImage =
+                service.images.find((img) => img.isFeatured)?.url ||
+                service.images[0]?.url;
               addItem({
                 id: service.id,
                 type: "service",
