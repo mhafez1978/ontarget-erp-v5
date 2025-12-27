@@ -2,10 +2,10 @@ import {
   LayoutDashboard,
   ShoppingCart,
   FileText,
-  Settings,
   User,
   ShoppingBag,
   FolderKanban,
+  LifeBuoy,
 } from "lucide-react";
 
 export const companyCustomerMenuItems = [
@@ -15,5 +15,5 @@ export const companyCustomerMenuItems = [
   { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
   { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/support", label: "Support", icon: LifeBuoy },
 ];
