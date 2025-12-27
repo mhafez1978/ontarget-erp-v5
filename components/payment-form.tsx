@@ -1,13 +1,9 @@
 "use client";
 
-
 import { CreditCard, Lock, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
-
-;
 
 import {
   useStripe,
@@ -23,6 +19,7 @@ import type {
 } from "@stripe/stripe-js";
 
 interface PaymentFormProps {
+  initialCardHolder?: string;
   onCardDataChange?: (cardData: {
     cardNumber: string;
     cardHolder: string;
@@ -55,6 +52,7 @@ const cardElementOptions = {
 };
 
 export function PaymentForm({
+  initialCardHolder = "",
   onCardDataChange,
   onValidationChange,
   onPaymentMethodCreated,
@@ -62,7 +60,7 @@ export function PaymentForm({
   const stripe = useStripe();
   const elements = useElements();
 
-  const [cardHolder, setCardHolder] = useState("");
+  const [cardHolder, setCardHolder] = useState(initialCardHolder);
   const [cardBrand, setCardBrand] = useState<
     "visa" | "mastercard" | "amex" | "discover"
   >("visa");
@@ -93,6 +91,13 @@ export function PaymentForm({
   const [displayNumber, setDisplayNumber] = useState("");
   const [displayExpiry, setDisplayExpiry] = useState("");
   const [displayCvv, setDisplayCvv] = useState("");
+
+  // Update cardHolder when initialCardHolder changes
+  useEffect(() => {
+    if (initialCardHolder && initialCardHolder !== cardHolder) {
+      setCardHolder(initialCardHolder);
+    }
+  }, [initialCardHolder]);
 
   // Handle card holder name change
   const handleCardHolderChange = (value: string) => {

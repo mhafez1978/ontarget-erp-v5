@@ -150,7 +150,10 @@ export default function CartPage() {
                           Type: <span className="capitalize">{item.type}</span>
                         </p>
                         <p className="text-lg font-bold text-primary mt-2">
-                          ${item.price.toFixed(2)}
+                          $
+                          {typeof item.price === "number"
+                            ? item.price.toFixed(2)
+                            : Number(item.price).toFixed(2)}
                         </p>
                       </div>
 

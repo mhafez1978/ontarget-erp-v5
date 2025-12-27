@@ -13,6 +13,7 @@ import {
   Pencil,
   Trash2,
   Copy,
+  Ticket,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import {
@@ -25,6 +26,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -101,6 +112,10 @@ export default function SupportPage() {
     { id: string; name: string; isOwner?: boolean }[]
   >([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
+  const [ticketSubject, setTicketSubject] = useState("");
+  const [ticketMessage, setTicketMessage] = useState("");
+  const [submittingTicket, setSubmittingTicket] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -273,6 +288,43 @@ export default function SupportPage() {
     }
   };
 
+  // Handle ticket submission
+  const handleSubmitTicket = async () => {
+    if (!ticketSubject.trim() || !ticketMessage.trim()) {
+      toast.error("Please fill in both subject and message");
+      return;
+    }
+
+    setSubmittingTicket(true);
+    try {
+      const response = await fetch("/api/support/submit-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: ticketSubject,
+          message: ticketMessage,
+          companyId: selectedCompanyId || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Support ticket submitted successfully!");
+        setTicketDialogOpen(false);
+        setTicketSubject("");
+        setTicketMessage("");
+      } else {
+        toast.error(data.error || "Failed to submit ticket");
+      }
+    } catch (error) {
+      console.error("Error submitting ticket:", error);
+      toast.error("An error occurred while submitting your ticket");
+    } finally {
+      setSubmittingTicket(false);
+    }
+  };
+
   // Get button text based on active tab
   const getAddButtonText = () => {
     switch (activeTab) {
@@ -360,6 +412,17 @@ export default function SupportPage() {
                     {getAddButtonText()}
                   </Button>
                 )}
+              {/* Submit Ticket Button - For customers */}
+              {(user?.role === "ERP_CUSTOMER" ||
+                user?.role === "COMPANY_CUSTOMER") && (
+                <Button
+                  onClick={() => setTicketDialogOpen(true)}
+                  className="shrink-0"
+                >
+                  <Ticket className="h-4 w-4 mr-2" />
+                  Submit Ticket
+                </Button>
+              )}
             </div>
           </div>
 
@@ -454,20 +517,33 @@ export default function SupportPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      <a
-                        href="mailto:support@ontarget-erp.com"
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <Mail className="h-4 w-4" />
-                        <span>Email Support</span>
-                      </a>
-                      <a
-                        href="#"
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <HelpCircle className="h-4 w-4" />
-                        <span>Submit a Ticket</span>
-                      </a>
+                      {user?.role === "ERP_CUSTOMER" ||
+                      user?.role === "COMPANY_CUSTOMER" ? (
+                        <button
+                          onClick={() => setTicketDialogOpen(true)}
+                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <HelpCircle className="h-4 w-4" />
+                          <span>Submit a Ticket</span>
+                        </button>
+                      ) : (
+                        <>
+                          <a
+                            href="mailto:support@ontarget-erp.com"
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                          >
+                            <Mail className="h-4 w-4" />
+                            <span>Email Support</span>
+                          </a>
+                          <a
+                            href="#"
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                          >
+                            <HelpCircle className="h-4 w-4" />
+                            <span>Submit a Ticket</span>
+                          </a>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -773,50 +849,106 @@ export default function SupportPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid gap-4">
-                    <div className="flex items-start gap-4 p-4 border rounded-lg">
-                      <Mail className="h-6 w-6 text-primary mt-1" />
-                      <div>
-                        <h4 className="font-semibold mb-1">Email Support</h4>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Send us an email and we&apos;ll respond within 24
-                          hours
-                        </p>
-                        <a
-                          href="mailto:support@ontarget-erp.com"
-                          className="text-sm text-primary hover:underline"
-                        >
-                          support@ontarget-erp.com
-                        </a>
+                    {user?.role === "ERP_CUSTOMER" ||
+                    user?.role === "COMPANY_CUSTOMER" ? (
+                      <div className="flex items-start gap-4 p-4 border rounded-lg">
+                        <HelpCircle className="h-6 w-6 text-primary mt-1" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold mb-1">
+                            Submit a Ticket
+                          </h4>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Send us a support request and we&apos;ll respond as
+                            soon as possible
+                          </p>
+                          <Button
+                            onClick={() => setTicketDialogOpen(true)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Open Ticket Form
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="flex items-start gap-4 p-4 border rounded-lg">
-                      <HelpCircle className="h-6 w-6 text-primary mt-1" />
-                      <div>
-                        <h4 className="font-semibold mb-1">Help Center</h4>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Browse our knowledge base for instant answers
-                        </p>
-                        <button
-                          onClick={() =>
-                            document
-                              .querySelector('[value="kb-articles"]')
-                              ?.dispatchEvent(
-                                new MouseEvent("click", { bubbles: true })
-                              )
-                          }
-                          className="text-sm text-primary hover:underline"
-                        >
-                          Browse KB Articles
-                        </button>
+                    ) : (
+                      <div className="flex items-start gap-4 p-4 border rounded-lg">
+                        <Mail className="h-6 w-6 text-primary mt-1" />
+                        <div>
+                          <h4 className="font-semibold mb-1">Email Support</h4>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Send us an email and we&apos;ll respond within 24
+                            hours
+                          </p>
+                          <a
+                            href="mailto:support@ontarget-erp.com"
+                            className="text-sm text-primary hover:underline"
+                          >
+                            support@ontarget-erp.com
+                          </a>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* Submit Ticket Dialog */}
+        <Dialog open={ticketDialogOpen} onOpenChange={setTicketDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Submit Support Ticket</DialogTitle>
+              <DialogDescription>
+                Send a support request to the company. We'll respond as soon as
+                possible.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="ticket-subject">Subject *</Label>
+                <Input
+                  id="ticket-subject"
+                  placeholder="Brief description of your issue"
+                  value={ticketSubject}
+                  onChange={(e) => setTicketSubject(e.target.value)}
+                  disabled={submittingTicket}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ticket-message">Message *</Label>
+                <Textarea
+                  id="ticket-message"
+                  placeholder="Please provide details about your issue or question..."
+                  value={ticketMessage}
+                  onChange={(e) => setTicketMessage(e.target.value)}
+                  disabled={submittingTicket}
+                  rows={8}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setTicketDialogOpen(false)}
+                disabled={submittingTicket}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmitTicket}
+                disabled={
+                  submittingTicket ||
+                  !ticketSubject.trim() ||
+                  !ticketMessage.trim()
+                }
+              >
+                {submittingTicket ? "Submitting..." : "Submit Ticket"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DashboardLayout>
     </StaffAndAbove>
   );
