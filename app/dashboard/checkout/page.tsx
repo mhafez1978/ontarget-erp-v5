@@ -98,28 +98,30 @@ export default function CheckoutPage() {
   }, [fetchUser]);
 
   // Check payment gateway status when cart has items
-  if (!loading && items.length > 0) {
-    const companyId = items[0].companyId;
-    if (companyId) {
-      setCheckingGateway(true);
-      fetch(`/api/checkout/gateway-status?companyId=${companyId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setGatewayStatus(data);
-          if (!data.configured || !data.enabled) {
-            toast.warning("Payment gateway not configured", {
-              description: data.message,
-            });
-          }
-        })
-        .catch((err) => {
-          console.error("Error checking gateway status:", err);
-        })
-        .finally(() => {
-          setCheckingGateway(false);
-        });
+  useEffect(() => {
+    if (!loading && items.length > 0) {
+      const companyId = items[0].companyId;
+      if (companyId) {
+        setCheckingGateway(true);
+        fetch(`/api/checkout/gateway-status?companyId=${companyId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            setGatewayStatus(data);
+            if (!data.configured || !data.enabled) {
+              toast.warning("Payment gateway not configured", {
+                description: data.message,
+              });
+            }
+          })
+          .catch((err) => {
+            console.error("Error checking gateway status:", err);
+          })
+          .finally(() => {
+            setCheckingGateway(false);
+          });
+      }
     }
-  }
+  }, [loading, items]);
 
   useEffect(() => {
     // Redirect if cart is empty
@@ -202,17 +204,6 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error("Error placing order:", error);
       toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-                {gatewayStatus.message}. Please contact the company to complete
-                your order.
-              </AlertDescription>
-            </Alert>
-          );
-      }
-      ror("Failed to place order. Please try again.");
     } finally {
       setSubmitting(false);
     }
