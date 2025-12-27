@@ -4,7 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
-import { Image as ImageIcon, Copy, Pencil, Trash2, Star, ShoppingCart } from "lucide-react";
+import {
+  Image as ImageIcon,
+  Copy,
+  Pencil,
+  Trash2,
+  Star,
+  ShoppingCart,
+} from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 
 interface ProductImage {
@@ -69,7 +76,7 @@ export function ProductGridCard({
   onAddToCart,
 }: ProductGridCardProps) {
   const { addItem } = useCart();
-  
+
   const getFeaturedImage = (): string | null => {
     const featured = product.images.find((img) => img.isFeatured);
     return featured?.url || product.images[0]?.url || null;
@@ -182,12 +189,15 @@ export function ProductGridCard({
           <div className="text-xs text-muted-foreground">
             {[product.city, product.state].filter(Boolean).join(", ")}
           </div>
-        )}Add to Cart Button for Customers */}
+        )}
+        {/* Add to Cart Button for Customers */}
         {readOnly && (
           <Button
             className="w-full"
             onClick={() => {
-              const featuredImage = product.images.find((img) => img.isFeatured)?.url || product.images[0]?.url;
+              const featuredImage =
+                product.images.find((img) => img.isFeatured)?.url ||
+                product.images[0]?.url;
               addItem({
                 id: product.id,
                 type: "product",
