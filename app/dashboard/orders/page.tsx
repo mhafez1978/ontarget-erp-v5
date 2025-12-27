@@ -1,7 +1,18 @@
 "use client";
 
-
-import { Package, Search, Eye, Loader2, DollarSign, ShoppingCart, TrendingUp, Clock, Plus, X, Trash } from "lucide-react";
+import {
+  Package,
+  Search,
+  Eye,
+  Loader2,
+  DollarSign,
+  ShoppingCart,
+  TrendingUp,
+  Clock,
+  Plus,
+  X,
+  Trash,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import {
@@ -40,16 +51,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-
-
-
-
-
-
-
-
-
-;
 import Image from "next/image";
 import { format } from "date-fns";
 
@@ -501,14 +502,16 @@ export default function OrdersPage() {
               Manage and track customer orders
             </p>
           </div>
-          <Button onClick={() => setCreateOrderOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Order
-          </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div
+          className={`grid gap-4 ${
+            user.role === "ERP_CUSTOMER" || user.role === "COMPANY_CUSTOMER"
+              ? "md:grid-cols-2 lg:grid-cols-4"
+              : "md:grid-cols-2 lg:grid-cols-5"
+          }`}
+        >
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -551,17 +554,20 @@ export default function OrdersPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${stats.revenue.toFixed(2)}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Revenue Card - Hide for customers */}
+          {user.role !== "ERP_CUSTOMER" && user.role !== "COMPANY_CUSTOMER" && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  ${stats.revenue.toFixed(2)}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Filters */}
@@ -918,191 +924,6 @@ export default function OrdersPage() {
               </div>
             </>
           )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Create Order Sheet */}
-      <Sheet open={createOrderOpen} onOpenChange={setCreateOrderOpen}>
-        <SheetContent className="sm:max-w-2xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Create New Order</SheetTitle>
-            <SheetDescription>
-              Select a company, customer, and add items to create an order
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="space-y-6 mt-6">
-            {/* Company Selection */}
-            <div>
-              <Label>Company</Label>
-              <Select
-                value={selectedCompanyId}
-                onValueChange={handleCompanyChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select company" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companies.map((company) => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.name} {company.isRoot && "(Root)"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Customer Selection */}
-            {selectedCompanyId && (
-              <div>
-                <Label>Customer</Label>
-                <Select
-                  value={selectedCustomerId}
-                  onValueChange={setSelectedCustomerId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.name || customer.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {customers.length === 0 && selectedCompanyId && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    No customers found for this company
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Add Products */}
-            {selectedCompanyId && (
-              <div>
-                <Label>Add Product</Label>
-                <Select
-                  onValueChange={(id) => {
-                    const product = products.find((p) => p.id === id);
-                    if (product) addOrderItem("product", product);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select product to add" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name} - ${product.price.toFixed(2)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Add Services */}
-            {selectedCompanyId && (
-              <div>
-                <Label>Add Service</Label>
-                <Select
-                  onValueChange={(id) => {
-                    const service = services.find((s) => s.id === id);
-                    if (service) addOrderItem("service", service);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select service to add" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {services.map((service) => (
-                      <SelectItem key={service.id} value={service.id}>
-                        {service.name} - ${service.price.toFixed(2)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Order Items */}
-            {orderItems.length > 0 && (
-              <div>
-                <Label>Order Items</Label>
-                <div className="space-y-2 mt-2">
-                  {orderItems.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 p-3 border rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          ${item.unitPrice.toFixed(2)} × {item.quantity}
-                        </p>
-                      </div>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateItemQuantity(index, parseInt(e.target.value))
-                        }
-                        className="w-20"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeOrderItem(index)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Order Summary */}
-            {orderItems.length > 0 && (
-              <div className="space-y-2 p-4 bg-muted rounded-lg">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal:</span>
-                  <span>${calculateTotal().subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Tax (10%):</span>
-                  <span>${calculateTotal().tax.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between font-bold">
-                  <span>Total:</span>
-                  <span>${calculateTotal().total.toFixed(2)}</span>
-                </div>
-              </div>
-            )}
-
-            <Button
-              onClick={handleCreateOrder}
-              disabled={
-                creatingOrder ||
-                !selectedCompanyId ||
-                !selectedCustomerId ||
-                orderItems.length === 0
-              }
-              className="w-full"
-            >
-              {creatingOrder ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Order...
-                </>
-              ) : (
-                "Create Order"
-              )}
-            </Button>
-          </div>
         </SheetContent>
       </Sheet>
     </DashboardLayout>

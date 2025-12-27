@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { getGatewayForCompany } from "@/lib/payments/service";
+import { getGatewayForCompany, getRootGateway } from "@/lib/payments/service";
 
 /**
  * GET /api/checkout/gateway-status?companyId=xxx
- * Check if company has payment gateway configured
+ * Check if company has payment gateway configured (TEMPORARY: fallback enabled for testing)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -23,15 +23,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if company has payment gateway configured
-    const paymentGateway = await getGatewayForCompany(companyId);
+    // TEMPORARY: Check company gateway with fallback to root for testing
+    let paymentGateway = await getGatewayForCompany(companyId);
+
+    if (!paymentGateway) {
+      paymentGateway = await getRootGateway();
+    }
 
     if (!paymentGateway) {
       return NextResponse.json({
         configured: false,
         enabled: false,
         provider: null,
-        message: "Payment gateway not configured for this company",
+        message:
+          "This company has not configured a payment gateway. Please contact the company to set up payments.",
       });
     }
 

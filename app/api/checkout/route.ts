@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { getGatewayForCompany } from "@/lib/payments/service";
+import { getGatewayForCompany, getRootGateway } from "@/lib/payments/service";
 
 /**
  * POST /api/checkout
@@ -59,15 +59,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if company has payment gateway configured
-    const paymentGateway = await getGatewayForCompany(companyId);
+    // TEMPORARY: Check company payment gateway with fallback for testing
+    let paymentGateway = await getGatewayForCompany(companyId);
+
+    if (!paymentGateway) {
+      paymentGateway = await getRootGateway();
+    }
 
     if (!paymentGateway) {
       return NextResponse.json(
         {
           error: "Payment gateway not configured",
-          details:
-            "The company has not configured a payment gateway. Please contact support.",
+          details: "No payment gateway is configured. Please contact support.",
         },
         { status: 400 }
       );

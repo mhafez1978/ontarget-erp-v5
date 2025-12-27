@@ -202,7 +202,7 @@ export function ProductGridCard({
                 id: product.id,
                 type: "product",
                 name: product.name,
-                price: product.price,
+                price: Number(product.price),
                 image: featuredImage,
                 description: product.description,
                 companyId: product.company.id,

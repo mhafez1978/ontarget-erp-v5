@@ -202,7 +202,7 @@ export function ServiceGridCard({
                 id: service.id,
                 type: "service",
                 name: service.name,
-                price: service.price,
+                price: Number(service.price),
                 image: featuredImage,
                 description: service.description,
                 companyId: service.company.id,
