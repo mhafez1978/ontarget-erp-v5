@@ -201,18 +201,11 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      toast.er;
-
-      {
-        /* Payment Gateway Warning */
-      }
-      {
-        gatewayStatus &&
-          (!gatewayStatus.configured || !gatewayStatus.enabled) && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Payment Gateway Not Available</AlertTitle>
-              <AlertDescription>
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
                 {gatewayStatus.message}. Please contact the company to complete
                 your order.
               </AlertDescription>
