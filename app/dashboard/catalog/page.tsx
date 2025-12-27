@@ -20,8 +20,8 @@ function getRoleCatalogView(role: string, userName?: string | null) {
       return <ManagerCatalogView userName={userName} />;
     case "ERP_CUSTOMER":
     case "COMPANY_CUSTOMER":
-      // Company customers see the same catalog view as managers (read-only)
-      return <ManagerCatalogView userName={userName} />;
+      // Company customers see catalog view without management controls
+      return <ManagerCatalogView userName={userName} userRole={role} />;
     default:
       // For roles without catalog access, show unauthorized message
       return (

@@ -1,7 +1,13 @@
 "use client";
 
-
-import { Package, Briefcase, Loader2, Search, Grid3x3, List } from "lucide-react";
+import {
+  Package,
+  Briefcase,
+  Loader2,
+  Search,
+  Grid3x3,
+  List,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,11 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-
-
-
-;
 import { AddProductSheet } from "@/components/add-product-sheet";
 import { AddServiceSheet } from "@/components/add-service-sheet";
 import { EditProductSheet } from "@/components/edit-product-sheet";
@@ -38,6 +39,7 @@ import { ServiceTableRow } from "@/components/catalog/service-table-row";
 
 interface ManagerCatalogViewProps {
   userName?: string | null;
+  userRole?: string;
 }
 
 interface Company {
@@ -118,7 +120,12 @@ interface Service {
   createdAt: string;
 }
 
-export function ManagerCatalogView({ userName }: ManagerCatalogViewProps) {
+export function ManagerCatalogView({
+  userName,
+  userRole,
+}: ManagerCatalogViewProps) {
+  const isCustomer =
+    userRole === "ERP_CUSTOMER" || userRole === "COMPANY_CUSTOMER";
   const [activeTab, setActiveTab] = useState("products");
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isAddingService, setIsAddingService] = useState(false);
@@ -461,17 +468,22 @@ export function ManagerCatalogView({ userName }: ManagerCatalogViewProps) {
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-4">Catalog</h1>
           <p className="text-muted-foreground">
-            Welcome back, {userName || "Manager"}! Manage your products and
-            services here.
+            {isCustomer
+              ? `Welcome back, ${
+                  userName || "Customer"
+                }! Browse products and services.`
+              : `Welcome back, ${
+                  userName || "Manager"
+                }! Manage your products and services here.`}
           </p>
         </div>
-        {activeTab === "products" && (
+        {!isCustomer && activeTab === "products" && (
           <Button onClick={() => setIsAddingProduct(true)} className="shrink-0">
             <Package className="h-4 w-4 mr-2" />
             Add Product
           </Button>
         )}
-        {activeTab === "services" && (
+        {!isCustomer && activeTab === "services" && (
           <Button onClick={() => setIsAddingService(true)} className="shrink-0">
             <Briefcase className="h-4 w-4 mr-2" />
             Add Service
@@ -597,6 +609,7 @@ export function ManagerCatalogView({ userName }: ManagerCatalogViewProps) {
                         onToggleActive={(id, currentValue) =>
                           handleToggleActive(id, currentValue, "product")
                         }
+                        readOnly={isCustomer}
                       />
                     ))}
                   </div>
@@ -692,6 +705,7 @@ export function ManagerCatalogView({ userName }: ManagerCatalogViewProps) {
                         onToggleActive={(id, currentValue) =>
                           handleToggleActive(id, currentValue, "service")
                         }
+                        readOnly={isCustomer}
                       />
                     ))}
                   </div>
