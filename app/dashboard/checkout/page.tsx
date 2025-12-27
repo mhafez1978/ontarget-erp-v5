@@ -530,8 +530,10 @@ export default function CheckoutPage() {
                   disabled={
                     submitting ||
                     checkingGateway ||
-                    (gatewayStatus &&
-                      (!gatewayStatus.configured || !gatewayStatus.enabled))
+                    !!(
+                      gatewayStatus &&
+                      (!gatewayStatus.configured || !gatewayStatus.enabled)
+                    )
                   }
                 >
                   {submitting
