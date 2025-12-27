@@ -1,7 +1,19 @@
 "use client";
 
-
-import { BookOpen, Search, Mail, FileText, Settings, HelpCircle, MessageSquare, Video, Plus, Pencil, Trash2, Copy } from "lucide-react";
+import {
+  BookOpen,
+  Search,
+  Mail,
+  FileText,
+  Settings,
+  HelpCircle,
+  MessageSquare,
+  Video,
+  Plus,
+  Pencil,
+  Trash2,
+  Copy,
+} from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import {
   Card,
@@ -14,17 +26,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-
-
-
-
-
-
-
-
-
-
-;
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -331,29 +332,34 @@ export default function SupportPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {companies.length > 0 && (
-                <div className="flex flex-col text-right justify-center">
-                  <select
-                    className="mt-1 border rounded py-3 px-2 text-sm bg-background"
-                    value={selectedCompanyId}
-                    onChange={(e) => setSelectedCompanyId(e.target.value)}
-                  >
-                    {companies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                        {c.isOwner ? " (Owner)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {/* Add Button - Shows for KB Articles, Video Tutorials, and FAQ tabs */}
-              {activeTab !== "contact" && (
-                <Button onClick={handleAddClick} className="shrink-0">
-                  <Plus className="h-4 w-4 mr-2" />
-                  {getAddButtonText()}
-                </Button>
-              )}
+              {/* Company selector - Only for staff and above */}
+              {companies.length > 0 &&
+                user?.role !== "ERP_CUSTOMER" &&
+                user?.role !== "COMPANY_CUSTOMER" && (
+                  <div className="flex flex-col text-right justify-center">
+                    <select
+                      className="mt-1 border rounded py-3 px-2 text-sm bg-background"
+                      value={selectedCompanyId}
+                      onChange={(e) => setSelectedCompanyId(e.target.value)}
+                    >
+                      {companies.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                          {c.isOwner ? " (Owner)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              {/* Add Button - Shows for KB Articles, Video Tutorials, and FAQ tabs - Only for staff and above */}
+              {activeTab !== "contact" &&
+                user?.role !== "ERP_CUSTOMER" &&
+                user?.role !== "COMPANY_CUSTOMER" && (
+                  <Button onClick={handleAddClick} className="shrink-0">
+                    <Plus className="h-4 w-4 mr-2" />
+                    {getAddButtonText()}
+                  </Button>
+                )}
             </div>
           </div>
 
