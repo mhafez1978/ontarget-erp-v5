@@ -59,7 +59,7 @@ export default function FrontstoreV2Page() {
 
   // Check if AI provider is configured
   useEffect(() => {
-    fetch("/api/settings/ai-provider?scope=GLOBAL")
+    fetch("/api/settings/ai-provider?scope=GLOBAL&checkOnly=true")
       .then((res) => res.json())
       .then((data) => {
         if (

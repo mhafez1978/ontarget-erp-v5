@@ -29,16 +29,19 @@ export async function GET(req: NextRequest) {
     }
 
     const user = validation.user;
+    const { searchParams } = new URL(req.url);
+    const scope = searchParams.get("scope") || "GLOBAL";
 
-    if (user.role !== "SUPER_ADMIN") {
+    // Check if this is a read-only status check
+    const checkOnly = searchParams.get("checkOnly") === "true";
+
+    // Only super admins can access full settings, but anyone can check status
+    if (!checkOnly && user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Forbidden - Super Admin only" },
         { status: 403 }
       );
     }
-
-    const { searchParams } = new URL(req.url);
-    const scope = searchParams.get("scope") || "GLOBAL";
 
     if (scope !== "GLOBAL") {
       return NextResponse.json(
