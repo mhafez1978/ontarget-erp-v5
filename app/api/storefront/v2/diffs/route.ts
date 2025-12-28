@@ -66,11 +66,16 @@ export async function POST(request: NextRequest) {
       );
 
     const mapped = mapAiSpecToThemeSections(targetSpec, themeId);
-    if (!mapped)
+    if (!mapped) {
+      console.error("[Diffs] Failed to map spec to theme:", {
+        specKeys: Object.keys(targetSpec || {}),
+        themeId,
+      });
       return NextResponse.json(
         { error: "Failed to map spec to theme" },
         { status: 500 }
       );
+    }
 
     const changes = computeSectionDiffs(prevSections, mapped);
     const summary = humanReadableSummary(changes);
@@ -78,8 +83,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, changes, summary });
   } catch (error) {
     console.error("Diffs error:", error);
+    console.error("[Diffs] Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { error: "Failed to compute diffs" },
+      {
+        error: "Failed to compute diffs",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

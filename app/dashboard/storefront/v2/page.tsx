@@ -739,7 +739,9 @@ export default function FrontstoreV2Page() {
             {previewSpec ? (
               <AiStorefrontRendererV2
                 spec={previewSpec}
-                slug={companyId}
+                slug={
+                  companies.find((c) => c.id === companyId)?.slug || companyId
+                }
                 companyName={
                   companies.find((c) => c.id === companyId)?.name || "Preview"
                 }
