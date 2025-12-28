@@ -11,11 +11,13 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { getRoleMenuItems } from "@/components/dashboard-menus/main-dashboard-menu";
 import { getProxiedImageUrl } from "@/lib/image-proxy";
 import { LogoImage } from "@/components/logo-image";
+import { useCart } from "@/contexts/cart-context";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -48,6 +50,7 @@ export function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { theme, resolvedTheme } = useTheme();
+  const { itemCount } = useCart();
 
   // Determine which logo to display based on theme
   const currentLogo = React.useMemo(() => {
@@ -332,6 +335,11 @@ export function DashboardLayout({
                   >
                     <Icon className="h-5 w-5 shrink-0" />
                     {!isCollapsed && <span>{item.label}</span>}
+                    {!isCollapsed && item.badge === "cart" && itemCount > 0 && (
+                      <Badge variant="default" className="ml-auto">
+                        {itemCount}
+                      </Badge>
+                    )}
                   </Link>
                 </li>
               );

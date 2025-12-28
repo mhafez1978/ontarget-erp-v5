@@ -222,10 +222,10 @@ export default function CheckoutPage() {
         setOrderSuccess(true);
         clearCart();
 
-        // Redirect to orders page after 10 seconds
+        // Redirect to orders page after 15 seconds
         setTimeout(() => {
           router.push(`/dashboard/orders?new=${data.order.id}`);
-        }, 10000);
+        }, 15000);
       } else {
         // Show specific error message
         if (data.details) {
