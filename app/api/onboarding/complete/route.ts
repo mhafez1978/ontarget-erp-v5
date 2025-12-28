@@ -19,6 +19,14 @@ export async function POST(request: Request) {
         staff: {
           include: {
             employmentDocuments: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+                country: true,
+                countryCode: true,
+              },
+            },
           },
         },
       },
