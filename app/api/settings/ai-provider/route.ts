@@ -112,6 +112,15 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = aiProviderSchema.parse(body);
 
+    console.log("[AI Provider] POST received data:", {
+      provider: data.provider,
+      model: data.model,
+      apiBase: data.apiBase,
+      isActive: data.isActive,
+      hasApiKey: !!data.apiKey,
+      apiKeyLength: data.apiKey?.length || 0,
+    });
+
     if (data.scope !== "GLOBAL") {
       return NextResponse.json(
         { error: "Only GLOBAL scope is supported for AI provider" },
@@ -162,6 +171,13 @@ export async function POST(req: NextRequest) {
             },
           })
         : undefined;
+
+    console.log("[AI Provider] Update result:", {
+      updated: !!provider,
+      id: provider?.id,
+      provider: provider?.provider,
+      model: provider?.model,
+    });
 
     const created =
       !existing && typeof aiProviderClient.create === "function"
