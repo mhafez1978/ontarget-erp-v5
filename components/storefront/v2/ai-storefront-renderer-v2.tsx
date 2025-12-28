@@ -1,7 +1,13 @@
 "use client";
 
-
-import { ShoppingCart, Star, ArrowRight, Play, Loader2, Menu } from "lucide-react";
+import {
+  ShoppingCart,
+  Star,
+  ArrowRight,
+  Play,
+  Loader2,
+  Menu,
+} from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,11 +15,6 @@ import { motion, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Marquee } from "@/components/ui/marquee";
 
-
-
-
-
-;
 import { toast } from "sonner";
 import type {
   AiFrontstoreSpec,
@@ -603,23 +604,27 @@ function FooterV2({
               Quick Links
             </h4>
             <ul className="space-y-2">
-              {["Home", "Products", "Services", "About", "Contact"].map(
-                (link) => (
-                  <li key={link}>
-                    <Link
-                      href={`/store/${slug}/${link.toLowerCase()}`}
-                      className="text-sm transition-colors hover:opacity-80"
-                      style={{
-                        color: spec.meta.textColor,
-                        opacity: 0.7,
-                        fontFamily: typography.bodyFont,
-                      }}
-                    >
-                      {link}
-                    </Link>
-                  </li>
-                )
-              )}
+              {[
+                { label: "Home", href: `/store/${slug}` },
+                { label: "Products", href: `/store/${slug}/products` },
+                { label: "Services", href: `/store/${slug}/services` },
+                { label: "About", href: `#about` },
+                { label: "Contact", href: `#contact` },
+              ].map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-sm transition-colors hover:opacity-80"
+                    style={{
+                      color: spec.meta.textColor,
+                      opacity: 0.7,
+                      fontFamily: typography.bodyFont,
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
