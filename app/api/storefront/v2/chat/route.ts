@@ -430,7 +430,7 @@ export async function POST(request: NextRequest) {
       console.error("[AI Storefront V2] Generated spec failed validation:");
       console.error(
         "[AI Storefront V2] Validation errors:",
-        JSON.stringify(parsedSpec.error.errors, null, 2)
+        JSON.stringify(parsedSpec.error.issues, null, 2)
       );
       console.error(
         "[AI Storefront V2] Spec keys:",
@@ -447,7 +447,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "AI generated an invalid storefront spec",
-          details: parsedSpec.error.errors
+          details: parsedSpec.error.issues
             .slice(0, 3)
             .map((e) => `${e.path.join(".")}: ${e.message}`)
             .join(", "),
