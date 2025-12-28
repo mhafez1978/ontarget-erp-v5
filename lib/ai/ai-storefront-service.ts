@@ -68,12 +68,16 @@ const STOREFRONT_SYSTEM_PROMPT = `You are an expert web designer creating access
 2. header (order: 1)  
 3. hero (order: 2)
 4. stats (order: 3)
-5. features (order: 4)
-6. case studies (order: 5) - Portfolio/projects/work showcase
+5. highlights (order: 4) - Key features/benefits
+6. portfolio (order: 5) - Portfolio/projects/work showcase
 7. testimonials (order: 6)
 8. cta-band (order: 7)
 9. footer (order: 999)
 
+📋 Available section types (use ONLY the 9 mandatory above):
+• announcement-bar, header, hero, highlights, product-grid, service-grid
+• portfolio, posts, team, testimonials, stats, faq
+• contact, contact-map, cta-band, footer
 
 ✅ ONLY the 9 mandatory sections listed above
 
@@ -259,8 +263,8 @@ function ensureMandatorySections(
     "header",
     "hero",
     "stats",
-    "features",
-    "case studies",
+    "highlights",
+    "portfolio",
     "testimonials",
     "cta-band",
     "footer",
@@ -396,10 +400,10 @@ function ensureMandatorySections(
           });
           break;
 
-        case "features":
+        case "highlights":
           missingSections.push({
-            id: "features",
-            type: "features",
+            id: "highlights",
+            type: "highlights",
             order: nextOrder++,
             content: {
               heading: "What We Offer",
@@ -478,10 +482,10 @@ function ensureMandatorySections(
           });
           break;
 
-        case "case studies":
+        case "portfolio":
           missingSections.push({
-            id: "case-studies",
-            type: "case studies",
+            id: "portfolio",
+            type: "portfolio",
             order: nextOrder++,
             content: {
               heading: "Our Work",

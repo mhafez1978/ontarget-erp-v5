@@ -427,9 +427,31 @@ export async function POST(request: NextRequest) {
     // Validate generated spec against schema and persist as a preview version
     const parsedSpec = aiFrontstoreSpecSchema.safeParse(result.spec);
     if (!parsedSpec.success) {
-      console.warn("AI generated spec failed validation:", parsedSpec.error);
+      console.error("[AI Storefront V2] Generated spec failed validation:");
+      console.error(
+        "[AI Storefront V2] Validation errors:",
+        JSON.stringify(parsedSpec.error.errors, null, 2)
+      );
+      console.error(
+        "[AI Storefront V2] Spec keys:",
+        Object.keys(result.spec || {})
+      );
+      console.error("[AI Storefront V2] Spec structure:", {
+        hasVersion: "version" in (result.spec || {}),
+        hasMeta: "meta" in (result.spec || {}),
+        hasSections: "sections" in (result.spec || {}),
+        sectionsCount: Array.isArray((result.spec as any)?.sections)
+          ? (result.spec as any).sections.length
+          : "not array",
+      });
       return NextResponse.json(
-        { error: "AI generated an invalid storefront spec" },
+        {
+          error: "AI generated an invalid storefront spec",
+          details: parsedSpec.error.errors
+            .slice(0, 3)
+            .map((e) => `${e.path.join(".")}: ${e.message}`)
+            .join(", "),
+        },
         { status: 500 }
       );
     }
