@@ -52,6 +52,36 @@ export default function FrontstoreV2Page() {
   const [themeSections, setThemeSections] = useState<ThemeSection[] | null>(
     null
   );
+  const [aiProviderConfigured, setAiProviderConfigured] = useState<
+    boolean | null
+  >(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Check if AI provider is configured
+  useEffect(() => {
+    fetch("/api/settings/ai-provider?scope=GLOBAL")
+      .then((res) => res.json())
+      .then((data) => {
+        if (
+          data.provider &&
+          data.provider.isActive &&
+          data.provider.hasApiKey
+        ) {
+          setAiProviderConfigured(true);
+        } else {
+          setAiProviderConfigured(false);
+        }
+      })
+      .catch(() => setAiProviderConfigured(false));
+
+    // Get user role
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        setUserRole(data.user?.role || null);
+      })
+      .catch((err) => console.error("Failed to get user role:", err));
+  }, []);
 
   // Load user's companies
   useEffect(() => {
@@ -448,6 +478,44 @@ export default function FrontstoreV2Page() {
 
   return (
     <div className="p-4 space-y-4">
+      {/* AI Provider Warning */}
+      {aiProviderConfigured === false && (
+        <div className="p-4 bg-amber-50 border-2 border-amber-300 rounded-lg">
+          <div className="flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-amber-900 mb-1">
+                AI Provider Not Configured
+              </h3>
+              <p className="text-sm text-amber-800 mb-2">
+                The global AI provider has not been configured yet. AI
+                storefront generation will use fallback templates instead of
+                AI-powered designs.
+              </p>
+              {userRole === "SUPER_ADMIN" ? (
+                <p className="text-sm text-amber-800">
+                  <strong>Action Required:</strong> Go to{" "}
+                  <a
+                    href="/dashboard/settings"
+                    target="_top"
+                    className="underline font-semibold"
+                  >
+                    Settings → AI Engine
+                  </a>{" "}
+                  to configure your AI provider (OpenAI, Anthropic, DeepSeek,
+                  etc.).
+                </p>
+              ) : (
+                <p className="text-sm text-amber-800">
+                  <strong>Note:</strong> Please contact your Super Admin to
+                  configure the AI provider in Settings.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Debug Panel */}
       <div className="p-3 bg-gray-100 border rounded text-xs space-y-1">
         <div>
