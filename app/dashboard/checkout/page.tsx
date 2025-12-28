@@ -220,12 +220,12 @@ export default function CheckoutPage() {
       if (response.ok) {
         setOrderNumber(data.order.orderNumber);
         setOrderSuccess(true);
-        clearCart();
 
-        // Redirect to orders page after 10 seconds
+        // Redirect to orders page after 30 seconds and clear cart just before
         setTimeout(() => {
+          clearCart();
           router.push(`/dashboard/orders?new=${data.order.id}`);
-        }, 10000);
+        }, 30000);
       } else {
         // Show specific error message
         if (data.details) {

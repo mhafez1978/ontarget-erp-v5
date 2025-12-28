@@ -1,9 +1,6 @@
 "use client";
 
-
-
 import { LucideIcon, Building2 } from "lucide-react";
-;
 import {
   superAdminMenuItems,
   adminMenuItems,
@@ -19,6 +16,7 @@ export interface MenuItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  badge?: string; // Optional badge identifier (e.g., "cart" for cart count)
 }
 
 // Role-based menu renderer
