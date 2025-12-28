@@ -1,17 +1,11 @@
 "use client";
 
-
 import { User2, Mail, UserPlus, UserMinus, Shield, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-
-
-
-
-;
 import { useState } from "react";
 import { toast } from "sonner";
 import { confirmToast } from "@/lib/confirm";
@@ -29,8 +23,6 @@ interface Project {
     | "CANCELLED";
   startDate: string | null;
   endDate: string | null;
-  targetStartDate: string | null;
-  targetEndDate: string | null;
   companyId: string;
   teamId: string;
   managerId: string | null;

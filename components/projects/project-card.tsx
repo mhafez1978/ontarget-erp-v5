@@ -1,7 +1,15 @@
 "use client";
 
-
-import { Calendar, CheckCircle2, User2, Users, MoreVertical, Edit, Trash2, Eye } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  User2,
+  Users,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Eye,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,13 +22,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-
-
-
-
-
-
-;
 import { useRouter } from "next/navigation";
 
 // Project type (matches API response)
@@ -37,8 +38,6 @@ interface Project {
     | "CANCELLED";
   startDate: string | null;
   endDate: string | null;
-  targetStartDate?: string | null;
-  targetEndDate: string | null;
   companyId: string;
   teamId: string;
   managerId: string | null;
@@ -296,22 +295,21 @@ export function ProjectCard({
         )}
 
         {/* Dates - Stack vertically on small cards */}
-        {(project.targetStartDate || project.targetEndDate) && (
+        {(project.startDate || project.endDate) && (
           <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-            {project.targetStartDate && (
+            {project.startDate && (
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3 shrink-0" />
                 <span className="truncate">
-                  Start:{" "}
-                  {new Date(project.targetStartDate).toLocaleDateString()}
+                  Start: {new Date(project.startDate).toLocaleDateString()}
                 </span>
               </span>
             )}
-            {project.targetEndDate && (
+            {project.endDate && (
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3 shrink-0" />
                 <span className="truncate">
-                  Due: {new Date(project.targetEndDate).toLocaleDateString()}
+                  Due: {new Date(project.endDate).toLocaleDateString()}
                 </span>
               </span>
             )}
