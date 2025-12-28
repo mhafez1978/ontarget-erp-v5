@@ -433,6 +433,15 @@ export async function POST(request: NextRequest) {
                   : undefined,
             }
           : undefined;
+
+      console.log("[AI Storefront Generate] Provider config:", {
+        hasConfig: !!providerConfig,
+        provider: providerConfig?.provider,
+        model: providerConfig?.model,
+        apiBase: providerConfig?.apiBase,
+        apiKeyLength: providerConfig?.apiKey?.length || 0,
+        apiKeyFirst8: providerConfig?.apiKey?.substring(0, 8) || "none",
+      });
     }
 
     const result = await generateAiStorefront(input, providerConfig);
