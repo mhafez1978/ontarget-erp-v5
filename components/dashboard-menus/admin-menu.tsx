@@ -1,43 +1,44 @@
-import { LayoutDashboard, Users, Settings, Tags, Shield, User, Palette, UsersRound, Mail, FolderKanban, BookOpen, Store, HelpCircle, MessageSquare, Clock, ShoppingCart, Receipt } from "lucide-react";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-;
+import {
+  LayoutDashboard,
+  Users,
+  Settings,
+  Tags,
+  Shield,
+  User,
+  Palette,
+  UsersRound,
+  Mail,
+  FolderKanban,
+  BookOpen,
+  Store,
+  HelpCircle,
+  MessageSquare,
+  Clock,
+  ShoppingCart,
+  Receipt,
+} from "lucide-react";
 
 export const adminMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/profile", label: "Profile", icon: User },
-  { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
-  { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/catalog", label: "Catalog", icon: Tags },
-  { href: "/dashboard/storefront", label: "Storefront", icon: Store },
-  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/dashboard/payments", label: "Payments", icon: Receipt },
+  { href: "/dashboard/workforce", label: "Workforce", icon: UsersRound },
+  { href: "/dashboard/timesheet", label: "Timesheet", icon: Clock },
+  { href: "/dashboard/customers", label: "Customers", icon: Users },
   {
     href: "/dashboard/testimonials",
     label: "Testimonials",
     icon: MessageSquare,
   },
-  { href: "/dashboard/workforce", label: "Workforce", icon: UsersRound },
-  { href: "/dashboard/timesheet", label: "Timesheet", icon: Clock },
+  { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
+  { href: "/dashboard/storefront", label: "Storefront", icon: Store },
+  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/dashboard/payments", label: "Payments", icon: Receipt },
   { href: "/dashboard/ledger", label: "Ledger", icon: BookOpen },
-  { href: "/dashboard/security", label: "Security", icon: Shield },
   { href: "/dashboard/hub", label: "Hub", icon: Mail },
-  { href: "/dashboard/branding", label: "Branding", icon: Palette },
   { href: "/dashboard/files", label: "Files", icon: FolderKanban },
+  { href: "/dashboard/branding", label: "Branding", icon: Palette },
+  { href: "/dashboard/security", label: "Security", icon: Shield },
   { href: "/dashboard/support", label: "Support", icon: HelpCircle },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

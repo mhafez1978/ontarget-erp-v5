@@ -1943,6 +1943,9 @@ model Task {
   // Time tracking (in minutes)
   timeEntry Int @default(0)
 
+  // Privacy flag - private tasks only visible to team members, not company customers
+  isPrivate Boolean @default(false)
+
   // Order for display
   order Int @default(0)
 
@@ -1972,6 +1975,9 @@ model ProjectNote {
 
   // Time tracking (in minutes)
   timeEntry Int @default(0)
+
+  // Privacy flag - private notes only visible to team members, not company customers
+  isPrivate Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

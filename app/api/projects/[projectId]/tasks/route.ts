@@ -134,9 +134,19 @@ export async function GET(
     }
     // SUPER_ADMIN, ADMIN: Full access if they have company access
 
-    // Get tasks
+    // Build where clause - filter private tasks for company customers
+    const isCustomer =
+      user.role === "COMPANY_CUSTOMER" || user.role === "ERP_CUSTOMER";
+    const whereClause: any = { projectId };
+
+    // Company customers can only see public tasks (isPrivate = false)
+    if (isCustomer) {
+      whereClause.isPrivate = false;
+    }
+
+    // Get tasks (filtered by privacy if customer)
     const tasks = (await db.task.findMany({
-      where: { projectId },
+      where: whereClause,
       include: {
         createdBy: {
           include: {
@@ -219,6 +229,7 @@ export async function POST(
       createdById,
       assignedToId,
       dueDate,
+      isPrivate = false,
     } = body;
 
     if (!title) {
@@ -336,6 +347,7 @@ export async function POST(
         createdById,
         assignedToId,
         dueDate: dueDate ? new Date(dueDate) : null,
+        isPrivate: Boolean(isPrivate),
         order,
       },
       include: {

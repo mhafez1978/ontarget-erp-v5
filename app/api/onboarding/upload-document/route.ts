@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { uploadDocument } from "@/lib/storage-service";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
-import { checkSequentialUpload } from "@/lib/onboarding";
+import { checkSequentialUpload } from "@/lib/onboarding-config";
 
 export async function POST(request: Request) {
   try {
@@ -142,11 +142,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Enforce sequential uploads for required document types
+    // Enforce sequential uploads for required document types (country-specific)
     const uploaded = onboardingToken.staff.employmentDocuments.map(
       (d) => d.docType
     );
-    const check = checkSequentialUpload(docType, uploaded);
+    // Fallback chain: staff country → company country → DEFAULT (International)
+    const countryCode =
+      onboardingToken.staff.countryCode ||
+      onboardingToken.staff.country ||
+      onboardingToken.staff.company?.countryCode ||
+      onboardingToken.staff.company?.country;
+    const check = checkSequentialUpload(docType, uploaded, countryCode);
 
     if (!check.ok) {
       // Audit: rejected upload due to out-of-order
@@ -157,7 +163,12 @@ export async function POST(request: Request) {
         entityType: ENTITY_TYPES.STAFF_MEMBER,
         entityId: onboardingToken.staffId,
         description: `Rejected upload for ${docType}: missing prerequisites`,
-        metadata: { token, docType, missingPrereqs: check.missingPrereqs },
+        metadata: {
+          token,
+          docType,
+          missingPrereqs: check.missingPrereqs,
+          country: countryCode,
+        },
       });
 
       return NextResponse.json(

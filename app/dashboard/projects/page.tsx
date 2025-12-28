@@ -9,6 +9,7 @@ import {
   ManagerProjectsView,
   StaffProjectsView,
   ContractorProjectsView,
+  CompanyCustomerProjectsView,
 } from "@/components/projects-views";
 
 // Role-based projects view component renderer
@@ -26,8 +27,8 @@ function getRoleProjectsView(role: string) {
       return <ContractorProjectsView />;
     case "ERP_CUSTOMER":
     case "COMPANY_CUSTOMER":
-      // Company customers only see projects where they are the customer
-      return <ContractorProjectsView />;
+      // Company customers see projects where they are assigned as customer (read-only)
+      return <CompanyCustomerProjectsView />;
     default:
       // For roles without projects access, show unauthorized message
       return (

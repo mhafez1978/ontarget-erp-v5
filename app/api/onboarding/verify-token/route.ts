@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
+import { getOnboardingConfig } from "@/lib/onboarding-config";
 
 export async function GET(request: Request) {
   try {
@@ -24,6 +25,43 @@ export async function GET(request: Request) {
                 logo: true,
                 logoLight: true,
                 logoDark: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            employmentDocuments: {
+              select: {
+                id: true,
+                docType: true,
+                fileName: true,
+                status: true,
+                uploadedAt: true,
+              },
+            },
+          },
+          // Fetch country and countryCode for country-specific requirements
+          select: {
+            id: true,
+            userId: true,
+            companyId: true,
+            jobTitle: true,
+            country: true,
+            countryCode: true,
+            onboardingComplete: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+                logo: true,
+                logoLight: true,
+                logoDark: true,
+                country: true, // Fallback if staff country not set
+                countryCode: true, // Fallback if staff countryCode not set
               },
             },
             user: {
@@ -83,15 +121,15 @@ export async function GET(request: Request) {
       );
     }
 
-    // Required documents list
-    const requiredDocs: Array<string> = [
-      "SSN_CARD",
-      "DRIVERS_LICENSE",
-      "W4_TAX_FORM",
-      "I9_FORM",
-      "DIRECT_DEPOSIT_FORM",
-      "EMPLOYEE_HANDBOOK_SIGNED",
-    ];
+    // Get country-specific onboarding configuration
+    // Fallback chain: staff country → company country → DEFAULT (International)
+    const countryCode =
+      onboardingToken.staff.countryCode ||
+      onboardingToken.staff.country ||
+      onboardingToken.staff.company?.countryCode ||
+      onboardingToken.staff.company?.country;
+    const config = getOnboardingConfig(countryCode);
+    const requiredDocs = config.requiredOrder;
 
     const uploadedDocs = onboardingToken.staff.employmentDocuments.map(
       (doc) => doc.docType
@@ -109,7 +147,11 @@ export async function GET(request: Request) {
       entityType: ENTITY_TYPES.STAFF_MEMBER,
       entityId: onboardingToken.staff.id,
       description: `Onboarding token verified for ${onboardingToken.staff.user.email}`,
-      metadata: { token: onboardingToken.token, missingDocs },
+      metadata: {
+        token: onboardingToken.token,
+        missingDocs,
+        country: config.countryName,
+      },
     });
 
     return NextResponse.json({
@@ -118,8 +160,11 @@ export async function GET(request: Request) {
         name: onboardingToken.staff.user.name,
         email: onboardingToken.staff.user.email,
         jobTitle: onboardingToken.staff.jobTitle,
+        country: onboardingToken.staff.country,
+        countryCode: onboardingToken.staff.countryCode,
       },
       company: onboardingToken.staff.company,
+      onboardingConfig: config, // Return country-specific configuration
       progress: {
         step1Complete: onboardingToken.step1Complete,
         step2Complete: onboardingToken.step2Complete,

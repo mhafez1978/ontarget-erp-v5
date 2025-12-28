@@ -41,10 +41,27 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Get all notes for the project
+    // Build where clause - filter private notes for company customers
+    const isCustomer =
+      validation.user.role === "COMPANY_CUSTOMER" ||
+      validation.user.role === "ERP_CUSTOMER";
+    const whereClause: any = { projectId };
+
+    // Company customers can only see public notes (isPrivate = false)
+    if (isCustomer) {
+      whereClause.isPrivate = false;
+    }
+
+    // Get notes for the project (filtered by privacy if customer)
     const notes = await db.projectNote.findMany({
-      where: { projectId },
-      include: {
+      where: whereClause,
+      select: {
+        id: true,
+        content: true,
+        timeEntry: true,
+        isPrivate: true,
+        createdAt: true,
+        updatedAt: true,
         author: {
           select: {
             id: true,
@@ -87,7 +104,7 @@ export async function POST(
     const userId = validation.user.id;
     const { projectId } = await params;
     const body = await request.json();
-    const { content, timeEntry = 0 } = body;
+    const { content, timeEntry = 0, isPrivate = false } = body;
 
     if (!content || typeof content !== "string") {
       return NextResponse.json(
@@ -125,6 +142,7 @@ export async function POST(
       data: {
         content,
         timeEntry: Math.max(0, Math.floor(timeEntry)),
+        isPrivate: Boolean(isPrivate),
         projectId,
         authorId: userStaff.id,
       },

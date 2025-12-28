@@ -21,7 +21,55 @@ export async function GET(request: NextRequest) {
       user.role
     );
 
-    // Only ADMIN, MANAGER, STAFF can view company customers
+    // COMPANY_CUSTOMER users can only see their own company
+    if (user.role === "COMPANY_CUSTOMER" || user.role === "ERP_CUSTOMER") {
+      console.log(
+        "[API /customers/my-companies] Customer fetching their company"
+      );
+
+      // Find the customer's company through CompanyMember
+      const customerMembership = await db.companyMember.findFirst({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!customerMembership) {
+        console.log(
+          "[API /customers/my-companies] Customer not linked to any company"
+        );
+        return NextResponse.json({
+          success: true,
+          companies: [],
+          customers: [],
+          count: 0,
+        });
+      }
+
+      // Return the customer's company in the same format
+      return NextResponse.json({
+        success: true,
+        companies: [
+          {
+            id: customerMembership.company.id,
+            name: customerMembership.company.name,
+            customers: [], // Customers don't need to see other customers
+          },
+        ],
+        customers: [],
+        count: 0,
+      });
+    }
+
+    // ADMIN, MANAGER, STAFF can view all company customers they manage
     const allowedRoles = ["ADMIN", "MANAGER", "STAFF"];
     if (!allowedRoles.includes(user.role)) {
       console.log(

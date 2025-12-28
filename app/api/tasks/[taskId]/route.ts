@@ -205,6 +205,7 @@ export async function PATCH(
       dueDate,
       order,
       timeEntry,
+      isPrivate,
     } = body;
 
     // Get user with role
@@ -317,6 +318,7 @@ export async function PATCH(
         ...(timeEntry !== undefined && {
           timeEntry: Math.max(0, Math.floor(timeEntry)),
         }),
+        ...(isPrivate !== undefined && { isPrivate: Boolean(isPrivate) }),
       },
       include: {
         assignedTo: {

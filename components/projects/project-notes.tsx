@@ -1,27 +1,30 @@
 "use client";
 
-
-import { StickyNote, Plus, Trash2, Edit, X, Save, Clock, User2 } from "lucide-react";
+import {
+  StickyNote,
+  Plus,
+  Trash2,
+  Edit,
+  X,
+  Save,
+  Clock,
+  User2,
+  Lock,
+} from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TimeTracker } from "@/components/projects/time-tracker";
 import { toast } from "sonner";
 
-
-
-
-
-
-
-;
-
 interface ProjectNote {
   id: string;
   content: string;
   timeEntry: number;
+  isPrivate?: boolean;
   createdAt: string;
   updatedAt: string;
   author: {
@@ -38,20 +41,28 @@ interface ProjectNotesProps {
   projectId: string;
   notes: ProjectNote[];
   currentUserId: string;
+  userRole?: string; // Add userRole to determine read-only access
 }
 
 export function ProjectNotes({
   projectId,
   notes: initialNotes,
+  userRole,
 }: ProjectNotesProps) {
   const [notes, setNotes] = useState<ProjectNote[]>(initialNotes);
   const [isAdding, setIsAdding] = useState(false);
   const [newNoteContent, setNewNoteContent] = useState("");
   const [newNoteTime, setNewNoteTime] = useState(0);
+  const [newNoteIsPrivate, setNewNoteIsPrivate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editTime, setEditTime] = useState(0);
+  const [editIsPrivate, setEditIsPrivate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Company customers have read-only access to notes
+  const isReadOnly =
+    userRole === "COMPANY_CUSTOMER" || userRole === "ERP_CUSTOMER";
 
   const formatTime = (minutes: number) => {
     if (minutes < 60) {
@@ -76,6 +87,7 @@ export function ProjectNotes({
         body: JSON.stringify({
           content: newNoteContent,
           timeEntry: newNoteTime,
+          isPrivate: newNoteIsPrivate,
         }),
       });
 
@@ -87,6 +99,7 @@ export function ProjectNotes({
       setNotes([newNote, ...notes]);
       setNewNoteContent("");
       setNewNoteTime(0);
+      setNewNoteIsPrivate(false);
       setIsAdding(false);
       toast.success("Note added successfully");
     } catch (error) {
@@ -113,6 +126,7 @@ export function ProjectNotes({
           body: JSON.stringify({
             content: editContent,
             timeEntry: editTime,
+            isPrivate: editIsPrivate,
           }),
         }
       );
@@ -172,12 +186,14 @@ export function ProjectNotes({
     setEditingId(note.id);
     setEditContent(note.content);
     setEditTime(note.timeEntry);
+    setEditIsPrivate(note.isPrivate || false);
   };
 
   const cancelEditing = () => {
     setEditingId(null);
     setEditContent("");
     setEditTime(0);
+    setEditIsPrivate(false);
   };
 
   const totalTime = notes.reduce((sum, note) => sum + note.timeEntry, 0);
@@ -202,7 +218,7 @@ export function ProjectNotes({
                 <span>{formatTime(totalTime)} tracked</span>
               </div>
             )}
-            {!isAdding && (
+            {!isAdding && !isReadOnly && (
               <Button
                 size="sm"
                 onClick={() => setIsAdding(true)}
@@ -225,10 +241,29 @@ export function ProjectNotes({
               placeholder="Write your note..."
             />
             <div className="flex items-center justify-between">
-              <TimeTracker
-                onTimeChange={setNewNoteTime}
-                initialMinutes={newNoteTime}
-              />
+              <div className="flex items-center gap-4">
+                <TimeTracker
+                  onTimeChange={setNewNoteTime}
+                  initialMinutes={newNoteTime}
+                />
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="newNotePrivate"
+                    checked={newNoteIsPrivate}
+                    onChange={(e) => setNewNoteIsPrivate(e.target.checked)}
+                    disabled={isSaving}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <label
+                    htmlFor="newNotePrivate"
+                    className="flex items-center gap-1 text-xs cursor-pointer"
+                  >
+                    <Lock className="h-3 w-3" />
+                    Private
+                  </label>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
@@ -237,6 +272,7 @@ export function ProjectNotes({
                     setIsAdding(false);
                     setNewNoteContent("");
                     setNewNoteTime(0);
+                    setNewNoteIsPrivate(false);
                   }}
                   disabled={isSaving}
                 >
@@ -274,10 +310,29 @@ export function ProjectNotes({
                       placeholder="Edit your note..."
                     />
                     <div className="flex items-center justify-between">
-                      <TimeTracker
-                        onTimeChange={setEditTime}
-                        initialMinutes={editTime}
-                      />
+                      <div className="flex items-center gap-4">
+                        <TimeTracker
+                          onTimeChange={setEditTime}
+                          initialMinutes={editTime}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="editNotePrivate"
+                            checked={editIsPrivate}
+                            onChange={(e) => setEditIsPrivate(e.target.checked)}
+                            disabled={isSaving}
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <label
+                            htmlFor="editNotePrivate"
+                            className="flex items-center gap-1 text-xs cursor-pointer"
+                          >
+                            <Lock className="h-3 w-3" />
+                            Private
+                          </label>
+                        </div>
+                      </div>
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
@@ -318,6 +373,15 @@ export function ProjectNotes({
                             <span className="text-sm font-medium">
                               {note.author.user.name || "Unknown User"}
                             </span>
+                            {note.isPrivate && (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs gap-1"
+                              >
+                                <Lock className="h-3 w-3" />
+                                Private
+                              </Badge>
+                            )}
                             <span className="text-xs text-muted-foreground">
                               {new Date(note.createdAt).toLocaleDateString(
                                 "en-US",
@@ -342,24 +406,26 @@ export function ProjectNotes({
                           />
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => startEditing(note)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeleteNote(note.id)}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {!isReadOnly && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => startEditing(note)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteNote(note.id)}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </>
                 )}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
+import { getRequiredDocumentOrder } from "@/lib/onboarding-config";
 
 export async function POST(request: Request) {
   try {
@@ -61,15 +62,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if all required documents are uploaded
-    const requiredDocs: Array<string> = [
-      "SSN_CARD",
-      "DRIVERS_LICENSE",
-      "W4_TAX_FORM",
-      "I9_FORM",
-      "DIRECT_DEPOSIT_FORM",
-      "EMPLOYEE_HANDBOOK_SIGNED",
-    ];
+    // Check if all required documents are uploaded (country-specific)
+    // Fallback chain: staff country → company country → DEFAULT (International)
+    const countryCode =
+      onboardingToken.staff.countryCode ||
+      onboardingToken.staff.country ||
+      onboardingToken.staff.company?.countryCode ||
+      onboardingToken.staff.company?.country;
+    const requiredDocs = getRequiredDocumentOrder(countryCode);
 
     const uploadedDocs = onboardingToken.staff.employmentDocuments.map(
       (doc) => doc.docType
@@ -86,8 +86,10 @@ export async function POST(request: Request) {
         companyId: onboardingToken.staff.companyId,
         entityType: ENTITY_TYPES.STAFF_MEMBER,
         entityId: onboardingToken.staffId,
-        description: `Attempted onboarding completion but missing documents: ${missingDocs.join(", ")}`,
-        metadata: { token, missingDocs },
+        description: `Attempted onboarding completion but missing documents: ${missingDocs.join(
+          ", "
+        )}`,
+        metadata: { token, missingDocs, country: countryCode },
       });
       return NextResponse.json(
         {

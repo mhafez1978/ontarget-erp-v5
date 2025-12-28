@@ -1,7 +1,18 @@
 "use client";
 
-
-import { ArrowLeft, Edit, Trash2, Loader2, Calendar, Users, CheckCircle2, Activity, Clock, Plus, StickyNote } from "lucide-react";
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Loader2,
+  Calendar,
+  Users,
+  CheckCircle2,
+  Activity,
+  Clock,
+  Plus,
+  StickyNote,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard-layout";
@@ -20,16 +31,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-
-
-
-
-
-
-
-
-
-;
 import { toast } from "sonner";
 import { ProjectOverviewTab } from "@/components/projects/project-overview-tab";
 import { ProjectTeamTab } from "@/components/projects/project-team-tab";
@@ -88,8 +89,6 @@ interface Project {
     | "CANCELLED";
   startDate: string | null;
   endDate: string | null;
-  targetStartDate: string | null;
-  targetEndDate: string | null;
   companyId: string;
   teamId: string;
   managerId: string | null;
@@ -841,14 +840,24 @@ export default function ProjectDetailPage() {
             >
               {project.status.replace("_", " ")}
             </Badge>
-            <Button variant="outline" size="sm" onClick={handleEdit}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
+            {/* Hide edit/delete buttons for company customers (read-only access) */}
+            {user.role !== "ERP_CUSTOMER" &&
+              user.role !== "COMPANY_CUSTOMER" && (
+                <>
+                  <Button variant="outline" size="sm" onClick={handleEdit}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </>
+              )}
           </div>
         </div>
 
@@ -901,14 +910,11 @@ export default function ProjectDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {project.targetStartDate
-                  ? new Date(project.targetStartDate).toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                      }
-                    )
+                {project.startDate
+                  ? new Date(project.startDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })
                   : "N/A"}
               </div>
             </CardContent>
@@ -920,14 +926,11 @@ export default function ProjectDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {project.targetEndDate
-                  ? new Date(project.targetEndDate).toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                      }
-                    )
+                {project.endDate
+                  ? new Date(project.endDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })
                   : "N/A"}
               </div>
             </CardContent>
@@ -1071,6 +1074,7 @@ export default function ProjectDetailPage() {
               projectId={project.id}
               notes={notes}
               currentUserId={user.email || ""}
+              userRole={user.role}
             />
           </TabsContent>
           {FINANCE_FEATURE_FLAG && (

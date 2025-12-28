@@ -17,7 +17,7 @@ export async function PATCH(
     const userId = validation.user.id;
     const { projectId, noteId } = await params;
     const body = await request.json();
-    const { content, timeEntry } = body;
+    const { content, timeEntry, isPrivate } = body;
 
     // Verify note exists and belongs to the project
     const note = await db.projectNote.findUnique({
@@ -54,10 +54,15 @@ export async function PATCH(
     const oldContent = note.content;
 
     // Update the note
-    const updateData: { content?: string; timeEntry?: number } = {};
+    const updateData: {
+      content?: string;
+      timeEntry?: number;
+      isPrivate?: boolean;
+    } = {};
     if (content !== undefined) updateData.content = content;
     if (timeEntry !== undefined)
       updateData.timeEntry = Math.max(0, Math.floor(timeEntry));
+    if (isPrivate !== undefined) updateData.isPrivate = Boolean(isPrivate);
 
     const updatedNote = await db.projectNote.update({
       where: { id: noteId },
