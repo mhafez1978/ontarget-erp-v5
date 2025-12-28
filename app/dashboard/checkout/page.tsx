@@ -218,14 +218,14 @@ export default function CheckoutPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setOrderNumber(data.order.orderNumber);
+        setOrderNumber(data.order.id.toUpperCase());
         setOrderSuccess(true);
-        clearCart();
 
-        // Redirect to orders page after 15 seconds
+        // Redirect to orders page after 30 seconds and clear cart just before
         setTimeout(() => {
+          clearCart();
           router.push(`/dashboard/orders?new=${data.order.id}`);
-        }, 15000);
+        }, 30000);
       } else {
         // Show specific error message
         if (data.details) {
