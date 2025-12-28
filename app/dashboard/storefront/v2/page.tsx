@@ -1,7 +1,15 @@
 "use client";
 
-
-import { Sparkles, Send, Loader2, Smartphone, Monitor, Save, Wand2, MessageSquare } from "lucide-react";
+import {
+  Sparkles,
+  Send,
+  Loader2,
+  Smartphone,
+  Monitor,
+  Save,
+  Wand2,
+  MessageSquare,
+} from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AiStorefrontRendererV2 } from "@/components/storefront/v2/ai-storefront-renderer-v2";
@@ -12,14 +20,6 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { mapAiSpecToThemeSections as mapAiSpecToThemeSectionsShared } from "@/lib/storefront/ai-spec-mapper";
-
-
-
-
-
-
-
-;
 import type { AiFrontstoreSpec } from "@/lib/ai/ai-storefront-types";
 import type { ThemeSection } from "@/lib/storefront-themes";
 
@@ -737,25 +737,14 @@ export default function FrontstoreV2Page() {
             }`}
           >
             {previewSpec ? (
-              previewMode === "preview" ? (
-                <AiStorefrontRendererV2
-                  spec={previewSpec}
-                  slug={companyId}
-                  companyName={
-                    companies.find((c) => c.id === companyId)?.name || "Preview"
-                  }
-                  isPreview={true}
-                />
-              ) : (
-                <AiStorefrontRenderer
-                  spec={previewSpec}
-                  slug={companyId}
-                  companyName={
-                    companies.find((c) => c.id === companyId)?.name || "Preview"
-                  }
-                  enableCart={false}
-                />
-              )
+              <AiStorefrontRendererV2
+                spec={previewSpec}
+                slug={companyId}
+                companyName={
+                  companies.find((c) => c.id === companyId)?.name || "Preview"
+                }
+                isPreview={true}
+              />
             ) : (
               <div className="text-sm text-muted-foreground">
                 No preview yet. Generate a preview to see live rendering here.
