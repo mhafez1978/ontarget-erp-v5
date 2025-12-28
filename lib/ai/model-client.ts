@@ -50,6 +50,18 @@ export async function callStorefrontModel<T>(
     apiKey = providerConfig?.apiKey || process.env.OPENAI_API_KEY;
   }
 
+  console.log(`[AI Storefront] Provider: ${provider}`);
+  console.log(`[AI Storefront] Has providerConfig: ${!!providerConfig}`);
+  console.log(
+    `[AI Storefront] Has providerConfig.apiKey: ${!!providerConfig?.apiKey}`
+  );
+  console.log(`[AI Storefront] API Key length: ${apiKey?.length || 0}`);
+  console.log(
+    `[AI Storefront] API Key first 8 chars: ${
+      apiKey?.substring(0, 8) || "none"
+    }`
+  );
+
   if (!apiKey) {
     console.warn(
       `[AI Storefront] ${provider.toUpperCase()}_API_KEY not set; skipping remote model call`
@@ -232,6 +244,12 @@ export async function callStorefrontModel<T>(
 
     console.log(`[AI Storefront] Using DEEPSEEK provider with model: ${model}`);
     console.log(`[AI Storefront] Endpoint: ${endpoint}`);
+    console.log(`[AI Storefront] Request body:`, {
+      model,
+      messageCount: messages.length,
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -252,8 +270,9 @@ export async function callStorefrontModel<T>(
       console.error(
         "[AI Storefront] DeepSeek model call failed:",
         response.status,
-        text
+        response.statusText
       );
+      console.error("[AI Storefront] DeepSeek error response:", text);
       throw new Error(
         `AI storefront model call failed with status ${response.status}`
       );
