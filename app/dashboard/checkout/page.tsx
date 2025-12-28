@@ -218,7 +218,7 @@ export default function CheckoutPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setOrderNumber(data.order.id.toUpperCase());
+        setOrderNumber(data.order.orderNumber);
         setOrderSuccess(true);
 
         // Redirect to orders page after 30 seconds and clear cart just before
