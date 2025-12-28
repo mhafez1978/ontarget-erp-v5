@@ -9,9 +9,7 @@ import {
   ShoppingCart,
   TrendingUp,
   Clock,
-  Plus,
-  X,
-  Trash,
+  Printer,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
@@ -33,6 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -116,6 +115,7 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
 
   // User state for dashboard layout
   const [user, setUser] = useState<{
@@ -144,37 +144,37 @@ export default function OrdersPage() {
     revenue: 0,
   });
 
-  // Create order states
-  const [createOrderOpen, setCreateOrderOpen] = useState(false);
-  const [companies, setCompanies] = useState<
-    Array<{ id: string; name: string; isRoot: boolean }>
-  >([]);
-  const [customers, setCustomers] = useState<
-    Array<{
-      id: string;
-      name: string | null;
-      email: string | null;
-      phone: string | null;
-    }>
-  >([]);
-  const [products, setProducts] = useState<
-    Array<{ id: string; name: string; price: number }>
-  >([]);
-  const [services, setServices] = useState<
-    Array<{ id: string; name: string; price: number }>
-  >([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState("");
-  const [selectedCustomerId, setSelectedCustomerId] = useState("");
-  const [orderItems, setOrderItems] = useState<
-    Array<{
-      type: "product" | "service";
-      id: string;
-      name: string;
-      quantity: number;
-      unitPrice: number;
-    }>
-  >([]);
-  const [creatingOrder, setCreatingOrder] = useState(false);
+  // Create order states - commented out (feature not implemented in this component)
+  // const [createOrderOpen, setCreateOrderOpen] = useState(false);
+  // const [companies, setCompanies] = useState<
+  //   Array<{ id: string; name: string; isRoot: boolean }>
+  // >([]);
+  // const [customers, setCustomers] = useState<
+  //   Array<{
+  //     id: string;
+  //     name: string | null;
+  //     email: string | null;
+  //     phone: string | null;
+  //   }>
+  // >([]);
+  // const [products, setProducts] = useState<
+  //   Array<{ id: string; name: string; price: number }>
+  // >([]);
+  // const [services, setServices] = useState<
+  //   Array<{ id: string; name: string; price: number }>
+  // >([]);
+  // const [selectedCompanyId, setSelectedCompanyId] = useState("");
+  // const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  // const [orderItems, setOrderItems] = useState<
+  //   Array<{
+  //     type: "product" | "service";
+  //     id: string;
+  //     name: string;
+  //     quantity: number;
+  //     unitPrice: number;
+  //   }>
+  // >([]);
+  // const [creatingOrder, setCreatingOrder] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -213,16 +213,91 @@ export default function OrdersPage() {
     }
   };
 
+  const isCustomer =
+    user.role === "COMPANY_CUSTOMER" || user.role === "ERP_CUSTOMER";
+  const canEditOrders = ["STAFF", "MANAGER", "ADMIN", "SUPER_ADMIN"].includes(
+    user.role
+  );
+
+  const toggleOrderSelection = (orderId: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const toggleAllOrders = () => {
+    if (selectedOrderIds.length === filteredOrders.length) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(filteredOrders.map((order) => order.id));
+    }
+  };
+
+  const printOrder = (orderId: string) => {
+    // Create hidden iframe for printing
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = `/dashboard/orders/${orderId}/receipt?print=true`;
+    document.body.appendChild(iframe);
+
+    // Remove iframe after printing
+    iframe.onload = () => {
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    };
+  };
+
+  const printSelectedOrders = () => {
+    if (selectedOrderIds.length === 0) {
+      toast.error("Please select at least one order to print");
+      return;
+    }
+
+    selectedOrderIds.forEach((orderId, index) => {
+      setTimeout(() => printOrder(orderId), index * 500);
+    });
+  };
+
+  const getStatusVariant = (
+    status: string
+  ): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status) {
+      case "DELIVERED":
+        return "default";
+      case "SHIPPED":
+      case "PROCESSING":
+        return "secondary";
+      case "CANCELED":
+      case "REFUNDED":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
+
+  const getPaymentStatusVariant = (
+    paymentStatus: string
+  ): "default" | "secondary" | "destructive" | "outline" => {
+    switch (paymentStatus) {
+      case "PAID":
+        return "default";
+      case "PENDING":
+        return "outline";
+      case "FAILED":
+      case "REFUNDED":
+        return "destructive";
+      default:
+        return "secondary";
+    }
+  };
+
   useEffect(() => {
     fetchUser();
     fetchOrders();
   }, []);
-
-  useEffect(() => {
-    if (createOrderOpen) {
-      fetchCompanies();
-    }
-  }, [createOrderOpen]);
 
   const filterOrders = () => {
     let filtered = [...orders];
@@ -241,7 +316,7 @@ export default function OrdersPage() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (order) =>
-          order.orderNumber.toLowerCase().includes(query) ||
+          order.id.toLowerCase().includes(query) ||
           order.customerName.toLowerCase().includes(query) ||
           order.customerEmail.toLowerCase().includes(query)
       );
@@ -307,149 +382,6 @@ export default function OrdersPage() {
       toast.error("Failed to update order");
     } finally {
       setUpdating(false);
-    }
-  };
-
-  const fetchCompanies = async () => {
-    try {
-      const response = await fetch("/api/company/my-companies");
-      if (response.ok) {
-        const data = await response.json();
-        setCompanies(data.companies || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch companies:", error);
-    }
-  };
-
-  const fetchCustomers = async (companyId: string) => {
-    try {
-      const response = await fetch(`/api/customers?companyId=${companyId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCustomers(data.customers || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch customers:", error);
-      toast.error("Failed to load customers");
-    }
-  };
-
-  const fetchCatalog = async (companyId: string) => {
-    try {
-      const [productsRes, servicesRes] = await Promise.all([
-        fetch(`/api/catalog/products?companyId=${companyId}`),
-        fetch(`/api/catalog/services?companyId=${companyId}`),
-      ]);
-
-      if (productsRes.ok) {
-        const productsData = await productsRes.json();
-        setProducts(productsData.products || []);
-      }
-
-      if (servicesRes.ok) {
-        const servicesData = await servicesRes.json();
-        setServices(servicesData.services || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch catalog:", error);
-    }
-  };
-
-  const handleCompanyChange = async (companyId: string) => {
-    setSelectedCompanyId(companyId);
-    setSelectedCustomerId("");
-    setOrderItems([]);
-    await Promise.all([fetchCustomers(companyId), fetchCatalog(companyId)]);
-  };
-
-  const addOrderItem = (
-    type: "product" | "service",
-    item: { id: string; name: string; price: number }
-  ) => {
-    const existing = orderItems.find(
-      (i) => i.id === item.id && i.type === type
-    );
-    if (existing) {
-      toast.error("Item already added");
-      return;
-    }
-    setOrderItems([
-      ...orderItems,
-      {
-        type,
-        id: item.id,
-        name: item.name,
-        quantity: 1,
-        unitPrice: item.price,
-      },
-    ]);
-  };
-
-  const updateItemQuantity = (index: number, quantity: number) => {
-    if (quantity <= 0) return;
-    const updated = [...orderItems];
-    updated[index].quantity = quantity;
-    setOrderItems(updated);
-  };
-
-  const removeOrderItem = (index: number) => {
-    setOrderItems(orderItems.filter((_, i) => i !== index));
-  };
-
-  const calculateTotal = () => {
-    const subtotal = orderItems.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0
-    );
-    const tax = subtotal * 0.1;
-    const total = subtotal + tax;
-    return { subtotal, tax, total };
-  };
-
-  const handleCreateOrder = async () => {
-    if (!selectedCompanyId || !selectedCustomerId || orderItems.length === 0) {
-      toast.error("Please select company, customer, and add at least one item");
-      return;
-    }
-
-    try {
-      setCreatingOrder(true);
-      const items = orderItems.map((item) => ({
-        [item.type === "product" ? "productId" : "serviceId"]: item.id,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-      }));
-
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          companyId: selectedCompanyId,
-          customerId: selectedCustomerId,
-          items,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create order");
-      }
-
-      toast.success("Order created successfully!");
-      setCreateOrderOpen(false);
-      setSelectedCompanyId("");
-      setSelectedCustomerId("");
-      setOrderItems([]);
-      fetchOrders();
-    } catch (error) {
-      console.error("Failed to create order:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create order"
-      );
-    } finally {
-      setCreatingOrder(false);
     }
   };
 
@@ -653,6 +585,19 @@ export default function OrdersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      {isCustomer && (
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={
+                              selectedOrderIds.length ===
+                                filteredOrders.length &&
+                              filteredOrders.length > 0
+                            }
+                            onCheckedChange={toggleAllOrders}
+                            aria-label="Select all orders"
+                          />
+                        </TableHead>
+                      )}
                       <TableHead>Order #</TableHead>
                       <TableHead>Customer</TableHead>
                       <TableHead>Items</TableHead>
@@ -666,8 +611,19 @@ export default function OrdersPage() {
                   <TableBody>
                     {filteredOrders.map((order) => (
                       <TableRow key={order.id}>
+                        {isCustomer && (
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedOrderIds.includes(order.id)}
+                              onCheckedChange={() =>
+                                toggleOrderSelection(order.id)
+                              }
+                              aria-label={`Select order ${order.id}`}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell className="font-medium">
-                          {order.orderNumber}
+                          {order.id.toUpperCase()}
                         </TableCell>
                         <TableCell>
                           <div>
@@ -691,16 +647,33 @@ export default function OrdersPage() {
                           {format(new Date(order.createdAt), "MMM d, yyyy")}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setSheetOpen(true);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (isCustomer) {
+                                  window.location.href = `/dashboard/orders/${order.id}/receipt`;
+                                } else {
+                                  setSelectedOrder(order);
+                                  setSheetOpen(true);
+                                }
+                              }}
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                printOrder(order.id);
+                              }}
+                              title="Print Receipt"
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -718,7 +691,7 @@ export default function OrdersPage() {
           {selectedOrder && (
             <>
               <SheetHeader>
-                <SheetTitle>Order {selectedOrder.orderNumber}</SheetTitle>
+                <SheetTitle>Order {selectedOrder.id.toUpperCase()}</SheetTitle>
                 <SheetDescription>
                   Placed on{" "}
                   {format(
@@ -838,94 +811,157 @@ export default function OrdersPage() {
                   </div>
                 )}
 
-                {/* Order Management */}
-                <div className="space-y-4 pt-4 border-t">
-                  <div>
-                    <Label htmlFor="status">Order Status</Label>
-                    <Select
-                      value={selectedOrder.status}
-                      onValueChange={(value) =>
-                        setSelectedOrder({
-                          ...selectedOrder,
-                          status: value as OrderStatus,
-                        })
-                      }
-                    >
-                      <SelectTrigger id="status" className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-                        <SelectItem value="PROCESSING">Processing</SelectItem>
-                        <SelectItem value="SHIPPED">Shipped</SelectItem>
-                        <SelectItem value="DELIVERED">Delivered</SelectItem>
-                        <SelectItem value="CANCELED">Canceled</SelectItem>
-                        <SelectItem value="REFUNDED">Refunded</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="paymentStatus">Payment Status</Label>
-                    <Select
-                      value={selectedOrder.paymentStatus}
-                      onValueChange={(value) =>
-                        setSelectedOrder({
-                          ...selectedOrder,
-                          paymentStatus: value as PaymentStatusType,
-                        })
-                      }
-                    >
-                      <SelectTrigger id="paymentStatus" className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="PAID">Paid</SelectItem>
-                        <SelectItem value="FAILED">Failed</SelectItem>
-                        <SelectItem value="REFUNDED">Refunded</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="internalNotes">Internal Notes</Label>
-                    <Textarea
-                      id="internalNotes"
-                      value={selectedOrder.internalNotes || ""}
-                      onChange={(e) =>
-                        setSelectedOrder({
-                          ...selectedOrder,
-                          internalNotes: e.target.value,
-                        })
-                      }
-                      placeholder="Add internal notes about this order..."
-                      className="mt-1"
-                      rows={4}
-                    />
-                  </div>
-
-                  <Button
-                    onClick={handleUpdateOrder}
-                    disabled={updating}
-                    className="w-full"
-                  >
-                    {updating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      "Update Order"
+                {/* Status Information for Customers (Read-Only) */}
+                {isCustomer && (
+                  <div className="space-y-3 pt-4 border-t">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Order Status:</span>
+                      <Badge variant={getStatusVariant(selectedOrder.status)}>
+                        {selectedOrder.status}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">
+                        Payment Status:
+                      </span>
+                      <Badge
+                        variant={getPaymentStatusVariant(
+                          selectedOrder.paymentStatus
+                        )}
+                      >
+                        {selectedOrder.paymentStatus}
+                      </Badge>
+                    </div>
+                    {selectedOrder.paymentMethod && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">
+                          Payment Method:
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {selectedOrder.paymentMethod}
+                        </span>
+                      </div>
                     )}
-                  </Button>
-                </div>
+                    <Button
+                      onClick={() => {
+                        window.open(
+                          `/dashboard/orders/${selectedOrder.id}/receipt`,
+                          "_blank"
+                        );
+                      }}
+                      className="w-full mt-4"
+                    >
+                      <Printer className="mr-2 h-4 w-4" />
+                      Print Receipt
+                    </Button>
+                  </div>
+                )}
+
+                {/* Order Management for Staff (Editable) */}
+                {canEditOrders && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div>
+                      <Label htmlFor="status">Order Status</Label>
+                      <Select
+                        value={selectedOrder.status}
+                        onValueChange={(value) =>
+                          setSelectedOrder({
+                            ...selectedOrder,
+                            status: value as OrderStatus,
+                          })
+                        }
+                      >
+                        <SelectTrigger id="status" className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PENDING">Pending</SelectItem>
+                          <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                          <SelectItem value="PROCESSING">Processing</SelectItem>
+                          <SelectItem value="SHIPPED">Shipped</SelectItem>
+                          <SelectItem value="DELIVERED">Delivered</SelectItem>
+                          <SelectItem value="CANCELED">Canceled</SelectItem>
+                          <SelectItem value="REFUNDED">Refunded</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="paymentStatus">Payment Status</Label>
+                      <Select
+                        value={selectedOrder.paymentStatus}
+                        onValueChange={(value) =>
+                          setSelectedOrder({
+                            ...selectedOrder,
+                            paymentStatus: value as PaymentStatusType,
+                          })
+                        }
+                      >
+                        <SelectTrigger id="paymentStatus" className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PENDING">Pending</SelectItem>
+                          <SelectItem value="PAID">Paid</SelectItem>
+                          <SelectItem value="FAILED">Failed</SelectItem>
+                          <SelectItem value="REFUNDED">Refunded</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="internalNotes">Internal Notes</Label>
+                      <Textarea
+                        id="internalNotes"
+                        value={selectedOrder.internalNotes || ""}
+                        onChange={(e) =>
+                          setSelectedOrder({
+                            ...selectedOrder,
+                            internalNotes: e.target.value,
+                          })
+                        }
+                        placeholder="Add internal notes about this order..."
+                        className="mt-1"
+                        rows={4}
+                      />
+                    </div>
+
+                    <Button
+                      onClick={handleUpdateOrder}
+                      disabled={updating}
+                      className="w-full"
+                    >
+                      {updating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        "Update Order"
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Floating Action Button for Batch Print */}
+      {isCustomer && selectedOrderIds.length > 0 && (
+        <div className="fixed bottom-8 right-8 z-50">
+          <Button
+            onClick={printSelectedOrders}
+            size="lg"
+            className="shadow-lg hover:shadow-xl transition-shadow"
+          >
+            <Printer className="mr-2 h-5 w-5" />
+            Print {selectedOrderIds.length} Order
+            {selectedOrderIds.length !== 1 && "s"}
+          </Button>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

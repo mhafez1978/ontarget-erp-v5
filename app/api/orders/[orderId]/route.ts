@@ -60,6 +60,15 @@ export async function getOrderForUser(
         },
       },
       user: { select: { id: true, name: true, email: true } },
+      company: {
+        select: {
+          id: true,
+          name: true,
+          logo: true,
+          email: true,
+          phone: true,
+        },
+      },
     },
   });
 

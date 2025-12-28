@@ -6,6 +6,7 @@ import {
   ShoppingBag,
   FolderKanban,
   LifeBuoy,
+  Receipt,
 } from "lucide-react";
 
 export const companyCustomerMenuItems = [
@@ -15,5 +16,6 @@ export const companyCustomerMenuItems = [
   { href: "/dashboard/cart", label: "Cart", icon: ShoppingCart },
   { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
   { href: "/dashboard/orders", label: "Orders", icon: FileText },
+  { href: "/dashboard/invoices", label: "Invoices", icon: Receipt },
   { href: "/dashboard/support", label: "Support", icon: LifeBuoy },
 ];
