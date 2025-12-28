@@ -35,19 +35,27 @@ export async function callStorefrontModel<T>(
   schema: ZodSchema<T>,
   providerConfig?: AiProviderConfig
 ): Promise<T | null> {
-  const apiKey = providerConfig?.apiKey || process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    console.warn(
-      "[AI Storefront] OPENAI_API_KEY not set; skipping remote model call"
-    );
-    return null;
-  }
-
   const provider: AiProviderType =
     providerConfig?.provider ||
     (process.env.AI_STOREFRONT_PROVIDER as AiProviderType | undefined) ||
     "openai";
+
+  // Get API key based on provider
+  let apiKey: string | undefined;
+  if (provider === "anthropic") {
+    apiKey = providerConfig?.apiKey || process.env.ANTHROPIC_API_KEY;
+  } else if (provider === "deepseek") {
+    apiKey = providerConfig?.apiKey || process.env.DEEPSEEK_API_KEY;
+  } else {
+    apiKey = providerConfig?.apiKey || process.env.OPENAI_API_KEY;
+  }
+
+  if (!apiKey) {
+    console.warn(
+      `[AI Storefront] ${provider.toUpperCase()}_API_KEY not set; skipping remote model call`
+    );
+    return null;
+  }
 
   // Anthropic Claude client (direct API)
   if (provider === "anthropic") {

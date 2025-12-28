@@ -480,15 +480,25 @@ export async function POST(request: NextRequest) {
       | undefined;
     if (aiProviderClient && typeof aiProviderClient.findFirst === "function") {
       try {
+        console.log("[AI Storefront V2] Loading AI provider from database...");
         const aiProvider = (await aiProviderClient.findFirst({
           where: { scope: "GLOBAL", isActive: true },
         })) as Record<string, unknown> | null;
+
+        console.log("[AI Storefront V2] AI provider found:", {
+          found: !!aiProvider,
+          provider: aiProvider?.provider,
+          hasApiKey: !!aiProvider?.apiKey,
+          model: aiProvider?.model,
+        });
+
         if (aiProvider) {
           if (typeof aiProvider.apiKey === "string" && aiProvider.apiKey) {
             try {
+              const decryptedKey = decrypt(aiProvider.apiKey as string);
               providerConfig = {
                 provider: (aiProvider.provider as AiProviderType) || "openai",
-                apiKey: decrypt(aiProvider.apiKey as string),
+                apiKey: decryptedKey,
                 model:
                   typeof aiProvider.model === "string"
                     ? (aiProvider.model as string)
@@ -498,6 +508,13 @@ export async function POST(request: NextRequest) {
                     ? (aiProvider.apiBase as string)
                     : undefined,
               };
+              console.log("[AI Storefront V2] Provider config created:", {
+                provider: providerConfig.provider,
+                model: providerConfig.model,
+                apiBase: providerConfig.apiBase,
+                hasKey: !!providerConfig.apiKey,
+                keyLength: providerConfig.apiKey?.length,
+              });
             } catch (dErr) {
               console.warn(
                 "[AI Storefront] Failed to decrypt stored AI provider key; ensure ENCRYPTION_KEY matches the value used when saving the provider",
@@ -509,10 +526,16 @@ export async function POST(request: NextRequest) {
               "[AI Storefront] AI provider record found but apiKey is empty — re-enter the API key in Settings > AI Provider and toggle active."
             );
           }
+        } else {
+          console.warn(
+            "[AI Storefront V2] No active AI provider found in database"
+          );
         }
       } catch (e) {
         console.warn("Failed to load AI provider settings:", e);
       }
+    } else {
+      console.warn("[AI Storefront V2] aiProviderSetting table not available");
     }
 
     const stream = new ReadableStream({
