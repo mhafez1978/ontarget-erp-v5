@@ -244,9 +244,23 @@ export async function callStorefrontModel<T>(
 
     console.log(`[AI Storefront] Using DEEPSEEK provider with model: ${model}`);
     console.log(`[AI Storefront] Endpoint: ${endpoint}`);
+
+    // DeepSeek requires the word "json" in the prompt when using json_object response format
+    const messagesWithJsonPrompt = messages.map((msg, index) => {
+      if (index === 0 && msg.role === "system") {
+        return {
+          ...msg,
+          content:
+            msg.content +
+            "\n\nIMPORTANT: You MUST respond with valid JSON format only. Return a single JSON object.",
+        };
+      }
+      return msg;
+    });
+
     console.log(`[AI Storefront] Request body:`, {
       model,
-      messageCount: messages.length,
+      messageCount: messagesWithJsonPrompt.length,
       response_format: { type: "json_object" },
       temperature: 0.7,
     });
@@ -259,7 +273,7 @@ export async function callStorefrontModel<T>(
       },
       body: JSON.stringify({
         model,
-        messages,
+        messages: messagesWithJsonPrompt,
         response_format: { type: "json_object" },
         temperature: 0.7,
       }),
