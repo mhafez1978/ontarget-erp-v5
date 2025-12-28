@@ -122,7 +122,7 @@ export default function CartPage() {
                       className="flex gap-4 pb-4 border-b last:border-0"
                     >
                       {/* Item Image */}
-                      <div className="relative w-24 h-24 bg-muted rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="relative w-24 h-24 bg-muted rounded-lg overflow-hidden shrink-0">
                         {item.image ? (
                           <Image
                             src={item.image}
