@@ -51,11 +51,13 @@ export async function listOrdersForUser(
   const companyId = user.companyMemberships[0].companyId;
 
   // Check if user has permission to view orders
-  const canViewOrders = ["STAFF", "MANAGER", "ADMIN", "SUPER_ADMIN"].includes(
+  // Staff can see all company orders, customers can see their own orders
+  const isStaff = ["STAFF", "MANAGER", "ADMIN", "SUPER_ADMIN"].includes(
     user.role
   );
+  const isCustomer = ["ERP_CUSTOMER", "COMPANY_CUSTOMER"].includes(user.role);
 
-  if (!canViewOrders) {
+  if (!isStaff && !isCustomer) {
     return { status: 403, body: { error: "Insufficient permissions" } };
   }
 
@@ -68,6 +70,11 @@ export async function listOrdersForUser(
   const where: Record<string, unknown> = {
     companyId,
   };
+
+  // Customers can only see their own orders
+  if (isCustomer) {
+    where.userId = userId;
+  }
 
   if (status) {
     where.status = status as StorefrontOrderStatus;
