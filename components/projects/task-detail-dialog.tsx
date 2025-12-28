@@ -1,7 +1,6 @@
 "use client";
 
-
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -25,7 +24,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
-;
 import { toast } from "sonner";
 import { confirmToast } from "@/lib/confirm";
 import { TimeTracker } from "@/components/projects/time-tracker";
@@ -41,6 +39,7 @@ interface Task {
   createdById: string;
   assignedToId: string | null;
   timeEntry: number;
+  isPrivate?: boolean;
   createdBy: {
     id: string;
     user: {
@@ -120,6 +119,7 @@ export function TaskDetailDialog({
   const [isDeleting, setIsDeleting] = useState(false);
   const [timeEntry, setTimeEntry] = useState(0);
   const [description, setDescription] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
 
   const { register, handleSubmit, setValue, watch, reset } =
     useForm<TaskFormData>({
@@ -152,6 +152,7 @@ export function TaskDetailDialog({
       });
       setDescription(task.description || "");
       setTimeEntry(task.timeEntry || 0);
+      setIsPrivate(task.isPrivate || false);
     }
   }, [task, reset]);
 
@@ -172,6 +173,7 @@ export function TaskDetailDialog({
           assignedToId:
             data.assignedToId === "UNASSIGNED" ? null : data.assignedToId,
           timeEntry,
+          isPrivate,
         }),
       });
 
@@ -447,6 +449,27 @@ export function TaskDetailDialog({
               Track time spent on this task. Time is saved automatically when
               you save the task.
             </p>
+          </div>
+
+          <Separator />
+
+          {/* Privacy Setting */}
+          <div className="flex items-center space-x-2 py-2 px-4 rounded-lg border bg-muted/50">
+            <input
+              type="checkbox"
+              id="isPrivateEdit"
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate(e.target.checked)}
+              disabled={isSaving || isDeleting}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label
+              htmlFor="isPrivateEdit"
+              className="flex items-center gap-2 text-sm cursor-pointer"
+            >
+              <Lock className="h-4 w-4" />
+              <span>Private task (hidden from company customers)</span>
+            </label>
           </div>
 
           <Separator />

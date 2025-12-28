@@ -1,7 +1,17 @@
 "use client";
 
-
-import { Calendar, User2, AlertCircle, MoreVertical, Edit, Trash2, UserPlus, Flag, Clock } from "lucide-react";
+import {
+  Calendar,
+  User2,
+  AlertCircle,
+  MoreVertical,
+  Edit,
+  Trash2,
+  UserPlus,
+  Flag,
+  Clock,
+  Lock,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,15 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-
-
-
-
-
-
-
-;
 
 interface Task {
   id: string;
@@ -41,6 +42,7 @@ interface Task {
   projectId: string;
   order: number;
   timeEntry: number;
+  isPrivate?: boolean;
   createdAt: string;
   updatedAt: string;
   createdBy: {
@@ -244,14 +246,25 @@ export function TaskCard({
             >
               {task.title}
             </p>
-            <Badge
-              variant="outline"
-              className={`text-xs whitespace-nowrap ${getPriorityColor(
-                task.priority
-              )}`}
-            >
-              {task.priority}
-            </Badge>
+            <div className="flex items-center gap-1">
+              {task.isPrivate && (
+                <Badge
+                  variant="secondary"
+                  className="text-xs gap-1 whitespace-nowrap"
+                >
+                  <Lock className="h-3 w-3" />
+                  Private
+                </Badge>
+              )}
+              <Badge
+                variant="outline"
+                className={`text-xs whitespace-nowrap ${getPriorityColor(
+                  task.priority
+                )}`}
+              >
+                {task.priority}
+              </Badge>
+            </div>
           </div>
 
           {/* Description */}

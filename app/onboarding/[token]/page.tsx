@@ -1,7 +1,15 @@
 "use client";
 
-
-import { Upload, CheckCircle2, Circle, FileText, ChevronRight } from "lucide-react";
+import {
+  Upload,
+  CheckCircle2,
+  Circle,
+  FileText,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  AlertCircle,
+} from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -17,6 +25,11 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type {
+  OnboardingConfig,
+  DocumentRequirement,
+} from "@/lib/onboarding-config";
 
 interface OnboardingData {
   valid: boolean;
@@ -24,6 +37,8 @@ interface OnboardingData {
     name: string;
     email: string;
     jobTitle: string;
+    country?: string | null;
+    countryCode?: string | null;
   };
   company: {
     id: string;
@@ -32,6 +47,7 @@ interface OnboardingData {
     logoLight?: string;
     logoDark?: string;
   };
+  onboardingConfig: OnboardingConfig; // Country-specific configuration
   progress: {
     step1Complete: boolean;
     step2Complete: boolean;
@@ -49,64 +65,6 @@ interface OnboardingData {
   missingDocs: string[];
   isComplete: boolean;
 }
-
-interface DocumentRequirement {
-  type: string;
-  label: string;
-  description: string;
-  required: boolean;
-}
-
-const documentRequirements: DocumentRequirement[] = [
-  {
-    type: "SSN_CARD",
-    label: "Social Security Card",
-    description: "Clear photo or scan of your SS card",
-    required: true,
-  },
-  {
-    type: "DRIVERS_LICENSE",
-    label: "Driver's License or State ID",
-    description: "Government-issued photo ID",
-    required: true,
-  },
-  {
-    type: "W4_TAX_FORM",
-    label: "W-4 Tax Withholding Form",
-    description: "Federal tax withholding information",
-    required: true,
-  },
-  {
-    type: "I9_FORM",
-    label: "I-9 Employment Eligibility",
-    description: "Proof of work authorization",
-    required: true,
-  },
-  {
-    type: "DIRECT_DEPOSIT_FORM",
-    label: "Direct Deposit Authorization",
-    description: "Bank account information for payroll",
-    required: true,
-  },
-  {
-    type: "EMPLOYEE_HANDBOOK_SIGNED",
-    label: "Employee Handbook Acknowledgment",
-    description: "Signed acknowledgment of company policies",
-    required: true,
-  },
-  {
-    type: "WORK_AUTHORIZATION",
-    label: "Work Authorization (if applicable)",
-    description: "Visa, work permit, or green card",
-    required: false,
-  },
-  {
-    type: "STATE_TAX_FORM",
-    label: "State Tax Form (if applicable)",
-    description: "State withholding form",
-    required: false,
-  },
-];
 
 export default function OnboardingPage() {
   const params = useParams();
@@ -264,10 +222,12 @@ export default function OnboardingPage() {
 
   const calculateProgress = () => {
     if (!onboardingData) return 0;
-    const totalRequired = documentRequirements.filter((d) => d.required).length;
-    const uploaded = documentRequirements
-      .filter((d) => d.required)
-      .filter((d) => isDocumentUploaded(d.type)).length;
+    const config = onboardingData.onboardingConfig;
+    const requiredDocs = config.documents.filter((d) => d.required);
+    const totalRequired = requiredDocs.length;
+    const uploaded = requiredDocs.filter((d) =>
+      isDocumentUploaded(d.type)
+    ).length;
     return (uploaded / totalRequired) * 100;
   };
 
@@ -388,11 +348,31 @@ export default function OnboardingPage() {
           <CardHeader>
             <CardTitle>Required Documents</CardTitle>
             <CardDescription>
-              Upload all required documents to complete your onboarding
+              Upload all required documents to complete your onboarding for{" "}
+              {onboardingData.onboardingConfig.countryName}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {documentRequirements.map((doc) => {
+            {/* Country indicator */}
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>
+                Document Requirements for{" "}
+                {onboardingData.onboardingConfig.countryName}
+              </AlertTitle>
+              <AlertDescription>
+                You need to upload{" "}
+                {
+                  onboardingData.onboardingConfig.documents.filter(
+                    (d) => d.required
+                  ).length
+                }{" "}
+                required documents. Forms marked with a download icon can be
+                downloaded, filled out, and uploaded.
+              </AlertDescription>
+            </Alert>
+
+            {onboardingData.onboardingConfig.documents.map((doc) => {
               const isUploaded = isDocumentUploaded(doc.type);
               const status = getDocumentStatus(doc.type);
               const isUploading = uploading === doc.type;
@@ -411,7 +391,7 @@ export default function OnboardingPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h4 className="text-sm font-medium">{doc.label}</h4>
                       {doc.required && (
                         <Badge variant="secondary" className="text-xs">
@@ -436,8 +416,33 @@ export default function OnboardingPage() {
                     <p className="text-xs text-muted-foreground mb-2">
                       {doc.description}
                     </p>
+
+                    {/* Help text */}
+                    {doc.helpText && (
+                      <p className="text-xs text-blue-600 mb-2 flex items-start gap-1">
+                        <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                        <span>{doc.helpText}</span>
+                      </p>
+                    )}
+
+                    {/* Download form button if available */}
+                    {doc.downloadUrl && !isUploaded && (
+                      <div className="mb-2">
+                        <a
+                          href={doc.downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                        >
+                          <Download className="h-3 w-3" />
+                          Download blank form
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+
                     {!isUploaded ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <input
                           type="file"
                           id={`file-${doc.type}`}

@@ -220,6 +220,7 @@ export async function canViewProject(
       select: {
         companyId: true,
         teamId: true,
+        customerId: true,
         company: {
           select: {
             ownerId: true,
@@ -238,6 +239,17 @@ export async function canViewProject(
     // Company owner can view
     if (project.company.ownerId === userId) {
       return { canEdit: true, isCompanyOwner: true };
+    }
+
+    // COMPANY_CUSTOMER or ERP_CUSTOMER: Can view if they're assigned as the customer
+    if (userRole === "COMPANY_CUSTOMER" || userRole === "ERP_CUSTOMER") {
+      if (project.customerId === userId) {
+        return { canEdit: true };
+      }
+      return {
+        canEdit: false,
+        reason: "You are not assigned as the customer for this project",
+      };
     }
 
     // SUPER_ADMIN can only view in companies they own or where they're staff

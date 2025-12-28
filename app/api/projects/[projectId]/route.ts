@@ -164,9 +164,22 @@ export async function GET(
           },
         },
         tasks: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            status: true,
+            priority: true,
+            dueDate: true,
+            completedAt: true,
+            timeEntry: true,
+            isPrivate: true,
+            order: true,
+            createdAt: true,
+            updatedAt: true,
             assignedTo: {
-              include: {
+              select: {
+                id: true,
                 user: {
                   select: {
                     id: true,

@@ -3,3 +3,4 @@ export { AdminProjectsView } from "./admin-projects-view";
 export { ManagerProjectsView } from "./manager-projects-view";
 export { StaffProjectsView } from "./staff-projects-view";
 export { ContractorProjectsView } from "./contractor-projects-view";
+export { CompanyCustomerProjectsView } from "./company-customer-projects-view";

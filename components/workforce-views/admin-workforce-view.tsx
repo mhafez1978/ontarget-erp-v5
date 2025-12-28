@@ -1,7 +1,16 @@
 "use client";
 
-
-import { Users, Loader2, Search, Grid3x3, List, UserPlus, Pencil, Trash2, Send } from "lucide-react";
+import {
+  Users,
+  Loader2,
+  Search,
+  Grid3x3,
+  List,
+  UserPlus,
+  Pencil,
+  Trash2,
+  Send,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,14 +32,6 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 
-
-
-
-
-
-
-
-;
 import {
   Table,
   TableBody,
@@ -894,7 +895,7 @@ export function AdminWorkforceView() {
             </SheetDescription>
           </SheetHeader>
 
-          <div className="space-y-6 mt-6 px-6">
+          <div className="space-y-6 mt-6 px-6 pb-20">
             {/* Company Selection */}
             <div className="space-y-2">
               <Label htmlFor="company">Select Company *</Label>
@@ -1069,22 +1070,6 @@ export function AdminWorkforceView() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editPayRate">Pay Rate (hourly)</Label>
-                  <Input
-                    id="editPayRate"
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g., 25.00"
-                    value={editFormData.payRate}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        payRate: e.target.value,
-                      })
-                    }
-                  />
-                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="payRate">Pay Rate (hourly)</Label>
@@ -1231,18 +1216,54 @@ export function AdminWorkforceView() {
               <Button
                 className={`flex-1 ${getPulsateClassName(isAddFormDirty)}`}
                 onClick={async () => {
-                  if (
-                    !formData.name ||
-                    !formData.email ||
-                    !formData.password ||
-                    !selectedCompanyId
-                  ) {
-                    toast.error("Please fill in all required fields");
+                  // Validate required fields with specific messages
+                  if (!selectedCompanyId) {
+                    toast.error("⚠️ Please select a company", {
+                      style: {
+                        background: "#dc2626",
+                        color: "white",
+                      },
+                    });
+                    return;
+                  }
+
+                  if (!formData.name) {
+                    toast.error("⚠️ Full name is required", {
+                      style: {
+                        background: "#dc2626",
+                        color: "white",
+                      },
+                    });
+                    return;
+                  }
+
+                  if (!formData.email) {
+                    toast.error("⚠️ Email address is required", {
+                      style: {
+                        background: "#dc2626",
+                        color: "white",
+                      },
+                    });
+                    return;
+                  }
+
+                  if (!formData.password) {
+                    toast.error("⚠️ Password is required", {
+                      style: {
+                        background: "#dc2626",
+                        color: "white",
+                      },
+                    });
                     return;
                   }
 
                   if (formData.password.length < 8) {
-                    toast.error("Password must be at least 8 characters");
+                    toast.error("⚠️ Password must be at least 8 characters", {
+                      style: {
+                        background: "#dc2626",
+                        color: "white",
+                      },
+                    });
                     return;
                   }
 

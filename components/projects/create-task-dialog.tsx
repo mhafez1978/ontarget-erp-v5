@@ -1,7 +1,6 @@
 "use client";
 
-
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +21,6 @@ import {
 } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { toast } from "sonner";
-;
-
 interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -66,6 +63,7 @@ export function CreateTaskDialog({
   const [dueDate, setDueDate] = useState("");
   const [createdById, setCreatedById] = useState<string>("");
   const [assignedToId, setAssignedToId] = useState<string>("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingStaff, setIsLoadingStaff] = useState(false);
@@ -197,6 +195,7 @@ export function CreateTaskDialog({
           dueDate: dueDate || null,
           createdById,
           assignedToId: assignedToId || null,
+          isPrivate,
         }),
       });
 
@@ -385,6 +384,24 @@ export function CreateTaskDialog({
                 </Select>
               )}
             </div>
+          </div>
+
+          <div className="flex items-center space-x-2 py-2 px-4 rounded-lg border bg-muted/50">
+            <input
+              type="checkbox"
+              id="isPrivate"
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate(e.target.checked)}
+              disabled={isLoading}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label
+              htmlFor="isPrivate"
+              className="flex items-center gap-2 text-sm cursor-pointer"
+            >
+              <Lock className="h-4 w-4" />
+              <span>Private task (hidden from company customers)</span>
+            </label>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

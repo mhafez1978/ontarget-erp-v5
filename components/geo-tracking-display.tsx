@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Users, MapPin, Globe, UserCheck, AlertCircle } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
@@ -12,10 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-
-
-
-;
 import { Button } from "@/components/ui/button";
 
 interface VisitorData {
@@ -56,6 +51,9 @@ export function GeoTrackingDisplay() {
     null
   );
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [visitorsCursor, setVisitorsCursor] = useState<string | null>(null);
+  const [hasMoreVisitors, setHasMoreVisitors] = useState(true);
+  const [loadingMoreVisitors, setLoadingMoreVisitors] = useState(false);
 
   useEffect(() => {
     // Fetch user role
@@ -73,49 +71,105 @@ export function GeoTrackingDisplay() {
     fetchUserRole();
   }, []);
 
-  const fetchTrackingData = useCallback(async (showLoading = true) => {
-    if (showLoading) {
-      setIsLoading(true);
-    }
+  const fetchTrackingData = useCallback(
+    async (showLoading = true, resetVisitors = true) => {
+      if (showLoading) {
+        setIsLoading(true);
+      }
+      try {
+        // Check geo-tracking settings
+        const settingsRes = await fetch("/api/settings/geo-tracking", {
+          cache: "no-store",
+        });
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setGeoTrackingEnabled(settingsData.enabled || false);
+        }
+
+        const [visitorsRes, sessionsRes] = await Promise.all([
+          fetch("/api/tracking/visitors?limit=20", { cache: "no-store" }),
+          fetch("/api/tracking/sessions", { cache: "no-store" }),
+        ]);
+
+        if (visitorsRes.ok) {
+          const visitorsData = await visitorsRes.json();
+          if (resetVisitors) {
+            setVisitors(visitorsData.visitors || []);
+          }
+          setVisitorsCursor(visitorsData.nextCursor || null);
+          setHasMoreVisitors(visitorsData.hasMore || false);
+        }
+
+        if (sessionsRes.ok) {
+          const sessionsData = await sessionsRes.json();
+          setActiveSessions(sessionsData.sessions || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch tracking data:", error);
+      } finally {
+        if (showLoading) {
+          setIsLoading(false);
+        }
+      }
+    },
+    []
+  );
+
+  const loadMoreVisitors = useCallback(async () => {
+    if (!hasMoreVisitors || loadingMoreVisitors || !visitorsCursor) return;
+
+    setLoadingMoreVisitors(true);
     try {
-      // Check geo-tracking settings
-      const settingsRes = await fetch("/api/settings/geo-tracking", {
-        cache: "no-store",
-      });
-      if (settingsRes.ok) {
-        const settingsData = await settingsRes.json();
-        setGeoTrackingEnabled(settingsData.enabled || false);
-      }
-
-      const [visitorsRes, sessionsRes] = await Promise.all([
-        fetch("/api/tracking/visitors", { cache: "no-store" }),
-        fetch("/api/tracking/sessions", { cache: "no-store" }),
-      ]);
-
-      if (visitorsRes.ok) {
-        const visitorsData = await visitorsRes.json();
-        setVisitors(visitorsData.visitors || []);
-      }
-
-      if (sessionsRes.ok) {
-        const sessionsData = await sessionsRes.json();
-        setActiveSessions(sessionsData.sessions || []);
+      const response = await fetch(
+        `/api/tracking/visitors?cursor=${visitorsCursor}&limit=20`,
+        { cache: "no-store" }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setVisitors((prev) => [...prev, ...(data.visitors || [])]);
+        setVisitorsCursor(data.nextCursor || null);
+        setHasMoreVisitors(data.hasMore || false);
       }
     } catch (error) {
-      console.error("Failed to fetch tracking data:", error);
+      console.error("Failed to load more visitors:", error);
     } finally {
-      if (showLoading) {
-        setIsLoading(false);
-      }
+      setLoadingMoreVisitors(false);
     }
-  }, []);
+  }, [hasMoreVisitors, loadingMoreVisitors, visitorsCursor]);
 
   useEffect(() => {
     fetchTrackingData();
     // Refresh every 30 seconds
-    const interval = setInterval(() => fetchTrackingData(false), 30000);
+    const interval = setInterval(() => fetchTrackingData(false, false), 30000);
     return () => clearInterval(interval);
   }, [fetchTrackingData]);
+
+  // Intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasMoreVisitors &&
+          !loadingMoreVisitors
+        ) {
+          loadMoreVisitors();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const sentinel = document.getElementById("visitors-sentinel");
+    if (sentinel) {
+      observer.observe(sentinel);
+    }
+
+    return () => {
+      if (sentinel) {
+        observer.unobserve(sentinel);
+      }
+    };
+  }, [hasMoreVisitors, loadingMoreVisitors, loadMoreVisitors]);
 
   if (isLoading) {
     return (
@@ -283,7 +337,7 @@ export function GeoTrackingDisplay() {
               No recent visitors tracked
             </p>
           ) : (
-            <div className="max-h-80 overflow-y-auto space-y-2 pr-2">
+            <div className="max-h-[600px] overflow-y-auto space-y-2 pr-2">
               {visitors.map((visitor) => (
                 <div
                   key={visitor.id}
@@ -331,6 +385,20 @@ export function GeoTrackingDisplay() {
                   </div>
                 </div>
               ))}
+              {/* Infinite scroll sentinel */}
+              {hasMoreVisitors && (
+                <div id="visitors-sentinel" className="py-4 text-center">
+                  {loadingMoreVisitors ? (
+                    <p className="text-sm text-muted-foreground">
+                      Loading more visitors...
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Scroll for more
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </CardContent>
