@@ -567,26 +567,26 @@ function ensureMandatorySections(
 
     // Sort by order but keep footer at 999
     allSections.sort((a, b) => a.order - b.order);
-    
+
     // Enforce correct order for mandatory sections (but don't renumber everything)
     const orderMap: Record<string, number> = {
       "announcement-bar": 0,
-      "header": 1,
-      "hero": 2,
-      "stats": 3,
-      "highlights": 4,
-      "portfolio": 5,
-      "testimonials": 6,
+      header: 1,
+      hero: 2,
+      stats: 3,
+      highlights: 4,
+      portfolio: 5,
+      testimonials: 6,
       "cta-band": 7,
-      "footer": 999,
+      footer: 999,
     };
-    
+
     allSections.forEach((section) => {
       if (orderMap[section.type] !== undefined) {
         section.order = orderMap[section.type];
       }
     });
-    
+
     // Re-sort after fixing orders
     allSections.sort((a, b) => a.order - b.order);
 
