@@ -65,22 +65,14 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
 
-    const mapped = mapAiSpecToThemeSections(targetSpec, themeId);
-    if (!mapped) {
-      console.error("[Diffs] Failed to map spec to theme:", {
-        specKeys: Object.keys(targetSpec || {}),
-        themeId,
-      });
-      return NextResponse.json(
-        { error: "Failed to map spec to theme" },
-        { status: 500 }
-      );
-    }
-
-    const changes = computeSectionDiffs(prevSections, mapped);
-    const summary = humanReadableSummary(changes);
-
-    return NextResponse.json({ success: true, changes, summary });
+    // For V2, we don't use theme mapping - the spec IS the design
+    // Return empty diffs since V2 doesn't use the legacy theme system
+    return NextResponse.json({
+      success: true,
+      changes: { added: [], removed: [], modified: [] },
+      summary:
+        "V2 storefront uses direct spec rendering - no theme mapping needed",
+    });
   } catch (error) {
     console.error("Diffs error:", error);
     console.error("[Diffs] Error details:", {

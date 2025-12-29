@@ -81,6 +81,13 @@ const STOREFRONT_SYSTEM_PROMPT = `You are an expert web designer creating access
 
 ✅ ONLY the 9 mandatory sections listed above
 
+� COMPANY CONTEXT:
+• Read the company data carefully - understand their industry and services
+• For agencies/consultancies → emphasize expertise, portfolio, process
+• For product companies → emphasize features, benefits, social proof
+• For service businesses → emphasize reliability, experience, results
+• Match tone and messaging to the company's actual offerings
+
 🎨 DESIGN CREATIVITY - RESPOND TO THE ADMIN'S REQUEST:
 • If they want "bold colors" → use vibrant, saturated colors (e.g., #FF6B6B, #4ECDC4)
 • If they want "professional" → use blues/grays (e.g., #2563EB, #64748B)
@@ -92,7 +99,20 @@ const STOREFRONT_SYSTEM_PROMPT = `You are an expert web designer creating access
 • Vary cornerStyle: "sharp", "soft", "round"
 • Vary heroSize: "compact", "medium", "large", "full"
 
-✅ Accessibility: 4.5:1 contrast, 16px+ fonts
+⚠️ CRITICAL ACCESSIBILITY REQUIREMENTS:
+• NEVER use white/light text on white/light backgrounds
+• NEVER use dark text on dark backgrounds  
+• Minimum 4.5:1 contrast ratio for all text (WCAG AA)
+• If logo/branding uses light colors, header MUST have dark background
+• If logo/branding uses dark colors, header background can be light
+• Test: Can you read white text on the background color? If not, change it!
+• Common mistakes to AVOID: white logo on white header, black text on dark blue
+
+✅ Design Checklist:
+• 4.5:1+ contrast ratio on ALL text
+• 16px+ minimum font size
+• Readable color combinations
+• Consistent visual hierarchy
 🖼️ Images: Unsplash for backgrounds, real product images when available
 
 Output: { shouldAsk: false, explanation: "brief", spec: {...} }`;
@@ -545,11 +565,30 @@ function ensureMandatorySections(
 
     const allSections = [...spec.sections, ...missingSections];
 
-    // Re-sort by order and ensure sequential ordering
+    // Sort by order but keep footer at 999
     allSections.sort((a, b) => a.order - b.order);
-    allSections.forEach((section, index) => {
-      section.order = index;
+
+    // Enforce correct order for mandatory sections (but don't renumber everything)
+    const orderMap: Record<string, number> = {
+      "announcement-bar": 0,
+      header: 1,
+      hero: 2,
+      stats: 3,
+      highlights: 4,
+      portfolio: 5,
+      testimonials: 6,
+      "cta-band": 7,
+      footer: 999,
+    };
+
+    allSections.forEach((section) => {
+      if (orderMap[section.type] !== undefined) {
+        section.order = orderMap[section.type];
+      }
     });
+
+    // Re-sort after fixing orders
+    allSections.sort((a, b) => a.order - b.order);
 
     return {
       ...spec,
@@ -850,10 +889,15 @@ export async function generateAiStorefront(
   const regenerateKeywords = [
     "regenerate",
     "start fresh",
+    "fresh design",
     "new design",
     "completely different",
+    "completely new",
     "start over",
     "create new",
+    "different style",
+    "fresh approach",
+    "from scratch",
   ];
   const isRegenerateIntent =
     prompt &&
@@ -862,6 +906,9 @@ export async function generateAiStorefront(
     );
 
   const effectivePreviousSpec = isRegenerateIntent ? null : input.previousSpec;
+  const effectiveConversationHistory = isRegenerateIntent
+    ? []
+    : input.conversationHistory || [];
 
   const userContext = {
     company,
@@ -883,8 +930,7 @@ export async function generateAiStorefront(
     seo: input.seo,
     adminPrompt: prompt,
     previousSpec: effectivePreviousSpec || null,
-    isFirstMessage:
-      !input.conversationHistory || input.conversationHistory.length === 0,
+    isFirstMessage: effectiveConversationHistory.length === 0,
   };
 
   // Admin's prompt is the creative direction - this is what they typed in the UI
@@ -894,6 +940,9 @@ export async function generateAiStorefront(
       input.team?.length || 0
     }\n\n` +
     `ADMIN'S DESIGN REQUEST:\n"${prompt}"\n\n` +
+    (isRegenerateIntent
+      ? "IMPORTANT: Create a COMPLETELY DIFFERENT design with new colors, layout, and style. Do NOT reuse the previous design.\n\n"
+      : "") +
     `Generate a storefront with all 9 mandatory sections. Make the design match the admin's vision above.\n\n` +
     `Company Data:\n${JSON.stringify(userContext, null, 2)}`;
 
@@ -901,9 +950,9 @@ export async function generateAiStorefront(
     { role: "system", content: STOREFRONT_SYSTEM_PROMPT },
   ];
 
-  // Add conversation history if available
-  if (input.conversationHistory && input.conversationHistory.length > 0) {
-    for (const msg of input.conversationHistory) {
+  // Add conversation history if available (skip if regenerating)
+  if (effectiveConversationHistory.length > 0) {
+    for (const msg of effectiveConversationHistory) {
       messages.push({
         role: msg.role as "user" | "assistant",
         content: msg.content,
