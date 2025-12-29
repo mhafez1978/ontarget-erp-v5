@@ -889,10 +889,15 @@ export async function generateAiStorefront(
   const regenerateKeywords = [
     "regenerate",
     "start fresh",
+    "fresh design",
     "new design",
     "completely different",
+    "completely new",
     "start over",
     "create new",
+    "different style",
+    "fresh approach",
+    "from scratch",
   ];
   const isRegenerateIntent =
     prompt &&
@@ -901,6 +906,9 @@ export async function generateAiStorefront(
     );
 
   const effectivePreviousSpec = isRegenerateIntent ? null : input.previousSpec;
+  const effectiveConversationHistory = isRegenerateIntent
+    ? []
+    : input.conversationHistory || [];
 
   const userContext = {
     company,
@@ -922,8 +930,7 @@ export async function generateAiStorefront(
     seo: input.seo,
     adminPrompt: prompt,
     previousSpec: effectivePreviousSpec || null,
-    isFirstMessage:
-      !input.conversationHistory || input.conversationHistory.length === 0,
+    isFirstMessage: effectiveConversationHistory.length === 0,
   };
 
   // Admin's prompt is the creative direction - this is what they typed in the UI
@@ -933,6 +940,9 @@ export async function generateAiStorefront(
       input.team?.length || 0
     }\n\n` +
     `ADMIN'S DESIGN REQUEST:\n"${prompt}"\n\n` +
+    (isRegenerateIntent
+      ? "IMPORTANT: Create a COMPLETELY DIFFERENT design with new colors, layout, and style. Do NOT reuse the previous design.\n\n"
+      : "") +
     `Generate a storefront with all 9 mandatory sections. Make the design match the admin's vision above.\n\n` +
     `Company Data:\n${JSON.stringify(userContext, null, 2)}`;
 
@@ -940,9 +950,9 @@ export async function generateAiStorefront(
     { role: "system", content: STOREFRONT_SYSTEM_PROMPT },
   ];
 
-  // Add conversation history if available
-  if (input.conversationHistory && input.conversationHistory.length > 0) {
-    for (const msg of input.conversationHistory) {
+  // Add conversation history if available (skip if regenerating)
+  if (effectiveConversationHistory.length > 0) {
+    for (const msg of effectiveConversationHistory) {
       messages.push({
         role: msg.role as "user" | "assistant",
         content: msg.content,
