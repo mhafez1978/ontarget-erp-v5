@@ -133,8 +133,31 @@ export default function TestimonialsPage() {
   }, [fetchCompanies]);
 
   const fetchTestimonials = useCallback(async () => {
+    // If we don't have a selected company, or the selected company is not in the
+    // user's companies list, fall back to the first available company.
     if (!selectedCompanyId) {
       console.log("[Testimonials Page] No company selected");
+      if (companies.length > 0) {
+        console.warn(
+          "[Testimonials Page] No selectedCompanyId; falling back to first company:",
+          companies[0].id
+        );
+        setSelectedCompanyId(companies[0].id);
+      }
+      return;
+    }
+
+    // If the selectedCompanyId does not exist in the companies list, reset it
+    if (
+      companies.length > 0 &&
+      !companies.some((c) => c.id === selectedCompanyId)
+    ) {
+      console.warn(
+        "[Testimonials Page] Selected company id invalid or removed, falling back to first company:",
+        selectedCompanyId,
+        companies[0].id
+      );
+      setSelectedCompanyId(companies[0].id);
       return;
     }
 
@@ -176,7 +199,7 @@ export default function TestimonialsPage() {
       console.error("Error fetching testimonials:", error);
       toast.error("Failed to fetch testimonials");
     }
-  }, [selectedCompanyId, statusFilter]);
+  }, [selectedCompanyId, statusFilter, companies]);
 
   useEffect(() => {
     fetchUser();
