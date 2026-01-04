@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
         : "none"
     );
 
-    // Optional debug output: returns user's company ownership/membership info
+    // Optional debug output: returns user's company ownership/membership info and DB diagnostics
     const debug = searchParams.get("debug");
     if (debug === "true") {
       const ownedCompanyIds = user.ownedCompanies.map(
@@ -112,12 +112,35 @@ export async function GET(request: NextRequest) {
         (m: { companyId: string }) => m.companyId
       );
 
+      // Additional DB diagnostics to help troubleshoot production vs local differences
+      let dbInfo: any = {};
+      try {
+        const totalCount = await db.testimonial.count();
+        const companyCount = await db.testimonial.count({
+          where: { companyId },
+        });
+        const sample = await db.testimonial.findFirst({
+          where: { companyId },
+          orderBy: { createdAt: "desc" },
+        });
+        // Attempt to read current database name (MySQL)
+        const dbNameRes: any = await db.$queryRaw`SELECT DATABASE() as db`;
+        const dbName = Array.isArray(dbNameRes)
+          ? dbNameRes[0]?.db ?? null
+          : dbNameRes?.db ?? null;
+        dbInfo = { totalCount, companyCount, sample, dbName };
+      } catch (e) {
+        console.error("Debug DB query failed:", e);
+        dbInfo = { error: String(e) };
+      }
+
       return NextResponse.json({
         testimonials,
         debug: {
           ownedCompanyIds,
           membershipCompanyIds,
           whereClause,
+          dbInfo,
         },
       });
     }
