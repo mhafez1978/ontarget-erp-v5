@@ -41,6 +41,34 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Company aggregates (which companyIds actually have testimonials?)
+    let companyAggregates: any[] = [];
+    let companySamples: any[] = [];
+    try {
+      companyAggregates = await db.testimonial.groupBy({
+        by: ["companyId"],
+        _count: { companyId: true },
+        orderBy: { _count: { companyId: "desc" } },
+        take: 100,
+      });
+
+      // Small sample per top companies
+      const top = companyAggregates.slice(0, 10);
+      companySamples = await Promise.all(
+        top.map(async (a) => ({
+          companyId: a.companyId,
+          count: a._count.companyId,
+          sample: await db.testimonial.findFirst({
+            where: { companyId: a.companyId },
+            orderBy: { createdAt: "desc" },
+            select: { id: true, customerName: true, createdAt: true, status: true },
+          }),
+        }))
+      );
+    } catch (e) {
+      console.error("[Debug Testimonials] Aggregation failed:", e);
+    }
+
     // Try to read current DB name (MySQL)
     let dbName: string | null = null;
     try {
@@ -56,6 +84,8 @@ export async function GET(request: NextRequest) {
       dbName,
       returned: testimonials.length,
       testimonials,
+      companyAggregates,
+      companySamples,
     });
   } catch (error) {
     console.error("[Debug Testimonials] Error:", error);
