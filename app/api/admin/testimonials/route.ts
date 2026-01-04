@@ -68,6 +68,10 @@ export async function GET(request: NextRequest) {
       whereClause.status = status.toUpperCase();
     }
 
+    console.log("[Testimonials API] Company ID:", companyId);
+    console.log("[Testimonials API] Status filter:", status);
+    console.log("[Testimonials API] Where clause:", whereClause);
+
     // Fetch testimonials
     const testimonials = await db.testimonial.findMany({
       where: whereClause,
@@ -84,6 +88,19 @@ export async function GET(request: NextRequest) {
         },
       },
     });
+
+    console.log("[Testimonials API] Found testimonials:", testimonials.length);
+    console.log(
+      "[Testimonials API] First testimonial:",
+      testimonials[0]
+        ? {
+            id: testimonials[0].id,
+            companyId: testimonials[0].companyId,
+            status: testimonials[0].status,
+            customerName: testimonials[0].customerName,
+          }
+        : "none"
+    );
 
     return NextResponse.json(testimonials);
   } catch (error) {
