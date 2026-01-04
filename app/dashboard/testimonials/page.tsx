@@ -1,7 +1,15 @@
 "use client";
 
-
-import { MessageSquare, Check, X, Star, Trash2, Loader2, Trophy, RefreshCw } from "lucide-react";
+import {
+  MessageSquare,
+  Check,
+  X,
+  Star,
+  Trash2,
+  Loader2,
+  Trophy,
+  RefreshCw,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import {
@@ -21,13 +29,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-
-
-
-
-
-;
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -132,15 +133,29 @@ export default function TestimonialsPage() {
   }, [fetchCompanies]);
 
   const fetchTestimonials = useCallback(async () => {
-    if (!selectedCompanyId) return;
+    if (!selectedCompanyId) {
+      console.log("[Testimonials Page] No company selected");
+      return;
+    }
+
+    console.log(
+      "[Testimonials Page] Fetching testimonials for company:",
+      selectedCompanyId
+    );
+    console.log("[Testimonials Page] Status filter:", statusFilter);
 
     try {
-      const response = await fetch(
-        `/api/admin/testimonials?companyId=${selectedCompanyId}&status=${statusFilter}`
-      );
+      const url = `/api/admin/testimonials?companyId=${selectedCompanyId}&status=${statusFilter}`;
+      console.log("[Testimonials Page] Fetching from:", url);
+
+      const response = await fetch(url);
       const data = await response.json();
 
+      console.log("[Testimonials Page] Response status:", response.status);
+      console.log("[Testimonials Page] Response data:", data);
+
       if (response.ok) {
+        console.log("[Testimonials Page] Received testimonials:", data.length);
         // Sort: PENDING first, then by most recent
         const sorted = data.sort((a: Testimonial, b: Testimonial) => {
           // First priority: PENDING status on top
@@ -154,6 +169,7 @@ export default function TestimonialsPage() {
         });
         setTestimonials(sorted);
       } else {
+        console.error("[Testimonials Page] Error response:", data);
         toast.error(data.error || "Failed to fetch testimonials");
       }
     } catch (error) {
