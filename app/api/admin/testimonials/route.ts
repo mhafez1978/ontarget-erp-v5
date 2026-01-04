@@ -105,7 +105,9 @@ export async function GET(request: NextRequest) {
     // Optional debug output: returns user's company ownership/membership info
     const debug = searchParams.get("debug");
     if (debug === "true") {
-      const ownedCompanyIds = user.ownedCompanies.map((c: { id: string }) => c.id);
+      const ownedCompanyIds = user.ownedCompanies.map(
+        (c: { id: string }) => c.id
+      );
       const membershipCompanyIds = user.companyMemberships.map(
         (m: { companyId: string }) => m.companyId
       );

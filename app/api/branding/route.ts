@@ -64,10 +64,7 @@ export async function GET(request: NextRequest) {
 
         if (
           membership &&
-          membership.company.subscriberSubscriptions.length > 0 &&
-          (membership.company.logoLight ||
-            membership.company.logoDark ||
-            membership.company.logo)
+          membership.company.subscriberSubscriptions.length > 0
         ) {
           console.log(
             "[Branding API] Returning white-label branding for:",
