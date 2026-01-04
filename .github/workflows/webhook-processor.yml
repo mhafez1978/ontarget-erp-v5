@@ -1,0 +1,19 @@
+name: Webhook Delivery Processor
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # every 5 minutes
+  workflow_dispatch: {}
+
+jobs:
+  process-deliveries:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call webhook processor
+        env:
+          WEBHOOK_PROCESSOR_SECRET: ${{ secrets.WEBHOOK_PROCESSOR_SECRET }}
+          APP_URL: ${{ secrets.APP_URL }}
+        run: |
+          echo "Triggering webhook processor"
+          status=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$APP_URL/api/webhooks/process" -H "x-processor-secret: $WEBHOOK_PROCESSOR_SECRET") || true
+          echo "Processor responded: $status"

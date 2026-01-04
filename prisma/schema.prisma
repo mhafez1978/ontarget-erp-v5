@@ -153,6 +153,10 @@ model User {
   // AI storefront generation logs
   aiStorefrontGenerations AiStorefrontGenerationLog[]
 
+  // V4 conversations and websites
+  v4Conversations V4Conversation[]
+  v4Websites      V4Website[]
+
   // Support / Knowledge Base articles authored by this user
   supportArticles SupportArticle[]
 
@@ -188,8 +192,8 @@ model CustomerPaymentProvider {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
   @@unique([provider, externalId])
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -210,30 +214,30 @@ model PasswordReset {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // (no composite indexes here) - keep token/expiry indexes only
 
   @@index([userId])
   @@index([token])
   @@index([expires])
-    // (no composite indexes here) - keep token/expiry indexes only
 }
 
 // Company Model
 model Company {
-  id           String  @id @default(cuid())
-  name         String
-  slogan       String?
-  description  String? @db.Text
-  industry     String? // Optional industry/vertical hint for AI storefront and theming
-  logo         String? @db.LongText // Can store file path or base64 data URL
-  logoLight    String? @db.LongText // Logo for light theme (path or base64)
-  logoDark     String? @db.LongText // Logo for dark theme (path or base64)
+  id            String  @id @default(cuid())
+  name          String
+  slogan        String?
+  description   String? @db.Text
+  industry      String? // Optional industry/vertical hint for AI storefront and theming
+  logo          String? @db.LongText // Can store file path or base64 data URL
+  logoLight     String? @db.LongText // Logo for light theme (path or base64)
+  logoDark      String? @db.LongText // Logo for dark theme (path or base64)
   uploadedLogos Json?   @db.Json // Temporary storage for uploaded base64 logos before assignment
-  website      String?
-  phone        String?
-  email        String?
-  salesEmail   String? // Sales inquiries email
-  supportEmail String? // Customer support email
-  isRoot       Boolean @default(false) // True for OnTarget ERP (the SaaS provider)
+  website       String?
+  phone         String?
+  email         String?
+  salesEmail    String? // Sales inquiries email
+  supportEmail  String? // Customer support email
+  isRoot        Boolean @default(false) // True for OnTarget ERP (the SaaS provider)
 
   // Storefront fields
   slug              String?   @unique // URL-friendly slug: "my-company-name" -> /store/my-company-name
@@ -297,8 +301,13 @@ model Company {
 
   // AI storefront usage
   aiStorefrontGenerations AiStorefrontGenerationLog[]
-  storefrontConversations  StorefrontConversation[]
-  storefrontSpecVersions    StorefrontSpecVersion[]
+  storefrontConversations StorefrontConversation[]
+  storefrontSpecVersions  StorefrontSpecVersion[]
+  storefrontWebsitesV3    StorefrontWebsiteV3[] // V3 multi-page websites
+
+  // V4 conversations and generated websites
+  v4Conversations V4Conversation[]
+  v4Websites      V4Website[]
 
   // Storage configuration - NEW SYSTEM: Uses StorageProvider table
   // Subscription-based backup: ESSENTIAL (uses global), PROFESSIONAL (optional backup), ENTERPRISE (no backup)
@@ -329,16 +338,33 @@ model Company {
   // Multi-location support
   locations CompanyLocation[]
 
+  // Back-relations for models referencing Company
+  telemetryEvents TelemetryEvent[]
+  leads           Lead[]
+  webhookConfigs  WebhookConfig[]
+
   // Support / Knowledge Base articles for this company
   supportArticles SupportArticle[]
 
+  // Social proof & metrics (for V4 AI generation)
+  foundedYear        Int?
+  employeeCount      Int?
+  instagramFollowers Int?
+  facebookLikes      Int?
+  linkedinFollowers  Int?
+  youtubeSubscribers Int?
+  trustpilotRating   Float?
+  googleRating       Float?
+  certifications     Json? // Array of certification names
+  awards             Json? // Array of award names
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  // (no composite indexes added here by accident)
 
   @@index([ownerId])
   @@index([name])
   @@index([isRoot])
-    // (no composite indexes added here by accident)
 }
 
 // AI storefront generation usage tracking
@@ -354,6 +380,91 @@ model AiStorefrontGenerationLog {
 
   @@index([companyId, createdAt])
   @@index([userId, createdAt])
+}
+
+// V4 Conversation - Interactive design chat sessions
+model V4Conversation {
+  id        String @id @default(cuid())
+  companyId String
+  userId    String
+  phase     String @default("greeting") // Current conversation phase
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Design preferences collected during conversation
+  heroStyle      String?
+  primaryColor   String?
+  secondaryColor String?
+  accentColor    String?
+  fontPairing    String?
+  designStyle    String?
+
+  // Sections to include (JSON array of section names)
+  sections Json? // {hero: true, products: true, services: false, ...}
+
+  // Metadata
+  isComplete Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  messages V4Message[]
+  websites V4Website[]
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([companyId, isComplete])
+}
+
+// V4 Message - Individual messages in conversation
+model V4Message {
+  id             String @id @default(cuid())
+  conversationId String
+  role           String // "user" or "assistant"
+  content        String @db.Text
+  phase          String // Phase when message was sent
+
+  conversation V4Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+}
+
+// V4 Website - Generated websites from conversations
+model V4Website {
+  id             String  @id @default(cuid())
+  companyId      String
+  conversationId String?
+  userId         String
+
+  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  conversation V4Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Generated website data (JSON)
+  websiteData Json // Full V4Website object with pages and components
+
+  // Design preferences used
+  preferences Json // V4DesignPreferences object
+
+  // Quality metrics
+  qualityScore    Float @default(0)
+  creativityScore Float @default(0)
+
+  // Status
+  isActive    Boolean   @default(false) // Is this the live version?
+  publishedAt DateTime?
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([conversationId])
+  @@index([userId])
+  @@index([companyId, isActive])
 }
 
 // Storefront blog posts (optional blogroll for company storefronts)
@@ -402,7 +513,7 @@ model SupportArticle {
   tags     String? @db.Text
 
   // --- ADD THIS LINE ---
-  featuredImage String? @db.LongText 
+  featuredImage String? @db.LongText
   // ---------------------
 
   content String @db.LongText
@@ -474,7 +585,7 @@ model Subscription {
   trialEndsAt       DateTime? // 30 days from creation by default
   billingCycleStart DateTime? // When active subscription starts
   billingCycleEnd   DateTime? // Next billing date
-  
+
   // External provider reference (Stripe subscription id, etc.)
   externalSubscriptionId String?
 
@@ -519,15 +630,15 @@ enum LocationType {
 
 // Company Locations (multi-location support for branches, offices, etc.)
 model CompanyLocation {
-  id        String       @id @default(cuid())
+  id        String  @id @default(cuid())
   companyId String
-  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
   // Location info
-  name          String // e.g., "Headquarters", "Los Angeles Branch"
-  type          LocationType @default(BRANCH) // Type of location
-  isMain        Boolean      @default(false) // Is this the main/primary location?
-  
+  name   String // e.g., "Headquarters", "Los Angeles Branch"
+  type   LocationType @default(BRANCH) // Type of location
+  isMain Boolean      @default(false) // Is this the main/primary location?
+
   // Address fields
   addressLine1 String
   addressLine2 String?
@@ -535,20 +646,20 @@ model CompanyLocation {
   state        String?
   country      String
   postalCode   String?
-  
+
   // Geolocation data (from Photon API or manual entry)
-  latitude     Float
-  longitude    Float
-  
+  latitude  Float
+  longitude Float
+
   // Metadata
-  phone        String?
-  email        String?
-  hours        String? @db.Text // Business hours (formatted text or JSON)
-  notes        String? @db.Text // Additional notes about this location
-  
+  phone String?
+  email String?
+  hours String? @db.Text // Business hours (formatted text or JSON)
+  notes String? @db.Text // Additional notes about this location
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([companyId])
   @@index([isMain])
   // Composite: quick lookup of main location for a company
@@ -621,13 +732,13 @@ model CompanyStaff {
   displayOrder Int?    @default(0) // Order in team section
 
   // Project Management relations
-  teamMemberships TeamMember[]
-  managedProjects Project[]     @relation("ProjectManager")
-  ledProjects     Project[]     @relation("TeamLead")
-  createdTasks    Task[]        @relation("TaskCreator")
-  assignedTasks   Task[]        @relation("TaskAssignee")
-  projectNotes    ProjectNote[]
-  projectDocuments ProjectDocument[] @relation("ProjectDocumentUploader")
+  teamMemberships         TeamMember[]
+  managedProjects         Project[]               @relation("ProjectManager")
+  ledProjects             Project[]               @relation("TeamLead")
+  createdTasks            Task[]                  @relation("TaskCreator")
+  assignedTasks           Task[]                  @relation("TaskAssignee")
+  projectNotes            ProjectNote[]
+  projectDocuments        ProjectDocument[]       @relation("ProjectDocumentUploader")
   projectFinancialEntries ProjectFinancialEntry[] @relation("ProjectFinancialEntryCreator")
 
   // Financial relations
@@ -778,7 +889,7 @@ model GeoTrackingSetting {
   enabled   Boolean  @default(false)
   provider  String   @default("IP_API") // "IP_API", "IPINFO", "IPGEOLOCATION"
   apiKey    String?  @db.Text // Encrypted API key (required for IPINFO and IPGEOLOCATION)
-  apiUrl    String?  // Custom API URL override
+  apiUrl    String? // Custom API URL override
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -840,19 +951,19 @@ model VisitorTracking {
 
 // Product Model
 model Product {
-  id          String  @id @default(cuid())
-  name        String
-  description String? @db.Text
-  price       Decimal @db.Decimal(10, 2)
-  unitCost    Decimal? @db.Decimal(13, 2)
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?  @db.Text
+  price               Decimal  @db.Decimal(10, 2)
+  unitCost            Decimal? @db.Decimal(13, 2)
   markupPercent       Decimal? @db.Decimal(5, 2)
   markupAmount        Decimal? @db.Decimal(13, 2)
   profitMarginPercent Decimal? @db.Decimal(5, 2)
-  sku         String?
-  category    String?
-  isPublished Boolean @default(true)
-  isFeatured  Boolean @default(false)
-  isActive    Boolean @default(true)
+  sku                 String?
+  category            String?
+  isPublished         Boolean  @default(true)
+  isFeatured          Boolean  @default(false)
+  isActive            Boolean  @default(true)
 
   // Inventory fields
   quantity       Int     @default(0)
@@ -910,19 +1021,19 @@ model ProductImage {
 
 // Service Model
 model Service {
-  id          String  @id @default(cuid())
-  name        String
-  description String? @db.Text
-  price       Decimal @db.Decimal(10, 2)
-  unitCost    Decimal? @db.Decimal(13, 2)
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?  @db.Text
+  price               Decimal  @db.Decimal(10, 2)
+  unitCost            Decimal? @db.Decimal(13, 2)
   markupPercent       Decimal? @db.Decimal(5, 2)
   markupAmount        Decimal? @db.Decimal(13, 2)
   profitMarginPercent Decimal? @db.Decimal(5, 2)
-  duration    String? // e.g., "1 hour", "2 days", etc.
-  category    String?
-  isPublished Boolean @default(true)
-  isFeatured  Boolean @default(false)
-  isActive    Boolean @default(true)
+  duration            String? // e.g., "1 hour", "2 days", etc.
+  category            String?
+  isPublished         Boolean  @default(true)
+  isFeatured          Boolean  @default(false)
+  isActive            Boolean  @default(true)
 
   // Address fields (where service is provided)
   addressLine1 String?
@@ -1191,10 +1302,9 @@ model Invoice {
   invoiceNumber String  @unique // "INV-2024-001234"
   companyId     String // Company issuing the invoice
   userId        String? // User/customer receiving the invoice (NULL for external customers)
-  
+
   // External provider linkage
-  externalInvoiceId String? // External provider invoice id (Stripe invoice id)
-  @@unique([externalInvoiceId])
+  externalInvoiceId  String? // External provider invoice id (Stripe invoice id)
   externalInvoiceUrl String? // Hosted invoice URL or PDF
 
   // Invoice type and status
@@ -1240,6 +1350,7 @@ model Invoice {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([externalInvoiceId])
   @@index([companyId])
   @@index([userId])
   @@index([invoiceNumber])
@@ -1472,15 +1583,15 @@ model StorageProvider {
 
 // Chat-driven AI storefront MVP models
 model StorefrontConversation {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   companyId     String
-  createdBy     String?  // userId of the initiator (nullable for system)
-  status        String   @default("OPEN")
+  createdBy     String? // userId of the initiator (nullable for system)
+  status        String    @default("OPEN")
   lastMessageAt DateTime?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
 
   // Relations
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company  Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   messages StorefrontMessage[]
 
   @@index([companyId])
@@ -1489,15 +1600,15 @@ model StorefrontConversation {
 model StorefrontMessage {
   id             String   @id @default(cuid())
   conversationId String
-  role           String   // 'user' | 'ai' | 'system'
+  role           String // 'user' | 'ai' | 'system'
   content        String?  @db.Text
   toolsUsed      Json?    @db.Json
-  specVersionId  String?  // optional pointer to a created spec version
+  specVersionId  String? // optional pointer to a created spec version
   isApplied      Boolean  @default(false)
   isPreviewOnly  Boolean  @default(true)
   createdAt      DateTime @default(now())
 
-  conversation StorefrontConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation StorefrontConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   specVersion  StorefrontSpecVersion? @relation(fields: [specVersionId], references: [id], onDelete: SetNull)
 
   @@index([conversationId])
@@ -1505,20 +1616,108 @@ model StorefrontMessage {
 }
 
 model StorefrontSpecVersion {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   companyId String
-  spec      Json?    @db.Json
-  createdBy String?  // userId
+  spec      Json?     @db.Json
+  createdBy String? // userId
   messageId String?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   appliedAt DateTime?
   title     String?
-  source    String?  @default("ai")
+  source    String?   @default("ai")
 
-  company  Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company  Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   messages StorefrontMessage[]
 
   @@index([companyId])
+}
+
+// Analytics & Lead models for storefront chat and webhooks
+model TelemetryEvent {
+  id        String   @id @default(cuid())
+  companyId String? // nullable for system events
+  eventType String
+  payload   Json     @db.Json
+  createdAt DateTime @default(now())
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String?
+  email     String?
+  phone     String?
+  source    String? // e.g., 'chat', 'contact-form'
+  message   String?  @db.Text
+  data      Json?    @db.Json
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([email])
+  @@index([phone])
+}
+
+model WebhookConfig {
+  id        String   @id @default(cuid())
+  companyId String
+  url       String   @db.Text
+  isActive  Boolean  @default(true)
+  secret    String?  @db.Text // optional HMAC secret for signing
+  events    Json?    @db.Json // array of event names to subscribe
+  createdAt DateTime @default(now())
+
+  company    Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([companyId])
+  @@index([isActive])
+}
+
+model WebhookDelivery {
+  id            String    @id @default(cuid())
+  webhookId     String
+  payload       Json      @db.Json
+  status        String    @default("PENDING") // PENDING, SUCCESS, FAILED
+  responseCode  Int?
+  responseBody  String?   @db.Text
+  attempts      Int       @default(0)
+  lastAttemptAt DateTime?
+  createdAt     DateTime  @default(now())
+
+  webhook WebhookConfig @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([status])
+}
+
+// AI Storefront V3 - Multi-page SEO-optimized websites
+model StorefrontWebsiteV3 {
+  id                     String    @id @default(cuid())
+  companyId              String
+  websiteData            Json      @db.Json // Full V3Website object
+  qualityScore           Int // 0-100 quality score
+  seoCompliant           Boolean   @default(false)
+  accessibilityCompliant Boolean   @default(false)
+  validationWarnings     Json?     @db.Json // Array of warning strings
+  isActive               Boolean   @default(false) // Is this the active/published version
+  generatedBy            String // userId who generated it
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  publishedAt            DateTime? // When it was made active
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([companyId, isActive])
 }
 
 // Storage Provider Type Enum
@@ -1602,9 +1801,9 @@ model EmailProvider {
 
 // Captcha Provider Configuration
 model CaptchaProvider {
-  id        String              @id @default(cuid())
-  provider  CaptchaProviderType @default(GOOGLE_RECAPTCHA)
-  isActive  Boolean             @default(false)
+  id       String              @id @default(cuid())
+  provider CaptchaProviderType @default(GOOGLE_RECAPTCHA)
+  isActive Boolean             @default(false)
 
   // Keys
   siteKey   String?
@@ -1873,13 +2072,13 @@ model Project {
   // Status
   status ProjectStatus @default(PLANNING)
 
-  projectType ProjectType @default(INTERNAL)
-  category    ProjectCategory @default(INTERNAL)
-  isFeatured  Boolean     @default(false)
-  currency    String      @default("USD")
-  estimatedCost   Decimal? @db.Decimal(13, 2)
-  estimatedMarkup Decimal? @db.Decimal(13, 2)
-  featuredImage   String?  @db.LongText
+  projectType     ProjectType     @default(INTERNAL)
+  category        ProjectCategory @default(INTERNAL)
+  isFeatured      Boolean         @default(false)
+  currency        String          @default("USD")
+  estimatedCost   Decimal?        @db.Decimal(13, 2)
+  estimatedMarkup Decimal?        @db.Decimal(13, 2)
+  featuredImage   String?         @db.LongText
 
   // Sort order for kanban board (within each status lane)
   sortOrder Int @default(0)
@@ -1892,8 +2091,8 @@ model Project {
   tasks Task[]
 
   // Notes
-  notes ProjectNote[]
-  documents ProjectDocument[]
+  notes            ProjectNote[]
+  documents        ProjectDocument[]
   financialEntries ProjectFinancialEntry[]
 
   createdAt DateTime @default(now())
@@ -1989,15 +2188,15 @@ model ProjectNote {
 
 // Project Document uploads for supporting files, receipts, etc.
 model ProjectDocument {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   fileName        String
-  url             String @db.LongText
+  url             String        @db.LongText
   storageProvider String
   documentType    DocumentType?
-  notes           String? @db.Text
+  notes           String?       @db.Text
 
   uploadedById String?
   uploadedBy   CompanyStaff? @relation("ProjectDocumentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
@@ -2012,20 +2211,20 @@ model ProjectDocument {
 
 // Financial entries attached to projects (expenses/purchases)
 model ProjectFinancialEntry {
-  id        String            @id @default(cuid())
+  id        String  @id @default(cuid())
   projectId String
-  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  entryType ProjectEntryType
-  description String? @db.Text
+  entryType   ProjectEntryType
+  description String?          @db.Text
   vendor      String?
   referenceId String? // PO, receipt, invoice number
 
-  amount        Decimal @db.Decimal(13, 2)
-  cost          Decimal @db.Decimal(13, 2)
+  amount        Decimal  @db.Decimal(13, 2)
+  cost          Decimal  @db.Decimal(13, 2)
   markupPercent Decimal? @db.Decimal(5, 2)
   markupAmount  Decimal? @db.Decimal(13, 2)
-  currency      String  @default("USD")
+  currency      String   @default("USD")
 
   occurrenceDate DateTime @default(now())
   receiptUrl     String?  @db.LongText
@@ -2113,16 +2312,16 @@ model OnboardingToken {
 
 // OAuth Onboarding Token for root platform customers
 model OAuthOnboarding {
-  id           String   @id @default(cuid())
-  token        String   @unique @default(cuid())
+  id    String @id @default(cuid())
+  token String @unique @default(cuid())
 
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Requested plan passed during OAuth flow (ESSENTIAL|GROWTH|ENTERPRISE|null)
   requestedPlan String?
-  context       String   @default("root") // root | storefront
-  companyId     String?  // present when context is storefront
+  context       String  @default("root") // root | storefront
+  companyId     String? // present when context is storefront
 
   // Token lifecycle
   expiresAt   DateTime
@@ -2155,9 +2354,9 @@ model TimeEntry {
   clockOut DateTime?
 
   // Break tracking
-  breakStart DateTime?
-  breakEnd   DateTime?
-  breakMinutes Int @default(0) // Total break time in minutes
+  breakStart   DateTime?
+  breakEnd     DateTime?
+  breakMinutes Int       @default(0) // Total break time in minutes
 
   // Calculated fields
   totalMinutes Int? // Total minutes worked (clockOut - clockIn - breaks)
@@ -2193,9 +2392,9 @@ model TimeEntry {
 
 // Time Entry Status Enum
 enum TimeEntryStatus {
-  CLOCKED_IN   // Currently working
-  ON_BREAK     // On break
-  CLOCKED_OUT  // Finished for the day
+  CLOCKED_IN // Currently working
+  ON_BREAK // On break
+  CLOCKED_OUT // Finished for the day
 }
 
 // File/Folder System - Hierarchical file storage
@@ -2763,33 +2962,33 @@ enum UserRole {
 
 // Plan Pricing Configuration - allows dynamic pricing management
 model PlanPricing {
-  id        String   @id @default(cuid())
-  plan      String   @unique // ESSENTIAL, GROWTH, ENTERPRISE
-  
+  id   String @id @default(cuid())
+  plan String @unique // ESSENTIAL, GROWTH, ENTERPRISE
+
   // Monthly pricing
   monthlyPrice      Float
   monthlyPromoPrice Float?
-  
+
   // Annual pricing
-  annualPrice         Float
-  annualPriceMonthly  Float
-  
+  annualPrice        Float
+  annualPriceMonthly Float
+
   // Transaction fees
   transactionFeePercent Float
   transactionFeeFixed   Float
-  
+
   // Storage
-  baseStorageGB          Int
+  baseStorageGB             Int
   extraStoragePricePer100GB Float
   extraStoragePricePerGB    Float
-  
+
   // Marketing
   isPopular Boolean @default(false)
-  
+
   // Metadata
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdBy String? // User ID who created/updated
-  
+
   @@index([plan])
 }

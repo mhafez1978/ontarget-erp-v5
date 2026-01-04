@@ -16,6 +16,7 @@ import {
   Sparkles,
   CreditCard,
   Lock,
+  Webhook,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -45,6 +46,7 @@ import { DeleteTeamDialog } from "@/components/delete-team-dialog";
 import { AddTeamMemberDialog } from "@/components/add-team-member-dialog";
 import { PricingManagement } from "@/components/admin/pricing-management";
 import { PasswordManagementTab } from "@/components/password-management-tab";
+import { WebhookManager } from "@/components/dashboard/webhook-manager";
 import {
   getModelsForProvider,
   estimateGenerationCost,
@@ -126,6 +128,8 @@ export default function SettingsPage() {
   const [aiModel, setAiModel] = useState("gpt-4o-mini");
   const [aiApiBase, setAiApiBase] = useState("");
   const [aiHasExistingKey, setAiHasExistingKey] = useState(false);
+  const [dynamicModels, setDynamicModels] = useState<ModelInfo[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
 
   // State to track password visibility for each provider
   const [showSecrets, setShowSecrets] = useState<{
@@ -393,16 +397,84 @@ export default function SettingsPage() {
     loadAiProvider();
   }, [user.role]);
 
-  // Auto-update model when provider changes
+  // Auto-update model when provider changes and fetch dynamic models
   useEffect(() => {
-    const models = getModelsForProvider(
-      aiProviderType as "openai" | "anthropic" | "deepseek"
-    );
-    const defaultModel = models.find((m) => m.recommended) || models[0];
-    if (defaultModel && !models.find((m) => m.id === aiModel)) {
-      setAiModel(defaultModel.id);
-    }
-  }, [aiProviderType]);
+    const fetchDynamicModels = async () => {
+      // Only fetch if we have an API key (saved OR currently entered)
+      const hasApiKey = aiHasExistingKey || aiApiKey.trim().length > 0;
+
+      if (!hasApiKey) {
+        // If no API key at all, use fallback models
+        const fallbackModels = getModelsForProvider(
+          aiProviderType as "openai" | "anthropic" | "deepseek"
+        );
+        setDynamicModels(fallbackModels);
+        return;
+      }
+
+      console.log(
+        `[Settings Page] Fetching dynamic models for ${aiProviderType}, hasApiKey: ${hasApiKey}`
+      );
+      setModelsLoading(true);
+      try {
+        const response = await fetch("/api/settings/ai-provider/models", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            provider: aiProviderType,
+            forceRefresh: false,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.models && data.models.length > 0) {
+            setDynamicModels(data.models);
+
+            // Auto-select recommended model if current model not in list
+            const currentModelExists = data.models.find(
+              (m: ModelInfo) => m.id === aiModel
+            );
+            if (!currentModelExists) {
+              const recommended = data.models.find(
+                (m: ModelInfo) => m.recommended
+              );
+              if (recommended) {
+                setAiModel(recommended.id);
+              } else if (data.models[0]) {
+                setAiModel(data.models[0].id);
+              }
+            }
+          } else {
+            // Fallback to static models
+            const fallbackModels = getModelsForProvider(
+              aiProviderType as "openai" | "anthropic" | "deepseek"
+            );
+            setDynamicModels(fallbackModels);
+          }
+        } else {
+          // Fallback to static models on error
+          const fallbackModels = getModelsForProvider(
+            aiProviderType as "openai" | "anthropic" | "deepseek"
+          );
+          setDynamicModels(fallbackModels);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dynamic models:", error);
+        // Fallback to static models
+        const fallbackModels = getModelsForProvider(
+          aiProviderType as "openai" | "anthropic" | "deepseek"
+        );
+        setDynamicModels(fallbackModels);
+      } finally {
+        setModelsLoading(false);
+      }
+    };
+
+    fetchDynamicModels();
+  }, [aiProviderType, aiHasExistingKey, aiApiKey]);
 
   const handleGeoTrackingToggle = async (checked: boolean) => {
     setIsLoading(true);
@@ -2484,8 +2556,6 @@ export default function SettingsPage() {
                           Settings → API Keys
                         </a>{" "}
                         and click &quot;Create Key&quot;.{" "}
-                        <strong>New accounts get $5 free credits</strong> (no
-                        credit card required initially).
                       </li>
                       <li>
                         <strong>For DeepSeek:</strong> Sign up at{" "}
@@ -2538,7 +2608,7 @@ export default function SettingsPage() {
                             rel="noopener noreferrer"
                             className="underline hover:no-underline"
                           >
-                            $5 free credits
+                            $5 in free credits
                           </a>{" "}
                           (no credit card required).
                         </li>
@@ -2632,32 +2702,50 @@ export default function SettingsPage() {
                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                           value={aiModel}
                           onChange={(e) => setAiModel(e.target.value)}
-                          disabled={aiProviderLoading}
+                          disabled={aiProviderLoading || modelsLoading}
                         >
-                          {(() => {
-                            const models = getModelsForProvider(
-                              aiProviderType as
-                                | "openai"
-                                | "anthropic"
-                                | "deepseek"
-                            );
-                            return models.map((model) => (
+                          {modelsLoading ? (
+                            <option value={aiModel}>Loading models...</option>
+                          ) : (
+                            (dynamicModels.length > 0
+                              ? dynamicModels
+                              : getModelsForProvider(
+                                  aiProviderType as
+                                    | "openai"
+                                    | "anthropic"
+                                    | "deepseek"
+                                )
+                            ).map((model) => (
                               <option key={model.id} value={model.id}>
                                 {model.name} - {estimateGenerationCost(model)}
-                                /gen {getRelativeCostMultiplier(model, models)}
+                                /gen{" "}
+                                {getRelativeCostMultiplier(
+                                  model,
+                                  dynamicModels.length > 0
+                                    ? dynamicModels
+                                    : getModelsForProvider(
+                                        aiProviderType as
+                                          | "openai"
+                                          | "anthropic"
+                                          | "deepseek"
+                                      )
+                                )}
                                 {model.recommended ? " ⭐" : ""}
                               </option>
-                            ));
-                          })()}
+                            ))
+                          )}
                         </select>
                         <div className="text-xs text-muted-foreground space-y-1">
                           {(() => {
-                            const models = getModelsForProvider(
-                              aiProviderType as
-                                | "openai"
-                                | "anthropic"
-                                | "deepseek"
-                            );
+                            const models =
+                              dynamicModels.length > 0
+                                ? dynamicModels
+                                : getModelsForProvider(
+                                    aiProviderType as
+                                      | "openai"
+                                      | "anthropic"
+                                      | "deepseek"
+                                  );
                             const currentModel = models.find(
                               (m) => m.id === aiModel
                             );
@@ -2679,6 +2767,12 @@ export default function SettingsPage() {
                             }
                             return null;
                           })()}
+                          {aiHasExistingKey && dynamicModels.length > 0 && (
+                            <p className="text-green-600 dark:text-green-400">
+                              ✓ Showing {dynamicModels.length} models available
+                              for your API key
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -2827,6 +2921,39 @@ export default function SettingsPage() {
               </div>
             </AccordionContent>
           </AccordionItem>
+
+          {/* Webhooks Configuration */}
+          {user.companyId && (
+            <AccordionItem value="webhooks">
+              <AccordionTrigger className="text-xl font-semibold">
+                <div className="flex items-center gap-2">
+                  <Webhook className="h-5 w-5" />
+                  Webhooks
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-4">
+                  <div className="mb-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          About Webhooks
+                        </p>
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                          Webhooks allow you to receive real-time notifications
+                          when events occur in your account. Configure webhook
+                          endpoints to integrate with external systems and
+                          automate workflows.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <WebhookManager companyId={user.companyId} />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Captcha Settings */}
           {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (

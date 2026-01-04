@@ -84,9 +84,37 @@ export async function POST(request: NextRequest) {
       }`
     );
 
+    // Decrypt and validate API key
+    const decryptedKey = decrypt(provider.apiKey);
+
+    // Debug logging
+    console.log("[AI Provider Test] Debug info:", {
+      provider: provider.provider,
+      keyLength: decryptedKey.length,
+      keyPrefix: decryptedKey.substring(0, 15),
+      keySuffix: decryptedKey.substring(decryptedKey.length - 10),
+      hasWhitespace: /\s/.test(decryptedKey),
+      trimmedLength: decryptedKey.trim().length,
+    });
+
+    // Validate API key format
+    if (provider.provider === "anthropic") {
+      if (!decryptedKey.startsWith("sk-ant-api")) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid Anthropic API key format. Key should start with 'sk-ant-api'",
+            hint: "Please check that you entered the correct API key from console.anthropic.com",
+          },
+          { status: 400 }
+        );
+      }
+      console.log("[AI Provider Test] API key format validated ✓");
+    }
+
     const result = await callStorefrontModel(messages, testSchemaZod, {
       provider: provider.provider as "openai" | "anthropic",
-      apiKey: decrypt(provider.apiKey),
+      apiKey: decryptedKey,
       model: provider.model || undefined,
       apiBase: provider.apiBase || undefined,
     });

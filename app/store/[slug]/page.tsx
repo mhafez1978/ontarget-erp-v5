@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import { defaultThemes, type ThemeSection } from "@/lib/storefront-themes";
@@ -6,11 +6,18 @@ import { ThemeRenderer } from "@/components/storefront/theme-renderer";
 import StorefrontLayout from "@/components/storefront/storefront-layout";
 import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
 import { AiStorefrontRendererV2 } from "@/components/storefront/v2/ai-storefront-renderer-v2";
+import { ChatWidget } from "@/components/storefront/chat-widget";
 import type { Metadata } from "next";
+import type { V4Website } from "@/lib/ai/v4-types";
+
+// V4 component type alias (individual page components)
+type V4Component = import("@/lib/ai/v4-types").V4Page["components"][number];
 import {
   aiFrontstoreSpecSchema,
   type AiFrontstoreSpec,
 } from "@/lib/ai/ai-storefront-types";
+import { extractBodyContent } from "@/lib/storefront/html-utils";
+import { computeHeaderLinks } from "@/lib/storefront/header-utils";
 
 // Force dynamic rendering to prevent caching issues
 export const dynamic = "force-dynamic";
@@ -375,6 +382,503 @@ export default async function StorefrontPage({ params }: PageProps) {
 
   if (!slug) {
     notFound();
+  }
+
+  // Check if company has an active V4 or V3 website. Prefer V4 (no version exposing in public URL)
+  const companyCheck = await db.company.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+
+  if (companyCheck) {
+    // Prefer active V4 website if exists
+    const activeV4Website = await db.v4Website.findFirst({
+      where: {
+        companyId: companyCheck.id,
+        isActive: true,
+      },
+      orderBy: { publishedAt: "desc" },
+    });
+
+    if (activeV4Website) {
+      // Render the published V4 website directly at /store/:slug (do not expose version in URL)
+      const websiteData =
+        (activeV4Website.websiteData as unknown as V4Website) || null;
+
+      // Fetch company details so we can show branding in header
+      const companyMeta = await db.company.findUnique({
+        where: { id: companyCheck.id },
+        select: {
+          name: true,
+          slug: true,
+          logo: true,
+          logoLight: true,
+          logoDark: true,
+          storeBanner: true,
+          email: true,
+          phone: true,
+        },
+      });
+
+      // Count products/services for conditional page logic
+      const productCount = await db.product.count({
+        where: {
+          companyId: companyCheck.id,
+          isPublished: true,
+          isActive: true,
+        },
+      });
+
+      // Count projects so we can decide what CTAs should link to
+      const projectCount = await db.project.count({
+        where: { subscriberCompanyId: companyCheck.id },
+      });
+
+      // Work with the canonical V4 page type
+      // pages are expected to be V4Page[] when present in the V4 website payload
+      let pages = Array.isArray(websiteData?.pages)
+        ? (websiteData.pages as import("@/lib/ai/v4-types").V4Page[])
+        : [];
+
+      // Filter out empty pages and products page when there are no products
+      pages = pages.filter((p) => {
+        if (!p || !Array.isArray(p.components) || p.components.length === 0)
+          return false;
+        const slugLike = (p.slug || p.name || "").toLowerCase();
+        if (slugLike.includes("product") && productCount === 0) return false;
+        return true;
+      });
+
+      // Sanitize names (remove seasonal labels)
+      pages = pages.map((p) => {
+        if (p && typeof p.name === "string") {
+          p.name = p.name.replace(/black\s*-?\s*friday/gi, "").trim();
+          if (!p.name) p.name = "Services";
+        }
+        return p;
+      });
+
+      // If there is no Contact page but company has contact info, add a simple Contact V4 page
+      const hasContact = pages.some(
+        (p) =>
+          (p.slug || "").toLowerCase().includes("contact") ||
+          (p.name || "").toLowerCase().includes("contact")
+      );
+      if (!hasContact && (companyMeta?.email || companyMeta?.phone)) {
+        pages.push({
+          slug: "contact",
+          name: "Contact",
+          components: [
+            {
+              id: `contact-fallback-${companyCheck.id}`,
+              order: 0,
+              componentCode: `<section class=\"py-12 bg-white\"><div class=\"container mx-auto\"><h2 class=\"text-2xl font-semibold\">Contact Us</h2><p class=\"mt-2\">Reach out at <a href=\"mailto:${
+                companyMeta?.email || ""
+              }\">${companyMeta?.email || ""}</a> or call ${
+                companyMeta?.phone || ""
+              }.</p></div></section>`,
+              metadata: {
+                name: "ContactFallback",
+                description: "Contact fallback section",
+                props: {},
+                dependencies: [],
+              },
+            },
+          ],
+          seo: {
+            title: "Contact",
+            description: `Contact ${companyMeta?.name || ""}`,
+            keywords: [],
+            ogImage: null,
+            canonicalUrl: null,
+            structuredData: [],
+          },
+        });
+      }
+
+      // If there is no testimonials page but we have testimonials in DB, add one
+      const testimonialCount = await db.testimonial.count({
+        where: { companyId: companyCheck.id, status: "APPROVED" },
+      });
+      const hasTestimonials = pages.some(
+        (p) =>
+          (p.slug || "").toLowerCase().includes("testimonial") ||
+          (p.name || "").toLowerCase().includes("testimonial")
+      );
+      if (!hasTestimonials && testimonialCount > 0) {
+        const approved = await db.testimonial.findMany({
+          where: { companyId: companyCheck.id, status: "APPROVED" },
+          take: 6,
+          orderBy: { createdAt: "desc" },
+        });
+        const itemsHtml = approved
+          .map(
+            (t) =>
+              `<blockquote class=\"p-4 bg-white rounded-lg shadow-sm\"><p class=\"font-medium\">${(
+                t.testimonial || ""
+              ).replace(
+                /</g,
+                "&lt;"
+              )}</p><footer class=\"mt-2 text-sm text-muted-foreground\">— ${
+                t.customerName || ""
+              }</footer></blockquote>`
+          )
+          .join("\n");
+        pages.push({
+          slug: "testimonials",
+          name: "Testimonials",
+          components: [
+            {
+              id: `testimonials-${companyCheck.id}`,
+              order: 0,
+              componentCode: `<section class=\"py-12 bg-gradient-to-r from-gray-50 to-white\"><div class=\"container mx-auto\"><h2 class=\"text-2xl font-semibold\">What our customers say</h2><div class=\"mt-4 grid grid-cols-1 md:grid-cols-2 gap-4\">${itemsHtml}</div></div></section>`,
+              metadata: {
+                name: "TestimonialsFallback",
+                description: "Testimonials fallback section",
+                props: {},
+                dependencies: [],
+              },
+            },
+          ],
+          seo: {
+            title: "Testimonials",
+            description: `What our customers say about ${
+              companyMeta?.name || ""
+            }`,
+            keywords: [],
+            ogImage: null,
+            canonicalUrl: null,
+            structuredData: [],
+          },
+        });
+      }
+
+      // Determine first page
+      const firstPage = pages.length > 0 ? pages[0] : null;
+
+      // Inject global styles from design system if present
+      const globalStyles = websiteData?.globalStyles || "";
+
+      // Map the V4 design system to our AiMeta shape expected by StorefrontLayout
+      const aiMetaFromV4 = websiteData?.designSystem
+        ? {
+            primaryColor: websiteData.designSystem.colors?.primary,
+            secondaryColor: websiteData.designSystem.colors?.secondary,
+            accentColor: websiteData.designSystem.colors?.accent,
+            backgroundColor: websiteData.designSystem.colors?.background,
+            textColor: websiteData.designSystem.colors?.foreground,
+          }
+        : null;
+
+      // Fetch small datasets we may need for fallbacks
+      const featuredTeamMembers = await db.companyStaff.findMany({
+        where: {
+          companyId: companyCheck.id,
+          status: "ACTIVE",
+        },
+        include: { user: { select: { id: true, name: true, image: true } } },
+        orderBy: [{ displayOrder: "asc" }, { hireDate: "asc" }],
+      });
+
+      const featuredProjectsPrimary = await db.project.findMany({
+        where: { subscriberCompanyId: companyCheck.id },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          featuredImage: true,
+          startDate: true,
+        },
+        take: 6,
+        orderBy: { startDate: "desc" },
+      });
+
+      const featuredProjects =
+        featuredProjectsPrimary.length > 0 ? featuredProjectsPrimary : [];
+
+      let headerLinksToPass: Array<{ label: string; href: string }> | null =
+        null;
+      try {
+        const postsCount = await db.storefrontPost.count({
+          where: { companyId: companyCheck.id, status: "PUBLISHED" },
+        });
+
+        headerLinksToPass = computeHeaderLinks(slug, postsCount);
+      } catch (e) {
+        console.error("Failed to compute storefront header links", e);
+        headerLinksToPass = null;
+      }
+
+      // Add About page fallback when missing
+      const hasAbout = pages.some((p) =>
+        (p.slug || "").toLowerCase().includes("about")
+      );
+      if (!hasAbout) {
+        pages.push({
+          slug: "about",
+          name: "About",
+          components: [
+            {
+              id: `about-fallback-${companyCheck.id}`,
+              order: 0,
+              componentCode: `<section class="py-12 bg-white"><div class="container mx-auto"><h2 class="text-2xl font-semibold">About ${
+                companyMeta?.name || ""
+              }</h2><p class="mt-4">${
+                (companyMeta?.name || "") +
+                " is a digital agency focused on web design and e-commerce. We help businesses expand their online presence."
+              }</p></div></section>`,
+              metadata: {
+                name: "AboutFallback",
+                description: "About fallback section",
+                props: {},
+                dependencies: [],
+              },
+            },
+          ],
+          seo: {
+            title: "About",
+            description: `About ${companyMeta?.name || ""}`,
+            keywords: [],
+            ogImage: null,
+            canonicalUrl: null,
+            structuredData: [],
+          },
+        });
+      }
+
+      // Add Team page fallback when team members exist
+      const hasTeam = pages.some(
+        (p) =>
+          (p.slug || "").toLowerCase().includes("team") ||
+          (p.name || "").toLowerCase().includes("team")
+      );
+      if (
+        !hasTeam &&
+        Array.isArray(featuredTeamMembers) &&
+        featuredTeamMembers.length > 0
+      ) {
+        const membersHtml = featuredTeamMembers
+          .map(
+            (m) =>
+              `<div class="p-4"><h4 class="font-medium">${
+                m.user?.name || "Team Member"
+              }</h4><p class="text-sm text-muted-foreground">${
+                m.jobTitle || ""
+              }</p></div>`
+          )
+          .join("");
+        pages.push({
+          slug: "team",
+          name: "Meet the Team",
+          components: [
+            {
+              id: `team-fallback-${companyCheck.id}`,
+              order: 0,
+              componentCode: `<section class="py-12 bg-white"><div class="container mx-auto"><h2 class="text-2xl font-semibold">Meet the Team</h2><div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">${membersHtml}</div></div></section>`,
+              metadata: {
+                name: "TeamFallback",
+                description: "Team fallback",
+                props: {},
+                dependencies: [],
+              },
+            },
+          ],
+          seo: {
+            title: "Meet the Team",
+            description: `The team at ${companyMeta?.name || ""}`,
+            keywords: [],
+            ogImage: null,
+            canonicalUrl: null,
+            structuredData: [],
+          },
+        });
+      }
+
+      // Add Portfolio page fallback when projects exist
+      const hasPortfolio = pages.some(
+        (p) =>
+          (p.slug || "").toLowerCase().includes("portfolio") ||
+          (p.name || "").toLowerCase().includes("portfolio") ||
+          (p.slug || "").toLowerCase().includes("projects")
+      );
+      if (!hasPortfolio && projectCount > 0) {
+        const projectsHtml = featuredProjects
+          .map(
+            (pr) =>
+              `<div class="p-4"><h4 class="font-medium">${
+                pr.name
+              }</h4><p class="text-sm">${(pr.description || "").slice(
+                0,
+                120
+              )}</p></div>`
+          )
+          .join("");
+        pages.push({
+          slug: "portfolio",
+          name: "Portfolio",
+          components: [
+            {
+              id: `portfolio-fallback-${companyCheck.id}`,
+              order: 0,
+              componentCode: `<section class="py-12 bg-white"><div class="container mx-auto"><h2 class="text-2xl font-semibold">Portfolio</h2><div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">${projectsHtml}</div></div></section>`,
+              metadata: {
+                name: "PortfolioFallback",
+                description: "Portfolio fallback",
+                props: {},
+                dependencies: [],
+              },
+            },
+          ],
+          seo: {
+            title: "Portfolio",
+            description: `Recent projects from ${companyMeta?.name || ""}`,
+            keywords: [],
+            ogImage: null,
+            canonicalUrl: null,
+            structuredData: [],
+          },
+        });
+      }
+
+      return (
+        <StorefrontLayout
+          slug={slug}
+          companyName={companyMeta?.name || ""}
+          logo={companyMeta?.logo || null}
+          logoLight={companyMeta?.logoLight || null}
+          logoDark={companyMeta?.logoDark || null}
+          storeBanner={companyMeta?.storeBanner || null}
+          storeMetadata={null}
+          aiMeta={aiMetaFromV4}
+          isStoreEnabled={true}
+          storeBlogEnabled={false}
+          renderHero={false}
+          headerLinks={headerLinksToPass}
+          hideProducts={productCount === 0}
+          showFeedbackCTA={hasContact}
+          feedbackHref={
+            hasContact ? "#contact" : `/store/${slug}/contact#testimonial`
+          }
+        >
+          {/* Inject generated global styles to ensure design system is applied and full-bleed backgrounds work */}
+          {globalStyles ? (
+            <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+          ) : null}
+
+          {/* Render each component's HTML for the first page (full-bleed wrapper) */}
+          {firstPage ? (
+            <div className="w-full py-0">
+              {firstPage.components?.map((comp, idx) => {
+                // Use canonical V4 componentCode and sanitize problematic CTAs
+                let html = (comp as V4Component).componentCode || "";
+
+                // If the component contains a full HTML document, extract only the inner <body> contents
+                // Use shared util to ensure consistent behavior and make this testable
+                html = extractBodyContent(html);
+
+                // NOTE: we use the shared util to strip full HTML documents from generated
+                // component output (doctype/html/head/body) so we only inject inner markup
+                // into the storefront. This avoids nested <html> and <body> tags which can
+                // produce non-deterministic client-side mutations and hydration mismatches.
+                // If portfolio/projects are absent, rewrite #portfolio or /portfolio links to contact
+                if (
+                  !Array.isArray(websiteData?.pages) ||
+                  websiteData.pages.length === 0
+                ) {
+                  // no-op
+                }
+
+                // If there are no projects, replace in-page portfolio anchors with contact anchor
+                if (Array.isArray(websiteData?.pages)) {
+                  const hasProjects = projectCount > 0; // derived from DB
+                  if (!hasProjects) {
+                    html = html.replace(
+                      /href=\"#portfolio\"/gi,
+                      'href="#contact"'
+                    );
+                    html = html.replace(
+                      /href=\"\/portfolio\"/gi,
+                      'href="/contact"'
+                    );
+                    html = html.replace(
+                      /href=\"#projects\"/gi,
+                      'href="#contact"'
+                    );
+                  }
+                }
+
+                // Final HTML normalizations before injection (footer links, canonical anchors)
+                try {
+                  // map common empty anchors to canonical storefront pages
+                  html = html.replace(
+                    /<a([^>]*?)href=(['"])#\2([^>]*?)>\s*(About Us|About)\s*<\/a>/gi,
+                    `<a$1href="/store/${slug}/about"$3>$4</a>`
+                  );
+                  html = html.replace(
+                    /<a([^>]*?)href=(['"])#\2([^>]*?)>\s*(Our Portfolio|Portfolio|Projects)\s*<\/a>/gi,
+                    `<a$1href="/store/${slug}/portfolio"$3>$4</a>`
+                  );
+                  html = html.replace(
+                    /<a([^>]*?)href=(['"])#\2([^>]*?)>\s*(Testimonials|Reviews)\s*<\/a>/gi,
+                    `<a$1href="/store/${slug}/testimonials"$3>$4</a>`
+                  );
+                } catch (e) {
+                  // Non-essential normalization; swallow errors
+                  console.debug("HTML footer normalization failed", e);
+                }
+
+                return (
+                  <div
+                    key={idx}
+                    className="w-full"
+                    dangerouslySetInnerHTML={{ __html: html }}
+                  />
+                );
+              })}
+
+              {/* Chat widget: prefer structured config (mount client widget) when available, otherwise render legacy HTML fallback */}
+              {websiteData?.chatWidget?.config ? (
+                // ChatWidget is a client component; render it with config
+                <div key="v4-chat-widget-client">
+                  <ChatWidget
+                    companySlug={companyMeta?.slug || slug}
+                    companyId={companyCheck.id}
+                    companyName={companyMeta?.name || ""}
+                    config={websiteData.chatWidget.config}
+                    mountInside={false}
+                  />
+                </div>
+              ) : websiteData?.chatWidget?.html ? (
+                <div
+                  key="v4-chat-widget-html"
+                  dangerouslySetInnerHTML={{
+                    __html: websiteData.chatWidget.html,
+                  }}
+                />
+              ) : null}
+            </div>
+          ) : (
+            <div className="w-full py-8 text-center">
+              <p>No published content available.</p>
+            </div>
+          )}
+        </StorefrontLayout>
+      );
+    }
+
+    // If no active V4 site, fallback to existing V3 redirect behavior
+    const activeV3Website = await db.storefrontWebsiteV3.findFirst({
+      where: {
+        companyId: companyCheck.id,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    if (activeV3Website) {
+      // Redirect to V3 preview
+      redirect(`/store/v3/${slug}`);
+    }
   }
 
   const data = await getStoreData(slug);

@@ -28,6 +28,12 @@ interface StoreMetadata {
   copyright?: string | boolean;
 }
 
+interface NavLink {
+  href: string;
+  label: string;
+  isExternal?: boolean;
+}
+
 interface StorefrontLayoutProps {
   slug: string;
   companyName: string;
@@ -43,6 +49,10 @@ interface StorefrontLayoutProps {
   renderHero?: boolean;
   heroProps?: HeroProps;
   children?: React.ReactNode;
+  headerLinks?: NavLink[] | null;
+  hideProducts?: boolean;
+  showFeedbackCTA?: boolean;
+  feedbackHref?: string | null;
 }
 
 export default function StorefrontLayout({
@@ -60,6 +70,10 @@ export default function StorefrontLayout({
   renderHero = false,
   heroProps,
   children,
+  headerLinks,
+  hideProducts,
+  showFeedbackCTA,
+  feedbackHref = null,
 }: StorefrontLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
@@ -78,7 +92,20 @@ export default function StorefrontLayout({
         aiMeta={aiMeta}
         storeBlogEnabled={storeBlogEnabled}
         useThemeClass={useThemeClass ?? null}
+        headerLinks={headerLinks ?? null}
+        hideProducts={hideProducts ?? false}
       />
+
+      {/* Floating feedback CTA for testimonials/contact (appears when requested) */}
+      {showFeedbackCTA && (
+        <a
+          href={feedbackHref || `/store/${slug}/contact#testimonial`}
+          className="fixed z-50 right-4 bottom-24 bg-primary text-white px-4 py-3 rounded-full shadow-lg hover:scale-105 transition-transform"
+          style={{ backgroundColor: "var(--color-primary, #9333EA)" }}
+        >
+          Leave Feedback
+        </a>
+      )}
 
       {renderHero && (
         <StorefrontHero
