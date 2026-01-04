@@ -1,17 +1,18 @@
 "use client";
 
-
-import { ShoppingCart, Search, Filter, Grid3x3, List, ArrowLeft } from "lucide-react";
+import {
+  ShoppingCart,
+  Search,
+  Filter,
+  Grid3x3,
+  List,
+  ArrowLeft,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
-
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -126,9 +127,30 @@ export default function ProductsPage() {
       const productsResponse = await fetch(`/api/store/${slug}/products`);
       if (!productsResponse.ok) throw new Error("Failed to fetch products");
       const productsData = await productsResponse.json();
-      setProducts(
-        Array.isArray(productsData) ? productsData : productsData.products || []
-      );
+      const fetchedProducts = Array.isArray(productsData)
+        ? productsData
+        : productsData.products || [];
+      setProducts(fetchedProducts);
+
+      // If no products exist, redirect to services if services are available (avoid empty page)
+      if (Array.isArray(fetchedProducts) && fetchedProducts.length === 0) {
+        try {
+          const servicesResp = await fetch(`/api/store/${slug}/services`);
+          if (servicesResp.ok) {
+            const servicesData = await servicesResp.json();
+            const servicesArray = Array.isArray(servicesData)
+              ? servicesData
+              : servicesData.services || [];
+            if (servicesArray.length > 0) {
+              // Redirect to services page
+              window.location.href = `/store/${slug}/services`;
+              return;
+            }
+          }
+        } catch (e) {
+          // ignore and continue to show empty state
+        }
+      }
     } catch (error) {
       console.error("Error fetching store data:", error);
       toast.error("Failed to load products");
@@ -271,10 +293,7 @@ export default function ProductsPage() {
     ? "bg-[#F8FAFC] text-[#0F172A]"
     : "bg-background";
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredProducts.length / pageSize)
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const pageItems = filteredProducts.slice(startIndex, endIndex);
@@ -402,10 +421,7 @@ export default function ProductsPage() {
                 )}
               </div>
               <nav className="hidden md:flex items-center gap-6">
-                <Link
-                  href={`/store/${slug}`}
-                  className={linkClass}
-                >
+                <Link href={`/store/${slug}`} className={linkClass}>
                   Home
                 </Link>
                 <Link
@@ -414,16 +430,10 @@ export default function ProductsPage() {
                 >
                   Products
                 </Link>
-                <Link
-                  href={`/store/${slug}/services`}
-                  className={linkClass}
-                >
+                <Link href={`/store/${slug}/services`} className={linkClass}>
                   Services
                 </Link>
-                <Link
-                  href={`/store/${slug}/login`}
-                  className={linkClass}
-                >
+                <Link href={`/store/${slug}/login`} className={linkClass}>
                   Login
                 </Link>
                 <Button
@@ -582,143 +592,148 @@ export default function ProductsPage() {
               }
             >
               {pageItems.map((product) => (
-              <Card
-                key={product.id}
-                className={`${viewMode === "list" ? "flex" : ""} ${
-                  isBlackFriday
-                    ? "bg-zinc-950 text-white border border-red-500/60"
-                  : isFitnessBoutique
-                    ? "bg-slate-900 text-slate-50 border border-orange-500/60"
-                  : isDigitalCampus
-                    ? "bg-white text-[#0F172A] border border-[#E0ECFF] shadow-sm"
-                    : ""
-                }`}
-              >
-                {product.images &&
-                  product.images.length > 0 &&
-                  product.images[0].url && (
-                    <div
-                      className={
-                        viewMode === "list"
-                          ? "relative w-48 shrink-0 aspect-square"
-                          : "relative aspect-square overflow-hidden bg-muted"
-                      }
-                    >
-                      <Image
-                        src={product.images[0].url}
-                        alt={product.name}
-                        fill
-                        className="object-cover hover:scale-105 transition-transform"
-                        sizes={
+                <Card
+                  key={product.id}
+                  className={`${viewMode === "list" ? "flex" : ""} ${
+                    isBlackFriday
+                      ? "bg-zinc-950 text-white border border-red-500/60"
+                      : isFitnessBoutique
+                      ? "bg-slate-900 text-slate-50 border border-orange-500/60"
+                      : isDigitalCampus
+                      ? "bg-white text-[#0F172A] border border-[#E0ECFF] shadow-sm"
+                      : ""
+                  }`}
+                >
+                  {product.images &&
+                    product.images.length > 0 &&
+                    product.images[0].url && (
+                      <div
+                        className={
                           viewMode === "list"
-                            ? "192px"
-                            : "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            ? "relative w-48 shrink-0 aspect-square"
+                            : "relative aspect-square overflow-hidden bg-muted"
                         }
-                      />
-                    </div>
-                  )}
-                <div className="flex-1 flex flex-col">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="line-clamp-1">
-                        {product.name}
-                      </CardTitle>
-                      {product.isFeatured && (
-                        <Badge variant="secondary">Featured</Badge>
-                      )}
-                    </div>
-                    {product.category && (
-                      <Badge variant="outline" className="w-fit">
-                        {product.category}
-                      </Badge>
+                      >
+                        <Image
+                          src={product.images[0].url}
+                          alt={product.name}
+                          fill
+                          className="object-cover hover:scale-105 transition-transform"
+                          sizes={
+                            viewMode === "list"
+                              ? "192px"
+                              : "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          }
+                        />
+                      </div>
                     )}
-                    <CardDescription
-                      className={
-                        viewMode === "list" ? "line-clamp-2" : "line-clamp-3"
-                      }
-                    >
-                      {product.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <p
-                    className={`text-2xl font-bold ${
-                        isAiThemed
-                          ? ""
-                          : isBlackFriday
-                          ? "text-yellow-400"
-                          : isFitnessBoutique
-                          ? "text-orange-400"
-                          : isDigitalCampus
-                          ? "text-[#2563EB]"
-                          : ""
-                    }`}
-                    style={
-                      isAiThemed
-                        ? { color: aiMeta?.accentColor || aiMeta?.primaryColor }
-                        : undefined
-                    }
-                  >
-                    ${Number(product.price).toFixed(2)}
-                    </p>
-                    {product.inventory !== null && product.inventory < 10 && (
+                  <div className="flex-1 flex flex-col">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="line-clamp-1">
+                          {product.name}
+                        </CardTitle>
+                        {product.isFeatured && (
+                          <Badge variant="secondary">Featured</Badge>
+                        )}
+                      </div>
+                      {product.category && (
+                        <Badge variant="outline" className="w-fit">
+                          {product.category}
+                        </Badge>
+                      )}
+                      <CardDescription
+                        className={
+                          viewMode === "list" ? "line-clamp-2" : "line-clamp-3"
+                        }
+                      >
+                        {product.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-1">
                       <p
-                        className={`text-sm mt-2 ${
-                          isBlackFriday || isFitnessBoutique
+                        className={`text-2xl font-bold ${
+                          isAiThemed
+                            ? ""
+                            : isBlackFriday
+                            ? "text-yellow-400"
+                            : isFitnessBoutique
                             ? "text-orange-400"
                             : isDigitalCampus
-                            ? "text-[#B45309]"
-                            : "text-orange-600"
-                        }`}
-                      >
-                        Only {product.inventory} left in stock!
-                      </p>
-                    )}
-                    {product.inventory === 0 && (
-                      <p
-                        className={`text-sm mt-2 ${
-                          isBlackFriday || isFitnessBoutique
-                            ? "text-red-400"
-                            : isDigitalCampus
-                            ? "text-red-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        Out of stock
-                      </p>
-                    )}
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      className={`w-full ${
-                        !isAiThemed
-                          ? isBlackFriday
-                            ? "bg-red-600 hover:bg-red-700 text-white"
-                          : isFitnessBoutique
-                            ? "bg-orange-500 hover:bg-orange-600 text-black"
-                            : isDigitalCampus
-                            ? "bg-[#2563EB] hover:bg-[#1D4ED8] text-white"
+                            ? "text-[#2563EB]"
                             : ""
-                          : ""
-                      }`}
-                      style={
-                        isAiThemed
-                          ? {
-                              backgroundColor:
-                                aiMeta?.primaryColor || undefined,
-                              color: aiMeta?.textColor || "#ffffff",
-                            }
-                          : undefined
-                      }
-                      onClick={() => addToCart(product.id)}
-                      disabled={product.inventory === 0}
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      {product.inventory === 0 ? "Out of Stock" : "Add to Cart"}
-                    </Button>
-                  </CardFooter>
-                </div>
-              </Card>
+                        }`}
+                        style={
+                          isAiThemed
+                            ? {
+                                color:
+                                  aiMeta?.accentColor || aiMeta?.primaryColor,
+                              }
+                            : undefined
+                        }
+                      >
+                        ${Number(product.price).toFixed(2)}
+                      </p>
+                      {product.inventory !== null && product.inventory < 10 && (
+                        <p
+                          className={`text-sm mt-2 ${
+                            isBlackFriday || isFitnessBoutique
+                              ? "text-orange-400"
+                              : isDigitalCampus
+                              ? "text-[#B45309]"
+                              : "text-orange-600"
+                          }`}
+                        >
+                          Only {product.inventory} left in stock!
+                        </p>
+                      )}
+                      {product.inventory === 0 && (
+                        <p
+                          className={`text-sm mt-2 ${
+                            isBlackFriday || isFitnessBoutique
+                              ? "text-red-400"
+                              : isDigitalCampus
+                              ? "text-red-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          Out of stock
+                        </p>
+                      )}
+                    </CardContent>
+                    <CardFooter>
+                      <Button
+                        className={`w-full ${
+                          !isAiThemed
+                            ? isBlackFriday
+                              ? "bg-red-600 hover:bg-red-700 text-white"
+                              : isFitnessBoutique
+                              ? "bg-orange-500 hover:bg-orange-600 text-black"
+                              : isDigitalCampus
+                              ? "bg-[#2563EB] hover:bg-[#1D4ED8] text-white"
+                              : ""
+                            : ""
+                        }`}
+                        style={
+                          isAiThemed
+                            ? {
+                                backgroundColor:
+                                  aiMeta?.primaryColor || undefined,
+                                color: aiMeta?.textColor || "#ffffff",
+                              }
+                            : undefined
+                        }
+                        onClick={() => addToCart(product.id)}
+                        disabled={product.inventory === 0}
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        {product.inventory === 0
+                          ? "Out of Stock"
+                          : "Add to Cart"}
+                      </Button>
+                    </CardFooter>
+                  </div>
+                </Card>
               ))}
             </div>
             {totalPages > 1 && (
@@ -763,9 +778,7 @@ export default function ProductsPage() {
                     size="sm"
                     disabled={currentPage === totalPages}
                     onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(totalPages, prev + 1)
-                      )
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                     }
                   >
                     Next

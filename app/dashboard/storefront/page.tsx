@@ -1,8 +1,6 @@
 "use client";
 
-
-import { Sparkles, Store, Globe, Palette, Save, Loader2, ExternalLink, Upload, Trash2, Building, AlertCircle } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { DashboardLayout } from "@/components/dashboard-layout";
@@ -27,22 +25,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 
-
-
-
-
-
-
-
-
-
-;
 import { ThemeGallery } from "@/components/storefront/theme-gallery";
 import { ContentWizard } from "@/components/storefront/content-wizard";
 import { StorefrontReadinessWidget } from "@/components/storefront/storefront-readiness-widget";
+import { V4ChatInterface } from "@/components/storefront/v4-chat-interface";
+import { V4WebsitePreview } from "@/components/storefront/v4-website-preview";
 import { ThemeSection, defaultThemes } from "@/lib/storefront-themes";
 import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
+import {
+  Sparkles,
+  Store,
+  Globe,
+  Palette,
+  Save,
+  Loader2,
+  ExternalLink,
+  Upload,
+  Trash2,
+  Building,
+  AlertCircle,
+} from "lucide-react";
 import type {
   AiFrontstoreSpec,
   AiFrontstoreSection,
@@ -50,6 +54,9 @@ import type {
   FeaturedTeamMember,
   FeaturedProduct,
 } from "@/lib/ai/ai-storefront-types";
+import type { V4Conversation } from "@/lib/ai/v4-conversation-types";
+import type { V4WebsiteData } from "@/components/storefront/v4-website-preview";
+import type { V4Page, V4Website } from "@/lib/ai/v4-types";
 
 // Extend FeaturedService type to include price
 type FeaturedService = {
@@ -129,6 +136,9 @@ export default function StorefrontPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [themeSections, setThemeSections] = useState<ThemeSection[]>([]);
+  const [importedSections, setImportedSections] = useState<
+    ThemeSection[] | null
+  >(null);
   const [settings, setSettings] = useState<StorefrontSettings>({
     slug: null,
     subdomain: null,
@@ -180,6 +190,93 @@ export default function StorefrontPage() {
     string | null
   >(null);
 
+  // V4 state
+
+  const [v4Conversation, setV4Conversation] = useState<V4Conversation | null>(
+    null
+  );
+
+  type StoredV4Website = {
+    id: string;
+    data?: V4Website | null;
+    qualityScore?: number;
+    creativityScore?: number;
+  } | null;
+
+  const [v4Website, setV4Website] = useState<StoredV4Website>(null);
+  const [v4Generating, setV4Generating] = useState(false);
+
+  // Memoized transformation of raw V4 website to V4WebsiteData required by preview
+  const websiteDataMemo = useMemo(() => {
+    if (!v4Website?.data) return null;
+
+    const typography = v4Website.data.designSystem?.typography as
+      | Record<string, unknown>
+      | undefined;
+
+    return {
+      chatWidgetHtml: v4Website.data.chatWidget?.html || null,
+      chatWidgetConfig: v4Website.data.chatWidget?.config || null,
+      designSystem: {
+        colors: Object.entries(
+          v4Website.data.designSystem?.colors || {}
+        ).reduce((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {} as Record<string, string>),
+        typography: {
+          headingFont:
+            typeof typography?.headingFont === "string"
+              ? typography.headingFont
+              : "Inter",
+          bodyFont:
+            typeof typography?.bodyFont === "string"
+              ? typography.bodyFont
+              : "Inter",
+          heading:
+            typeof typography?.heading === "string"
+              ? typography.heading
+              : undefined,
+          body:
+            typeof typography?.body === "string" ? typography.body : undefined,
+        },
+      },
+      accessibility: (() => {
+        const access = v4Website.data.accessibility as
+          | Record<string, unknown>
+          | undefined;
+        return {
+          wcagLevel: (access?.wcagLevel as string) || "AA",
+          features: (access?.features as string[]) || [],
+          colorContrastAA: (access?.colorContrastAA as boolean) || undefined,
+          keyboardNavigable:
+            (access?.keyboardNavigable as boolean) || undefined,
+          ariaLabelsComplete:
+            (access?.ariaLabelsComplete as boolean) || undefined,
+        };
+      })(),
+      pages: (v4Website.data.pages || []).map((page: V4Page, idx: number) => {
+        const p = page as V4Page;
+        return {
+          path: p.slug
+            ? p.slug === "home"
+              ? "/"
+              : `/${p.slug}`
+            : `/page-${idx}`,
+          title: p.name || `Page ${idx + 1}`,
+          name: p.name,
+          description: undefined as string | undefined,
+          components: (p.components || []).map((comp) => ({
+            metadata: comp.metadata,
+            componentCode: comp.componentCode,
+          })),
+          metadata: undefined,
+          seo: p.seo,
+        };
+      }),
+    } as V4WebsiteData;
+  }, [v4Website]);
+
   // Posts management state
   interface StorefrontPostSummary {
     id: string;
@@ -229,6 +326,15 @@ export default function StorefrontPage() {
 
   const [activeTab, setActiveTab] = useState<string>("general");
 
+  // Dynamically import WebhookManager
+  const WebhookManager = dynamic(
+    () =>
+      import("@/components/dashboard/webhook-manager").then(
+        (mod) => mod.WebhookManager
+      ),
+    { ssr: false }
+  );
+
   // Handle URL parameters for tab and company selection
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -240,6 +346,25 @@ export default function StorefrontPage() {
 
     if (company && companies.some((c) => c.id === company)) {
       setSelectedCompanyId(company);
+    }
+
+    // Check for imported sections from V2/V3/etc
+    if (tab === "content") {
+      const importData = sessionStorage.getItem("content-wizard-import");
+      if (importData) {
+        try {
+          const parsed = JSON.parse(importData);
+          setImportedSections(parsed.sections || null);
+          sessionStorage.removeItem("content-wizard-import");
+          toast.success(
+            `Loaded ${parsed.sections?.length || 0} sections from ${
+              parsed.source || "export"
+            }`
+          );
+        } catch (error) {
+          console.error("Failed to parse imported sections:", error);
+        }
+      }
     }
   }, [searchParams, companies]);
 
@@ -504,7 +629,15 @@ export default function StorefrontPage() {
         `/api/company/storefront?companyId=${selectedCompanyId}`
       );
       if (!response.ok) {
-        throw new Error("Failed to fetch settings");
+        // If company doesn't have storefront settings yet, use defaults
+        console.log("No storefront settings found, using defaults");
+        setSettings((prev) => ({
+          ...prev,
+          storeTheme: "modern-tech",
+          storeBlogEnabled: false,
+        }));
+        setThemeSections([]);
+        return;
       }
       const data = await response.json();
       // Set default theme if none exists
@@ -524,10 +657,42 @@ export default function StorefrontPage() {
       }
     } catch (error) {
       console.error("Error fetching storefront settings:", error);
-      toast.error("Failed to load storefront settings");
+      // Use defaults on error instead of showing error toast
+      setSettings((prev) => ({
+        ...prev,
+        storeTheme: "modern-tech",
+        storeBlogEnabled: false,
+      }));
+      setThemeSections([]);
     } finally {
       setLoading(false);
     }
+  }, [selectedCompanyId]);
+
+  // Fetch the most recent V4 website for the selected company so preview persists across navigation
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const resp = await fetch(
+          `/api/storefront/v4/websites?companyId=${selectedCompanyId}`
+        );
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (!cancelled) {
+          setV4Website(data.website || null);
+        }
+      } catch (e) {
+        console.error("Failed to load V4 website:", e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCompanyId]);
 
   // 4. Define fetchAiConfig
@@ -648,6 +813,26 @@ export default function StorefrontPage() {
   ]);
 
   const handleSave = async () => {
+    // If no company selected, but a slug is present, try to resolve company by slug
+    if (!selectedCompanyId && settings.slug) {
+      try {
+        const res = await fetch(
+          `/api/companies/by-slug/${encodeURIComponent(
+            settings.slug
+          )}?allowDisabled=1`
+        );
+        if (res.ok) {
+          const d = await res.json();
+          const found = d?.company;
+          if (found?.id) {
+            setSelectedCompanyId(found.id);
+          }
+        }
+      } catch (e) {
+        console.debug("Could not auto-resolve company by slug", e);
+      }
+    }
+
     if (!selectedCompanyId) {
       toast.error("Please select a company first");
       return;
@@ -1005,6 +1190,36 @@ export default function StorefrontPage() {
                 AI Storefront V2
               </TabsTrigger>
             )}
+            {(user.role === "SUPER_ADMIN" ||
+              ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
+                user.plan?.toUpperCase() || ""
+              )) && (
+              <TabsTrigger value="ai-v3">
+                <Globe className="h-4 w-4 mr-2" />
+                AI Storefront V3
+              </TabsTrigger>
+            )}
+            {(user.role === "SUPER_ADMIN" ||
+              ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
+                user.plan?.toUpperCase() || ""
+              )) && (
+              <TabsTrigger value="ai-v4">
+                <Sparkles className="h-4 w-4 mr-2" />
+                AI Storefront V4
+              </TabsTrigger>
+            )}
+
+            {/* Webhooks (company-level) */}
+            {selectedCompanyId &&
+              (user.role === "SUPER_ADMIN" ||
+                ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
+                  user.plan?.toUpperCase() || ""
+                )) && (
+                <TabsTrigger value="webhooks">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  Webhooks
+                </TabsTrigger>
+              )}
           </TabsList>
 
           {/* General Settings Tab */}
@@ -1256,7 +1471,9 @@ export default function StorefrontPage() {
                   : undefined
               }
               initialSections={
-                themeSections && themeSections.length > 0
+                importedSections && importedSections.length > 0
+                  ? importedSections
+                  : themeSections && themeSections.length > 0
                   ? themeSections
                   : undefined
               }
@@ -2524,123 +2741,126 @@ export default function StorefrontPage() {
                                     </div>
                                   );
                                 })()}
-                                <AiStorefrontRenderer
-                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                  spec={aiSpec as any}
-                                  slug={settings.slug}
-                                  companyName={selectedCompany.name}
-                                  enableCart={false}
-                                  featuredProducts={
-                                    Array.isArray(aiPreviewProducts)
-                                      ? aiPreviewProducts.map((p) => {
-                                          const product = p as FeaturedProduct;
-                                          return {
-                                            ...product,
-                                            description:
-                                              typeof product.description ===
-                                              "undefined"
-                                                ? null
-                                                : product.description ?? null,
-                                            price:
-                                              typeof product.price === "number"
-                                                ? product.price
-                                                : 0,
-                                          };
-                                        })
-                                      : undefined
-                                  }
-                                  featuredServices={
-                                    Array.isArray(aiPreviewServices)
-                                      ? aiPreviewServices.map((s) => {
-                                          // Ensure 'price' exists on the service object
-                                          const service = {
-                                            ...(s as FeaturedService),
-                                            price:
-                                              typeof (s as FeaturedService)
-                                                .price === "number"
-                                                ? (s as FeaturedService).price
-                                                : 0,
-                                          };
-                                          return {
-                                            id: service.id,
-                                            name: service.name,
-                                            description:
-                                              service.description ?? null,
-                                            price: service.price,
-                                            image: service.image ?? undefined,
-                                          };
-                                        })
-                                      : undefined
-                                  }
-                                  featuredTeamMembers={
-                                    Array.isArray(aiPreviewTeam)
-                                      ? (aiPreviewTeam as FeaturedTeamMember[])
-                                      : undefined
-                                  }
-                                  testimonials={
-                                    Array.isArray(aiPreviewTestimonials)
-                                      ? (
-                                          aiPreviewTestimonials as StorefrontTestimonial[]
-                                        ).map((t) => ({
-                                          customerName: t.name,
-                                          testimonial: t.quote,
-                                          company: t.company,
-                                          image: t.image,
-                                          id: t.id,
-                                        }))
-                                      : undefined
-                                  }
-                                  contactEmail={
-                                    aiPreviewContactEmail || undefined
-                                  }
-                                  contactPhone={
-                                    aiPreviewContactPhone || undefined
-                                  }
-                                  heroOverride={(() => {
-                                    const sections =
-                                      (settings.storeMetadata?.sections as
-                                        | ThemeSection[]
-                                        | undefined) || [];
-                                    const hero = sections.find(
-                                      (s) => s.type === "hero" && s.enabled
-                                    );
-                                    if (!hero || !hero.content) return null;
-                                    return {
-                                      title:
-                                        (hero.content.heading as
-                                          | string
-                                          | undefined) ||
-                                        (hero.content.title as
-                                          | string
-                                          | undefined),
-                                      subtitle:
-                                        (hero.content.subheading as
-                                          | string
-                                          | undefined) ||
-                                        (hero.content.subtitle as
-                                          | string
-                                          | undefined),
-                                      description:
-                                        (hero.content.description as
-                                          | string
-                                          | undefined) || undefined,
-                                      primaryCTA:
-                                        (hero.content.ctaText as
-                                          | string
-                                          | undefined) ||
-                                        (hero.content.primaryCTA as
-                                          | string
-                                          | undefined),
-                                      secondaryCTA:
-                                        (hero.content.secondaryCtaText as
-                                          | string
-                                          | undefined) ||
-                                        (hero.content.secondaryCTA as
-                                          | string
-                                          | undefined),
-                                    };
-                                  })()}
-                                />
+                                {aiSpec ? (
+                                  <AiStorefrontRenderer
+                                    spec={aiSpec}
+                                    slug={settings.slug}
+                                    companyName={selectedCompany.name}
+                                    enableCart={false}
+                                    featuredProducts={
+                                      Array.isArray(aiPreviewProducts)
+                                        ? aiPreviewProducts.map((p) => {
+                                            const product =
+                                              p as FeaturedProduct;
+                                            return {
+                                              ...product,
+                                              description:
+                                                typeof product.description ===
+                                                "undefined"
+                                                  ? null
+                                                  : product.description ?? null,
+                                              price:
+                                                typeof product.price ===
+                                                "number"
+                                                  ? product.price
+                                                  : 0,
+                                            };
+                                          })
+                                        : undefined
+                                    }
+                                    featuredServices={
+                                      Array.isArray(aiPreviewServices)
+                                        ? aiPreviewServices.map((s) => {
+                                            // Ensure 'price' exists on the service object
+                                            const service = {
+                                              ...(s as FeaturedService),
+                                              price:
+                                                typeof (s as FeaturedService)
+                                                  .price === "number"
+                                                  ? (s as FeaturedService).price
+                                                  : 0,
+                                            };
+                                            return {
+                                              id: service.id,
+                                              name: service.name,
+                                              description:
+                                                service.description ?? null,
+                                              price: service.price,
+                                              image: service.image ?? undefined,
+                                            };
+                                          })
+                                        : undefined
+                                    }
+                                    featuredTeamMembers={
+                                      Array.isArray(aiPreviewTeam)
+                                        ? (aiPreviewTeam as FeaturedTeamMember[])
+                                        : undefined
+                                    }
+                                    testimonials={
+                                      Array.isArray(aiPreviewTestimonials)
+                                        ? (
+                                            aiPreviewTestimonials as StorefrontTestimonial[]
+                                          ).map((t) => ({
+                                            customerName: t.name,
+                                            testimonial: t.quote,
+                                            company: t.company,
+                                            image: t.image,
+                                            id: t.id,
+                                          }))
+                                        : undefined
+                                    }
+                                    contactEmail={
+                                      aiPreviewContactEmail || undefined
+                                    }
+                                    contactPhone={
+                                      aiPreviewContactPhone || undefined
+                                    }
+                                    heroOverride={(() => {
+                                      const sections =
+                                        (settings.storeMetadata?.sections as
+                                          | ThemeSection[]
+                                          | undefined) || [];
+                                      const hero = sections.find(
+                                        (s) => s.type === "hero" && s.enabled
+                                      );
+                                      if (!hero || !hero.content) return null;
+                                      return {
+                                        title:
+                                          (hero.content.heading as
+                                            | string
+                                            | undefined) ||
+                                          (hero.content.title as
+                                            | string
+                                            | undefined),
+                                        subtitle:
+                                          (hero.content.subheading as
+                                            | string
+                                            | undefined) ||
+                                          (hero.content.subtitle as
+                                            | string
+                                            | undefined),
+                                        description:
+                                          (hero.content.description as
+                                            | string
+                                            | undefined) || undefined,
+                                        primaryCTA:
+                                          (hero.content.ctaText as
+                                            | string
+                                            | undefined) ||
+                                          (hero.content.primaryCTA as
+                                            | string
+                                            | undefined),
+                                        secondaryCTA:
+                                          (hero.content.secondaryCtaText as
+                                            | string
+                                            | undefined) ||
+                                          (hero.content.secondaryCTA as
+                                            | string
+                                            | undefined),
+                                      };
+                                    })()}
+                                  />
+                                ) : null}
                               </div>
                             )}
                         </div>
@@ -2677,6 +2897,470 @@ export default function StorefrontPage() {
                     title="AI Storefront V2"
                   />
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* AI Storefront V3 Tab */}
+          <TabsContent value="ai-v3" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  AI Storefront Builder V3 - Multi-Page Websites
+                </CardTitle>
+                <CardDescription>
+                  Enterprise-grade multi-page website generation with SEO
+                  optimization and WCAG 2.1 AA accessibility compliance.
+                  Generate complete 4+ page websites with advanced features.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Info Banner */}
+                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      What&apos;s New in V3?
+                    </h4>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 ml-6 list-disc">
+                      <li>
+                        Multi-page websites (minimum 4 pages: Home, About,
+                        Services/Products, Contact)
+                      </li>
+                      <li>
+                        SEO-optimized with proper meta tags, heading hierarchy,
+                        and structured data
+                      </li>
+                      <li>
+                        WCAG 2.1 AA accessibility compliance with ARIA labels
+                        and semantic HTML
+                      </li>
+                      <li>
+                        Quality validation scoring (0-100) with detailed
+                        feedback
+                      </li>
+                      <li>Industry-specific content generation</li>
+                      <li>Advanced branding system with tone and typography</li>
+                    </ul>
+                  </div>
+
+                  {/* Coming Soon Notice */}
+                  <div className="bg-muted border rounded-lg p-8 text-center">
+                    <Globe className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      V3 Full Interface Available
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+                      The complete V3 generation interface with version
+                      management, quality scoring, and preview is now embedded
+                      below.
+                    </p>
+                  </div>
+
+                  {/* V3 Interface */}
+                  <div
+                    className="rounded-lg border bg-muted/20 overflow-hidden"
+                    style={{
+                      height: "calc(100vh - 400px)",
+                      minHeight: "600px",
+                    }}
+                  >
+                    <iframe
+                      src="/dashboard/storefront/v3"
+                      className="w-full h-full border-0"
+                      title="AI Storefront V3"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* AI V4 Tab */}
+          <TabsContent value="ai-v4" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  AI Storefront Builder V4 - Conversational Design
+                </CardTitle>
+                <CardDescription>
+                  Revolutionary AI-powered website generation through natural
+                  conversation. The AI guides you through design choices and
+                  generates unique TSX components tailored to your company.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[60vh]">
+                  {/* LEFT: Chat Interface */}
+                  <div className="lg:col-span-5">
+                    <Card className="flex flex-col h-full">
+                      <CardHeader className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg">
+                            Design Assistant
+                          </CardTitle>
+                          <CardDescription>
+                            Chat with the AI to design your website
+                          </CardDescription>
+                        </div>
+                        {v4Website && (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={async () => {
+                                if (
+                                  confirm(
+                                    "Delete this website and start fresh? This cannot be undone."
+                                  )
+                                ) {
+                                  try {
+                                    await fetch(
+                                      `/api/storefront/v4/websites/${v4Website.id}`,
+                                      { method: "DELETE" }
+                                    );
+                                    setV4Website(null);
+                                    setV4Conversation(null);
+                                    toast.success("Website deleted");
+                                  } catch (error) {
+                                    console.log(error);
+                                    toast.error("Failed to delete website");
+                                  }
+                                }
+                              }}
+                            >
+                              Delete & Start Fresh
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    "Start a new conversation? This will hide the current preview."
+                                  )
+                                ) {
+                                  setV4Website(null);
+                                  setV4Conversation(null);
+                                }
+                              }}
+                            >
+                              New Conversation
+                            </Button>
+                          </div>
+                        )}
+                      </CardHeader>
+
+                      <CardContent className="flex-1 overflow-hidden p-0">
+                        <V4ChatInterface
+                          companyId={selectedCompanyId}
+                          onComplete={async (conversation) => {
+                            // store conversation for UI
+                            setV4Conversation(
+                              conversation as unknown as V4Conversation
+                            );
+
+                            // Auto-generate website when conversation completes
+                            if (conversation.isComplete) {
+                              toast.info("Generating your website...");
+                              setV4Generating(true);
+                              try {
+                                const response = await fetch(
+                                  `/api/storefront/v4/conversations/${conversation.id}/generate`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                  }
+                                );
+                                if (!response.ok)
+                                  throw new Error("Generation failed");
+                                const data = await response.json();
+                                setV4Website(data.website);
+                                toast.success(
+                                  "Website generated successfully!"
+                                );
+                              } catch (error) {
+                                console.log(error);
+                                toast.error("Failed to generate website");
+                              } finally {
+                                setV4Generating(false);
+                              }
+                            }
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* RIGHT: Live Preview */}
+                  <div className="lg:col-span-7">
+                    <Card className="flex flex-col h-full">
+                      <CardHeader className="border-b">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="text-lg">
+                              Live Preview
+                            </CardTitle>
+                            <CardDescription>
+                              {v4Conversation && !v4Website ? (
+                                <>
+                                  Conversation in progress - Phase:{" "}
+                                  {v4Conversation.phase}
+                                </>
+                              ) : v4Website ? (
+                                "Your generated website"
+                              ) : (
+                                "See your website update in real-time"
+                              )}
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="flex-1 overflow-auto p-0">
+                        {/* Loading State */}
+                        {v4Generating && (
+                          <div className="flex items-center justify-center py-12 h-full">
+                            <div className="text-center space-y-4">
+                              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+                              <div>
+                                <h3 className="font-semibold">
+                                  Generating your website...
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  The AI is creating unique components for your
+                                  site
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {/* No Website State */}
+                        {!v4Website && !v4Generating && (
+                          <div className="flex items-center justify-center py-12 h-full">
+                            <div className="text-center space-y-4 max-w-md">
+                              <Globe className="h-16 w-16 mx-auto text-muted-foreground/50" />
+                              <div>
+                                <h3 className="font-semibold text-lg">
+                                  Start Building Your Website
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Chat with the AI assistant to design your
+                                  perfect website. Your preview will appear here
+                                  in real-time.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {/* Website Preview */}
+                        {websiteDataMemo && !v4Generating ? (
+                          <div className="h-full">
+                            <V4WebsitePreview
+                              websiteData={websiteDataMemo}
+                              qualityScore={v4Website?.qualityScore ?? 0}
+                              creativityScore={v4Website?.creativityScore ?? 0}
+                              onExport={() => {
+                                const componentsArray =
+                                  (v4Website?.data?.pages?.[0]?.components as
+                                    | V4Page["components"]
+                                    | undefined) || [];
+                                const sections = componentsArray.map(
+                                  (comp, idx) => {
+                                    const name = (
+                                      comp.metadata?.name || ""
+                                    ).toLowerCase();
+
+                                    // Guess a ThemeSection type from component name
+                                    let type: ThemeSection["type"] = "about";
+                                    if (name.includes("hero")) type = "hero";
+                                    else if (
+                                      name.includes("promo") ||
+                                      name.includes("banner")
+                                    )
+                                      type = "promo-banner";
+                                    else if (name.includes("product"))
+                                      type = "featured-products";
+                                    else if (name.includes("service"))
+                                      type = "featured-services";
+                                    else if (
+                                      name.includes("testimonial") ||
+                                      name.includes("testimonials")
+                                    )
+                                      type = "testimonials";
+                                    else if (name.includes("contact"))
+                                      type = "contact";
+                                    else if (name.includes("footer"))
+                                      type = "footer";
+                                    else if (name.includes("stats"))
+                                      type = "stats";
+                                    else if (name.includes("team"))
+                                      type = "team";
+                                    else if (name.includes("gallery"))
+                                      type = "gallery";
+
+                                    const props = (comp.metadata?.props ||
+                                      {}) as Record<string, unknown>;
+
+                                    const content: Record<string, unknown> = {
+                                      title:
+                                        comp.metadata?.name ||
+                                        `Section ${idx + 1}`,
+                                      code: comp.componentCode,
+                                    };
+
+                                    // Extract hero-like fields for editable Content Wizard experience
+                                    if (type === "hero") {
+                                      content.heading =
+                                        (props.heading as string) ||
+                                        (props.title as string) ||
+                                        (props.primaryText as string) ||
+                                        (props.heroTitle as string) ||
+                                        undefined;
+                                      content.subheading =
+                                        (props.subheading as string) ||
+                                        (props.subtitle as string) ||
+                                        (props.heroSubtitle as string) ||
+                                        undefined;
+                                      content.description =
+                                        (props.description as string) ||
+                                        (props.body as string) ||
+                                        (props.text as string) ||
+                                        undefined;
+                                      content.ctaText =
+                                        (props.ctaText as string) ||
+                                        (props.primaryCTA as string) ||
+                                        (props.primaryCta as string) ||
+                                        undefined;
+                                      content.ctaLink =
+                                        (props.ctaLink as string) ||
+                                        (props.primaryHref as string) ||
+                                        undefined;
+                                    }
+
+                                    // Basic styling hints
+                                    const styling: Record<string, unknown> = {
+                                      backgroundImage:
+                                        (props.backgroundImage as string) ||
+                                        undefined,
+                                      backgroundColor:
+                                        (props.backgroundColor as string) ||
+                                        undefined,
+                                    };
+
+                                    return {
+                                      id: `v4-${idx}`,
+                                      type,
+                                      enabled: true,
+                                      order: idx,
+                                      content,
+                                      styling,
+                                    };
+                                  }
+                                );
+
+                                sessionStorage.setItem(
+                                  "content-wizard-import",
+                                  JSON.stringify(sections)
+                                );
+
+                                // Navigate to content tab without reloading to preserve preview state
+                                try {
+                                  setActiveTab("content");
+                                  const urlParams = new URLSearchParams(
+                                    window.location.search
+                                  );
+                                  urlParams.set("tab", "content");
+                                  window.history.replaceState(
+                                    {},
+                                    "",
+                                    `?${urlParams.toString()}`
+                                  );
+                                  // Pass sections into local state so Content Wizard can pick them up immediately
+                                  setImportedSections(
+                                    sections as ThemeSection[]
+                                  );
+                                  toast.success("Exported to Content Wizard!");
+                                } catch (e) {
+                                  console.log(e);
+                                  // Fallback to previous behavior
+                                  const urlParams = new URLSearchParams(
+                                    window.location.search
+                                  );
+                                  urlParams.set("tab", "content");
+                                  window.history.pushState(
+                                    {},
+                                    "",
+                                    `?${urlParams.toString()}`
+                                  );
+                                  window.location.reload();
+                                  toast.success("Exported to Content Wizard!");
+                                }
+                              }}
+                              onPublish={async () => {
+                                try {
+                                  const response = await fetch(
+                                    `/api/storefront/v4/websites/${v4Website?.id}/activate`,
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                    }
+                                  );
+                                  if (!response.ok)
+                                    throw new Error("Failed to publish");
+
+                                  // Refresh website state from server so preview reflects published state
+                                  const refreshResp = await fetch(
+                                    `/api/storefront/v4/websites?companyId=${selectedCompanyId}`
+                                  );
+                                  if (refreshResp.ok) {
+                                    const data = await refreshResp.json();
+                                    setV4Website(data.website || null);
+                                  }
+
+                                  toast.success(
+                                    "Website published successfully!"
+                                  );
+                                } catch (error) {
+                                  console.log(error);
+                                  toast.error("Failed to publish website");
+                                }
+                              }}
+                            />
+                          </div>
+                        ) : null}{" "}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Webhooks Tab */}
+          <TabsContent value="webhooks" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Webhooks</CardTitle>
+                <CardDescription>
+                  Configure webhooks for this company to receive lead events and
+                  telemetry.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {selectedCompanyId ? (
+                  <WebhookManager companyId={selectedCompanyId} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Select a company to manage webhooks.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

@@ -7,12 +7,14 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
+    const url = new URL(request.url);
+    const allowDisabled = url.searchParams.get("allowDisabled") === "1";
+
+    const whereClause: any = { slug };
+    if (!allowDisabled) whereClause.isStoreEnabled = true;
 
     const company = await db.company.findUnique({
-      where: {
-        slug: slug,
-        isStoreEnabled: true, // Only return companies with storefront enabled
-      },
+      where: whereClause,
       select: {
         id: true,
         name: true,

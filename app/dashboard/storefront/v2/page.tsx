@@ -81,6 +81,35 @@ export default function FrontstoreV2Page() {
         setUserRole(data.user?.role || null);
       })
       .catch((err) => console.error("Failed to get user role:", err));
+
+    // Check for V3 export data
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("fromV3Export") === "true") {
+      const exportData = sessionStorage.getItem("v3-export-data");
+      if (exportData) {
+        try {
+          const { sections, companyData, metadata } = JSON.parse(exportData);
+          setThemeSections(sections);
+          toast.success(
+            `Loaded ${metadata.sectionCount} sections from V3 export`,
+            {
+              description: `From: ${
+                metadata.version
+              } website generated on ${new Date(
+                metadata.generatedAt
+              ).toLocaleString()}`,
+            }
+          );
+          // Clear the export data
+          sessionStorage.removeItem("v3-export-data");
+          // Clean up URL
+          window.history.replaceState({}, "", "/dashboard/storefront/v2");
+        } catch (error) {
+          console.error("Failed to load V3 export:", error);
+          toast.error("Failed to load exported V3 website");
+        }
+      }
+    }
   }, []);
 
   // Load user's companies

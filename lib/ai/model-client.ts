@@ -26,6 +26,7 @@ export interface AiProviderConfig {
  * - Accepts chat messages
  * - Requests JSON-only output
  * - Validates it against a Zod schema
+ * - Retries on rate limits and overload errors
  *
  * If no API key is configured, returns null so callers can fall back to a
  * deterministic, non-AI spec.
@@ -33,7 +34,8 @@ export interface AiProviderConfig {
 export async function callStorefrontModel<T>(
   messages: ChatMessage[],
   schema: ZodSchema<T>,
-  providerConfig?: AiProviderConfig
+  providerConfig?: AiProviderConfig,
+  maxRetries = 3
 ): Promise<T | null> {
   const provider: AiProviderType =
     providerConfig?.provider ||
@@ -107,8 +109,8 @@ export async function callStorefrontModel<T>(
       },
       body: JSON.stringify({
         model,
-        max_tokens: 4096,
-        temperature: 0.7,
+        max_tokens: 20000,
+        temperature: 0.8,
         system,
         messages: [
           {
@@ -126,8 +128,36 @@ export async function callStorefrontModel<T>(
         response.status,
         text
       );
+
+      // Handle authentication errors
+      if (response.status === 401) {
+        throw new Error(
+          "Invalid Anthropic API key. Please check your API key at console.anthropic.com and update it in Settings > AI Provider"
+        );
+      }
+
+      // Retry on rate limits (429) or overload (529)
+      if (
+        (response.status === 429 || response.status === 529) &&
+        maxRetries > 0
+      ) {
+        const retryDelay = Math.pow(2, 4 - maxRetries) * 1000; // Exponential backoff: 2s, 4s, 8s
+        console.log(
+          `[AI Storefront] Retrying after ${retryDelay}ms (${maxRetries} retries left)...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        return callStorefrontModel(
+          messages,
+          schema,
+          providerConfig,
+          maxRetries - 1
+        );
+      }
+
       throw new Error(
-        `AI storefront model call failed with status ${response.status}`
+        `AI storefront model call failed with status ${response.status}${
+          response.status === 529 ? " (API overloaded - try again later)" : ""
+        }`
       );
     }
 
@@ -166,7 +196,79 @@ export async function callStorefrontModel<T>(
       );
       console.log("[AI Storefront] Parse error:", directParseError);
 
-      // If direct parsing fails, try extracting JSON from markdown or text
+      // Helper to attempt continuation requests when output appears truncated
+      async function attemptContinuation(previous: string, attempts = 2) {
+        let accumulated = previous;
+        for (let i = 0; i < attempts; i++) {
+          console.log(
+            `[AI Storefront] Attempting continuation request (${
+              i + 1
+            }/${attempts})`
+          );
+          const contResp = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": apiKey || "",
+              "anthropic-version": "2023-06-01",
+            } as Record<string, string>,
+            body: JSON.stringify({
+              model,
+              max_tokens: 20000,
+              temperature: 0.8,
+              system,
+              messages: [
+                {
+                  role: "user",
+                  content: `CONTINUATION REQUEST: The previous response was truncated. Continue the JSON object from where it left off. Previous content (truncated):\n\n${accumulated}\n\nReturn ONLY the continuation text required to complete the JSON object (do not repeat previously returned text, and do not include backticks or markdown).`,
+                },
+              ],
+            }),
+          });
+
+          if (!contResp.ok) {
+            console.log(
+              `[AI Storefront] Continuation request failed with status ${contResp.status}`
+            );
+            continue;
+          }
+
+          const contJson = (await contResp.json()) as Record<string, unknown>;
+          const contContent =
+            contJson?.content && Array.isArray(contJson.content)
+              ? contJson.content
+                  .map((c: Record<string, unknown>) =>
+                    typeof c.text === "string" ? c.text : ""
+                  )
+                  .join("\n")
+              : null;
+
+          if (!contContent) {
+            console.log("[AI Storefront] Continuation response empty");
+            continue;
+          }
+
+          // Append and try to parse again
+          accumulated = accumulated + contContent;
+          try {
+            const attemptParsed = JSON.parse(accumulated.trim());
+            console.log(
+              "[AI Storefront] Successfully parsed after continuation"
+            );
+            return attemptParsed;
+          } catch (e) {
+            // keep looping to try another continuation
+            console.log(
+              "[AI Storefront] Continuation parse still failed, trying again..."
+            );
+            continue;
+          }
+        }
+
+        throw new Error("Failed to recover truncated JSON via continuation");
+      }
+
+      // If direct parsing fails, try extracting JSON from markdown or text first
       try {
         // Try to extract JSON from markdown code blocks
         const jsonMatch = trimmedContent.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -200,7 +302,18 @@ export async function callStorefrontModel<T>(
               "[AI Storefront] Extracted and sanitized JSON from text"
             );
           } else {
-            throw new Error("No JSON found in content");
+            // If we suspect truncation (no closing brace or ends with ellipsis), try continuation
+            const likelyTruncated =
+              trimmedContent.endsWith("...") ||
+              trimmedContent.trim().endsWith("`") ||
+              trimmedContent.indexOf("{") === -1 ||
+              trimmedContent.lastIndexOf("}") < trimmedContent.indexOf("{");
+
+            if (likelyTruncated) {
+              parsed = await attemptContinuation(trimmedContent, 2);
+            } else {
+              throw new Error("No JSON found in content");
+            }
           }
         }
       } catch (error) {
@@ -262,7 +375,8 @@ export async function callStorefrontModel<T>(
       model,
       messageCount: messagesWithJsonPrompt.length,
       response_format: { type: "json_object" },
-      temperature: 0.7,
+      temperature: 0.8,
+      max_tokens: 8192,
     });
 
     const response = await fetch(endpoint, {
@@ -275,7 +389,8 @@ export async function callStorefrontModel<T>(
         model,
         messages: messagesWithJsonPrompt,
         response_format: { type: "json_object" },
-        temperature: 0.7,
+        temperature: 0.8,
+        max_tokens: 8192,
       }),
     });
 
@@ -345,7 +460,8 @@ export async function callStorefrontModel<T>(
       model,
       messages,
       response_format: { type: "json_object" },
-      temperature: 0.7,
+      temperature: 0.8,
+      max_tokens: 20000,
     }),
   });
 
@@ -427,7 +543,7 @@ export async function streamStorefrontModel(
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ model, messages, stream: true, temperature: 0.7 }),
+    body: JSON.stringify({ model, messages, stream: true, temperature: 0.8 }),
   });
 
   if (!response.ok) {

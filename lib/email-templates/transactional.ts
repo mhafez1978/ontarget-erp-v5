@@ -13,6 +13,84 @@ import {
  */
 
 export const TRANSACTIONAL_TEMPLATES: TemplateDefinition[] = [
+  // CONTACT_LEAD_NOTIFICATION Template
+  {
+    type: "CONTACT_LEAD_NOTIFICATION" as EmailTemplateType,
+    category: "TRANSACTIONAL" as EmailTemplateCategory,
+    name: "Contact Lead Notification",
+    description:
+      "Notification sent to store owner when a visitor submits the contact form",
+    subject: "New message from {{name}} — {{companyName}}",
+    variables: [
+      "name",
+      "email",
+      "phone",
+      "message",
+      "companyName",
+      "companyLogo",
+      "currentYear",
+    ],
+    isSystem: true,
+    contentBlocks: [],
+    shellHtml: (_blocks, vars) => {
+      const bodyContent = `
+        <p style="font-size:16px; color:#111827;">You have a new contact message submitted through your storefront.</p>
+        <p><strong>Name:</strong> ${vars.name}</p>
+        <p><strong>Email:</strong> ${vars.email || "—"}</p>
+        <p><strong>Phone:</strong> ${vars.phone || "—"}</p>
+        <div style="white-space:pre-wrap;border:1px solid #eee;padding:12px;border-radius:6px;">${(
+          vars.message || ""
+        )
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")}</div>
+      `;
+      return createEmailShell({
+        headerGradient: "linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%)",
+        headerIcon: "✉️",
+        headerTitle: `New contact from ${vars.name || "a visitor"}`,
+        bodyContent,
+        companyLogo: vars.companyLogo,
+        companyName: vars.companyName,
+        currentYear: vars.currentYear,
+      });
+    },
+    textVersion: (_blocks, vars) =>
+      `New contact message\n\nName: ${vars.name}\nEmail: ${vars.email}\nPhone: ${vars.phone}\n\nMessage:\n${vars.message}`,
+  },
+
+  // CONTACT_AUTO_REPLY Template
+  {
+    type: "CONTACT_AUTO_REPLY" as EmailTemplateType,
+    category: "TRANSACTIONAL" as EmailTemplateCategory,
+    name: "Contact Auto Reply",
+    description: "Auto-reply to visitor after contact submission",
+    subject: "Thanks for contacting {{companyName}}",
+    variables: ["name", "companyName", "currentYear"],
+    isSystem: true,
+    contentBlocks: [],
+    shellHtml: (_blocks, vars) => {
+      const bodyContent = `
+        <p style="font-size:16px; color:#111827;">Hi ${
+          vars.name || "there"
+        },</p>
+        <p>Thanks for reaching out to ${
+          vars.companyName || "us"
+        }. We received your message and will get back to you soon.</p>
+      `;
+      return createEmailShell({
+        headerGradient: "linear-gradient(135deg,#667eea 0%,#764ba2 100%)",
+        headerIcon: "💬",
+        headerTitle: `Thanks for contacting ${vars.companyName || "us"}`,
+        bodyContent,
+        companyLogo: vars.companyLogo,
+        companyName: vars.companyName,
+        currentYear: vars.currentYear,
+      });
+    },
+    textVersion: (_blocks, vars) =>
+      `Thanks for contacting ${vars.companyName}. We received your message.`,
+  },
+
   // WELCOME_STAFF Template
   {
     type: "WELCOME_STAFF" as EmailTemplateType,
@@ -546,5 +624,99 @@ Questions? We're here to help! Contact our support team anytime.
 ${vars.companyName} • Powered by OnTarget ERP
 © ${vars.currentYear} All rights reserved
     `,
+  },
+
+  // Contact: Lead Notification (System template)
+  {
+    type: "CUSTOM" as EmailTemplateType,
+    category: "TRANSACTIONAL" as EmailTemplateCategory,
+    name: "Contact Lead Notification",
+    description: "Sent to company when a visitor submits the contact form",
+    subject: "New message from {{name}} — {{companyName}}",
+    variables: [
+      "name",
+      "email",
+      "phone",
+      "message",
+      "companyName",
+      "currentYear",
+      "companyLogo",
+    ],
+    isSystem: true,
+    contentBlocks: [],
+    shellHtml: (blocks, vars) => {
+      const bodyContent = `
+        <p style="font-size: 20px; color: #212529; margin: 0 0 12px; font-weight: 700;">New contact message</p>
+        <table style="width:100%;font-size:15px;color:#495057;margin-top:12px;">
+          <tr><td style="width:140px;color:#6b7280;padding:6px 0;">Name</td><td style="padding:6px 0;">${
+            vars.name
+          }</td></tr>
+          <tr><td style="width:140px;color:#6b7280;padding:6px 0;">Email</td><td style="padding:6px 0;">${
+            vars.email || "—"
+          }</td></tr>
+          <tr><td style="width:140px;color:#6b7280;padding:6px 0;">Phone</td><td style="padding:6px 0;">${
+            vars.phone || "—"
+          }</td></tr>
+        </table>
+        <div style="margin-top:18px;padding:12px;border:1px solid #e9ecef;border-radius:8px;background:#f8fafc;">${
+          vars.message
+        }</div>
+      `;
+
+      return createEmailShell({
+        headerGradient: "linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)",
+        headerIcon: "✉️",
+        headerTitle: `New message for ${vars.companyName}`,
+        bodyContent,
+        companyLogo: vars.companyLogo,
+        companyName: vars.companyName,
+        currentYear: vars.currentYear,
+      });
+    },
+    textVersion: (blocks, vars) =>
+      `New message from ${vars.name}\n\nEmail: ${vars.email || "—"}\nPhone: ${
+        vars.phone || "—"
+      }\n\nMessage:\n${vars.message}\n\n--\n${vars.companyName}`,
+  },
+
+  // Contact: Auto-reply to visitor
+  {
+    type: "CUSTOM" as EmailTemplateType,
+    category: "TRANSACTIONAL" as EmailTemplateCategory,
+    name: "Contact Auto Reply",
+    description: "Auto-reply sent to visitor after contact form submission",
+    subject: "Thanks for contacting {{companyName}}",
+    variables: ["name", "companyName", "currentYear", "companyLogo"],
+    isSystem: true,
+    contentBlocks: [],
+    shellHtml: (blocks, vars) => {
+      const bodyContent = `
+        <p style="font-size: 20px; color: #212529; margin: 0 0 12px; font-weight: 700;">Thanks for reaching out</p>
+        <p style="font-size:15px;color:#495057;line-height:1.6;">Hi ${
+          vars.name || "there"
+        },</p>
+        <p style="font-size:15px;color:#495057;line-height:1.6;">Thanks for contacting ${
+          vars.companyName
+        }. We've received your message and will get back to you shortly.</p>
+        <p style="font-size:14px;color:#6b7280;margin-top:20px;">— The ${
+          vars.companyName
+        } Team</p>
+      `;
+      return createEmailShell({
+        headerGradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+        headerIcon: "✅",
+        headerTitle: `Thanks from ${vars.companyName}`,
+        bodyContent,
+        companyLogo: vars.companyLogo,
+        companyName: vars.companyName,
+        currentYear: vars.currentYear,
+      });
+    },
+    textVersion: (blocks, vars) =>
+      `Thanks for contacting ${vars.companyName}\n\nHi ${
+        vars.name || "there"
+      },\n\nWe received your message and will get back to you shortly.\n\n— The ${
+        vars.companyName
+      } Team`,
   },
 ];

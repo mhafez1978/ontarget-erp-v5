@@ -1,16 +1,11 @@
 "use client";
 
-
 import { ShoppingCart, Search, Filter, Clock, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -64,7 +59,7 @@ interface StoreMetadata {
 }
 
 interface Company {
-  id: string;
+  id?: string;
   name: string;
   logo: string | null;
   logoLight?: string | null;
@@ -92,6 +87,8 @@ export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [v4PageHtml, setV4PageHtml] = useState<string | null>(null);
+  const [v4GlobalStyles, setV4GlobalStyles] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState("name");
@@ -128,6 +125,38 @@ export default function ServicesPage() {
         ? servicesData
         : servicesData.services || [];
       setServices(servicesArray);
+
+      // Try to fetch an active V4 website for this company and render its Services page (if present)
+      try {
+        if (store?.id) {
+          const resp = await fetch(
+            `/api/storefront/v4/websites?companyId=${store.id}`
+          );
+          if (resp.ok) {
+            const data = await resp.json();
+            const website = data.website || null;
+            const websiteData = website?.websiteData || website?.data || null;
+            const pages = Array.isArray(websiteData?.pages)
+              ? websiteData.pages
+              : [];
+            // Find a page that seems like Services
+            const servicePage = pages.find((p: any) => {
+              const slugLike = (p.slug || p.name || "").toLowerCase();
+              return slugLike.includes("service");
+            });
+            if (servicePage && Array.isArray(servicePage.components)) {
+              // Build HTML from components
+              const pageHtml = (servicePage.components || [])
+                .map((c: any) => c.code || c.componentCode || c.html || "")
+                .join("\n");
+              setV4PageHtml(pageHtml || null);
+              setV4GlobalStyles(websiteData?.globalStyles || null);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load V4 website for services page:", e);
+      }
     } catch (error) {
       console.error("Error fetching store data:", error);
       toast.error("Failed to load services");
@@ -268,10 +297,7 @@ export default function ServicesPage() {
     ? "bg-[#F8FAFC] text-[#0F172A]"
     : "bg-background";
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredServices.length / pageSize)
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredServices.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const pageItems = filteredServices.slice(startIndex, endIndex);
@@ -399,16 +425,10 @@ export default function ServicesPage() {
                 )}
               </div>
               <nav className="hidden md:flex items-center gap-6">
-                <Link
-                  href={`/store/${slug}`}
-                  className={linkClass}
-                >
+                <Link href={`/store/${slug}`} className={linkClass}>
                   Home
                 </Link>
-                <Link
-                  href={`/store/${slug}/products`}
-                  className={linkClass}
-                >
+                <Link href={`/store/${slug}/products`} className={linkClass}>
                   Products
                 </Link>
                 <Link
@@ -417,10 +437,7 @@ export default function ServicesPage() {
                 >
                   Services
                 </Link>
-                <Link
-                  href={`/store/${slug}/login`}
-                  className={linkClass}
-                >
+                <Link href={`/store/${slug}/login`} className={linkClass}>
                   Login
                 </Link>
                 <Button
@@ -455,274 +472,287 @@ export default function ServicesPage() {
         )}
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Back Button */}
-        <Button variant="ghost" asChild className="mb-4">
-          <Link href={`/store/${slug}`}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Store
-          </Link>
-        </Button>
+      {v4PageHtml ? (
+        <>
+          {/* Inject V4 global styles if present so AI design system applies */}
+          {v4GlobalStyles ? (
+            <style dangerouslySetInnerHTML={{ __html: v4GlobalStyles }} />
+          ) : null}
+          <div
+            className="w-full"
+            dangerouslySetInnerHTML={{ __html: v4PageHtml }}
+          />
+        </>
+      ) : (
+        <div className="container mx-auto px-4 py-8">
+          {/* Back Button */}
+          <Button variant="ghost" asChild className="mb-4">
+            <Link href={`/store/${slug}`}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Store
+            </Link>
+          </Button>
 
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">
-            {isBlackFriday
-              ? "Black Friday Service Specials"
-              : isFitnessBoutique
-              ? "Programs & Coaching"
-              : "Services"}
-          </h1>
-          <p
-            className={
-              isBlackFriday || isFitnessBoutique
-                ? "text-gray-300"
-                : isDigitalCampus
-                ? "text-slate-600"
-                : "text-muted-foreground"
-            }
-          >
-            Browse our collection of {services.length} services
-          </p>
-        </div>
-
-        {/* Filters and Search */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search services..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          {/* Category Filter */}
-          {categories.length > 0 && (
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger className="w-full md:w-[200px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {/* Sort */}
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">Name (A-Z)</SelectItem>
-              <SelectItem value="price-low">Price (Low to High)</SelectItem>
-              <SelectItem value="price-high">Price (High to Low)</SelectItem>
-              <SelectItem value="duration">Duration</SelectItem>
-              <SelectItem value="featured">Featured First</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Services List */}
-        {filteredServices.length === 0 ? (
-          <div className="text-center py-12">
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">
+              {isBlackFriday
+                ? "Black Friday Service Specials"
+                : isFitnessBoutique
+                ? "Programs & Coaching"
+                : "Services"}
+            </h1>
             <p
               className={
                 isBlackFriday || isFitnessBoutique
-                  ? "text-gray-400 text-lg"
+                  ? "text-gray-300"
                   : isDigitalCampus
-                  ? "text-slate-500 text-lg"
-                  : "text-muted-foreground text-lg"
+                  ? "text-slate-600"
+                  : "text-muted-foreground"
               }
             >
-              No services found
+              Browse our collection of {services.length} services
             </p>
           </div>
-        ) : (
-          <>
-            <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">
-              {pageItems.map((service) => (
-              <Card
-                key={service.id}
-                className={`flex flex-col md:flex-row ${
-                  isBlackFriday
-                    ? "bg-zinc-950 text-white border border-red-500/60"
-                    : isFitnessBoutique
-                    ? "bg-slate-900 text-slate-50 border border-orange-500/60"
-                    : isDigitalCampus
-                    ? "bg-white text-[#0F172A] border border-[#E0ECFF] shadow-sm"
-                    : ""
-                }`}
+
+          {/* Filters and Search */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search services..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Category Filter */}
+            {categories.length > 0 && (
+              <Select
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
               >
-                {service.images &&
-                  service.images.length > 0 &&
-                  service.images[0].url && (
-                    <div className="relative w-full md:w-40 md:shrink-0 aspect-video md:aspect-square overflow-hidden bg-muted">
-                      <Image
-                        src={service.images[0].url}
-                        alt={service.name}
-                        fill
-                        className="object-cover transition-transform duration-300 hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, 160px"
-                      />
-                    </div>
-                  )}
-                <div className="flex-1">
-                  <CardHeader>
-                    <div className="flex items-start justify-between flex-wrap gap-2">
-                      <div className="space-y-2">
-                        <CardTitle className="text-2xl">
-                          {service.name}
-                        </CardTitle>
-                        <div className="flex gap-2 flex-wrap">
-                          {service.category && (
-                            <Badge variant="outline">{service.category}</Badge>
-                          )}
-                          {service.isFeatured && (
-                            <Badge variant="secondary">Featured</Badge>
-                          )}
-                          {service.duration && (
-                            <Badge variant="outline" className="gap-1">
-                              <Clock className="h-3 w-3" />
-                              {service.duration} mins
-                            </Badge>
-                          )}
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name (A-Z)</SelectItem>
+                <SelectItem value="price-low">Price (Low to High)</SelectItem>
+                <SelectItem value="price-high">Price (High to Low)</SelectItem>
+                <SelectItem value="duration">Duration</SelectItem>
+                <SelectItem value="featured">Featured First</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Services List */}
+          {filteredServices.length === 0 ? (
+            <div className="text-center py-12">
+              <p
+                className={
+                  isBlackFriday || isFitnessBoutique
+                    ? "text-gray-400 text-lg"
+                    : isDigitalCampus
+                    ? "text-slate-500 text-lg"
+                    : "text-muted-foreground text-lg"
+                }
+              >
+                No services found
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">
+                {pageItems.map((service) => (
+                  <Card
+                    key={service.id}
+                    className={`flex flex-col md:flex-row ${
+                      isBlackFriday
+                        ? "bg-zinc-950 text-white border border-red-500/60"
+                        : isFitnessBoutique
+                        ? "bg-slate-900 text-slate-50 border border-orange-500/60"
+                        : isDigitalCampus
+                        ? "bg-white text-[#0F172A] border border-[#E0ECFF] shadow-sm"
+                        : ""
+                    }`}
+                  >
+                    {service.images &&
+                      service.images.length > 0 &&
+                      service.images[0].url && (
+                        <div className="relative w-full md:w-40 md:shrink-0 aspect-video md:aspect-square overflow-hidden bg-muted">
+                          <Image
+                            src={service.images[0].url}
+                            alt={service.name}
+                            fill
+                            className="object-cover transition-transform duration-300 hover:scale-105"
+                            sizes="(max-width: 768px) 100vw, 160px"
+                          />
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`text-3xl font-bold ${
-                            isAiThemed
-                              ? ""
-                              : isBlackFriday
-                              ? "text-yellow-400"
-                              : isFitnessBoutique
-                              ? "text-orange-400"
-                              : isDigitalCampus
-                              ? "text-[#2563EB]"
-                              : ""
-                          }`}
+                      )}
+                    <div className="flex-1">
+                      <CardHeader>
+                        <div className="flex items-start justify-between flex-wrap gap-2">
+                          <div className="space-y-2">
+                            <CardTitle className="text-2xl">
+                              {service.name}
+                            </CardTitle>
+                            <div className="flex gap-2 flex-wrap">
+                              {service.category && (
+                                <Badge variant="outline">
+                                  {service.category}
+                                </Badge>
+                              )}
+                              {service.isFeatured && (
+                                <Badge variant="secondary">Featured</Badge>
+                              )}
+                              {service.duration && (
+                                <Badge variant="outline" className="gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {service.duration} mins
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p
+                              className={`text-3xl font-bold ${
+                                isAiThemed
+                                  ? ""
+                                  : isBlackFriday
+                                  ? "text-yellow-400"
+                                  : isFitnessBoutique
+                                  ? "text-orange-400"
+                                  : isDigitalCampus
+                                  ? "text-[#2563EB]"
+                                  : ""
+                              }`}
+                              style={
+                                isAiThemed
+                                  ? {
+                                      color:
+                                        aiMeta?.accentColor ||
+                                        aiMeta?.primaryColor,
+                                    }
+                                  : undefined
+                              }
+                            >
+                              ${Number(service.price).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        <CardDescription className="text-base mt-4">
+                          {service.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardFooter>
+                        <Button
+                          onClick={() => addToCart(service.id)}
+                          className={
+                            !isAiThemed
+                              ? isBlackFriday
+                                ? "bg-red-600 hover:bg-red-700 text-white"
+                                : isFitnessBoutique
+                                ? "bg-orange-500 hover:bg-orange-600 text-black"
+                                : isDigitalCampus
+                                ? "bg-[#2563EB] hover:bg-[#1D4ED8] text-white"
+                                : undefined
+                              : undefined
+                          }
                           style={
                             isAiThemed
                               ? {
-                                  color:
-                                    aiMeta?.accentColor ||
-                                    aiMeta?.primaryColor,
+                                  backgroundColor:
+                                    aiMeta?.primaryColor || undefined,
+                                  color: aiMeta?.textColor || "#ffffff",
                                 }
                               : undefined
                           }
                         >
-                          ${Number(service.price).toFixed(2)}
-                        </p>
-                      </div>
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          Add to Cart
+                        </Button>
+                      </CardFooter>
                     </div>
-                    <CardDescription className="text-base mt-4">
-                      {service.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardFooter>
+                  </Card>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-between text-sm">
+                  <p
+                    className={
+                      isBlackFriday || isFitnessBoutique
+                        ? "text-gray-300"
+                        : isDigitalCampus
+                        ? "text-slate-600"
+                        : "text-muted-foreground"
+                    }
+                  >
+                    Showing{" "}
+                    <span className="font-semibold">
+                      {startIndex + 1}-
+                      {Math.min(endIndex, filteredServices.length)}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-semibold">
+                      {filteredServices.length}
+                    </span>{" "}
+                    services
+                  </p>
+                  <div className="flex items-center gap-2">
                     <Button
-                      onClick={() => addToCart(service.id)}
-                      className={
-                        !isAiThemed
-                          ? isBlackFriday
-                            ? "bg-red-600 hover:bg-red-700 text-white"
-                          : isFitnessBoutique
-                            ? "bg-orange-500 hover:bg-orange-600 text-black"
-                            : isDigitalCampus
-                            ? "bg-[#2563EB] hover:bg-[#1D4ED8] text-white"
-                            : undefined
-                          : undefined
-                      }
-                      style={
-                        isAiThemed
-                          ? {
-                              backgroundColor:
-                                aiMeta?.primaryColor || undefined,
-                              color: aiMeta?.textColor || "#ffffff",
-                            }
-                          : undefined
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === 1}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
                       }
                     >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Add to Cart
+                      Previous
                     </Button>
-                  </CardFooter>
+                    <span
+                      className={
+                        isBlackFriday ? "text-gray-200" : "text-foreground"
+                      }
+                    >
+                      Page <span className="font-semibold">{currentPage}</span>{" "}
+                      of <span className="font-semibold">{totalPages}</span>
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === totalPages}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
-              </Card>
-              ))}
-            </div>
-            {totalPages > 1 && (
-              <div className="mt-8 flex items-center justify-between text-sm">
-                <p
-                  className={
-                    isBlackFriday || isFitnessBoutique
-                      ? "text-gray-300"
-                      : isDigitalCampus
-                      ? "text-slate-600"
-                      : "text-muted-foreground"
-                  }
-                >
-                  Showing{" "}
-                  <span className="font-semibold">
-                    {startIndex + 1}-
-                    {Math.min(endIndex, filteredServices.length)}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-semibold">
-                    {filteredServices.length}
-                  </span>{" "}
-                  services
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={currentPage === 1}
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
-                    }
-                  >
-                    Previous
-                  </Button>
-                  <span
-                    className={
-                      isBlackFriday ? "text-gray-200" : "text-foreground"
-                    }
-                  >
-                    Page <span className="font-semibold">{currentPage}</span> of{" "}
-                    <span className="font-semibold">{totalPages}</span>
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={currentPage === totalPages}
-                    onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(totalPages, prev + 1)
-                      )
-                    }
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

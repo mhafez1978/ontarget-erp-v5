@@ -90,6 +90,8 @@ export async function POST(request: NextRequest) {
         industry: true,
         storeBlogEnabled: true,
         logo: true,
+        email: true,
+        phone: true,
       },
     });
 
@@ -264,7 +266,11 @@ export async function POST(request: NextRequest) {
       showTestimonials: true,
       blogEnabled: !!company.storeBlogEnabled,
       blogHasPosts: postsCount > 0,
-      contact: {},
+      contact: {
+        email: company.email || null,
+        phone: company.phone || null,
+        address: null,
+      },
       prompt: message,
       goal:
         (intentHints?.goal as

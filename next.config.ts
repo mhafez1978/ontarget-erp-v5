@@ -65,11 +65,6 @@ const nextConfig: NextConfig = {
         hostname: "robohash.org",
         pathname: "/**",
       },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-        pathname: "/**",
-      },
     ],
   },
   async headers() {

@@ -358,8 +358,6 @@ export async function POST(request: NextRequest) {
       products,
       services,
       testimonials,
-      customersCount,
-      approvedTestimonialsCount,
       brandColors: {
         primary: primaryColor || undefined,
         secondary: secondaryColor || undefined,

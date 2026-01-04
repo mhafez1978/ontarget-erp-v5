@@ -52,7 +52,14 @@ export default function CompaniesPage() {
 
       if (data.authenticated && data.user) {
         // Check if user has access to companies page
-        const allowedRoles = ["SUPER_ADMIN", "ADMIN"];
+        // Allow platform admins plus common company-level roles (manager/staff/contractor)
+        const allowedRoles = [
+          "SUPER_ADMIN",
+          "ADMIN",
+          "MANAGER",
+          "STAFF",
+          "CONTRACTOR",
+        ];
 
         if (!allowedRoles.includes(data.user.role)) {
           // Redirect unauthorized users back to dashboard
