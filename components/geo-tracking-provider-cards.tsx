@@ -263,7 +263,7 @@ export function GeoTrackingProviderCards() {
                 <div className="flex items-start gap-4">
                   <div
                     className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br text-2xl",
+                      "flex h-12 w-12 items-center justify-center rounded-lg bg-linear-to-br text-2xl",
                       provider.color
                     )}
                   >

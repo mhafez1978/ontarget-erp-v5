@@ -1376,7 +1376,7 @@ Requirements:
 6. Add smooth CSS transitions and animations using Tailwind utility classes (hover:scale-105, transition-all, animate-fade-in, etc.)
 7. Use the actual company data provided - NO placeholders or fake data (unless explicitly requested)
 8. Make the design modern, unique, and visually stunning (aim: world-class, professional, SEO-optimized, "10K design" level)
-9. **BE CREATIVE**: Use gradients (bg-gradient-to-r), backdrop-blur effects (backdrop-blur-lg for glassmorphism), custom animations, and unique layouts. Push boundaries!
+9. **BE CREATIVE**: Use gradients (bg-linear-to-r), backdrop-blur effects (backdrop-blur-lg for glassmorphism), custom animations, and unique layouts. Push boundaries!
 10. Ensure all interactive elements have hover states with transform effects
 11. **IMAGES**: For visual sections (hero, products, services, team, testimonials, portfolio) include an **imageKeywords** string and an **images** array of objects [{ url?: string, unsplashSearchTerm?: string, alt: string }]. If you cannot provide direct URLs, provide unsplashSearchTerm values we can use to fetch free images.
 12. **CONTACT MAP**: For contact sections include: 'map:{ address?:string, coords?:[lat,lng], pinLabel?:string }' if location data is available. If coords are not available, provide 'suggestedCoords' based on the company address.
