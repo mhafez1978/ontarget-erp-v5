@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
             ? "Immediate deletion requested"
             : `Scheduled for deletion on ${scheduledDeletionDate.toLocaleDateString()}`
         }`,
-        metadata: {
+        metadata: JSON.stringify({
           reason,
           feedback,
           deleteImmediately,
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
           stripeCancelled,
           stripeError,
           externalSubscriptionId: subscription.externalSubscriptionId,
-        },
+        }),
       },
     });
 

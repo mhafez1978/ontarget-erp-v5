@@ -134,16 +134,11 @@ export async function POST(request: NextRequest) {
           state: backupData.company.state,
           country: backupData.company.country,
           postalCode: backupData.company.postalCode,
-          timezone: backupData.company.timezone,
-          currency: backupData.company.currency,
           facebookUrl: backupData.company.facebookUrl,
           twitterUrl: backupData.company.twitterUrl,
           instagramUrl: backupData.company.instagramUrl,
           linkedinUrl: backupData.company.linkedinUrl,
           youtubeUrl: backupData.company.youtubeUrl,
-          primaryColor: backupData.company.primaryColor,
-          secondaryColor: backupData.company.secondaryColor,
-          accentColor: backupData.company.accentColor,
         },
       });
 
@@ -197,8 +192,6 @@ export async function POST(request: NextRequest) {
                   terminationDate: staffMember.terminationDate
                     ? new Date(staffMember.terminationDate)
                     : null,
-                  salary: staffMember.salary,
-                  hourlyRate: staffMember.hourlyRate,
                   city: staffMember.city,
                   state: staffMember.state,
                   country: staffMember.country,
@@ -298,11 +291,7 @@ export async function POST(request: NextRequest) {
                 lowStockAlert:
                   product.lowStockThreshold || product.lowStockAlert,
                 category: product.category,
-                tags: product.tags,
                 isActive: product.isActive !== false,
-                images: product.images,
-                weight: product.weight,
-                dimensions: product.dimensions,
               },
             });
             stats.products++;
@@ -429,7 +418,6 @@ export async function POST(request: NextRequest) {
                   ? new Date(project.startDate)
                   : null,
                 endDate: project.endDate ? new Date(project.endDate) : null,
-                budget: project.budget,
                 teamId,
               },
             });

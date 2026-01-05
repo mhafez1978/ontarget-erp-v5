@@ -113,7 +113,6 @@ export async function GET(request: NextRequest) {
       storefrontOrders,
       locations,
       teams,
-      storageSettings,
     ] = await Promise.all([
       // Company details
       db.company.findUnique({
@@ -294,7 +293,6 @@ export async function GET(request: NextRequest) {
         description: company.description,
         website: company.website,
         industry: company.industry,
-        size: company.size,
         phone: company.phone,
         email: company.email,
         addressLine1: company.addressLine1,
@@ -303,17 +301,12 @@ export async function GET(request: NextRequest) {
         state: company.state,
         country: company.country,
         postalCode: company.postalCode,
-        timezone: company.timezone,
-        currency: company.currency,
         logo: company.logo,
         facebookUrl: company.facebookUrl,
         twitterUrl: company.twitterUrl,
         instagramUrl: company.instagramUrl,
         linkedinUrl: company.linkedinUrl,
         youtubeUrl: company.youtubeUrl,
-        primaryColor: company.primaryColor,
-        secondaryColor: company.secondaryColor,
-        accentColor: company.accentColor,
         owner: company.owner,
         members: company.members.map(
           (m: {
@@ -373,7 +366,6 @@ export async function GET(request: NextRequest) {
         status: p.status,
         startDate: p.startDate,
         endDate: p.endDate,
-        budget: p.budget,
         teamId: p.teamId,
         teamName: p.team?.name,
         createdAt: p.createdAt,
@@ -430,9 +422,6 @@ export async function GET(request: NextRequest) {
           staffName: m.staff.user.name,
         })),
       })),
-      settings: {
-        storage: storageSettings,
-      },
     };
 
     // Create audit log
