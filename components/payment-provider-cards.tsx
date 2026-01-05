@@ -51,8 +51,15 @@ export default function PaymentProviderCards({
         try {
           const resp = await fetch("/api/companies/my-owned");
           const data = await resp.json();
-          if (resp.ok) setCompanies(data.companies || []);
-          else {
+          if (resp.ok) {
+            const companiesList = data.companies || [];
+            setCompanies(companiesList);
+
+            // Auto-select first company for regular ADMIN (not SUPER_ADMIN)
+            if (userRole === "ADMIN" && companiesList.length > 0) {
+              setSelectedCompanyId(companiesList[0].id);
+            }
+          } else {
             console.warn(
               "Failed to fetch companies for payment providers",
               data
@@ -508,30 +515,33 @@ export default function PaymentProviderCards({
                   Configuration Scope
                 </Label>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={
-                      selectedCompanyId === "GLOBAL" ? "default" : "outline"
-                    }
-                    onClick={() => setSelectedCompanyId("GLOBAL")}
-                    className="flex-shrink-0"
-                  >
-                    <svg
-                      className="mr-2 h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                  {/* Only SUPER_ADMIN can configure Global (Root) payment gateway */}
+                  {userRole === "SUPER_ADMIN" && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={
+                        selectedCompanyId === "GLOBAL" ? "default" : "outline"
+                      }
+                      onClick={() => setSelectedCompanyId("GLOBAL")}
+                      className="flex-shrink-0"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Global (Root)
-                  </Button>
+                      <svg
+                        className="mr-2 h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Global (Root)
+                    </Button>
+                  )}
                   {companies.map((c) => (
                     <Button
                       key={c.id}
@@ -560,7 +570,13 @@ export default function PaymentProviderCards({
                     </Button>
                   ))}
                 </div>
-                {companies.length === 0 && (
+                {companies.length === 0 && userRole !== "SUPER_ADMIN" && (
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border">
+                    No companies found. You need to own or be an admin of a
+                    company to configure payment providers.
+                  </p>
+                )}
+                {companies.length === 0 && userRole === "SUPER_ADMIN" && (
                   <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border">
                     No companies found. Configure the global (root) payment
                     provider for ERP subscription billing.
