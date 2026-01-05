@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Wand2, Eye, EyeOff, Sparkles } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import {
@@ -16,9 +15,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
-
-
-;
 import { defaultThemes, ThemeSection } from "@/lib/storefront-themes";
 import { cn } from "@/lib/utils";
 
@@ -178,8 +174,9 @@ export function ContentWizard({
     key: string,
     value: string | boolean
   ) => {
-    setSections((prev) =>
-      prev.map((section) =>
+    console.log("[Content Wizard] Updating:", { sectionId, key, value });
+    setSections((prev) => {
+      const updated = prev.map((section) =>
         section.id === sectionId
           ? {
               ...section,
@@ -189,8 +186,10 @@ export function ContentWizard({
               },
             }
           : section
-      )
-    );
+      );
+      console.log("[Content Wizard] Updated sections:", updated);
+      return updated;
+    });
   };
 
   const toggleSection = (sectionId: string) => {
@@ -385,7 +384,7 @@ export function ContentWizard({
                   <Label htmlFor="heading">Main Heading</Label>
                   <Input
                     id="heading"
-                    value={currentSection.content.heading as string}
+                    value={(currentSection.content.heading as string) || ""}
                     onChange={(e) =>
                       updateSectionContent(
                         currentSection.id,
@@ -401,7 +400,7 @@ export function ContentWizard({
                   <Label htmlFor="subheading">Subheading</Label>
                   <Input
                     id="subheading"
-                    value={currentSection.content.subheading as string}
+                    value={(currentSection.content.subheading as string) || ""}
                     onChange={(e) =>
                       updateSectionContent(
                         currentSection.id,
@@ -417,7 +416,7 @@ export function ContentWizard({
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    value={currentSection.content.description as string}
+                    value={(currentSection.content.description as string) || ""}
                     onChange={(e) =>
                       updateSectionContent(
                         currentSection.id,
@@ -435,7 +434,7 @@ export function ContentWizard({
                     <Label htmlFor="ctaText">Primary Button Text</Label>
                     <Input
                       id="ctaText"
-                      value={currentSection.content.ctaText as string}
+                      value={(currentSection.content.ctaText as string) || ""}
                       onChange={(e) =>
                         updateSectionContent(
                           currentSection.id,
@@ -451,7 +450,7 @@ export function ContentWizard({
                     <Label htmlFor="ctaLink">Primary Button Link</Label>
                     <Input
                       id="ctaLink"
-                      value={currentSection.content.ctaLink as string}
+                      value={(currentSection.content.ctaLink as string) || ""}
                       onChange={(e) =>
                         updateSectionContent(
                           currentSection.id,
@@ -473,7 +472,8 @@ export function ContentWizard({
                       <Input
                         id="secondaryCtaText"
                         value={
-                          currentSection.content.secondaryCtaText as string
+                          (currentSection.content.secondaryCtaText as string) ||
+                          ""
                         }
                         onChange={(e) =>
                           updateSectionContent(
@@ -493,7 +493,8 @@ export function ContentWizard({
                       <Input
                         id="secondaryCtaLink"
                         value={
-                          currentSection.content.secondaryCtaLink as string
+                          (currentSection.content.secondaryCtaLink as string) ||
+                          ""
                         }
                         onChange={(e) =>
                           updateSectionContent(

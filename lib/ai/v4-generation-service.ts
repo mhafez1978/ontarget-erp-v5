@@ -1289,13 +1289,14 @@ Requirements:
 3. Apply the design system colors using inline style attributes where needed
 4. Make it fully responsive using Tailwind responsive classes (sm:, md:, lg:, xl:)
 5. Include accessibility features (ARIA labels, semantic HTML5 tags)
-6. Add smooth CSS transitions and animations using Tailwind utility classes
+6. Add smooth CSS transitions and animations using Tailwind utility classes (hover:scale-105, transition-all, animate-fade-in, etc.)
 7. Use the actual company data provided - NO placeholders or fake data (unless explicitly requested)
-8. Make the design modern, unique, and visually appealing (aim: world-class, professional, SEO-optimized, "10K design" level)
-9. Ensure all interactive elements have hover states
-10. **IMAGES**: For visual sections (hero, products, services, team, testimonials, portfolio) include an **imageKeywords** string and an **images** array of objects [{ url?: string, unsplashSearchTerm?: string, alt: string }]. If you cannot provide direct URLs, provide unsplashSearchTerm values we can use to fetch free images.
-11. **CONTACT MAP**: For contact sections include: 'map:{ address?:string, coords?:[lat,lng], pinLabel?:string }' if location data is available. If coords are not available, provide 'suggestedCoords' based on the company address.
-12. IMPORTANT: Return a JSON object with fields: 'code' (HTML string), and optional metadata fields like 'images', 'imageKeywords', 'map' where applicable. Example response:
+8. Make the design modern, unique, and visually stunning (aim: world-class, professional, SEO-optimized, "10K design" level)
+9. **BE CREATIVE**: Use gradients (bg-gradient-to-r), backdrop-blur effects (backdrop-blur-lg for glassmorphism), custom animations, and unique layouts. Push boundaries!
+10. Ensure all interactive elements have hover states with transform effects
+11. **IMAGES**: For visual sections (hero, products, services, team, testimonials, portfolio) include an **imageKeywords** string and an **images** array of objects [{ url?: string, unsplashSearchTerm?: string, alt: string }]. If you cannot provide direct URLs, provide unsplashSearchTerm values we can use to fetch free images.
+12. **CONTACT MAP**: For contact sections include: 'map:{ address?:string, coords?:[lat,lng], pinLabel?:string }' if location data is available. If coords are not available, provide 'suggestedCoords' based on the company address.
+13. IMPORTANT: Return a JSON object with fields: 'code' (HTML string), and optional metadata fields like 'images', 'imageKeywords', 'map' where applicable. Example response:
 { "code": "<section class=\"hero\">...</section>", "images": [{"url":"...","alt":"..."}], "imageKeywords":"web design hero" }
 Do not return Markdown or any explanatory text—just a single JSON object.
 
@@ -1837,20 +1838,49 @@ function calculateQualityScore(
 }
 
 function calculateCreativityScore(website: V4Website): number {
-  let score = 50; // Base score
+  let score = 40; // Base score (lowered to make room for more points)
 
-  // Check for unique design elements
   const websiteStr = JSON.stringify(website).toLowerCase();
 
-  if (websiteStr.includes("gradient")) score += 10;
-  if (websiteStr.includes("animation")) score += 10;
+  // Visual effects (10 points each)
+  if (websiteStr.includes("gradient") || websiteStr.includes("bg-gradient"))
+    score += 12;
+  if (websiteStr.includes("animation") || websiteStr.includes("animate-"))
+    score += 12;
   if (
     websiteStr.includes("glassmorphism") ||
     websiteStr.includes("backdrop-blur")
   )
-    score += 10;
-  if (websiteStr.includes("custom")) score += 10;
-  if (websiteStr.includes("unique")) score += 10;
+    score += 12;
+
+  // Transform effects (8 points each)
+  if (
+    websiteStr.includes("hover:scale") ||
+    websiteStr.includes("transform") ||
+    websiteStr.includes("transition-transform")
+  )
+    score += 8;
+  if (websiteStr.includes("hover:rotate") || websiteStr.includes("rotate-"))
+    score += 8;
+
+  // Advanced layouts (8 points each)
+  if (websiteStr.includes("grid-cols") && websiteStr.includes("gap-"))
+    score += 6;
+  if (websiteStr.includes("flex") && websiteStr.includes("space-")) score += 4;
+
+  // Color sophistication (6 points each)
+  if (
+    websiteStr.includes("opacity-") ||
+    websiteStr.includes("bg-opacity-") ||
+    websiteStr.includes("text-opacity-")
+  )
+    score += 6;
+  if (websiteStr.includes("shadow-") || websiteStr.includes("drop-shadow"))
+    score += 6;
+
+  // Unique/custom elements
+  if (websiteStr.includes("custom")) score += 8;
+  if (websiteStr.includes("unique")) score += 8;
 
   return Math.min(score, 100);
 }
