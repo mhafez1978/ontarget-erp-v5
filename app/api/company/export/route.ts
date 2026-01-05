@@ -248,20 +248,6 @@ export async function GET(request: NextRequest) {
         },
       }),
 
-      // Files metadata (not the actual files)
-      db.companyFile.findMany({
-        where: { companyId },
-        select: {
-          id: true,
-          name: true,
-          path: true,
-          size: true,
-          mimeType: true,
-          uploadedBy: true,
-          createdAt: true,
-        },
-      }),
-
       // Locations
       db.companyLocation.findMany({
         where: { companyId },
@@ -286,38 +272,6 @@ export async function GET(request: NextRequest) {
               },
             },
           },
-        },
-      }),
-
-      // Email settings
-      db.emailProviderSetting.findFirst({
-        where: { companyId },
-        select: {
-          id: true,
-          provider: true,
-          isConfigured: true,
-          fromEmail: true,
-          fromName: true,
-        },
-      }),
-
-      // Storage settings
-      db.storageProvider.findFirst({
-        where: { companyId },
-        select: {
-          id: true,
-          provider: true,
-          bucketName: true,
-        },
-      }),
-
-      // Geo tracking settings
-      db.geoTrackingProvider.findFirst({
-        where: { companyId },
-        select: {
-          id: true,
-          provider: true,
-          isEnabled: true,
         },
       }),
     ]);
@@ -361,12 +315,22 @@ export async function GET(request: NextRequest) {
         secondaryColor: company.secondaryColor,
         accentColor: company.accentColor,
         owner: company.owner,
-        members: company.members.map((m: { role: string; user: { id: string; name: string | null; email: string | null; role: string } }) => ({
-          role: m.role,
-          user: m.user,
-        })),
+        members: company.members.map(
+          (m: {
+            role: string;
+            user: {
+              id: string;
+              name: string | null;
+              email: string | null;
+              role: string;
+            };
+          }) => ({
+            role: m.role,
+            user: m.user,
+          })
+        ),
       },
-      staff: staff.map((s: typeof staff[0]) => ({
+      staff: staff.map((s: (typeof staff)[0]) => ({
         userId: s.userId,
         userName: s.user.name,
         userEmail: s.user.email,
@@ -382,7 +346,7 @@ export async function GET(request: NextRequest) {
         countryCode: s.countryCode,
       })),
       customers,
-      products: products.map((p: typeof products[0]) => ({
+      products: products.map((p: (typeof products)[0]) => ({
         name: p.name,
         description: p.description,
         sku: p.sku,
@@ -394,7 +358,7 @@ export async function GET(request: NextRequest) {
         isActive: p.isActive,
         createdAt: p.createdAt,
       })),
-      services: services.map((s: typeof services[0]) => ({
+      services: services.map((s: (typeof services)[0]) => ({
         name: s.name,
         description: s.description,
         price: s.price,
@@ -403,7 +367,7 @@ export async function GET(request: NextRequest) {
         isActive: s.isActive,
         createdAt: s.createdAt,
       })),
-      projects: projects.map((p: typeof projects[0]) => ({
+      projects: projects.map((p: (typeof projects)[0]) => ({
         name: p.name,
         description: p.description,
         status: p.status,
@@ -414,7 +378,7 @@ export async function GET(request: NextRequest) {
         teamName: p.team?.name,
         createdAt: p.createdAt,
       })),
-      tasks: tasks.map((t: typeof tasks[0]) => ({
+      tasks: tasks.map((t: (typeof tasks)[0]) => ({
         title: t.title,
         description: t.description,
         status: t.status,
@@ -425,7 +389,7 @@ export async function GET(request: NextRequest) {
         assigneeEmail: t.assignedTo?.user.email,
         createdAt: t.createdAt,
       })),
-      orders: storefrontOrders.map((o: typeof storefrontOrders[0]) => ({
+      orders: storefrontOrders.map((o: (typeof storefrontOrders)[0]) => ({
         orderNumber: o.orderNumber,
         status: o.status,
         total: o.total,
@@ -436,7 +400,7 @@ export async function GET(request: NextRequest) {
         billingAddress: o.billingAddress,
         paymentMethod: o.paymentMethod,
         customerNotes: o.customerNotes,
-        items: o.items.map((i: typeof o.items[0]) => ({
+        items: o.items.map((i: (typeof o.items)[0]) => ({
           itemName: i.itemName,
           itemSku: i.itemSku,
           quantity: i.quantity,
@@ -445,7 +409,7 @@ export async function GET(request: NextRequest) {
         })),
         createdAt: o.createdAt,
       })),
-      locations: locations.map((l: typeof locations[0]) => ({
+      locations: locations.map((l: (typeof locations)[0]) => ({
         name: l.name,
         type: l.type,
         isMain: l.isMain,
@@ -458,10 +422,10 @@ export async function GET(request: NextRequest) {
         phone: l.phone,
         email: l.email,
       })),
-      teams: teams.map((t: typeof teams[0]) => ({
+      teams: teams.map((t: (typeof teams)[0]) => ({
         name: t.name,
         description: t.description,
-        members: t.members.map((m: typeof t.members[0]) => ({
+        members: t.members.map((m: (typeof t.members)[0]) => ({
           staffEmail: m.staff.user.email,
           staffName: m.staff.user.name,
         })),

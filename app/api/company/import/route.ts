@@ -126,7 +126,6 @@ export async function POST(request: NextRequest) {
           description: backupData.company.description,
           website: backupData.company.website,
           industry: backupData.company.industry,
-          size: backupData.company.size,
           phone: backupData.company.phone,
           email: backupData.company.email,
           addressLine1: backupData.company.addressLine1,
@@ -164,7 +163,6 @@ export async function POST(request: NextRequest) {
                 data: {
                   email: staffMember.userEmail,
                   name: staffMember.userName,
-                  phone: staffMember.userPhone,
                   password: tempPassword,
                   role: "ERP_CUSTOMER", // Default role, can be upgraded
                 },
@@ -191,7 +189,6 @@ export async function POST(request: NextRequest) {
                   userId: existingUser.id,
                   role: staffMember.role || "EMPLOYEE_ROLE",
                   jobTitle: staffMember.jobTitle || "EMPLOYEE",
-                  department: staffMember.department,
                   employmentType: staffMember.employmentType || "FULL_TIME",
                   status: staffMember.status || "ACTIVE",
                   hireDate: staffMember.hireDate
@@ -223,7 +220,7 @@ export async function POST(request: NextRequest) {
                   data: {
                     companyId,
                     userId: existingUser.id,
-                    role: "MEMBER",
+                    role: "STAFF",
                   },
                 });
               }
@@ -253,7 +250,6 @@ export async function POST(request: NextRequest) {
                 data: {
                   email: customer.email,
                   name: customer.name,
-                  phone: customer.phone,
                   password: tempPassword,
                   role: "ERP_CUSTOMER",
                   addressLine1: customer.addressLine1,
@@ -270,7 +266,7 @@ export async function POST(request: NextRequest) {
                 data: {
                   companyId,
                   userId: newCustomer.id,
-                  role: "CUSTOMER",
+                  role: "STAFF",
                 },
               });
 
@@ -297,9 +293,10 @@ export async function POST(request: NextRequest) {
                 description: product.description,
                 sku: product.sku,
                 price: product.price,
-                cost: product.cost,
-                stockQuantity: product.stockQuantity || 0,
-                lowStockThreshold: product.lowStockThreshold,
+                unitCost: product.cost || product.unitCost,
+                quantity: product.stockQuantity || product.quantity || 0,
+                lowStockAlert:
+                  product.lowStockThreshold || product.lowStockAlert,
                 category: product.category,
                 tags: product.tags,
                 isActive: product.isActive !== false,
@@ -355,6 +352,8 @@ export async function POST(request: NextRequest) {
                 state: location.state,
                 country: location.country,
                 postalCode: location.postalCode,
+                latitude: location.latitude || 0,
+                longitude: location.longitude || 0,
                 phone: location.phone,
                 email: location.email,
               },
@@ -398,7 +397,7 @@ export async function POST(request: NextRequest) {
                           staffId: staff.id,
                         },
                       });
-                    } catch (error) {
+                    } catch {
                       // Member might already exist, skip
                     }
                   }
@@ -426,7 +425,6 @@ export async function POST(request: NextRequest) {
                 name: project.name,
                 description: project.description,
                 status: project.status || "PLANNING",
-                priority: project.priority || "MEDIUM",
                 startDate: project.startDate
                   ? new Date(project.startDate)
                   : null,
@@ -468,9 +466,13 @@ export async function POST(request: NextRequest) {
                 status: task.status || "TODO",
                 priority: task.priority || "MEDIUM",
                 dueDate: task.dueDate ? new Date(task.dueDate) : null,
-                assigneeId: assigneeStaff?.id,
-                estimatedHours: task.estimatedHours,
-                actualHours: task.actualHours,
+                assignedToId: assigneeStaff?.id,
+                createdById:
+                  assigneeStaff?.id ||
+                  (
+                    await tx.companyStaff.findFirst({ where: { companyId } })
+                  )?.id ||
+                  "",
               },
             });
             stats.tasks++;
@@ -490,7 +492,11 @@ export async function POST(request: NextRequest) {
                 companyId,
                 orderNumber: `RESTORED_${order.orderNumber}`,
                 status: order.status || "COMPLETED",
-                totalAmount: order.totalAmount,
+                total: order.totalAmount || order.total,
+                subtotal: order.totalAmount || order.total,
+                tax: 0,
+                shipping: 0,
+                discount: 0,
                 customerEmail: order.customerEmail,
                 customerName: order.customerName,
                 customerPhone: order.customerPhone,
@@ -512,13 +518,15 @@ export async function POST(request: NextRequest) {
                 });
 
                 if (product) {
-                  await tx.orderItem.create({
+                  await tx.storefrontOrderItem.create({
                     data: {
                       orderId: newOrder.id,
                       productId: product.id,
+                      itemName: item.productName || product.name,
+                      itemSku: item.productSku || product.sku,
                       quantity: item.quantity,
-                      unitPrice: item.unitPrice,
-                      subtotal: item.subtotal,
+                      price: item.unitPrice || item.price,
+                      total: item.subtotal || item.total,
                     },
                   });
                 }
