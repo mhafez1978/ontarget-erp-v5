@@ -10,7 +10,7 @@ import {
   EyeOff,
   AlertCircle,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { PLAN_LIMITS, getTotalUserLimit } from "@/lib/plan-limits";
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
-import { PaymentForm } from "@/components/payment-form";
+import { PaymentForm, type PaymentFormHandle } from "@/components/payment-form";
 import { CreditCardDisplay } from "@/components/credit-card-display";
 import {
   AddressAutocomplete,
@@ -120,6 +120,9 @@ export default function SelectPlanPage() {
     name: string;
     email: string;
   } | null>(null);
+
+  // Ref to access payment form methods securely
+  const paymentFormRef = useRef<PaymentFormHandle>(null);
 
   useEffect(() => {
     // If this page was reached via an onboarding token, verify that token
@@ -456,11 +459,12 @@ export default function SelectPlanPage() {
     setIsLoading(true);
 
     try {
-      // Create payment method now (when user clicks button)
-      let finalPaymentMethodId = paymentMethodId;
-      if (!finalPaymentMethodId && (window as any).__createPaymentMethod) {
+      // Create payment method securely using ref
+      let finalPaymentMethodId: string | null = paymentMethodId;
+      if (!finalPaymentMethodId && paymentFormRef.current) {
         console.log("[Select Plan] Creating payment method on submit...");
-        finalPaymentMethodId = await (window as any).__createPaymentMethod();
+        finalPaymentMethodId =
+          await paymentFormRef.current.createPaymentMethod();
         if (!finalPaymentMethodId) {
           toast.error(
             "Failed to process payment method. Please check your card details."
@@ -737,6 +741,7 @@ export default function SelectPlanPage() {
                   </CardHeader>
                   <CardContent>
                     <PaymentForm
+                      ref={paymentFormRef}
                       initialCardHolder={onboardUser?.name || ""}
                       onCardDataChange={setCardData}
                       onValidationChange={setIsPaymentValid}

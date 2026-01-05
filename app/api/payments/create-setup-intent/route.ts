@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import paymentsService from "@/lib/payments/service";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { getGeoLocation, extractClientIp } from "@/lib/geo-location";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +19,30 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, name } = body;
+
+    // Rate limiting: 5 setup intents per 15 minutes per email
+    if (email) {
+      const rateLimit = checkRateLimit(
+        email,
+        RATE_LIMITS.PAYMENT_METHOD_CREATE
+      );
+      if (!rateLimit.success) {
+        return NextResponse.json(
+          {
+            error: "Too many payment setup attempts. Please try again later.",
+            retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
+          },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(
+                Math.ceil((rateLimit.resetTime - Date.now()) / 1000)
+              ),
+            },
+          }
+        );
+      }
+    }
 
     // This endpoint is intended for onboarding flows (OAuth first-login) where
     // the frontend provides the new user's email and name. Do not fallback to
