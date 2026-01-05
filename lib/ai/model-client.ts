@@ -20,6 +20,50 @@ export interface AiProviderConfig {
 }
 
 /**
+ * Get the maximum output tokens for a given provider and model
+ */
+function getMaxTokensForModel(provider: AiProviderType, model: string): number {
+  const modelLower = model.toLowerCase();
+
+  switch (provider) {
+    case "anthropic":
+      // Claude 3.5 models
+      if (modelLower.includes("claude-3-5-haiku")) return 8192;
+      if (modelLower.includes("claude-3-5-sonnet")) return 8192;
+      // Claude 3 models
+      if (modelLower.includes("claude-3-opus")) return 4096;
+      if (modelLower.includes("claude-3-sonnet")) return 4096;
+      if (modelLower.includes("claude-3-haiku")) return 4096;
+      // Default for unknown Claude models
+      return 4096;
+
+    case "openai":
+    case "openai-compatible":
+      if (modelLower.includes("gpt-4o")) return 16384;
+      if (modelLower.includes("gpt-4-turbo")) return 4096;
+      if (modelLower.includes("gpt-4")) return 8192;
+      if (modelLower.includes("gpt-3.5-turbo-16k")) return 16385;
+      if (modelLower.includes("gpt-3.5")) return 4096;
+      // Default for unknown OpenAI models
+      return 4096;
+
+    case "deepseek":
+      if (modelLower.includes("deepseek-chat")) return 8192;
+      if (modelLower.includes("deepseek-reasoner")) return 8192;
+      // Default for unknown DeepSeek models
+      return 8192;
+
+    case "xai":
+      // Grok models typically support 8192
+      return 8192;
+
+    default:
+      // Safe default
+      return 4096;
+  }
+}
+
+/**
  * callStorefrontModel
  *
  * Thin wrapper around an LLM provider (e.g. OpenAI) that:
@@ -100,6 +144,8 @@ export async function callStorefrontModel<T>(
       .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
       .join("\n\n");
 
+    const maxTokens = getMaxTokensForModel("anthropic", model);
+
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -109,7 +155,7 @@ export async function callStorefrontModel<T>(
       },
       body: JSON.stringify({
         model,
-        max_tokens: 20000,
+        max_tokens: maxTokens,
         temperature: 0.8,
         system,
         messages: [
@@ -214,7 +260,7 @@ export async function callStorefrontModel<T>(
             } as Record<string, string>,
             body: JSON.stringify({
               model,
-              max_tokens: 20000,
+              max_tokens: maxTokens,
               temperature: 0.8,
               system,
               messages: [
@@ -376,7 +422,7 @@ export async function callStorefrontModel<T>(
       messageCount: messagesWithJsonPrompt.length,
       response_format: { type: "json_object" },
       temperature: 0.8,
-      max_tokens: 16384,
+      max_tokens: getMaxTokensForModel("deepseek", model),
     });
 
     const response = await fetch(endpoint, {
@@ -390,7 +436,7 @@ export async function callStorefrontModel<T>(
         messages: messagesWithJsonPrompt,
         response_format: { type: "json_object" },
         temperature: 0.8,
-        max_tokens: 16384,
+        max_tokens: getMaxTokensForModel("deepseek", model),
       }),
     });
 
@@ -450,6 +496,8 @@ export async function callStorefrontModel<T>(
   console.log(`[AI Storefront] Using OPENAI provider with model: ${model}`);
   console.log(`[AI Storefront] Endpoint: ${endpoint}`);
 
+  const maxTokens = getMaxTokensForModel(provider, model);
+
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -461,7 +509,7 @@ export async function callStorefrontModel<T>(
       messages,
       response_format: { type: "json_object" },
       temperature: 0.8,
-      max_tokens: 20000,
+      max_tokens: maxTokens,
     }),
   });
 
