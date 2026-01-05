@@ -203,13 +203,13 @@ export async function generateV4Website(
         components.push(component);
 
         // Add delay between Anthropic requests to avoid rate limits (8000 tokens/min)
-        // With 4000 tokens per request, we can do ~2 per minute
-        // Wait 35 seconds between requests to be safe
+        // With 5000 tokens per request, we can do ~1.58 per minute
+        // Wait 38 seconds between requests to stay safely under limit
         if (i < sectionsToGenerate.length - 1) {
           console.log(
-            `[V4 Generation] Waiting 35s before next section (rate limit protection)...`
+            `[V4 Generation] Waiting 38s before next section (rate limit protection)...`
           );
-          await new Promise((resolve) => setTimeout(resolve, 35000));
+          await new Promise((resolve) => setTimeout(resolve, 38000));
         }
       }
     } else {

@@ -28,17 +28,17 @@ function getMaxTokensForModel(provider: AiProviderType, model: string): number {
   switch (provider) {
     case "anthropic":
       // Claude 3.5 models
-      // Note: Free tier has 8,000 tokens/min limit, so we use 4000 to allow 2 requests/min
-      // Paid tier can use higher limits
-      if (modelLower.includes("claude-3-5-haiku")) return 4000;
-      if (modelLower.includes("claude-3-5-sonnet")) return 4000;
-      if (modelLower.includes("claude-3-5")) return 4000;
+      // Note: Free tier has 8,000 tokens/min limit
+      // Using 5000 tokens with 38s delays = ~1.58 sections/min = ~7900 tokens/min (under limit)
+      if (modelLower.includes("claude-3-5-haiku")) return 5000;
+      if (modelLower.includes("claude-3-5-sonnet")) return 5000;
+      if (modelLower.includes("claude-3-5")) return 5000;
       // Claude 3 models
       if (modelLower.includes("claude-3-opus")) return 4096;
       if (modelLower.includes("claude-3-sonnet")) return 4096;
       if (modelLower.includes("claude-3-haiku")) return 4096;
       // Default for unknown Claude models (safe for free tier)
-      return 4000;
+      return 5000;
 
     case "openai":
     case "openai-compatible":
