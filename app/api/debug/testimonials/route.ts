@@ -45,23 +45,35 @@ export async function GET(request: NextRequest) {
     let companyAggregates: any[] = [];
     let companySamples: any[] = [];
     try {
-      companyAggregates = await db.testimonial.groupBy({
-        by: ["companyId"],
-        _count: { companyId: true },
-        orderBy: { _count: { companyId: "desc" } },
-        take: 100,
-      });
+      // Use raw SQL to aggregate by companyId (safe and avoids Prisma groupBy TS issues)
+      const raw: any[] = await db.$queryRaw`
+        SELECT companyId, COUNT(*) as count
+        FROM testimonial
+        GROUP BY companyId
+        ORDER BY count DESC
+        LIMIT ${100}
+      `;
+
+      companyAggregates = raw.map((r) => ({
+        companyId: r.companyId,
+        count: Number(r.count),
+      }));
 
       // Small sample per top companies
       const top = companyAggregates.slice(0, 10);
       companySamples = await Promise.all(
         top.map(async (a) => ({
           companyId: a.companyId,
-          count: a._count.companyId,
+          count: a.count,
           sample: await db.testimonial.findFirst({
             where: { companyId: a.companyId },
             orderBy: { createdAt: "desc" },
-            select: { id: true, customerName: true, createdAt: true, status: true },
+            select: {
+              id: true,
+              customerName: true,
+              createdAt: true,
+              status: true,
+            },
           }),
         }))
       );
