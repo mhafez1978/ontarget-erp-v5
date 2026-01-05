@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
     try {
       companyAggregates = await db.testimonial.groupBy({
         by: ["companyId"],
-        _count: { companyId: true },
-        orderBy: { _count: { companyId: "desc" } },
+        _count: { _all: true },
+        orderBy: { _count: { _all: "desc" } },
         take: 100,
       });
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       companySamples = await Promise.all(
         top.map(async (a) => ({
           companyId: a.companyId,
-          count: a._count.companyId,
+          count: a._count?._all ?? 0,
           sample: await db.testimonial.findFirst({
             where: { companyId: a.companyId },
             orderBy: { createdAt: "desc" },
