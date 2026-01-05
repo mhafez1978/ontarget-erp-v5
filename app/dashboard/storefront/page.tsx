@@ -3064,9 +3064,18 @@ export default function StorefrontPage() {
 
                             // Auto-generate website when conversation completes
                             if (conversation.isComplete) {
-                              toast.info("Generating your website...");
+                              toast.info(
+                                "Generating your website... This may take 2-3 minutes."
+                              );
                               setV4Generating(true);
                               try {
+                                // Add 5 minute timeout
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(
+                                  () => controller.abort(),
+                                  5 * 60 * 1000
+                                );
+
                                 const response = await fetch(
                                   `/api/storefront/v4/conversations/${conversation.id}/generate`,
                                   {
@@ -3074,18 +3083,42 @@ export default function StorefrontPage() {
                                     headers: {
                                       "Content-Type": "application/json",
                                     },
+                                    signal: controller.signal,
                                   }
                                 );
-                                if (!response.ok)
-                                  throw new Error("Generation failed");
+
+                                clearTimeout(timeoutId);
+
+                                if (!response.ok) {
+                                  const error = await response.json();
+                                  throw new Error(
+                                    error.details ||
+                                      error.error ||
+                                      "Generation failed"
+                                  );
+                                }
+
                                 const data = await response.json();
                                 setV4Website(data.website);
                                 toast.success(
                                   "Website generated successfully!"
                                 );
                               } catch (error) {
-                                console.log(error);
-                                toast.error("Failed to generate website");
+                                console.error("[V4 Generation]", error);
+                                if (
+                                  error instanceof Error &&
+                                  error.name === "AbortError"
+                                ) {
+                                  toast.error(
+                                    "Generation timed out after 5 minutes. Please try again."
+                                  );
+                                } else {
+                                  toast.error(
+                                    error instanceof Error
+                                      ? `Generation failed: ${error.message}`
+                                      : "Failed to generate website"
+                                  );
+                                }
                               } finally {
                                 setV4Generating(false);
                               }
@@ -3125,16 +3158,30 @@ export default function StorefrontPage() {
                         {/* Loading State */}
                         {v4Generating && (
                           <div className="flex items-center justify-center py-12 h-full">
-                            <div className="text-center space-y-4">
+                            <div className="text-center space-y-4 max-w-md">
                               <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
                               <div>
-                                <h3 className="font-semibold">
+                                <h3 className="font-semibold text-lg">
                                   Generating your website...
                                 </h3>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-muted-foreground mt-2">
                                   The AI is creating unique components for your
-                                  site
+                                  site.
                                 </p>
+                                <p className="text-xs text-muted-foreground mt-4">
+                                  ⏱️ This typically takes 2-3 minutes
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Please keep this page open. You'll see a
+                                  success message when complete.
+                                </p>
+                              </div>
+                              <div className="text-xs text-muted-foreground space-y-1 mt-6 text-left bg-muted/50 p-4 rounded-lg">
+                                <div>✓ Generating design system...</div>
+                                <div>✓ Creating hero section...</div>
+                                <div>✓ Building product/service pages...</div>
+                                <div>✓ Adding team & testimonials...</div>
+                                <div>⏳ Finalizing and validating...</div>
                               </div>
                             </div>
                           </div>

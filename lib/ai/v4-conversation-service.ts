@@ -79,6 +79,16 @@ export async function startConversation(
     updatedAt: new Date(),
   };
 
+  // Debug: Log initial section preferences
+  console.log("[V4 Start] Initial sections based on context:", {
+    hasProducts: context.products.length,
+    hasServices: context.services.length,
+    hasTeam: context.team.length,
+    hasTestimonials: context.testimonials.length,
+    hasBlogPosts: context.blogPosts.length,
+    sections: conversation.preferences.sections,
+  });
+
   // Generate greeting message using AI
   const greetingPrompt = buildPromptForPhase("greeting", context, conversation);
   const greetingMessage = await generateAIResponse(
