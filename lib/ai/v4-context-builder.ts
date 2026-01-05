@@ -105,6 +105,14 @@ export async function buildV4Context(
   // Extract SEO keywords from company data
   const seoKeywords = extractSEOKeywords(company);
 
+  // Debug: Log what data we have
+  console.log("[V4 Context] Data loaded for company:", company.name);
+  console.log("[V4 Context] Products:", company.products.length);
+  console.log("[V4 Context] Services:", company.services.length);
+  console.log("[V4 Context] Team/Staff:", company.staff.length);
+  console.log("[V4 Context] Testimonials:", company.testimonials.length);
+  console.log("[V4 Context] Blog posts:", company.storefrontPosts.length);
+
   // Build comprehensive context
   const context: V4CompanyContext = {
     company: {
