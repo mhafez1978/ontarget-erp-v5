@@ -85,6 +85,63 @@ export function PaymentForm({
     }
   }, [isFormValid, onValidationChange]);
 
+  // Expose method to create payment method on demand (called when user clicks submit)
+  useEffect(() => {
+    if (typeof window !== "undefined" && onPaymentMethodCreated) {
+      (window as any).__createPaymentMethod = async () => {
+        if (!stripe || !elements || !isFormValid) {
+          console.log("[PaymentForm] Cannot create payment method:", {
+            stripe: !!stripe,
+            elements: !!elements,
+            isFormValid,
+          });
+          return null;
+        }
+
+        try {
+          const cardElement = elements.getElement(CardNumberElement);
+          if (!cardElement) {
+            console.log("[PaymentForm] Card element not found");
+            return null;
+          }
+
+          console.log("[PaymentForm] Creating payment method...");
+          const { error, paymentMethod } = await stripe.createPaymentMethod({
+            type: "card",
+            card: cardElement,
+            billing_details: {
+              name: cardHolder,
+            },
+          });
+
+          if (error) {
+            console.error(
+              "[PaymentForm] Payment method creation error:",
+              error.message,
+              error
+            );
+            console.error("[PaymentForm] Error type:", error.type);
+            console.error("[PaymentForm] Error code:", error.code);
+            return null;
+          } else if (paymentMethod) {
+            console.log(
+              "[PaymentForm] Payment method created successfully:",
+              paymentMethod.id
+            );
+            onPaymentMethodCreated(paymentMethod.id, {
+              brand: paymentMethod.card?.brand,
+              last4: paymentMethod.card?.last4,
+            });
+            return paymentMethod.id;
+          }
+        } catch (error) {
+          console.error("[PaymentForm] Payment method creation failed:", error);
+          return null;
+        }
+      };
+    }
+  }, [stripe, elements, isFormValid, cardHolder, onPaymentMethodCreated]);
+
   // We only use Stripe Elements as the single source of truth. For card preview
   // we send masked values back to the parent (no PAN exposure).
   const MASKED_NUMBER = "•••• •••• •••• ••••";
@@ -205,63 +262,6 @@ export function PaymentForm({
       });
     }
   };
-
-  // Create payment method when form is valid
-  useEffect(() => {
-    const createPaymentMethod = async () => {
-      if (!stripe || !elements || !isFormValid) {
-        console.log("[PaymentForm] Skipping payment method creation:", {
-          stripe: !!stripe,
-          elements: !!elements,
-          isFormValid,
-        });
-        return;
-      }
-      if (onPaymentMethodCreated) {
-        try {
-          const cardElement = elements.getElement(CardNumberElement);
-          if (!cardElement) {
-            console.log("[PaymentForm] Card element not found");
-            return;
-          }
-
-          console.log("[PaymentForm] Creating payment method...");
-          const { error, paymentMethod } = await stripe.createPaymentMethod({
-            type: "card",
-            card: cardElement,
-            billing_details: {
-              name: cardHolder,
-            },
-          });
-
-          if (error) {
-            console.error(
-              "[PaymentForm] Payment method creation error:",
-              error.message,
-              error
-            );
-            console.error("[PaymentForm] Error type:", error.type);
-            console.error("[PaymentForm] Error code:", error.code);
-          } else if (paymentMethod) {
-            console.log(
-              "[PaymentForm] Payment method created successfully:",
-              paymentMethod.id
-            );
-            onPaymentMethodCreated(paymentMethod.id, {
-              brand: paymentMethod.card?.brand,
-              last4: paymentMethod.card?.last4,
-            });
-          }
-        } catch (error) {
-          console.error("[PaymentForm] Payment method creation failed:", error);
-        }
-      }
-    };
-
-    // Debounce payment method creation
-    const timeoutId = setTimeout(createPaymentMethod, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [stripe, elements, isFormValid, cardHolder, onPaymentMethodCreated]);
 
   return (
     <div className="space-y-4">

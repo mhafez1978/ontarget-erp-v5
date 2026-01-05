@@ -441,13 +441,6 @@ export default function SelectPlanPage() {
       return;
     }
 
-    if (!paymentMethodId) {
-      toast.error(
-        "Payment method is still being processed. Please wait a moment and try again."
-      );
-      return;
-    }
-
     // Validate billing address
     if (
       !billingAddress ||
@@ -463,6 +456,26 @@ export default function SelectPlanPage() {
     setIsLoading(true);
 
     try {
+      // Create payment method now (when user clicks button)
+      let finalPaymentMethodId = paymentMethodId;
+      if (!finalPaymentMethodId && (window as any).__createPaymentMethod) {
+        console.log("[Select Plan] Creating payment method on submit...");
+        finalPaymentMethodId = await (window as any).__createPaymentMethod();
+        if (!finalPaymentMethodId) {
+          toast.error(
+            "Failed to process payment method. Please check your card details."
+          );
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (!finalPaymentMethodId) {
+        toast.error("Payment method is required");
+        setIsLoading(false);
+        return;
+      }
+
       let response;
 
       if (onboardToken && onboardUser) {
@@ -474,7 +487,7 @@ export default function SelectPlanPage() {
             token: onboardToken,
             plan: selectedPlan,
             billingCycle: billingCycle.toUpperCase(),
-            paymentMethodId,
+            paymentMethodId: finalPaymentMethodId,
             stripeCustomerId: customerId || undefined,
             billingAddress,
           }),
@@ -489,7 +502,7 @@ export default function SelectPlanPage() {
           body: JSON.stringify({
             plan: selectedPlan,
             billingCycle: billingCycle.toUpperCase(),
-            paymentMethodId,
+            paymentMethodId: finalPaymentMethodId,
           }),
         });
       }
@@ -765,18 +778,13 @@ export default function SelectPlanPage() {
                 <Button
                   size="lg"
                   onClick={handleSelectPlan}
-                  disabled={!isPaymentValid || !paymentMethodId || isLoading}
+                  disabled={!isPaymentValid || isLoading}
                   className="min-w-[200px]"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Processing...
-                    </>
-                  ) : !paymentMethodId && isPaymentValid ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing payment...
                     </>
                   ) : (
                     "Complete Setup"

@@ -87,8 +87,13 @@ export function instantiateStripeProviderFromGateway(gateway: PaymentGateway) {
       "Failed to instantiate provider: No secret key configured for gateway"
     );
 
+  const webhookSecret = gateway.webhookSecret
+    ? decrypt(gateway.webhookSecret)
+    : undefined;
+
   return createPaymentProvider(PaymentProviderName.STRIPE, {
     secretKey,
+    webhookSecret,
     isTestMode: gateway.isTestMode,
   });
 }
