@@ -1,7 +1,15 @@
 "use client";
 
-
-import { Check, Loader2, CreditCard, ChevronLeft, CheckCircle2, Eye, EyeOff, AlertCircle } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  CreditCard,
+  ChevronLeft,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  AlertCircle,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -288,13 +296,17 @@ export default function SelectPlanPage() {
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || "Payment provider is not configured");
+          throw new Error(
+            "Payment gateway not configured. Please contact your system global administrator."
+          );
         }
 
         const { publishableKey } = data;
 
         if (!publishableKey || publishableKey === "not_configured") {
-          throw new Error("Payment provider is missing a publishable key");
+          throw new Error(
+            "Payment gateway configuration incomplete. Please contact your system global administrator."
+          );
         }
 
         // Initialize Stripe

@@ -796,6 +796,20 @@ export default function StorefrontPage() {
     init();
   }, [fetchUser, fetchCompanies]);
 
+  // Auto-select company if only one exists or if saved in query params
+  useEffect(() => {
+    if (!selectedCompanyId && companies.length > 0) {
+      // Check URL for companyId parameter
+      const urlCompanyId = searchParams.get("companyId");
+      if (urlCompanyId && companies.some((c) => c.id === urlCompanyId)) {
+        setSelectedCompanyId(urlCompanyId);
+      } else if (companies.length === 1) {
+        // Auto-select if only one company exists
+        setSelectedCompanyId(companies[0].id);
+      }
+    }
+  }, [companies, selectedCompanyId, searchParams]);
+
   useEffect(() => {
     if (selectedCompanyId) {
       const company = companies.find((c) => c.id === selectedCompanyId);
