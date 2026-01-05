@@ -1011,8 +1011,11 @@ function determineSections(
   // Add about (always required)
   sections.push({ type: "about", name: "About Section" });
 
-  // Add sections based on preferences and available data
-  if (preferences.sections?.products && context.products.length > 0) {
+  // Generate sections based on ACTUAL DATA availability (not just preferences)
+  // This ensures we show what the company actually has
+
+  // Products - if company has products, show them
+  if (context.products.length > 0) {
     sections.push({ type: "products", name: "Products Section" });
     // Add individual product detail sections
     context.products.forEach((product) => {
@@ -1024,7 +1027,8 @@ function determineSections(
     });
   }
 
-  if (preferences.sections?.services && context.services.length > 0) {
+  // Services - if company has services, show them
+  if (context.services.length > 0) {
     sections.push({ type: "services", name: "Services Section" });
     // Add individual service detail sections
     context.services.forEach((service) => {
@@ -1036,16 +1040,34 @@ function determineSections(
     });
   }
 
-  if (preferences.sections?.team && context.team.length > 0) {
+  // Team - if company has team members, show them
+  if (context.team.length > 0) {
     sections.push({ type: "team", name: "Team Section" });
   }
 
-  if (preferences.sections?.testimonials && context.testimonials.length > 0) {
+  // Testimonials - if company has testimonials, show them
+  if (context.testimonials.length > 0) {
     sections.push({ type: "testimonials", name: "Testimonials Section" });
   }
 
-  // Always include about (required)
-  sections.push({ type: "about", name: "About Section" });
+  // Gallery - if products or services have many images
+  const totalImages = [
+    ...context.products.flatMap((p) => p.images),
+    ...context.services.flatMap((s) => s.images),
+  ].length;
+  if (totalImages > 6 && preferences.sections?.gallery !== false) {
+    sections.push({ type: "gallery", name: "Gallery Section" });
+  }
+
+  // FAQ - if explicitly requested in preferences
+  if (preferences.sections?.faq) {
+    sections.push({ type: "faq", name: "FAQ Section" });
+  }
+
+  // Blog/Posts - if explicitly requested
+  if (preferences.sections?.blog) {
+    sections.push({ type: "blog", name: "Blog Section" });
+  }
 
   // Always include contact (required) - use contact-map if locations exist
   const contactType = context.locations?.length > 0 ? "contact-map" : "contact";
@@ -1306,6 +1328,28 @@ Add proper HTML form attributes and basic client-side validation.
     case "footer":
       sectionData = `
 Company: ${context.company.name}
+Contact Email: ${context.company.email || ""}
+Contact Phone: ${context.company.phone || ""}
+Social Links: ${JSON.stringify(context.socialProof)}
+
+CRITICAL REQUIREMENTS FOR FOOTER:
+1. **HIGH CONTRAST**: Use light text (text-gray-200 or text-white) on dark backgrounds (bg-gray-900 or darker)
+2. **READABLE TEXT**: Ensure WCAG AA compliance - text must be easily readable
+3. Include company name, copyright, contact info, and quick links
+4. Add social media icons if social links exist
+5. Multi-column layout on desktop (3-4 columns), single column on mobile
+6. Include "Back to Top" button
+7. AVOID: Light text on light bg, dark text on dark bg, low contrast color combos
+8. TEST: All text should pass contrast ratio 4.5:1 minimum
+
+Example of GOOD contrast:
+- bg-gray-900 text-gray-200 ✓
+- bg-black text-white ✓  
+- bg-gray-800 text-gray-100 ✓
+
+Example of BAD contrast (AVOID):
+- bg-gray-900 text-gray-700 ✗
+- bg-purple-900 text-purple-400 ✗
       `;
       break;
   }
@@ -1854,25 +1898,93 @@ function calculateQualityScore(
   let score = 0;
   const maxScore = 100;
 
-  // Has design system (20 points)
-  if (website.designSystem) score += 20;
+  // Has design system with complete colors (15 points)
+  if (website.designSystem) {
+    score += 10;
+    if (
+      website.designSystem.colors.primary &&
+      website.designSystem.colors.secondary
+    ) {
+      score += 5;
+    }
+  }
 
-  // Has pages (20 points)
-  if (website.pages && website.pages.length > 0) score += 20;
+  // Has multiple pages (15 points)
+  if (website.pages && website.pages.length > 0) {
+    score += 10;
+    if (website.pages.length >= 3) score += 5; // Bonus for 3+ pages
+  }
 
-  // Each page has SEO metadata (20 points)
-  if (website.pages?.every((p) => p.seo)) score += 20;
+  // SEO metadata quality (15 points)
+  if (website.pages?.every((p) => p.seo)) {
+    score += 10;
+    // Bonus if every page has description and keywords
+    if (
+      website.pages.every(
+        (p) => p.seo.description && p.seo.keywords?.length > 0
+      )
+    ) {
+      score += 5;
+    }
+  }
 
-  // Components exist (20 points)
+  // Component quality (15 points)
   const totalComponents =
     website.pages?.reduce((sum, p) => sum + p.components.length, 0) || 0;
-  if (totalComponents >= 5) score += 20;
+  if (totalComponents >= 5) score += 10;
+  if (totalComponents >= 8) score += 5; // Bonus for 8+ sections
 
-  // Uses company data (20 points)
+  // Data-driven content (20 points)
   const companyMentions = JSON.stringify(website)
     .toLowerCase()
     .includes(context.company.name.toLowerCase());
-  if (companyMentions) score += 20;
+  if (companyMentions) score += 10;
+
+  // Check if it uses actual products/services/team data
+  const websiteStr = JSON.stringify(website).toLowerCase();
+  let dataScore = 0;
+  if (
+    context.products.length > 0 &&
+    context.products.some((p) => websiteStr.includes(p.name.toLowerCase()))
+  ) {
+    dataScore += 3;
+  }
+  if (
+    context.services.length > 0 &&
+    context.services.some((s) => websiteStr.includes(s.name.toLowerCase()))
+  ) {
+    dataScore += 3;
+  }
+  if (
+    context.team.length > 0 &&
+    context.team.some((t) => websiteStr.includes(t.name.toLowerCase()))
+  ) {
+    dataScore += 2;
+  }
+  if (context.testimonials.length > 0) {
+    dataScore += 2;
+  }
+  score += dataScore;
+
+  // Accessibility & Best Practices (10 points)
+  if (websiteStr.includes("aria-label") || websiteStr.includes("alt=")) {
+    score += 5;
+  }
+  if (
+    websiteStr.includes("semantic") ||
+    websiteStr.includes("<section") ||
+    websiteStr.includes("<header")
+  ) {
+    score += 5;
+  }
+
+  // Responsive design indicators (10 points)
+  if (websiteStr.includes("md:") && websiteStr.includes("lg:")) {
+    score += 5;
+  }
+  if (websiteStr.includes("sm:") || websiteStr.includes("xl:")) {
+    score += 5;
+  }
 
   return Math.min(score, maxScore);
 }
