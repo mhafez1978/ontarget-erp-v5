@@ -83,6 +83,7 @@ interface StorefrontSettings {
       twitter?: string;
       instagram?: string;
       linkedin?: string;
+      youtube?: string;
     };
     contactEmail?: string;
     contactPhone?: string;
@@ -1984,6 +1985,18 @@ export default function StorefrontPage() {
                     }
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="youtube">YouTube</Label>
+                  <Input
+                    id="youtube"
+                    placeholder="https://youtube.com/@mystore"
+                    value={settings.storeMetadata?.socialLinks?.youtube || ""}
+                    onChange={(e) =>
+                      updateSocialLink("youtube", e.target.value)
+                    }
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -3175,7 +3188,7 @@ export default function StorefrontPage() {
                                   ⏱️ This typically takes 2-3 minutes
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-2">
-                                  Please keep this page open. You'll see a
+                                  Please keep this page open. You&apos;ll see a
                                   success message when complete.
                                 </p>
                               </div>

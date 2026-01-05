@@ -906,6 +906,54 @@ function organizeComponentsIntoPages(
     });
   }
 
+  // INDIVIDUAL BLOG POST DETAIL PAGES
+  if (
+    preferences.sections?.blog &&
+    context.blogPosts &&
+    context.blogPosts.length > 0
+  ) {
+    context.blogPosts.forEach((post) => {
+      // Find blog-post-detail component by matching post slug/title
+      const postDetailComp = components.find(
+        (c) =>
+          c.type === "blog-post-detail" &&
+          (c.name.includes(post.title) || c.name.includes(post.slug))
+      );
+
+      pages.push({
+        slug: `blog/${post.slug}`,
+        name: post.title,
+        components: [postDetailComp, footerComp]
+          .filter((c): c is GeneratedComponent => c !== undefined)
+          .map(createPageComponent)
+          .filter((c): c is NonNullable<typeof c> => c !== null),
+        seo: {
+          title: `${post.title} | ${context.company.name}`,
+          description:
+            post.excerpt ||
+            `Read about ${post.title} on ${context.company.name}'s blog.`,
+          keywords: [...metadata.keywords, post.title, "blog post", "article"],
+          ogImage: post.heroImage || metadata.ogImage || null,
+          canonicalUrl: null,
+          structuredData: [
+            {
+              "@context": "https://schema.org",
+              "@type": "BlogPosting",
+              headline: post.title,
+              description: post.excerpt,
+              image: post.heroImage,
+              datePublished: post.publishedAt,
+              author: {
+                "@type": "Organization",
+                name: context.company.name,
+              },
+            },
+          ],
+        },
+      });
+    });
+  }
+
   // INDIVIDUAL SERVICE DETAIL PAGES
   if (context.services && context.services.length > 0) {
     context.services.forEach((service) => {
@@ -1050,6 +1098,11 @@ function determineSections(
     sections.push({ type: "testimonials", name: "Testimonials Section" });
   }
 
+  // Portfolio/Case Studies - if company has featured projects, show them
+  if (context.projects.length > 0) {
+    sections.push({ type: "portfolio", name: "Portfolio Section" });
+  }
+
   // Gallery - if products or services have many images
   const totalImages = [
     ...context.products.flatMap((p) => p.images),
@@ -1067,6 +1120,16 @@ function determineSections(
   // Blog/Posts - if explicitly requested
   if (preferences.sections?.blog) {
     sections.push({ type: "blog", name: "Blog Section" });
+    // Add individual blog post detail sections
+    if (context.blogPosts && context.blogPosts.length > 0) {
+      context.blogPosts.forEach((post) => {
+        sections.push({
+          type: "blog-post-detail",
+          name: `Blog Post: ${post.title}`,
+          metadata: { postId: post.id, post },
+        });
+      });
+    }
   }
 
   // Always include contact (required) - use contact-map if locations exist
@@ -1276,6 +1339,43 @@ IMPORTANT: Create a comprehensive product detail page with:
       }
       break;
 
+    case "blog-post-detail":
+      const postDetail = section.metadata?.post as
+        | (typeof context.blogPosts)[0]
+        | undefined;
+      if (postDetail) {
+        sectionData = `
+Blog Post Detail Page for: ${postDetail.title}
+
+Full Blog Post Information:
+- Title: ${postDetail.title}
+- Slug: ${postDetail.slug}
+- Excerpt: ${postDetail.excerpt || ""}
+- Hero Image: ${postDetail.heroImage || ""}
+- Published Date: ${postDetail.publishedAt || ""}
+
+IMPORTANT: Create a comprehensive blog post detail page with:
+1. Hero section with post title, publish date, and hero image (if available)
+2. Article content area (use placeholder lorem ipsum paragraphs for actual content - minimum 3-4 paragraphs)
+3. Featured image prominently displayed
+4. Author information (use company name as author)
+5. Social share buttons (Facebook, Twitter, LinkedIn)
+6. "Back to Blog" link/button
+7. Related posts section (show 3 other blog posts if available)
+8. Call-to-action at the end (e.g., "Contact us to learn more")
+9. Clean, readable typography optimized for reading
+10. Proper heading hierarchy (H1 for title, H2 for sections)
+11. Generous line spacing and comfortable reading width (max-w-3xl for content)
+
+Design Tips:
+- Use a clean, minimal design focused on readability
+- Add subtle animations on scroll
+- Include table of contents for longer posts (if applicable)
+- Make sure text has high contrast for easy reading
+        `;
+      }
+      break;
+
     case "team":
       sectionData = `
 Team Members (${context.team.length} total):
@@ -1299,6 +1399,91 @@ ${context.testimonials
 IMPORTANT: Display these testimonials in a clean grid layout.
 Add a simple "Leave a Review" button (no modal needed - just a link to #contact).
 Keep the design minimal - focus on showcasing the testimonials cleanly.
+      `;
+      break;
+
+    case "portfolio":
+      sectionData = `
+Portfolio / Case Studies / Previous Work (${
+        context.projects.length
+      } featured projects):
+${context.projects
+  .map(
+    (p) => `
+- Project: ${p.name}
+  Client: ${p.client || "Internal"}
+  Category: ${p.category || "General"}
+  Status: ${p.status || "Completed"}
+  Description: ${p.description || ""}
+  Featured Image: ${p.featuredImage || "No image"}
+  Tags: ${p.tags.join(", ") || "None"}
+`
+  )
+  .join("\n")}
+
+IMPORTANT: Create a stunning portfolio/case studies section:
+1. Display projects in a grid (2-3 columns on desktop, 1 on mobile)
+2. Each project card should include:
+   - Featured image (use featuredImage if available, or generate using Unsplash keywords)
+   - Project name as heading
+   - Client name (if available)
+   - Category/type badge
+   - Brief description
+   - "View Project" or "Read Case Study" CTA
+3. Add hover effects (image zoom, card lift, overlay)
+4. Use high-quality, professional imagery
+5. If no featured images, use relevant Unsplash images based on:
+   - Project category (e.g., "web design project", "branding project")
+   - Industry keywords
+   - Professional work themes
+6. Optional: Add filter buttons by category if multiple categories exist
+7. Make cards clickable (can link to #contact for now)
+8. Design should feel like a premium portfolio showcase
+9. Include section heading like "Our Work", "Case Studies", "Portfolio", or "Previous Projects"
+10. Add a subheading like "See how we've helped clients succeed"
+
+Design Tips:
+- Use overlay effects to highlight project details on hover
+- Consider card aspect ratios: 16:9 or 4:3 for images
+- Add subtle animations (fade-in, slide-up on scroll)
+- Use the design system colors for CTAs and accents
+- Ensure images are high quality and professionally presented
+      `;
+      break;
+
+    case "blog":
+      sectionData = `
+Blog Posts (${context.blogPosts?.length || 0} total):
+${
+  context.blogPosts && context.blogPosts.length > 0
+    ? context.blogPosts
+        .map(
+          (post) => `
+- Title: ${post.title}
+  Slug: ${post.slug}
+  Excerpt: ${post.excerpt || ""}
+  Image: ${post.heroImage || ""}
+  Published: ${post.publishedAt || ""}
+  Link: /blog/${post.slug}
+`
+        )
+        .join("\n")
+    : "No blog posts available yet."
+}
+
+IMPORTANT: Create a blog listing page with:
+1. Page header with "Blog" or "Articles" title
+2. Grid of blog post cards (2-3 columns on desktop, 1 on mobile)
+3. Each card should include:
+   - Featured image (use heroImage or placeholder)
+   - Post title (linked to /blog/[slug])
+   - Excerpt/preview text
+   - Published date
+   - "Read More" button/link to /blog/[slug]
+4. Clean, modern card design with hover effects
+5. Pagination or "Load More" if many posts
+6. Optional: Categories/tags filter
+7. Make each post clickable - link to /blog/[post.slug] for the full article
       `;
       break;
 
@@ -1326,17 +1511,50 @@ Add proper HTML form attributes and basic client-side validation.
       break;
 
     case "footer":
+      // Build social media links array for clearer presentation
+      const socialLinksArray = [];
+      if (context.socialLinks.facebook)
+        socialLinksArray.push(`Facebook: ${context.socialLinks.facebook}`);
+      if (context.socialLinks.twitter)
+        socialLinksArray.push(`Twitter/X: ${context.socialLinks.twitter}`);
+      if (context.socialLinks.instagram)
+        socialLinksArray.push(`Instagram: ${context.socialLinks.instagram}`);
+      if (context.socialLinks.linkedin)
+        socialLinksArray.push(`LinkedIn: ${context.socialLinks.linkedin}`);
+      if (context.socialLinks.youtube)
+        socialLinksArray.push(`YouTube: ${context.socialLinks.youtube}`);
+
       sectionData = `
 Company: ${context.company.name}
 Contact Email: ${context.company.email || ""}
 Contact Phone: ${context.company.phone || ""}
-Social Links: ${JSON.stringify(context.socialProof)}
+
+Social Media Links (IMPORTANT - Create icons for these):
+${
+  socialLinksArray.length > 0
+    ? socialLinksArray.join("\n")
+    : "No social media links provided"
+}
 
 CRITICAL REQUIREMENTS FOR FOOTER:
 1. **HIGH CONTRAST**: Use light text (text-gray-200 or text-white) on dark backgrounds (bg-gray-900 or darker)
 2. **READABLE TEXT**: Ensure WCAG AA compliance - text must be easily readable
 3. Include company name, copyright, contact info, and quick links
-4. Add social media icons if social links exist
+4. **SOCIAL MEDIA ICONS** (REQUIRED if links provided above):
+   - Create clickable icon links for each social media platform listed above
+   - Use SVG icons for Facebook, Twitter/X, Instagram, LinkedIn, YouTube
+   - Each icon should:
+     * Open link in NEW TAB (target="_blank" rel="noopener noreferrer")
+     * Have hover effects (opacity or color change)
+     * Be sized appropriately (h-5 w-5 or similar)
+     * Have proper spacing between icons (gap-4)
+   - Group icons together in a "Follow Us" or "Connect" section
+   - Example structure:
+     <div class="flex gap-4">
+       <a href="SOCIAL_LINK" target="_blank" rel="noopener noreferrer" class="hover:opacity-70 transition-opacity">
+         <svg>...Facebook icon...</svg>
+       </a>
+     </div>
 5. Multi-column layout on desktop (3-4 columns), single column on mobile
 6. Include "Back to Top" button
 7. AVOID: Light text on light bg, dark text on dark bg, low contrast color combos
@@ -1350,6 +1568,13 @@ Example of GOOD contrast:
 Example of BAD contrast (AVOID):
 - bg-gray-900 text-gray-700 ✗
 - bg-purple-900 text-purple-400 ✗
+
+SOCIAL MEDIA ICON SVGs (use these):
+Facebook: <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+Twitter/X: <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+Instagram: <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z"/></svg>
+LinkedIn: <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+YouTube: <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
       `;
       break;
   }

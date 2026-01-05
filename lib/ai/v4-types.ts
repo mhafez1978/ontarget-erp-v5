@@ -133,6 +133,15 @@ export interface V4CompanyContext {
     googleRating: number | null;
   };
 
+  // Social media links (from storeMetadata)
+  socialLinks: {
+    facebook: string | null;
+    twitter: string | null;
+    instagram: string | null;
+    linkedin: string | null;
+    youtube: string | null;
+  };
+
   // Content & media
   gallery: Array<{
     url: string;
@@ -147,6 +156,19 @@ export interface V4CompanyContext {
     excerpt: string | null;
     heroImage: string | null;
     publishedAt: string | null;
+  }>;
+
+  // Portfolio / Case Studies / Projects
+  projects: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    category: string | null;
+    status: string | null;
+    featuredImage: string | null;
+    client: string | null;
+    completedDate: string | null;
+    tags: string[];
   }>;
 
   // SEO keywords extracted from company data

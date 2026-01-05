@@ -1216,6 +1216,14 @@ export default function YourComponent({ props }: Props) {
    - Contact info
    - Newsletter signup
 
+8. **Blog Post Detail**: Individual article pages
+   - Hero with title, date, and featured image
+   - Full article content (readable typography)
+   - Author information
+   - Social share buttons
+   - Related posts section
+   - Back to blog navigation
+
 ## SEO Requirements
 
 Generate for each page:
