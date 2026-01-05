@@ -791,7 +791,7 @@ Apple pioneered translucent, blurred backgrounds:
 // ✅ Text shadow for contrast
 <div className="relative">
   <img src="hero.jpg" className="w-full" />
-  <h1 className="absolute inset-0 flex items-center justify-center text-white text-5xl font-bold [text-shadow:_0_2px_8px_rgb(0_0_0_/_80%)]">
+  <h1 className="absolute inset-0 flex items-center justify-center text-white text-5xl font-bold [text-shadow:0_2px_8px_rgb(0_0_0/80%)]">
     Text with shadow for readability
   </h1>
 </div>
