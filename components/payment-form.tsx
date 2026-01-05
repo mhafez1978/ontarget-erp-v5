@@ -237,8 +237,11 @@ export function PaymentForm({
           if (error) {
             console.error(
               "[PaymentForm] Payment method creation error:",
+              error.message,
               error
             );
+            console.error("[PaymentForm] Error type:", error.type);
+            console.error("[PaymentForm] Error code:", error.code);
           } else if (paymentMethod) {
             console.log(
               "[PaymentForm] Payment method created successfully:",
