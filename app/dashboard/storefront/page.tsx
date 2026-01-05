@@ -3214,6 +3214,27 @@ export default function StorefrontPage() {
                               websiteData={websiteDataMemo}
                               qualityScore={v4Website?.qualityScore ?? 0}
                               creativityScore={v4Website?.creativityScore ?? 0}
+                              websiteId={v4Website?.id}
+                              onSave={async () => {
+                                // Refresh website data after inline edit save
+                                try {
+                                  const refreshResp = await fetch(
+                                    `/api/storefront/v4/websites?companyId=${selectedCompanyId}`
+                                  );
+                                  if (refreshResp.ok) {
+                                    const data = await refreshResp.json();
+                                    setV4Website(data.website || null);
+                                    toast.success(
+                                      "Preview refreshed with your changes"
+                                    );
+                                  }
+                                } catch (err) {
+                                  console.error(
+                                    "Failed to refresh preview:",
+                                    err
+                                  );
+                                }
+                              }}
                               onExport={() => {
                                 const componentsArray =
                                   (v4Website?.data?.pages?.[0]?.components as
