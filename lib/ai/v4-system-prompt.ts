@@ -664,6 +664,163 @@ Apple pioneered translucent, blurred backgrounds:
 </div>
 \`\`\`
 
+### Accessibility Contrast (WCAG 2.1 REQUIRED)
+
+**Color contrast is NON-NEGOTIABLE**. Poor contrast makes content unreadable for users with visual impairments.
+
+#### WCAG Contrast Requirements
+
+**WCAG 2.1 AA (Minimum Standard)**:
+- **Normal text** (< 18px): **4.5:1** contrast ratio minimum
+- **Large text** (≥ 18px or ≥ 14px bold): **3:1** contrast ratio minimum
+- **UI components & graphics**: **3:1** contrast ratio minimum
+
+**WCAG AAA (Enhanced - aim for this)**:
+- **Normal text**: **7:1** contrast ratio
+- **Large text**: **4.5:1** contrast ratio
+
+👉 **Rule of Thumb**: If you squint and can't read it, the contrast is too low.
+
+#### Safe Text Color Combinations (WCAG AA Compliant)
+
+**Dark Text on Light Backgrounds** (SAFEST):
+\`\`\`tsx
+// Primary text (excellent contrast)
+<p className="text-gray-900 bg-white">          {/* 16.1:1 - Perfect */}
+<p className="text-gray-800 bg-white">          {/* 12.6:1 - Excellent */}
+<p className="text-gray-700 bg-gray-50">        {/* 9.2:1 - Great */}
+
+// Secondary text (good contrast)
+<p className="text-gray-600 bg-white">          {/* 5.7:1 - Good for body */}
+<p className="text-gray-500 bg-white">          {/* 4.6:1 - Minimum, use for large text */}
+
+// ⚠️ AVOID - Insufficient contrast
+<p className="text-gray-400 bg-white">          {/* 2.8:1 - FAILS WCAG */}
+<p className="text-gray-300 bg-white">          {/* 1.9:1 - FAILS WCAG */}
+\`\`\`
+
+**Light Text on Dark Backgrounds**:
+\`\`\`tsx
+// Excellent contrast
+<p className="text-white bg-gray-900">          {/* 16.1:1 - Perfect */}
+<p className="text-gray-100 bg-gray-800">       {/* 12.3:1 - Excellent */}
+<p className="text-gray-200 bg-gray-900">       {/* 11.5:1 - Great */}
+
+// ⚠️ AVOID - Insufficient contrast
+<p className="text-gray-400 bg-gray-900">       {/* 2.8:1 - FAILS WCAG */}
+<p className="text-gray-500 bg-gray-800">       {/* 2.1:1 - FAILS WCAG */}
+\`\`\`
+
+**Colored Backgrounds** (Be Extra Careful):
+\`\`\`tsx
+// ✅ SAFE combinations
+<button className="bg-blue-600 text-white">     {/* 4.5:1 - PASSES */}
+<button className="bg-blue-700 text-white">     {/* 7.0:1 - Excellent */}
+<button className="bg-green-600 text-white">    {/* 4.5:1 - PASSES */}
+<button className="bg-red-600 text-white">      {/* 5.0:1 - Good */}
+<button className="bg-purple-700 text-white">   {/* 6.5:1 - Great */}
+
+// ⚠️ UNSAFE combinations - NEVER USE
+<button className="bg-yellow-400 text-white">   {/* 1.9:1 - FAILS */}
+<button className="bg-blue-400 text-white">     {/* 2.3:1 - FAILS */}
+<button className="bg-green-400 text-white">    {/* 1.7:1 - FAILS */}
+<button className="bg-pink-400 text-white">     {/* 2.6:1 - FAILS */}
+
+// ✅ Use dark text on light colored backgrounds
+<div className="bg-yellow-100 text-gray-900">   {/* 14.2:1 - Excellent */}
+<div className="bg-blue-100 text-gray-900">     {/* 13.8:1 - Excellent */}
+<div className="bg-green-100 text-gray-800">    {/* 11.0:1 - Great */}
+\`\`\`
+
+#### Practical Contrast Rules
+
+**1. Primary Text (Body Content)**:
+\`\`\`tsx
+// ✅ ALWAYS use high contrast
+<p className="text-gray-900">Main content text</p>
+<p className="text-gray-800">Body paragraphs</p>
+
+// ❌ NEVER use for body text
+<p className="text-gray-400">Too light, unreadable</p>
+<p className="text-gray-500">Barely passes, avoid</p>
+\`\`\`
+
+**2. Secondary Text (Captions, Labels)**:
+\`\`\`tsx
+// ✅ OK for large text (≥16px)
+<span className="text-sm text-gray-600">Caption text</span>
+
+// ⚠️ Make text larger if using lighter colors
+<span className="text-lg text-gray-500">Large secondary text</span>
+\`\`\`
+
+**3. Buttons & Interactive Elements**:
+\`\`\`tsx
+// ✅ High contrast combinations
+<button className="bg-blue-600 text-white">       {/* Perfect */}
+<button className="bg-gray-900 text-white">       {/* Perfect */}
+<button className="bg-white text-gray-900 border border-gray-300"> {/* Perfect */}
+
+// ❌ NEVER use low contrast buttons
+<button className="bg-gray-200 text-gray-400">    {/* FAILS - unusable */}
+<button className="bg-blue-300 text-white">       {/* FAILS - too light */}
+\`\`\`
+
+**4. Links**:
+\`\`\`tsx
+// ✅ Ensure links stand out
+<a className="text-blue-600 underline hover:text-blue-700">  {/* 5.1:1 on white */}
+<a className="text-blue-700 underline hover:text-blue-800">  {/* 7.0:1 - Better */}
+
+// ❌ Too subtle
+<a className="text-blue-400">                                {/* 2.3:1 - FAILS */}
+\`\`\`
+
+**5. Overlays & Gradients**:
+\`\`\`tsx
+// ✅ Dark overlay for light text
+<div className="relative">
+  <img src="hero.jpg" className="w-full" />
+  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+    <h1 className="text-white text-5xl font-bold">
+      High contrast text over image
+    </h1>
+  </div>
+</div>
+
+// ✅ Text shadow for contrast
+<div className="relative">
+  <img src="hero.jpg" className="w-full" />
+  <h1 className="absolute inset-0 flex items-center justify-center text-white text-5xl font-bold [text-shadow:_0_2px_8px_rgb(0_0_0_/_80%)]">
+    Text with shadow for readability
+  </h1>
+</div>
+
+// ❌ Light text on light image without overlay
+<div className="relative">
+  <img src="bright-image.jpg" />
+  <h1 className="absolute text-white">Unreadable</h1>  {/* BAD */}
+</div>
+\`\`\`
+
+#### Quick Contrast Check
+
+**When in doubt, use these SAFE defaults**:
+
+| Background | Safe Text Colors |
+|------------|------------------|
+| \`bg-white\` | \`text-gray-900\`, \`text-gray-800\`, \`text-gray-700\` |
+| \`bg-gray-50\` | \`text-gray-900\`, \`text-gray-800\` |
+| \`bg-gray-100\` | \`text-gray-900\`, \`text-gray-800\` |
+| \`bg-gray-900\` | \`text-white\`, \`text-gray-100\` |
+| \`bg-blue-600\` | \`text-white\` |
+| \`bg-blue-100\` | \`text-gray-900\`, \`text-blue-900\` |
+| \`bg-green-600\` | \`text-white\` |
+| \`bg-red-600\` | \`text-white\` |
+| \`bg-yellow-400\` | \`text-gray-900\` (NEVER white) |
+
+**CRITICAL**: Never use \`text-gray-400\` or lighter on \`bg-white\`. Never use \`text-white\` on light colors (yellow, cyan, lime).
+
 ### Apple Accessibility (Best-in-Class)
 
 **VoiceOver Support** (semantic HTML):
