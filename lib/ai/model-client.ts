@@ -28,14 +28,17 @@ function getMaxTokensForModel(provider: AiProviderType, model: string): number {
   switch (provider) {
     case "anthropic":
       // Claude 3.5 models
-      if (modelLower.includes("claude-3-5-haiku")) return 8192;
-      if (modelLower.includes("claude-3-5-sonnet")) return 8192;
+      // Note: Free tier has 8,000 tokens/min limit, so we use 4000 to allow 2 requests/min
+      // Paid tier can use higher limits
+      if (modelLower.includes("claude-3-5-haiku")) return 4000;
+      if (modelLower.includes("claude-3-5-sonnet")) return 4000;
+      if (modelLower.includes("claude-3-5")) return 4000;
       // Claude 3 models
       if (modelLower.includes("claude-3-opus")) return 4096;
       if (modelLower.includes("claude-3-sonnet")) return 4096;
       if (modelLower.includes("claude-3-haiku")) return 4096;
-      // Default for unknown Claude models
-      return 4096;
+      // Default for unknown Claude models (safe for free tier)
+      return 4000;
 
     case "openai":
     case "openai-compatible":
@@ -224,7 +227,21 @@ export async function callStorefrontModel<T>(
     let parsed: unknown;
 
     // Trim any whitespace from content first
-    const trimmedContent = content.trim();
+    let trimmedContent = content.trim();
+
+    // Remove markdown code fences if present (```json ... ``` or ``` ... ```)
+    if (trimmedContent.startsWith("```")) {
+      console.log("[AI Storefront] Removing markdown code fences...");
+      // Remove opening fence (```json or ```)
+      trimmedContent = trimmedContent.replace(/^```(?:json)?\s*\n?/, "");
+      // Remove closing fence
+      trimmedContent = trimmedContent.replace(/\n?```\s*$/, "");
+      trimmedContent = trimmedContent.trim();
+      console.log(
+        "[AI Storefront] Content after fence removal starts with:",
+        trimmedContent.substring(0, 100)
+      );
+    }
 
     try {
       // First try direct parsing

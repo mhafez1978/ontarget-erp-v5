@@ -166,28 +166,68 @@ export async function generateV4Website(
     console.log(
       "[V4 Generation] Step 2: Generating",
       sectionsToGenerate.length,
-      "sections in parallel..."
+      "sections..."
     );
 
-    // Step 3: Generate all sections in parallel using Promise.all with progress tracking
-    console.log(
-      `[V4 Generation] Generating ${sectionsToGenerate.length} sections in parallel:`,
-      sectionsToGenerate.map((s) => s.type).join(", ")
-    );
+    // Step 3: Generate sections (sequential for Anthropic to avoid rate limits, parallel for others)
+    const isAnthropic = providerConfig.provider === "anthropic";
 
-    const componentPromises = sectionsToGenerate.map((section, index) =>
-      generateSectionWithRetry(
-        section,
-        context,
-        preferences,
-        designSystem,
-        providerConfig,
-        index + 1,
-        sectionsToGenerate.length
-      )
-    );
+    if (isAnthropic) {
+      console.log(
+        `[V4 Generation] Generating ${sectionsToGenerate.length} sections SEQUENTIALLY (Anthropic rate limit protection):`,
+        sectionsToGenerate.map((s) => s.type).join(", ")
+      );
+    } else {
+      console.log(
+        `[V4 Generation] Generating ${sectionsToGenerate.length} sections in PARALLEL:`,
+        sectionsToGenerate.map((s) => s.type).join(", ")
+      );
+    }
 
-    const components = await Promise.all(componentPromises);
+    let components: GeneratedComponent[];
+
+    if (isAnthropic) {
+      // Sequential generation for Anthropic to avoid rate limits
+      components = [];
+      for (let i = 0; i < sectionsToGenerate.length; i++) {
+        const section = sectionsToGenerate[i];
+        const component = await generateSectionWithRetry(
+          section,
+          context,
+          preferences,
+          designSystem,
+          providerConfig,
+          i + 1,
+          sectionsToGenerate.length
+        );
+        components.push(component);
+
+        // Add delay between Anthropic requests to avoid rate limits (8000 tokens/min)
+        // With 4000 tokens per request, we can do ~2 per minute
+        // Wait 35 seconds between requests to be safe
+        if (i < sectionsToGenerate.length - 1) {
+          console.log(
+            `[V4 Generation] Waiting 35s before next section (rate limit protection)...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, 35000));
+        }
+      }
+    } else {
+      // Parallel generation for other providers
+      const componentPromises = sectionsToGenerate.map((section, index) =>
+        generateSectionWithRetry(
+          section,
+          context,
+          preferences,
+          designSystem,
+          providerConfig,
+          index + 1,
+          sectionsToGenerate.length
+        )
+      );
+      components = await Promise.all(componentPromises);
+    }
+
     console.log(
       "[V4 Generation] ✅ Step 3: All",
       components.length,
