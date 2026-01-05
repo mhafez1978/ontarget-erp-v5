@@ -8,7 +8,8 @@ const VALID_PLANS = ["ESSENTIAL", "GROWTH", "ENTERPRISE"];
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan, paymentMethodId, billingCycle, promoCodeId } = await req.json();
+    const { plan, paymentMethodId, billingCycle, promoCodeId } =
+      await req.json();
 
     if (!plan || !VALID_PLANS.includes(plan)) {
       return NextResponse.json(
@@ -83,7 +84,10 @@ export async function POST(req: NextRequest) {
       }
 
       // Check usage limit
-      if (promoCode.maxUses !== null && promoCode.timesUsed >= promoCode.maxUses) {
+      if (
+        promoCode.maxUses !== null &&
+        promoCode.timesUsed >= promoCode.maxUses
+      ) {
         return NextResponse.json(
           { success: false, message: "Promo code usage limit reached" },
           { status: 400 }
@@ -103,20 +107,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let subscriptionAmount = billingCycle === "ANNUAL" 
-      ? planPricing.annualPrice 
-      : planPricing.monthlyPrice;
+    let subscriptionAmount =
+      billingCycle === "ANNUAL"
+        ? planPricing.annualPrice
+        : planPricing.monthlyPrice;
 
     // Apply promo code pricing
-    if (promoCode && promoCode.discountType === "FLAT_FEE" && promoCode.flatFeeAmount) {
-      subscriptionAmount = billingCycle === "ANNUAL"
-        ? promoCode.flatFeeAmount.toNumber() * 12
-        : promoCode.flatFeeAmount.toNumber();
+    if (
+      promoCode &&
+      promoCode.discountType === "FLAT_FEE" &&
+      promoCode.flatFeeAmount
+    ) {
+      subscriptionAmount =
+        billingCycle === "ANNUAL"
+          ? promoCode.flatFeeAmount.toNumber() * 12
+          : promoCode.flatFeeAmount.toNumber();
     }
 
     // Create Stripe subscription
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-11-20.acacia",
+      apiVersion: "2025-10-29.clover",
     });
 
     // Create Stripe customer if not exists
@@ -155,26 +165,26 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Create subscription with custom amount
+    // Create a price for the subscription
+    const price = await stripe.prices.create({
+      currency: "usd",
+      unit_amount: Math.round(subscriptionAmount * 100), // Convert to cents
+      recurring: {
+        interval: billingCycle === "ANNUAL" ? "year" : "month",
+      },
+      product_data: {
+        name: `OnTarget ERP - ${plan} Plan`,
+        metadata: {
+          plan: plan,
+          promoCode: promoCode?.code || "",
+        },
+      },
+    });
+
+    // Create subscription with the price
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
-      items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `OnTarget ERP - ${plan} Plan`,
-              description: promoCode 
-                ? `${plan} plan with promo code: ${promoCode.code}`
-                : `${plan} plan`,
-            },
-            unit_amount: Math.round(subscriptionAmount * 100), // Convert to cents
-            recurring: {
-              interval: billingCycle === "ANNUAL" ? "year" : "month",
-            },
-          },
-        },
-      ],
+      items: [{ price: price.id }],
       payment_behavior: "default_incomplete",
       payment_settings: { payment_method_types: ["card"] },
       expand: ["latest_invoice.payment_intent"],
@@ -212,13 +222,13 @@ export async function POST(req: NextRequest) {
       description: `User selected plan: ${plan} (${
         billingCycle || "MONTHLY"
       } billing)${promoCode ? ` with promo code: ${promoCode.code}` : ""}`,
-      metadata: JSON.stringify({
+      metadata: {
         plan,
         billingCycle,
-        subscriptionAmount,
+        subscriptionAmount: subscriptionAmount.toString(),
         promoCode: promoCode?.code || null,
         stripeSubscriptionId: subscription.id,
-      }),
+      },
     });
 
     return NextResponse.json({
@@ -226,6 +236,10 @@ export async function POST(req: NextRequest) {
       message: "Plan selected successfully",
       plan: plan,
       subscriptionId: subscription.id,
+    });
+  } catch (error) {
+    console.error("Error selecting plan:", error);
+    return NextResponse.json(
       { success: false, message: "Failed to select plan" },
       { status: 500 }
     );
