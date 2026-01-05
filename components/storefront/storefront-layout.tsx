@@ -53,6 +53,7 @@ interface StorefrontLayoutProps {
   hideProducts?: boolean;
   showFeedbackCTA?: boolean;
   feedbackHref?: string | null;
+  hideFooter?: boolean;
 }
 
 export default function StorefrontLayout({
@@ -74,6 +75,7 @@ export default function StorefrontLayout({
   hideProducts,
   showFeedbackCTA,
   feedbackHref = null,
+  hideFooter = false,
 }: StorefrontLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
@@ -123,12 +125,14 @@ export default function StorefrontLayout({
 
       <main>{children}</main>
 
-      <StorefrontFooter
-        slug={slug}
-        companyName={companyName}
-        aiMeta={aiMeta}
-        storeMetadata={storeMetadata}
-      />
+      {!hideFooter && (
+        <StorefrontFooter
+          slug={slug}
+          companyName={companyName}
+          aiMeta={aiMeta}
+          storeMetadata={storeMetadata}
+        />
+      )}
     </div>
   );
 }

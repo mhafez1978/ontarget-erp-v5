@@ -8,11 +8,13 @@ import {
   Download,
   ExternalLink,
   Loader2,
+  Edit3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { V4InlineEditor, EditableSection } from "./v4-inline-editor";
 
 interface V4Component {
   type?: string;
@@ -72,22 +74,27 @@ interface V4WebsitePreviewProps {
   websiteData: V4WebsiteData;
   qualityScore: number;
   creativityScore: number;
+  websiteId?: string;
   onExport?: () => void;
   onPublish?: () => void;
+  onSave?: () => void;
 }
 
 export function V4WebsitePreview({
   websiteData,
   qualityScore,
   creativityScore,
+  websiteId,
   onExport,
   onPublish,
+  onSave,
 }: V4WebsitePreviewProps) {
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">(
     "desktop"
   );
   const [isExporting, setIsExporting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -221,6 +228,18 @@ export function V4WebsitePreview({
               </div>
               <div className="flex gap-2">
                 <Button
+                  variant={isEditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  disabled={!websiteId}
+                  title={
+                    !websiteId ? "Save website first to enable editing" : ""
+                  }
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  {isEditMode ? "Exit Edit Mode" : "Edit Mode"}
+                </Button>
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={handleExport}
@@ -305,33 +324,50 @@ export function V4WebsitePreview({
                           `[V4 Preview] Component ${idx}:`,
                           component
                         );
-                        // Render each component's HTML code
+                        // Render each component's HTML code with inline editor wrapper when in edit mode
                         return (
-                          <div
-                            key={idx}
-                            dangerouslySetInnerHTML={{
-                              __html:
-                                component.code ||
-                                component.componentCode ||
-                                component.html ||
-                                "",
-                            }}
-                            style={
-                              {
-                                // Apply design system colors as CSS variables
-                                "--color-primary":
-                                  websiteData.designSystem?.colors?.primary,
-                                "--color-secondary":
-                                  websiteData.designSystem?.colors?.secondary,
-                                "--color-accent":
-                                  websiteData.designSystem?.colors?.accent,
-                                "--color-background":
-                                  websiteData.designSystem?.colors?.background,
-                                "--color-text":
-                                  websiteData.designSystem?.colors?.text,
-                              } as React.CSSProperties
-                            }
-                          />
+                          <div key={idx}>
+                            {isEditMode && websiteId && (
+                              <V4InlineEditor
+                                websiteId={websiteId}
+                                pageSlug="home"
+                                componentIndex={idx}
+                                isEnabled={isEditMode}
+                                onSave={onSave}
+                              />
+                            )}
+                            <EditableSection
+                              componentIndex={idx}
+                              isEditMode={isEditMode}
+                            >
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html:
+                                    component.code ||
+                                    component.componentCode ||
+                                    component.html ||
+                                    "",
+                                }}
+                                style={
+                                  {
+                                    // Apply design system colors as CSS variables
+                                    "--color-primary":
+                                      websiteData.designSystem?.colors?.primary,
+                                    "--color-secondary":
+                                      websiteData.designSystem?.colors
+                                        ?.secondary,
+                                    "--color-accent":
+                                      websiteData.designSystem?.colors?.accent,
+                                    "--color-background":
+                                      websiteData.designSystem?.colors
+                                        ?.background,
+                                    "--color-text":
+                                      websiteData.designSystem?.colors?.text,
+                                  } as React.CSSProperties
+                                }
+                              />
+                            </EditableSection>
+                          </div>
                         );
                       }
                     );

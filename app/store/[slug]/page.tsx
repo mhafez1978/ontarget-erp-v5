@@ -759,6 +759,7 @@ export default async function StorefrontPage({ params }: PageProps) {
           feedbackHref={
             hasContact ? "#contact" : `/store/${slug}/contact#testimonial`
           }
+          hideFooter={true}
         >
           {/* Inject generated global styles to ensure design system is applied and full-bleed backgrounds work */}
           {globalStyles ? (
