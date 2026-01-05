@@ -531,7 +531,7 @@ export default async function StorefrontPage({ params }: PageProps) {
             {
               id: `testimonials-${companyCheck.id}`,
               order: 0,
-              componentCode: `<section class=\"py-12 bg-gradient-to-r from-gray-50 to-white\"><div class=\"container mx-auto\"><h2 class=\"text-2xl font-semibold\">What our customers say</h2><div class=\"mt-4 grid grid-cols-1 md:grid-cols-2 gap-4\">${itemsHtml}</div></div></section>`,
+              componentCode: `<section class=\"py-12 bg-linear-to-r from-gray-50 to-white\"><div class=\"container mx-auto\"><h2 class=\"text-2xl font-semibold\">What our customers say</h2><div class=\"mt-4 grid grid-cols-1 md:grid-cols-2 gap-4\">${itemsHtml}</div></div></section>`,
               metadata: {
                 name: "TestimonialsFallback",
                 description: "Testimonials fallback section",

@@ -372,7 +372,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                       {/* CTA Section */}
                       <div className="mt-20 text-center">
                         <div
-                          className="inline-block bg-gradient-to-r from-gray-50 to-white border-2 rounded-2xl p-8 shadow-lg"
+                          className="inline-block bg-linear-to-r from-gray-50 to-white border-2 rounded-2xl p-8 shadow-lg"
                           style={{ borderColor: `${primaryColor}20` }}
                         >
                           <p className="text-2xl font-bold text-gray-900 mb-4">
@@ -408,7 +408,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                   )}
 
                   {section.type === "team" && (
-                    <section className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-white px-6 py-20 md:px-12 lg:px-20">
+                    <section className="min-h-screen bg-linear-to-br from-white via-gray-50 to-white px-6 py-20 md:px-12 lg:px-20">
                       <div className="mx-auto max-w-7xl">
                         {/* Header */}
                         <header className="mb-16 text-center md:mb-24">
@@ -622,7 +622,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                           </div>
                           {/* Contact Form */}
                           <div
-                            className="bg-gradient-to-br from-white to-gray-50 p-10 rounded-3xl shadow-xl border-2"
+                            className="bg-linear-to-br from-white to-gray-50 p-10 rounded-3xl shadow-xl border-2"
                             style={{ borderColor: `${primaryColor}15` }}
                           >
                             <h3
@@ -704,7 +704,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                             (location: any, lIdx: number) => (
                               <div
                                 key={lIdx}
-                                className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2"
+                                className="bg-linear-to-br from-white to-gray-50 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2"
                                 style={{ borderColor: `${primaryColor}15` }}
                               >
                                 <div className="flex items-start gap-4">

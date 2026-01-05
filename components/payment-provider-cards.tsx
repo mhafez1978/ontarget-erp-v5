@@ -1,6 +1,5 @@
 "use client";
 
-
 import { CreditCard, Wallet, Loader2, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,9 +14,6 @@ import {
 } from "@/components/ui/sheet";
 import { BorderBeam } from "@/components/ui/border-beam";
 
-
-
-;
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -246,7 +242,7 @@ export default function PaymentProviderCards({
         >
           <CardContent className="p-6">
             <div className="flex items-start space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-[#635BFF] to-[#0066ff] p-2">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-linear-to-br from-[#635BFF] to-[#0066ff] p-2">
                 <svg
                   className="h-8 w-8 brightness-0 invert"
                   viewBox="0 0 60 25"
@@ -298,7 +294,7 @@ export default function PaymentProviderCards({
         >
           <CardContent className="p-6">
             <div className="flex items-start space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-[#179BD7] to-[#253B80] p-2">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-linear-to-br from-[#179BD7] to-[#253B80] p-2">
                 <svg
                   className="h-8 w-8 brightness-0 invert"
                   viewBox="0 0 124 33"

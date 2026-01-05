@@ -1,9 +1,6 @@
 "use client";
 
-
 import { Wifi } from "lucide-react";
-;
-
 interface CreditCardDisplayProps {
   cardNumber: string;
   cardHolder: string;
@@ -46,7 +43,7 @@ export function CreditCardDisplay({
         {/* Main Card */}
         <div className="relative w-full h-56 rounded-2xl overflow-hidden shadow-2xl">
           {/* Glassmorphic gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/90 via-pink-600/90 to-blue-600/90 backdrop-blur-xl">
+          <div className="absolute inset-0 bg-linear-to-br from-purple-600/90 via-pink-600/90 to-blue-600/90 backdrop-blur-xl">
             {/* Shine effect */}
             <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-50" />
 
@@ -60,7 +57,7 @@ export function CreditCardDisplay({
             {/* Top Section */}
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
-                <div className="w-12 h-8 rounded bg-gradient-to-br from-yellow-200 to-yellow-400 opacity-80 shadow-lg" />
+                <div className="w-12 h-8 rounded bg-linear-to-br from-yellow-200 to-yellow-400 opacity-80 shadow-lg" />
                 <Wifi className="h-5 w-5 rotate-90 opacity-60" />
               </div>
               <div className="text-right">
@@ -112,12 +109,12 @@ export function CreditCardDisplay({
         </div>
 
         {/* Card Shadow */}
-        <div className="absolute inset-0 -z-10 translate-y-2 rounded-2xl bg-gradient-to-br from-purple-600/20 via-pink-600/20 to-blue-600/20 blur-xl" />
+        <div className="absolute inset-0 -z-10 translate-y-2 rounded-2xl bg-linear-to-br from-purple-600/20 via-pink-600/20 to-blue-600/20 blur-xl" />
       </div>
 
       {/* CVV Display (back of card preview) */}
       {cvv && (
-        <div className="mt-4 w-24 h-12 ml-auto rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-mono text-sm shadow-lg">
+        <div className="mt-4 w-24 h-12 ml-auto rounded-lg bg-linear-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-mono text-sm shadow-lg">
           CVV: {cvv}
         </div>
       )}
