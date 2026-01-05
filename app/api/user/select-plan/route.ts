@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { getClientIp } from "@/lib/get-client-ip";
 import Stripe from "stripe";
 
 const VALID_PLANS = ["ESSENTIAL", "GROWTH", "ENTERPRISE"];
@@ -129,6 +130,9 @@ export async function POST(req: NextRequest) {
       apiVersion: "2025-10-29.clover",
     });
 
+    // Get client IP for tax calculation
+    const clientIp = getClientIp(req) || "127.0.0.1";
+
     // Create Stripe customer if not exists
     const customers = await stripe.customers.list({
       email: user.email!,
@@ -150,9 +154,18 @@ export async function POST(req: NextRequest) {
           userId: user.id,
           plan: plan,
         },
+        // Enable tax ID collection for business customers
+        tax_id_data: undefined, // Users can add tax ID later in billing portal
       });
       customerId = customer.id;
     }
+
+    // Update customer with IP address for tax calculation
+    await stripe.customers.update(customerId, {
+      metadata: {
+        last_ip: clientIp,
+      },
+    });
 
     // Attach payment method to customer
     await stripe.paymentMethods.attach(paymentMethodId, {
@@ -179,21 +192,58 @@ export async function POST(req: NextRequest) {
           promoCode: promoCode?.code || "",
         },
       },
+      // Enable tax calculation for this price
+      tax_behavior: "exclusive", // Tax is added on top of the price
     });
 
-    // Create subscription with the price
+    // Calculate tax before creating subscription
+    let taxCalculation = null;
+    try {
+      taxCalculation = await stripe.tax.calculations.create({
+        currency: "usd",
+        line_items: [
+          {
+            amount: Math.round(subscriptionAmount * 100),
+            reference: `${plan}_plan`,
+            tax_code: "txcd_10000000", // SaaS tax code
+          },
+        ],
+        customer_details: {
+          address_source: "billing",
+          ip_address: clientIp,
+        },
+        expand: ["line_items.data.tax_breakdown"],
+      });
+
+      console.log("Tax calculation:", {
+        subtotal: taxCalculation.amount_total,
+        tax: taxCalculation.tax_amount_exclusive,
+        total: taxCalculation.amount_total + taxCalculation.tax_amount_exclusive,
+        taxRate: taxCalculation.tax_breakdown?.[0]?.tax_rate_details?.percentage_decimal,
+      });
+    } catch (taxError) {
+      console.error("Tax calculation failed (continuing without):", taxError);
+      // Continue without tax if calculation fails
+    }
+
+    // Create subscription with the price and automatic tax
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: price.id }],
       payment_behavior: "default_incomplete",
       payment_settings: { payment_method_types: ["card"] },
       expand: ["latest_invoice.payment_intent"],
+      // Enable automatic tax collection
+      automatic_tax: {
+        enabled: true,
+      },
       metadata: {
         userId: user.id,
         plan: plan,
         billingCycle: billingCycle || "MONTHLY",
         promoCodeId: promoCodeId || "",
         promoCode: promoCode?.code || "",
+        clientIp: clientIp,
       },
     });
 
@@ -226,8 +276,21 @@ export async function POST(req: NextRequest) {
         plan,
         billingCycle,
         subscriptionAmount: subscriptionAmount.toString(),
+        taxAmount: taxCalculation
+          ? (taxCalculation.tax_amount_exclusive / 100).toString()
+          : "0",
+        totalAmount: taxCalculation
+          ? (
+              (taxCalculation.amount_total +
+                taxCalculation.tax_amount_exclusive) /
+              100
+            ).toString()
+          : subscriptionAmount.toString(),
         promoCode: promoCode?.code || null,
         stripeSubscriptionId: subscription.id,
+        clientIp,
+      },
+    });
       },
     });
 
