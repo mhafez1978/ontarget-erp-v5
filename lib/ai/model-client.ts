@@ -376,7 +376,7 @@ export async function callStorefrontModel<T>(
       messageCount: messagesWithJsonPrompt.length,
       response_format: { type: "json_object" },
       temperature: 0.8,
-      max_tokens: 8192,
+      max_tokens: 16384,
     });
 
     const response = await fetch(endpoint, {
@@ -390,7 +390,7 @@ export async function callStorefrontModel<T>(
         messages: messagesWithJsonPrompt,
         response_format: { type: "json_object" },
         temperature: 0.8,
-        max_tokens: 8192,
+        max_tokens: 16384,
       }),
     });
 

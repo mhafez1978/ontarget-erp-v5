@@ -3312,7 +3312,10 @@ export default function StorefrontPage() {
 
                                 sessionStorage.setItem(
                                   "content-wizard-import",
-                                  JSON.stringify(sections)
+                                  JSON.stringify({
+                                    sections,
+                                    source: "V4 export",
+                                  })
                                 );
 
                                 // Navigate to content tab without reloading to preserve preview state

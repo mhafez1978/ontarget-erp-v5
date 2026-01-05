@@ -170,6 +170,11 @@ export async function generateV4Website(
     );
 
     // Step 3: Generate all sections in parallel using Promise.all with progress tracking
+    console.log(
+      `[V4 Generation] Generating ${sectionsToGenerate.length} sections in parallel:`,
+      sectionsToGenerate.map((s) => s.type).join(", ")
+    );
+
     const componentPromises = sectionsToGenerate.map((section, index) =>
       generateSectionWithRetry(
         section,
@@ -184,28 +189,20 @@ export async function generateV4Website(
 
     const components = await Promise.all(componentPromises);
     console.log(
-      "[V4 Generation] ✅ Step 3: All sections generated successfully!"
+      "[V4 Generation] ✅ Step 3: All",
+      components.length,
+      "sections generated successfully!"
     );
 
-    // Post-validation: ensure required sections are present. If any are missing,
-    // generate them synchronously (this prevents incomplete storefronts with only hero/footer)
-    const requiredTypes = [
-      "hero",
-      "about",
-      "services",
-      "products",
-      "team",
-      "testimonials",
-      "contact",
-      "footer",
-    ];
-
+    // Post-validation: ensure core required sections are present
+    // Only add truly essential sections if missing (hero, about, contact, footer)
+    const coreRequired = ["hero", "about", "contact", "footer"];
     const existingTypes = new Set(components.map((c) => c.type));
 
-    for (const t of requiredTypes) {
-      if (!existingTypes.has(t)) {
+    for (const t of coreRequired) {
+      if (!existingTypes.has(t) && t !== "contact-map") {
         console.log(
-          `[V4 Generation] Missing required section '${t}', generating now...`
+          `[V4 Generation] Missing core section '${t}', generating now...`
         );
         try {
           // For contact, prefer contact-map when company has locations
@@ -971,6 +968,9 @@ function determineSections(
   // Always include hero
   sections.push({ type: "hero", name: "Hero Section" });
 
+  // Add about (always required)
+  sections.push({ type: "about", name: "About Section" });
+
   // Add sections based on preferences and available data
   if (preferences.sections?.products && context.products.length > 0) {
     sections.push({ type: "products", name: "Products Section" });
@@ -1004,20 +1004,20 @@ function determineSections(
     sections.push({ type: "testimonials", name: "Testimonials Section" });
   }
 
-  if (
-    preferences.sections &&
-    "about" in preferences.sections &&
-    (preferences.sections as Record<string, boolean>).about
-  ) {
-    sections.push({ type: "about", name: "About Section" });
-  }
+  // Always include about (required)
+  sections.push({ type: "about", name: "About Section" });
 
-  if (preferences.sections?.contact) {
-    sections.push({ type: "contact", name: "Contact Section" });
-  }
+  // Always include contact (required) - use contact-map if locations exist
+  const contactType = context.locations?.length > 0 ? "contact-map" : "contact";
+  sections.push({ type: contactType, name: "Contact Section" });
 
-  // Always include footer
+  // Always include footer (required)
   sections.push({ type: "footer", name: "Footer Section" });
+
+  console.log(
+    `[V4 Generation] Sections to generate:`,
+    sections.map((s) => s.type).join(", ")
+  );
 
   return sections;
 }
@@ -1230,15 +1230,13 @@ Testimonials (${
         context.testimonials.length
       } reviews, avg ${context.customerInsights.averageRating?.toFixed(1)}★):
 ${context.testimonials
-  .slice(0, 6)
+  .slice(0, 5)
   .map((t) => `- ${t.customerName} (${t.rating}★): "${t.content}"`)
   .join("\n")}
 
-IMPORTANT: Add a "Share Your Experience" button that opens a testimonial submission form.
-The form should POST to /api/storefront/${context.company.slug}/testimonials
-Form fields: customerName, customerEmail, customerTitle (optional), rating (1-5 stars), testimonial
-Make it a modal/dialog that opens when button is clicked.
-Include star rating selector and proper validation.
+IMPORTANT: Display these testimonials in a clean grid layout.
+Add a simple "Leave a Review" button (no modal needed - just a link to #contact).
+Keep the design minimal - focus on showcasing the testimonials cleanly.
       `;
       break;
 

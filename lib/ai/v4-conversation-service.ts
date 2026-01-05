@@ -55,6 +55,33 @@ export async function startConversation(
   context: V4CompanyContext,
   providerConfig?: AiProviderConfig
 ): Promise<V4Conversation> {
+  // Determine which sections to enable based on available data
+  // Always enable: hero, about, contact, footer (required)
+  // Enable if data exists: products, services, team, testimonials, blog
+  const sections = {
+    hero: true, // Always
+    features: context.services.length > 0 || context.products.length > 0,
+    products: context.products.length > 0,
+    services: context.services.length > 0,
+    team: context.team.length > 0,
+    testimonials: context.testimonials.length > 0,
+    gallery: false, // User can request during conversation
+    blog: context.blogPosts.length > 0,
+    faq: false, // User can request during conversation
+    contact: true, // Always
+  };
+
+  console.log("[V4 Start] Company data loaded:", {
+    products: context.products.length,
+    services: context.services.length,
+    team: context.team.length,
+    testimonials: context.testimonials.length,
+    blogPosts: context.blogPosts.length,
+    locations: context.locations.length,
+  });
+
+  console.log("[V4 Start] Initial sections enabled:", sections);
+
   const conversation: V4Conversation = {
     id: generateId(),
     companyId,
@@ -62,32 +89,11 @@ export async function startConversation(
     phase: "greeting",
     messages: [],
     preferences: {
-      sections: {
-        hero: true,
-        features: context.services.length > 0,
-        products: context.products.length > 0,
-        services: context.services.length > 0,
-        team: context.team.length > 0,
-        testimonials: context.testimonials.length > 0,
-        gallery: false,
-        blog: context.blogPosts.length > 0,
-        faq: false,
-        contact: true,
-      },
+      sections,
     },
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-
-  // Debug: Log initial section preferences
-  console.log("[V4 Start] Initial sections based on context:", {
-    hasProducts: context.products.length,
-    hasServices: context.services.length,
-    hasTeam: context.team.length,
-    hasTestimonials: context.testimonials.length,
-    hasBlogPosts: context.blogPosts.length,
-    sections: conversation.preferences.sections,
-  });
 
   // Generate greeting message using AI
   const greetingPrompt = buildPromptForPhase("greeting", context, conversation);
