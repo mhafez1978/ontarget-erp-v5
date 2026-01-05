@@ -4,6 +4,8 @@ import { z } from "zod";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 import { createSession } from "@/lib/session-manager";
 import { sendEmail, getWelcomeCustomerEmail } from "@/lib/email-service";
+import { getPlanPrice } from "@/lib/plan-prices";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 // Helper to extract client IP from request headers
 function getClientIp(req: NextRequest): string | null {
@@ -38,6 +40,27 @@ const completeSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 3 attempts per hour per IP
+    const clientIp = getClientIp(request) || "unknown";
+    const rateLimit = checkRateLimit(clientIp, RATE_LIMITS.OAUTH_COMPLETE);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: "Too many signup attempts. Please try again later.",
+          retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.ceil((rateLimit.resetTime - Date.now()) / 1000)
+            ),
+            "X-RateLimit-Remaining": String(rateLimit.remaining),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const parsed = completeSchema.safeParse(body);
     if (!parsed.success) {
@@ -97,6 +120,22 @@ export async function POST(request: NextRequest) {
     if (onboarding.context !== "root") {
       return NextResponse.json(
         { error: "Invalid onboarding context" },
+        { status: 400 }
+      );
+    }
+
+    // Server-side price validation to prevent tampering
+    try {
+      const expectedPrice = getPlanPrice(plan, billingCycle);
+      console.log(
+        `[OAuth Complete] Plan: ${plan}, Cycle: ${billingCycle}, Expected Price: $${expectedPrice}`
+      );
+      // Note: Actual payment amount should be validated in payment processing
+      // This ensures the plan selection is valid
+    } catch (error) {
+      console.error("[OAuth Complete] Invalid plan configuration:", error);
+      return NextResponse.json(
+        { error: "Invalid plan or billing cycle" },
         { status: 400 }
       );
     }

@@ -87,8 +87,35 @@ export function instantiateStripeProviderFromGateway(gateway: PaymentGateway) {
       "Failed to instantiate provider: No secret key configured for gateway"
     );
 
+  // Security: Validate key format matches test mode setting
+  const isKeyTest = secretKey.startsWith("sk_test_");
+  const isKeyLive = secretKey.startsWith("sk_live_");
+
+  if (!isKeyTest && !isKeyLive) {
+    throw new Error(
+      "Failed to instantiate provider: Invalid Stripe secret key format"
+    );
+  }
+
+  if (gateway.isTestMode && isKeyLive) {
+    throw new Error(
+      "Security Error: Test mode is enabled but live Stripe key detected. Please use test keys (sk_test_...)"
+    );
+  }
+
+  if (!gateway.isTestMode && isKeyTest) {
+    throw new Error(
+      "Security Error: Live mode is enabled but test Stripe key detected. Please use live keys (sk_live_...)"
+    );
+  }
+
+  const webhookSecret = gateway.webhookSecret
+    ? decrypt(gateway.webhookSecret)
+    : undefined;
+
   return createPaymentProvider(PaymentProviderName.STRIPE, {
     secretKey,
+    webhookSecret,
     isTestMode: gateway.isTestMode,
   });
 }

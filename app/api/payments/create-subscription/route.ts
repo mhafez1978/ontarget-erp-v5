@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import paymentsService from "@/lib/payments/service";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,6 +10,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "customerId, plan, and paymentMethodId are required" },
         { status: 400 }
+      );
+    }
+
+    // Rate limiting: 10 subscription attempts per 15 minutes per customer
+    const rateLimit = checkRateLimit(
+      customerId,
+      RATE_LIMITS.PAYMENT_INTENT_CREATE
+    );
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: "Too many subscription attempts. Please try again later.",
+          retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.ceil((rateLimit.resetTime - Date.now()) / 1000)
+            ),
+          },
+        }
       );
     }
 

@@ -10,7 +10,7 @@ import {
   EyeOff,
   AlertCircle,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { PLAN_LIMITS, getTotalUserLimit } from "@/lib/plan-limits";
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
-import { PaymentForm } from "@/components/payment-form";
+import { PaymentForm, type PaymentFormHandle } from "@/components/payment-form";
 import { CreditCardDisplay } from "@/components/credit-card-display";
 import {
   AddressAutocomplete,
@@ -120,6 +120,9 @@ export default function SelectPlanPage() {
     name: string;
     email: string;
   } | null>(null);
+
+  // Ref to access payment form methods securely
+  const paymentFormRef = useRef<PaymentFormHandle>(null);
 
   useEffect(() => {
     // If this page was reached via an onboarding token, verify that token
@@ -441,13 +444,6 @@ export default function SelectPlanPage() {
       return;
     }
 
-    if (!paymentMethodId) {
-      toast.error(
-        "Payment method is still being processed. Please wait a moment and try again."
-      );
-      return;
-    }
-
     // Validate billing address
     if (
       !billingAddress ||
@@ -463,6 +459,27 @@ export default function SelectPlanPage() {
     setIsLoading(true);
 
     try {
+      // Create payment method securely using ref
+      let finalPaymentMethodId: string | null = paymentMethodId;
+      if (!finalPaymentMethodId && paymentFormRef.current) {
+        console.log("[Select Plan] Creating payment method on submit...");
+        finalPaymentMethodId =
+          await paymentFormRef.current.createPaymentMethod();
+        if (!finalPaymentMethodId) {
+          toast.error(
+            "Failed to process payment method. Please check your card details."
+          );
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (!finalPaymentMethodId) {
+        toast.error("Payment method is required");
+        setIsLoading(false);
+        return;
+      }
+
       let response;
 
       if (onboardToken && onboardUser) {
@@ -474,7 +491,7 @@ export default function SelectPlanPage() {
             token: onboardToken,
             plan: selectedPlan,
             billingCycle: billingCycle.toUpperCase(),
-            paymentMethodId,
+            paymentMethodId: finalPaymentMethodId,
             stripeCustomerId: customerId || undefined,
             billingAddress,
           }),
@@ -489,7 +506,7 @@ export default function SelectPlanPage() {
           body: JSON.stringify({
             plan: selectedPlan,
             billingCycle: billingCycle.toUpperCase(),
-            paymentMethodId,
+            paymentMethodId: finalPaymentMethodId,
           }),
         });
       }
@@ -724,6 +741,7 @@ export default function SelectPlanPage() {
                   </CardHeader>
                   <CardContent>
                     <PaymentForm
+                      ref={paymentFormRef}
                       initialCardHolder={onboardUser?.name || ""}
                       onCardDataChange={setCardData}
                       onValidationChange={setIsPaymentValid}
@@ -765,18 +783,13 @@ export default function SelectPlanPage() {
                 <Button
                   size="lg"
                   onClick={handleSelectPlan}
-                  disabled={!isPaymentValid || !paymentMethodId || isLoading}
+                  disabled={!isPaymentValid || isLoading}
                   className="min-w-[200px]"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Processing...
-                    </>
-                  ) : !paymentMethodId && isPaymentValid ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing payment...
                     </>
                   ) : (
                     "Complete Setup"
