@@ -74,6 +74,32 @@ export async function buildV4Context(
           publishedAt: true,
         },
       },
+      projects: {
+        where: {
+          isFeatured: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          category: true,
+          status: true,
+          featuredImage: true,
+          createdAt: true,
+          customer: {
+            select: {
+              name: true,
+            },
+          },
+          subscriberCompany: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -112,6 +138,7 @@ export async function buildV4Context(
   console.log("[V4 Context] Team/Staff:", company.staff.length);
   console.log("[V4 Context] Testimonials:", company.testimonials.length);
   console.log("[V4 Context] Blog posts:", company.storefrontPosts.length);
+  console.log("[V4 Context] Projects:", company.projects.length);
 
   // Build comprehensive context
   const context: V4CompanyContext = {
@@ -234,6 +261,15 @@ export async function buildV4Context(
       googleRating: company.googleRating,
     },
 
+    // Extract social media links from storeMetadata
+    socialLinks: {
+      facebook: (company.storeMetadata as any)?.socialLinks?.facebook || null,
+      twitter: (company.storeMetadata as any)?.socialLinks?.twitter || null,
+      instagram: (company.storeMetadata as any)?.socialLinks?.instagram || null,
+      linkedin: (company.storeMetadata as any)?.socialLinks?.linkedin || null,
+      youtube: (company.storeMetadata as any)?.socialLinks?.youtube || null,
+    },
+
     gallery: [], // Could be extracted from product/service images
 
     blogPosts: company.storefrontPosts.map((post) => ({
@@ -243,6 +279,19 @@ export async function buildV4Context(
       excerpt: post.excerpt,
       heroImage: post.heroImage,
       publishedAt: post.publishedAt?.toISOString() || null,
+    })),
+
+    projects: company.projects.map((project) => ({
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      category: project.category,
+      status: project.status,
+      featuredImage: project.featuredImage,
+      client: project.customer?.name || project.subscriberCompany?.name || null,
+      completedDate:
+        project.status === "COMPLETED" ? project.createdAt.toISOString() : null,
+      tags: project.category ? [project.category] : [],
     })),
 
     seoKeywords,
