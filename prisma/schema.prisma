@@ -596,6 +596,10 @@ model Subscription {
   // External provider reference (Stripe subscription id, etc.)
   externalSubscriptionId String?
 
+  // Promo code applied
+  promoCodeId String?
+  promoCode   PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+
   // Metadata
   notes String? @db.Text
 
@@ -608,6 +612,7 @@ model Subscription {
   @@index([status])
   @@index([plan])
   @@index([trialEndsAt])
+  @@index([promoCodeId])
   // composite index to quickly find the subscription for a subscriber by status
   @@index([subscriberCompanyId, status])
 }
@@ -2998,4 +3003,37 @@ model PlanPricing {
   createdBy String? // User ID who created/updated
 
   @@index([plan])
+}
+
+// Promo Code Model - for special pricing offers like beta testing
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "OnTargetLove"
+  description String?  @db.Text
+  
+  // Discount type and amounts
+  discountType String // "FLAT_FEE", "PERCENTAGE", "FREE_TRIAL"
+  flatFeeAmount Decimal? @db.Decimal(10, 2) // Fixed monthly fee (e.g., 0.99)
+  percentageOff Int? // Percentage discount (0-100)
+  freeTrialDays Int? // Days of free trial
+  
+  // Validity
+  isActive   Boolean   @default(true)
+  expiresAt  DateTime?
+  
+  // Usage limits
+  maxUses    Int? // null = unlimited uses
+  timesUsed  Int       @default(0)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String? // User ID who created it
+  
+  // Relations
+  subscriptions Subscription[]
+  
+  @@index([code])
+  @@index([isActive])
+  @@index([expiresAt])
 }

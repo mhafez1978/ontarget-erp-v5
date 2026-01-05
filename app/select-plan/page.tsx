@@ -111,6 +111,20 @@ export default function SelectPlanPage() {
     last4?: string;
   }>({});
 
+  // Promo code state
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{
+    id: string;
+    code: string;
+    description: string | null;
+    discountType: string;
+    flatFeeAmount: number | null;
+    percentageOff: number | null;
+    freeTrialDays: number | null;
+  } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
   // Onboarding-specific state
   const [onboardToken, setOnboardToken] = useState<string | null>(
     onboardTokenQuery || null
@@ -434,6 +448,50 @@ export default function SelectPlanPage() {
     setStep(2);
   };
 
+  const handleApplyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      toast.error("Please enter a promo code");
+      return;
+    }
+
+    setPromoLoading(true);
+    setPromoError(null);
+
+    try {
+      const response = await fetch("/api/promo-code/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.valid) {
+        setPromoError(data.error || "Invalid promo code");
+        setAppliedPromo(null);
+        toast.error(data.error || "Invalid promo code");
+        return;
+      }
+
+      setAppliedPromo(data.promoCode);
+      setPromoError(null);
+      toast.success(`Promo code "${data.promoCode.code}" applied!`);
+    } catch (error) {
+      console.error("Error applying promo code:", error);
+      setPromoError("Failed to apply promo code");
+      toast.error("Failed to apply promo code");
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromoCode = () => {
+    setAppliedPromo(null);
+    setPromoCode("");
+    setPromoError(null);
+    toast.info("Promo code removed");
+  };
+
   const handleBackToPlan = () => {
     setStep(1);
   };
@@ -494,6 +552,7 @@ export default function SelectPlanPage() {
             paymentMethodId: finalPaymentMethodId,
             stripeCustomerId: customerId || undefined,
             billingAddress,
+            promoCodeId: appliedPromo?.id || null,
           }),
         });
       } else {
@@ -507,6 +566,7 @@ export default function SelectPlanPage() {
             plan: selectedPlan,
             billingCycle: billingCycle.toUpperCase(),
             paymentMethodId: finalPaymentMethodId,
+            promoCodeId: appliedPromo?.id || null,
           }),
         });
       }
@@ -817,6 +877,90 @@ export default function SelectPlanPage() {
             Select a plan to get started with OnTarget ERP
           </p>
         </div>
+
+        {/* Promo Code Section */}
+        <div className="max-w-md mx-auto mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Have a Promo Code?</CardTitle>
+              <CardDescription>
+                Enter your promo code to receive special pricing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {appliedPromo ? (
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <span className="font-semibold text-green-700 dark:text-green-300">
+                          {appliedPromo.code}
+                        </span>
+                      </div>
+                      {appliedPromo.description && (
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          {appliedPromo.description}
+                        </p>
+                      )}
+                      {appliedPromo.discountType === "FLAT_FEE" &&
+                        appliedPromo.flatFeeAmount !== null && (
+                          <p className="text-sm font-medium text-green-700 dark:text-green-300 mt-1">
+                            Special pricing: ${appliedPromo.flatFeeAmount}/month
+                          </p>
+                        )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemovePromoCode}
+                      className="shrink-0"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter promo code"
+                      value={promoCode}
+                      onChange={(e) => {
+                        setPromoCode(e.target.value);
+                        setPromoError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyPromoCode();
+                        }
+                      }}
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={handleApplyPromoCode}
+                      disabled={promoLoading || !promoCode.trim()}
+                    >
+                      {promoLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Apply"
+                      )}
+                    </Button>
+                  </div>
+                  {promoError && (
+                    <div className="flex items-start gap-2 text-sm text-destructive">
+                      <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>{promoError}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Billing Cycle Toggle */}
         <div className="w-[230px] mx-auto flex flx-row justify-between items-center gap-2 mb-8 border border-gray-300 dark:border-gray-700 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm">
           <button
@@ -872,7 +1016,27 @@ export default function SelectPlanPage() {
                 </div>
                 {billingCycle === "monthly" ? (
                   <>
-                    {plan.monthlyPromoPrice ? (
+                    {appliedPromo &&
+                    appliedPromo.discountType === "FLAT_FEE" &&
+                    appliedPromo.flatFeeAmount !== null ? (
+                      <div className="mt-4">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xl text-orange-500 line-through font-semibold">
+                            ${plan.monthlyPrice}
+                          </span>
+                          <span className="text-3xl font-bold text-green-600">
+                            ${appliedPromo.flatFeeAmount}/month
+                          </span>
+                        </div>
+                        <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Promo applied!
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Billed monthly
+                        </p>
+                      </div>
+                    ) : plan.monthlyPromoPrice ? (
                       <div className="mt-4">
                         <div className="flex items-baseline gap-2">
                           <span className="text-xl text-orange-500 line-through font-semibold">
@@ -901,17 +1065,41 @@ export default function SelectPlanPage() {
                     )}
                   </>
                 ) : (
-                  <div className="mt-4">
-                    <div className="text-3xl font-bold">
-                      ${plan.annualPriceMonthly}/month
-                    </div>
-                    <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
-                      ${plan.annualPrice}/year
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Billed annually
-                    </p>
-                  </div>
+                  <>
+                    {appliedPromo &&
+                    appliedPromo.discountType === "FLAT_FEE" &&
+                    appliedPromo.flatFeeAmount !== null ? (
+                      <div className="mt-4">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xl text-orange-500 line-through font-semibold">
+                            ${plan.annualPrice}
+                          </span>
+                          <span className="text-3xl font-bold text-green-600">
+                            ${(appliedPromo.flatFeeAmount * 12).toFixed(2)}/year
+                          </span>
+                        </div>
+                        <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Promo applied!
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          ${appliedPromo.flatFeeAmount}/month, billed annually
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-4">
+                        <div className="text-3xl font-bold">
+                          ${plan.annualPriceMonthly}/month
+                        </div>
+                        <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
+                          ${plan.annualPrice}/year
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Billed annually
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
                 <p className="text-xs text-muted-foreground mt-2">
                   Transaction fee: {plan.transactionFeePercent}% + $

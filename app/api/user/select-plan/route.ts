@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import Stripe from "stripe";
 
 const VALID_PLANS = ["ESSENTIAL", "GROWTH", "ENTERPRISE"];
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan, paymentMethodId, billingCycle } = await req.json();
+    const { plan, paymentMethodId, billingCycle, promoCodeId } = await req.json();
 
     if (!plan || !VALID_PLANS.includes(plan)) {
       return NextResponse.json(
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
       select: {
         id: true,
         email: true,
+        name: true,
         plan: true,
         role: true,
       },
@@ -58,6 +60,133 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate promo code if provided
+    let promoCode = null;
+    if (promoCodeId) {
+      promoCode = await db.promoCode.findUnique({
+        where: { id: promoCodeId },
+      });
+
+      if (!promoCode || !promoCode.isActive) {
+        return NextResponse.json(
+          { success: false, message: "Invalid or inactive promo code" },
+          { status: 400 }
+        );
+      }
+
+      // Check expiration
+      if (promoCode.expiresAt && promoCode.expiresAt < new Date()) {
+        return NextResponse.json(
+          { success: false, message: "Promo code has expired" },
+          { status: 400 }
+        );
+      }
+
+      // Check usage limit
+      if (promoCode.maxUses !== null && promoCode.timesUsed >= promoCode.maxUses) {
+        return NextResponse.json(
+          { success: false, message: "Promo code usage limit reached" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Calculate pricing
+    const planPricing = await db.planPricing.findUnique({
+      where: { plan: plan },
+    });
+
+    if (!planPricing) {
+      return NextResponse.json(
+        { success: false, message: "Plan pricing not found" },
+        { status: 404 }
+      );
+    }
+
+    let subscriptionAmount = billingCycle === "ANNUAL" 
+      ? planPricing.annualPrice 
+      : planPricing.monthlyPrice;
+
+    // Apply promo code pricing
+    if (promoCode && promoCode.discountType === "FLAT_FEE" && promoCode.flatFeeAmount) {
+      subscriptionAmount = billingCycle === "ANNUAL"
+        ? promoCode.flatFeeAmount.toNumber() * 12
+        : promoCode.flatFeeAmount.toNumber();
+    }
+
+    // Create Stripe subscription
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2024-11-20.acacia",
+    });
+
+    // Create Stripe customer if not exists
+    const customers = await stripe.customers.list({
+      email: user.email!,
+      limit: 1,
+    });
+
+    let customerId: string;
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
+    } else {
+      const customer = await stripe.customers.create({
+        email: user.email!,
+        name: user.name || undefined,
+        payment_method: paymentMethodId,
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+        metadata: {
+          userId: user.id,
+          plan: plan,
+        },
+      });
+      customerId = customer.id;
+    }
+
+    // Attach payment method to customer
+    await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customerId,
+    });
+
+    await stripe.customers.update(customerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
+    });
+
+    // Create subscription with custom amount
+    const subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `OnTarget ERP - ${plan} Plan`,
+              description: promoCode 
+                ? `${plan} plan with promo code: ${promoCode.code}`
+                : `${plan} plan`,
+            },
+            unit_amount: Math.round(subscriptionAmount * 100), // Convert to cents
+            recurring: {
+              interval: billingCycle === "ANNUAL" ? "year" : "month",
+            },
+          },
+        },
+      ],
+      payment_behavior: "default_incomplete",
+      payment_settings: { payment_method_types: ["card"] },
+      expand: ["latest_invoice.payment_intent"],
+      metadata: {
+        userId: user.id,
+        plan: plan,
+        billingCycle: billingCycle || "MONTHLY",
+        promoCodeId: promoCodeId || "",
+        promoCode: promoCode?.code || "",
+      },
+    });
+
     // Update user's plan
     await db.user.update({
       where: { id: user.id },
@@ -66,23 +195,37 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Increment promo code usage if used
+    if (promoCode) {
+      await db.promoCode.update({
+        where: { id: promoCode.id },
+        data: {
+          timesUsed: { increment: 1 },
+        },
+      });
+    }
+
     // Create audit log
     await createAuditLog({
       userId: user.id,
       action: "USER_PLAN_SELECTED",
       description: `User selected plan: ${plan} (${
         billingCycle || "MONTHLY"
-      } billing) via OAuth flow`,
+      } billing)${promoCode ? ` with promo code: ${promoCode.code}` : ""}`,
+      metadata: JSON.stringify({
+        plan,
+        billingCycle,
+        subscriptionAmount,
+        promoCode: promoCode?.code || null,
+        stripeSubscriptionId: subscription.id,
+      }),
     });
 
     return NextResponse.json({
       success: true,
       message: "Plan selected successfully",
       plan: plan,
-    });
-  } catch (error) {
-    console.error("Error selecting plan:", error);
-    return NextResponse.json(
+      subscriptionId: subscription.id,
       { success: false, message: "Failed to select plan" },
       { status: 500 }
     );
