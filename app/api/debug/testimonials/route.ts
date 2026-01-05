@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") || "all";
     const limit = Math.min(1000, Number(searchParams.get("limit") || 100));
 
-    const where: any = {};
+    const where: Prisma.TestimonialWhereInput = {};
     if (companyId) where.companyId = companyId;
     if (status && status !== "all") where.status = status.toUpperCase();
 
@@ -42,11 +43,22 @@ export async function GET(request: NextRequest) {
     });
 
     // Company aggregates (which companyIds actually have testimonials?)
-    let companyAggregates: any[] = [];
-    let companySamples: any[] = [];
+    let companyAggregates: Array<{ companyId: string; count: number }> = [];
+    let companySamples: Array<{
+      companyId: string;
+      count: number;
+      sample: {
+        id: string;
+        customerName: string | null;
+        createdAt: Date;
+        status: string;
+      } | null;
+    }> = [];
     try {
       // Use raw SQL to aggregate by companyId (safe and avoids Prisma groupBy TS issues)
-      const raw: any[] = await db.$queryRaw`
+      const raw = await db.$queryRaw<
+        Array<{ companyId: string; count: bigint }>
+      >`
         SELECT companyId, COUNT(*) as count
         FROM testimonial
         GROUP BY companyId
@@ -84,8 +96,10 @@ export async function GET(request: NextRequest) {
     // Try to read current DB name (MySQL)
     let dbName: string | null = null;
     try {
-      const dbRes: any = await db.$queryRaw`SELECT DATABASE() as db`;
-      dbName = Array.isArray(dbRes) ? dbRes[0]?.db ?? null : dbRes?.db ?? null;
+      const dbRes = await db.$queryRaw<
+        Array<{ db: string }>
+      >`SELECT DATABASE() as db`;
+      dbName = dbRes[0]?.db ?? null;
     } catch (e) {
       console.error("[Debug Testimonials] Failed to read DB name:", e);
     }

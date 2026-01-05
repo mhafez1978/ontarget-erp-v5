@@ -42,20 +42,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Website not found" }, { status: 404 });
     }
 
-    // Verify user has access to this company
-    const hasAccess = await db.companyUser.findFirst({
+    // Verify user has access: either they created the website OR they have companyUser access
+    const isOwner = website.userId === userId;
+    const hasCompanyAccess = await db.companyMember.findFirst({
       where: {
         userId,
         companyId: website.companyId,
       },
     });
 
-    if (!hasAccess) {
+    if (!isOwner && !hasCompanyAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     // Parse current website data
-    const websiteData = website.data as V4Website;
+    const websiteData = website.websiteData as unknown as V4Website;
 
     if (!websiteData?.pages) {
       return NextResponse.json(
@@ -185,11 +186,6 @@ export async function POST(req: NextRequest) {
     page.components[componentIndex] = {
       ...component,
       componentCode: updatedHtml,
-      metadata: {
-        ...component.metadata,
-        lastEditedAt: new Date().toISOString(),
-        editedBy: userId,
-      },
     };
 
     // Update the page in the website
@@ -199,7 +195,7 @@ export async function POST(req: NextRequest) {
     await db.v4Website.update({
       where: { id: websiteId },
       data: {
-        data: websiteData,
+        websiteData: JSON.parse(JSON.stringify(websiteData)),
         updatedAt: new Date(),
       },
     });
