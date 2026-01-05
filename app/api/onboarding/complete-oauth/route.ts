@@ -185,7 +185,6 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit completion with geo-location data
-    const clientIp = getClientIp(request);
     await createAuditLog({
       action: AUDIT_ACTIONS.ONBOARDING_COMPLETED,
       userId: result.user.id,
