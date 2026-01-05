@@ -849,6 +849,8 @@ export default function StorefrontPage() {
         },
       };
 
+      console.log("[Storefront Save] Saving sections:", themeSections);
+
       const response = await fetch(
         `/api/company/storefront?companyId=${selectedCompanyId}`,
         {
@@ -863,6 +865,7 @@ export default function StorefrontPage() {
         throw new Error(error.error || "Failed to save settings");
       }
 
+      console.log("[Storefront Save] Successfully saved!");
       toast.success("Storefront settings saved successfully!");
     } catch (error) {
       console.error("Error saving storefront settings:", error);

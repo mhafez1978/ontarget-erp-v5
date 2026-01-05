@@ -61,6 +61,8 @@ RUN echo "root:${ROOT_PASSWORD}" | chpasswd
 # Allow nextjs user to use sudo
 RUN echo "nextjs ALL=(ALL) NOPASSWD: /usr/local/bin/node" > /etc/sudoers.d/nextjs && \
     echo "nextjs ALL=(ALL) NOPASSWD: /usr/local/bin/npx" >> /etc/sudoers.d/nextjs && \
+    echo "nextjs ALL=(ALL) NOPASSWD: /usr/local/bin/npm" >> /etc/sudoers.d/nextjs && \
+    echo "nextjs ALL=(ALL) NOPASSWD: /bin/su" >> /etc/sudoers.d/nextjs && \
     chmod 0440 /etc/sudoers.d/nextjs
 
 # Install Prisma CLI globally with correct ownership
