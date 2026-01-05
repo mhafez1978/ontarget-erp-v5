@@ -17,6 +17,7 @@ import {
   CreditCard,
   Lock,
   Webhook,
+  AlertTriangle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -47,6 +48,7 @@ import { AddTeamMemberDialog } from "@/components/add-team-member-dialog";
 import { PricingManagement } from "@/components/admin/pricing-management";
 import { PasswordManagementTab } from "@/components/password-management-tab";
 import { WebhookManager } from "@/components/dashboard/webhook-manager";
+import { DangerZone } from "@/components/danger-zone";
 import {
   getModelsForProvider,
   estimateGenerationCost,
@@ -3311,6 +3313,27 @@ export default function SettingsPage() {
               <AccordionContent>
                 <div className="pt-4">
                   <SubscriptionPlanCards />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Danger Zone - Only for company owners (ADMIN) */}
+          {user.role === "ADMIN" && user.companyId && (
+            <AccordionItem value="danger-zone">
+              <AccordionTrigger className="text-xl font-semibold">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  <span className="text-destructive">Danger Zone</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-4">
+                  <DangerZone
+                    companyId={user.companyId}
+                    companyName={"Your Company"}
+                    isOwner={true}
+                  />
                 </div>
               </AccordionContent>
             </AccordionItem>
