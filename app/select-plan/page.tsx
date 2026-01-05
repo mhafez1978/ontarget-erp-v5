@@ -442,7 +442,9 @@ export default function SelectPlanPage() {
     }
 
     if (!paymentMethodId) {
-      toast.error("Please add a payment method");
+      toast.error(
+        "Payment method is still being processed. Please wait a moment and try again."
+      );
       return;
     }
 
@@ -722,9 +724,15 @@ export default function SelectPlanPage() {
                   </CardHeader>
                   <CardContent>
                     <PaymentForm
+                      initialCardHolder={onboardUser?.name || ""}
                       onCardDataChange={setCardData}
                       onValidationChange={setIsPaymentValid}
                       onPaymentMethodCreated={(id, details) => {
+                        console.log(
+                          "[Select Plan] Payment method created:",
+                          id,
+                          details
+                        );
                         setPaymentMethodId(id);
                         setPaymentSummary({
                           brand: details?.brand,
@@ -757,13 +765,18 @@ export default function SelectPlanPage() {
                 <Button
                   size="lg"
                   onClick={handleSelectPlan}
-                  disabled={!isPaymentValid || isLoading}
+                  disabled={!isPaymentValid || !paymentMethodId || isLoading}
                   className="min-w-[200px]"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Processing...
+                    </>
+                  ) : !paymentMethodId && isPaymentValid ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing payment...
                     </>
                   ) : (
                     "Complete Setup"

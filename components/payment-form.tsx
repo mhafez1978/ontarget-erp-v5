@@ -209,12 +209,23 @@ export function PaymentForm({
   // Create payment method when form is valid
   useEffect(() => {
     const createPaymentMethod = async () => {
-      if (!stripe || !elements || !isFormValid) return;
+      if (!stripe || !elements || !isFormValid) {
+        console.log("[PaymentForm] Skipping payment method creation:", {
+          stripe: !!stripe,
+          elements: !!elements,
+          isFormValid,
+        });
+        return;
+      }
       if (onPaymentMethodCreated) {
         try {
           const cardElement = elements.getElement(CardNumberElement);
-          if (!cardElement) return;
+          if (!cardElement) {
+            console.log("[PaymentForm] Card element not found");
+            return;
+          }
 
+          console.log("[PaymentForm] Creating payment method...");
           const { error, paymentMethod } = await stripe.createPaymentMethod({
             type: "card",
             card: cardElement,
@@ -224,15 +235,22 @@ export function PaymentForm({
           });
 
           if (error) {
-            console.error("Payment method creation error:", error);
+            console.error(
+              "[PaymentForm] Payment method creation error:",
+              error
+            );
           } else if (paymentMethod) {
+            console.log(
+              "[PaymentForm] Payment method created successfully:",
+              paymentMethod.id
+            );
             onPaymentMethodCreated(paymentMethod.id, {
               brand: paymentMethod.card?.brand,
               last4: paymentMethod.card?.last4,
             });
           }
         } catch (error) {
-          console.error("Payment method creation failed:", error);
+          console.error("[PaymentForm] Payment method creation failed:", error);
         }
       }
     };
