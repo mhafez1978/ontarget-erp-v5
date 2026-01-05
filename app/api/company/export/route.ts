@@ -111,12 +111,9 @@ export async function GET(request: NextRequest) {
       projects,
       tasks,
       storefrontOrders,
-      companyFiles,
       locations,
       teams,
-      emailSettings,
       storageSettings,
-      geoSettings,
     ] = await Promise.all([
       // Company details
       db.company.findUnique({
@@ -129,7 +126,6 @@ export async function GET(request: NextRequest) {
                   id: true,
                   name: true,
                   email: true,
-                  phone: true,
                   role: true,
                 },
               },
@@ -154,7 +150,6 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
-              phone: true,
             },
           },
         },
@@ -174,7 +169,6 @@ export async function GET(request: NextRequest) {
           id: true,
           name: true,
           email: true,
-          phone: true,
           addressLine1: true,
           addressLine2: true,
           city: true,
@@ -222,7 +216,7 @@ export async function GET(request: NextRequest) {
               name: true,
             },
           },
-          assignee: {
+          assignedTo: {
             select: {
               id: true,
               user: {
@@ -313,7 +307,6 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           provider: true,
-          isConfigured: true,
           bucketName: true,
         },
       }),
@@ -368,48 +361,40 @@ export async function GET(request: NextRequest) {
         secondaryColor: company.secondaryColor,
         accentColor: company.accentColor,
         owner: company.owner,
-        members: company.members.map((m) => ({
+        members: company.members.map((m: { role: string; user: { id: string; name: string | null; email: string | null; role: string } }) => ({
           role: m.role,
           user: m.user,
         })),
       },
-      staff: staff.map((s) => ({
+      staff: staff.map((s: typeof staff[0]) => ({
         userId: s.userId,
         userName: s.user.name,
         userEmail: s.user.email,
-        userPhone: s.user.phone,
         role: s.role,
         jobTitle: s.jobTitle,
-        department: s.department,
         employmentType: s.employmentType,
         status: s.status,
         hireDate: s.hireDate,
         terminationDate: s.terminationDate,
-        salary: s.salary,
-        hourlyRate: s.hourlyRate,
         city: s.city,
         state: s.state,
         country: s.country,
         countryCode: s.countryCode,
       })),
       customers,
-      products: products.map((p) => ({
+      products: products.map((p: typeof products[0]) => ({
         name: p.name,
         description: p.description,
         sku: p.sku,
         price: p.price,
-        cost: p.cost,
-        stockQuantity: p.stockQuantity,
-        lowStockThreshold: p.lowStockThreshold,
+        unitCost: p.unitCost,
+        quantity: p.quantity,
+        lowStockAlert: p.lowStockAlert,
         category: p.category,
-        tags: p.tags,
         isActive: p.isActive,
-        images: p.images,
-        weight: p.weight,
-        dimensions: p.dimensions,
         createdAt: p.createdAt,
       })),
-      services: services.map((s) => ({
+      services: services.map((s: typeof services[0]) => ({
         name: s.name,
         description: s.description,
         price: s.price,
@@ -418,11 +403,10 @@ export async function GET(request: NextRequest) {
         isActive: s.isActive,
         createdAt: s.createdAt,
       })),
-      projects: projects.map((p) => ({
+      projects: projects.map((p: typeof projects[0]) => ({
         name: p.name,
         description: p.description,
         status: p.status,
-        priority: p.priority,
         startDate: p.startDate,
         endDate: p.endDate,
         budget: p.budget,
@@ -430,7 +414,7 @@ export async function GET(request: NextRequest) {
         teamName: p.team?.name,
         createdAt: p.createdAt,
       })),
-      tasks: tasks.map((t) => ({
+      tasks: tasks.map((t: typeof tasks[0]) => ({
         title: t.title,
         description: t.description,
         status: t.status,
@@ -438,15 +422,13 @@ export async function GET(request: NextRequest) {
         dueDate: t.dueDate,
         projectId: t.projectId,
         projectName: t.project.name,
-        assigneeEmail: t.assignee?.user.email,
-        estimatedHours: t.estimatedHours,
-        actualHours: t.actualHours,
+        assigneeEmail: t.assignedTo?.user.email,
         createdAt: t.createdAt,
       })),
-      orders: storefrontOrders.map((o) => ({
+      orders: storefrontOrders.map((o: typeof storefrontOrders[0]) => ({
         orderNumber: o.orderNumber,
         status: o.status,
-        totalAmount: o.totalAmount,
+        total: o.total,
         customerEmail: o.customerEmail,
         customerName: o.customerName,
         customerPhone: o.customerPhone,
@@ -454,17 +436,16 @@ export async function GET(request: NextRequest) {
         billingAddress: o.billingAddress,
         paymentMethod: o.paymentMethod,
         customerNotes: o.customerNotes,
-        items: o.items.map((i) => ({
-          productName: i.product.name,
-          productSku: i.product.sku,
+        items: o.items.map((i: typeof o.items[0]) => ({
+          itemName: i.itemName,
+          itemSku: i.itemSku,
           quantity: i.quantity,
-          unitPrice: i.unitPrice,
-          subtotal: i.subtotal,
+          price: i.price,
+          total: i.total,
         })),
         createdAt: o.createdAt,
       })),
-      files: companyFiles,
-      locations: locations.map((l) => ({
+      locations: locations.map((l: typeof locations[0]) => ({
         name: l.name,
         type: l.type,
         isMain: l.isMain,
@@ -477,18 +458,16 @@ export async function GET(request: NextRequest) {
         phone: l.phone,
         email: l.email,
       })),
-      teams: teams.map((t) => ({
+      teams: teams.map((t: typeof teams[0]) => ({
         name: t.name,
         description: t.description,
-        members: t.members.map((m) => ({
+        members: t.members.map((m: typeof t.members[0]) => ({
           staffEmail: m.staff.user.email,
           staffName: m.staff.user.name,
         })),
       })),
       settings: {
-        email: emailSettings,
         storage: storageSettings,
-        geoTracking: geoSettings,
       },
     };
 
@@ -510,7 +489,6 @@ export async function GET(request: NextRequest) {
             projects: projects.length,
             tasks: tasks.length,
             orders: storefrontOrders.length,
-            files: companyFiles.length,
           },
         }),
       },
