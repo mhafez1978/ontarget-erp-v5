@@ -67,6 +67,11 @@ export async function GET(request: NextRequest) {
         storeBanner: true,
         storeMetadata: true,
         storeBlogEnabled: true,
+        facebookUrl: true,
+        twitterUrl: true,
+        instagramUrl: true,
+        linkedinUrl: true,
+        youtubeUrl: true,
       },
     });
 
@@ -148,6 +153,11 @@ export async function PUT(request: NextRequest) {
       storeTheme,
       storeMetadata,
       storeBlogEnabled,
+      facebookUrl,
+      twitterUrl,
+      instagramUrl,
+      linkedinUrl,
+      youtubeUrl,
     } = body;
 
     // Validate slug format
@@ -217,6 +227,11 @@ export async function PUT(request: NextRequest) {
         storeTheme,
         storeMetadata,
         storeBlogEnabled,
+        facebookUrl,
+        twitterUrl,
+        instagramUrl,
+        linkedinUrl,
+        youtubeUrl,
       },
       select: {
         slug: true,
@@ -227,6 +242,11 @@ export async function PUT(request: NextRequest) {
         storeBanner: true,
         storeMetadata: true,
         storeBlogEnabled: true,
+        facebookUrl: true,
+        twitterUrl: true,
+        instagramUrl: true,
+        linkedinUrl: true,
+        youtubeUrl: true,
       },
     });
 

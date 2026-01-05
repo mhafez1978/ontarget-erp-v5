@@ -358,6 +358,13 @@ model Company {
   certifications     Json? // Array of certification names
   awards             Json? // Array of award names
 
+  // Social media links
+  facebookUrl  String?
+  twitterUrl   String?
+  instagramUrl String?
+  linkedinUrl  String?
+  youtubeUrl   String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // (no composite indexes added here by accident)

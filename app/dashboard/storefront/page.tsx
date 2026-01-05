@@ -78,19 +78,18 @@ interface StorefrontSettings {
     title?: string;
     description?: string;
     keywords?: string[];
-    socialLinks?: {
-      facebook?: string;
-      twitter?: string;
-      instagram?: string;
-      linkedin?: string;
-      youtube?: string;
-    };
     contactEmail?: string;
     contactPhone?: string;
     // Optional persisted layout/content overrides for ThemeRenderer
     sections?: ThemeSection[];
   } | null;
   storeBlogEnabled?: boolean;
+  // Social media links (moved from storeMetadata.socialLinks to dedicated columns)
+  facebookUrl?: string | null;
+  twitterUrl?: string | null;
+  instagramUrl?: string | null;
+  linkedinUrl?: string | null;
+  youtubeUrl?: string | null;
 }
 
 interface Company {
@@ -967,15 +966,10 @@ export default function StorefrontPage() {
   };
 
   const updateSocialLink = (platform: string, url: string) => {
+    const fieldName = `${platform}Url` as keyof StorefrontSettings;
     setSettings((prev) => ({
       ...prev,
-      storeMetadata: {
-        ...prev.storeMetadata,
-        socialLinks: {
-          ...(prev.storeMetadata?.socialLinks || {}),
-          [platform]: url,
-        },
-      },
+      [fieldName]: url,
     }));
   };
 
@@ -1943,7 +1937,7 @@ export default function StorefrontPage() {
                   <Input
                     id="facebook"
                     placeholder="https://facebook.com/mystore"
-                    value={settings.storeMetadata?.socialLinks?.facebook || ""}
+                    value={settings.facebookUrl || ""}
                     onChange={(e) =>
                       updateSocialLink("facebook", e.target.value)
                     }
@@ -1955,7 +1949,7 @@ export default function StorefrontPage() {
                   <Input
                     id="twitter"
                     placeholder="https://twitter.com/mystore"
-                    value={settings.storeMetadata?.socialLinks?.twitter || ""}
+                    value={settings.twitterUrl || ""}
                     onChange={(e) =>
                       updateSocialLink("twitter", e.target.value)
                     }
@@ -1967,7 +1961,7 @@ export default function StorefrontPage() {
                   <Input
                     id="instagram"
                     placeholder="https://instagram.com/mystore"
-                    value={settings.storeMetadata?.socialLinks?.instagram || ""}
+                    value={settings.instagramUrl || ""}
                     onChange={(e) =>
                       updateSocialLink("instagram", e.target.value)
                     }
@@ -1979,7 +1973,7 @@ export default function StorefrontPage() {
                   <Input
                     id="linkedin"
                     placeholder="https://linkedin.com/company/mystore"
-                    value={settings.storeMetadata?.socialLinks?.linkedin || ""}
+                    value={settings.linkedinUrl || ""}
                     onChange={(e) =>
                       updateSocialLink("linkedin", e.target.value)
                     }
@@ -1991,7 +1985,7 @@ export default function StorefrontPage() {
                   <Input
                     id="youtube"
                     placeholder="https://youtube.com/@mystore"
-                    value={settings.storeMetadata?.socialLinks?.youtube || ""}
+                    value={settings.youtubeUrl || ""}
                     onChange={(e) =>
                       updateSocialLink("youtube", e.target.value)
                     }
