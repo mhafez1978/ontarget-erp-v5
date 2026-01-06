@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -40,11 +40,7 @@ export function StripeConnectSettings({
   const [connecting, setConnecting] = useState(false);
   const [feeInfo, setFeeInfo] = useState<PlatformFeeInfo | null>(null);
 
-  useEffect(() => {
-    fetchFeeInfo();
-  }, [companyId]);
-
-  const fetchFeeInfo = async () => {
+  const fetchFeeInfo = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -61,7 +57,11 @@ export function StripeConnectSettings({
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
+
+  useEffect(() => {
+    fetchFeeInfo();
+  }, [fetchFeeInfo]);
 
   const handleConnectStripe = async () => {
     try {
@@ -240,7 +240,7 @@ export function StripeConnectSettings({
             </Button>
 
             <p className="text-xs text-muted-foreground text-center">
-              You'll be redirected to Stripe to create or link your account
+              You&apos;ll be redirected to Stripe to create or link your account
             </p>
           </>
         ) : (

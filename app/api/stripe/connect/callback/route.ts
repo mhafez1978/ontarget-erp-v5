@@ -3,9 +3,11 @@ import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-10-29.clover",
-});
+function getStripeClient() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2025-10-29.clover",
+  });
+}
 
 /**
  * Stripe Connect OAuth Callback
@@ -56,6 +58,7 @@ export async function GET(request: Request) {
     }
 
     // Exchange authorization code for access token
+    const stripe = getStripeClient();
     const response = await stripe.oauth.token({
       grant_type: "authorization_code",
       code,
