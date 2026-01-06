@@ -7,6 +7,7 @@ import type {
   Payment as PrismaPayment,
 } from "@prisma/client";
 import Stripe from "stripe";
+import { storeInvoicePDF } from "@/lib/invoice-storage";
 
 export async function POST(request: NextRequest) {
   // webhook audit record (declared outer so catch can reference it)
@@ -100,6 +101,25 @@ export async function POST(request: NextRequest) {
         case "invoice.payment_succeeded": {
           const invoice = event.data.object as any; // Stripe.Invoice with expanded properties
           const subscriptionId = invoice.subscription as string | undefined;
+
+          // Try to find userId from subscription metadata
+          let userId: string | undefined;
+          if (subscriptionId) {
+            try {
+              const stripe = (
+                paymentsService.instantiateStripeProviderFromGateway(
+                  gateway
+                ) as any
+              ).stripe;
+              const stripeSub = await stripe.subscriptions.retrieve(
+                subscriptionId
+              );
+              userId = stripeSub.metadata?.userId;
+            } catch (err) {
+              console.error("Failed to retrieve subscription for userId:", err);
+            }
+          }
+
           // Upsert an Invoice record for this Stripe invoice
           let localInvoice: PrismaInvoice | undefined = undefined;
           try {
@@ -134,6 +154,7 @@ export async function POST(request: NextRequest) {
                 data: {
                   invoiceNumber: `STRIPE-${invoice.number || invoice.id}`,
                   companyId: gateway.companyId,
+                  userId: userId, // Link to user if available
                   type: "SUBSCRIPTION",
                   status: invoice.paid ? "PAID" : "SENT",
                   customerEmail: invoice.customer_email || undefined,
@@ -160,6 +181,41 @@ export async function POST(request: NextRequest) {
                   notes: invoice.description || undefined,
                 },
               });
+            }
+
+            // Store invoice PDF in company file tree (only if user has a company)
+            if (
+              localInvoice &&
+              localInvoice.externalInvoiceUrl &&
+              !localInvoice.fileRecordId &&
+              userId
+            ) {
+              try {
+                // Check if user has a company
+                const userCompany = await db.companyMember.findFirst({
+                  where: { userId: userId },
+                  select: { companyId: true },
+                });
+
+                if (userCompany) {
+                  // User has a company, store PDF immediately
+                  await storeInvoicePDF({
+                    companyId: userCompany.companyId,
+                    invoiceId: localInvoice.id,
+                    stripeInvoicePdfUrl: localInvoice.externalInvoiceUrl,
+                    invoiceNumber: localInvoice.invoiceNumber,
+                    userId: userId,
+                  });
+                } else {
+                  // User doesn't have company yet, will be transferred later
+                  console.log(
+                    `Invoice ${localInvoice.invoiceNumber} will be stored in file tree after company creation`
+                  );
+                }
+              } catch (pdfError) {
+                console.error("Failed to store invoice PDF:", pdfError);
+                // Don't fail the webhook if PDF storage fails
+              }
             }
 
             // Create Payment record and mark subscription active

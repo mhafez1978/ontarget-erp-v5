@@ -299,6 +299,12 @@ model Company {
   invoices        Invoice[]
   payments        Payment[]
 
+  // Stripe Connect (for marketplace platform fees)
+  stripeConnectedAccountId String?   @unique // Stripe Connected Account ID
+  stripeAccountStatus      String?   @default("not_connected") // "not_connected", "pending", "active", "restricted"
+  stripeOnboardedAt        DateTime? // When they completed Stripe Connect onboarding
+  customPlatformFeePercent Decimal?  @db.Decimal(5, 2) // Override platform fee (null = use plan default)
+
   // AI storefront usage
   aiStorefrontGenerations AiStorefrontGenerationLog[]
   storefrontConversations StorefrontConversation[]
@@ -1246,10 +1252,11 @@ model PaymentGateway {
   isTestMode Boolean @default(true) // Test vs Production environment
 
   // Encrypted credentials (use encryption library before storing)
-  publicKey     String? @db.Text // Publishable/Public key (less sensitive)
-  secretKey     String? @db.Text // Secret/Private key (ENCRYPTED)
-  webhookSecret String? @db.Text // Webhook signing secret (ENCRYPTED)
-  merchantId    String? // Additional provider-specific ID
+  publicKey             String? @db.Text // Publishable/Public key (less sensitive)
+  secretKey             String? @db.Text // Secret/Private key (ENCRYPTED)
+  webhookSecret         String? @db.Text // Webhook signing secret (ENCRYPTED)
+  merchantId            String? // Additional provider-specific ID
+  stripeConnectClientId String? @db.Text // Stripe Connect OAuth Client ID (for marketplace platform fees)
 
   // Configuration
   config Json? // Provider-specific settings: { currency: "USD", statementDescriptor: "MyStore" }
@@ -1354,6 +1361,10 @@ model Invoice {
   createdBy String? // User ID who created
   sentAt    DateTime?
 
+  // File storage relation
+  fileRecordId String?     @unique // Link to PDF file in file tree
+  fileRecord   FileRecord? @relation(fields: [fileRecordId], references: [id], onDelete: SetNull)
+
   // Relations
   company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -1369,6 +1380,7 @@ model Invoice {
   @@index([status])
   @@index([type])
   @@index([dueDate])
+  @@index([fileRecordId])
 }
 
 // Payment Transaction Model (universal payment records)
@@ -2465,8 +2477,11 @@ model FileRecord {
   storageProvider String
 
   // Uploader
-  uploadedById String
-  uploadedBy   User   @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  uploadedById String?
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  // Invoice link (if this file is an invoice PDF)
+  invoice Invoice?
 
   // Metadata
   description String? @db.Text

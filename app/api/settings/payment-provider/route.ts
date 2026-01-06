@@ -15,6 +15,7 @@ interface PaymentProviderSettingsBody {
   publicKey?: string;
   secretKey?: string;
   webhookSecret?: string;
+  stripeConnectClientId?: string;
   isTestMode?: boolean;
 }
 
@@ -91,6 +92,7 @@ export async function GET(request: NextRequest) {
         isEnabled: gateway.isEnabled,
         isTestMode: gateway.isTestMode,
         publicKey: gateway.publicKey,
+        stripeConnectClientId: gateway.stripeConnectClientId,
         lastTestedAt: gateway.lastTestedAt,
         lastTestResult: gateway.lastTestResult,
       };
@@ -122,6 +124,7 @@ export async function POST(request: NextRequest) {
       publicKey,
       secretKey,
       webhookSecret,
+      stripeConnectClientId,
       isTestMode,
     } = body as PaymentProviderSettingsBody;
 
@@ -184,6 +187,8 @@ export async function POST(request: NextRequest) {
 
     if (secretKey) dataToSave.secretKey = encrypt(secretKey);
     if (webhookSecret) dataToSave.webhookSecret = encrypt(webhookSecret);
+    if (stripeConnectClientId)
+      dataToSave.stripeConnectClientId = stripeConnectClientId;
 
     if (existing) {
       // Only update publicKey if provided (else leave as-is)
@@ -202,6 +207,7 @@ export async function POST(request: NextRequest) {
           publicKey: encryptedPublicForCreate,
           secretKey: secretKey ? encrypt(secretKey) : null,
           webhookSecret: webhookSecret ? encrypt(webhookSecret) : null,
+          stripeConnectClientId: stripeConnectClientId || null,
           isTestMode: isTestMode ?? true,
           configuredBy: user.id,
         },
