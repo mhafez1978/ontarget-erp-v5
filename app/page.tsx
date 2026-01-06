@@ -6,7 +6,7 @@ import { HeroBanner } from "@/components/hero-banner/HeroBanner";
 import { CloudKitchenHero } from "@/components/hero-banner/CloudKitchenHero";
 import { FlamingPanHero } from "@/components/hero-banner/FlamingPanHero";
 import { MechanicsTaregtedHero } from "@/components/hero-banner/MechanicsTaregtedHero";
-import { FeaturesShowcase } from "@/components/hero-banner/FeaturesShowcase";
+//import { FeaturesShowcase } from "@/components/hero-banner/FeaturesShowcase";
 
 // Lazy load below-the-fold components to reduce initial JS
 const CTA1Section = dynamic(() =>
@@ -130,7 +130,7 @@ export default async function HomePage() {
       <FlamingPanHero />
       <MechanicsTaregtedHero />
       <CloudKitchenHero />
-      <FeaturesShowcase />
+      {/* <FeaturesShowcase /> */}
       {/* <SocialProof /> */}
       {/* Hero Section */}
       {/* <HeroSection /> */}
