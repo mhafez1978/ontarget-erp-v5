@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { Flame, ChefHat, Clock, Zap, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export const CloudKitchenHero: React.FC = () => {
   return (
@@ -47,14 +48,14 @@ export const CloudKitchenHero: React.FC = () => {
 
             {/* CTA */}
             <div className="pt-8">
-              <a
-                href="/signup"
+              <Link
+                href="/register?trial=true"
                 className="group inline-flex items-center gap-4 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xl px-10 py-6 rounded-full shadow-2xl transform hover:scale-105 transition-all duration-300"
               >
                 <ChefHat className="w-8 h-8" />
                 Start Your Free 14-Day Trial
                 <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
-              </a>
+              </Link>
               <p className="mt-4 text-gray-400">
                 No credit card required • Unlimited orders during trial
               </p>

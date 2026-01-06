@@ -1,6 +1,7 @@
 import React from "react";
 import { Shield, Zap, Building, ArrowRight, Sparkles } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export const FeaturesShowcase: React.FC = () => {
   return (
@@ -184,13 +185,13 @@ export const FeaturesShowcase: React.FC = () => {
 
         {/* Final Epic CTA */}
         <div className="text-center mt-32">
-          <a
-            href="/signup"
+          <Link
+            href="/register?trial=true"
             className="group inline-flex items-center gap-6 bg-linear-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-3xl px-16 py-8 rounded-full shadow-2xl transform hover:scale-110 transition-all duration-500"
           >
             Launch Your Free 14-Day Trial
             <ArrowRight className="w-10 h-10 group-hover:translate-x-4 transition-transform" />
-          </a>
+          </Link>
           <p className="mt-8 text-2xl text-gray-400">
             No credit card • Instant access to the entire universe
           </p>

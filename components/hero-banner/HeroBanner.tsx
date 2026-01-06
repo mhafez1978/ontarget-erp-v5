@@ -30,7 +30,7 @@ export const HeroBanner: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
           <Link
-            href="/register" // Replace with your actual signup URL
+            href="/register?trial=true" // Replace with your actual signup URL
             className="px-10 py-5 bg-white text-purple-900 font-semibold text-xl rounded-full shadow-2xl hover:shadow-purple-500/50 transform hover:scale-105 transition-all duration-300"
           >
             Sign Up for a Free Trial
