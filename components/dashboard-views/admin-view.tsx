@@ -19,10 +19,6 @@ export function AdminView({ userName, companyId }: AdminViewProps) {
       <h1 className="text-3xl font-bold tracking-tight">
         Welcome {userName || "Guest"}!
       </h1>
-      <p className="text-muted-foreground">
-        You have administrative access to manage users, settings, and business
-        operations.
-      </p>
 
       {companyId && (
         <div className="max-w-md">
