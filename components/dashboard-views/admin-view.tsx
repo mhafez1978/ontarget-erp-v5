@@ -6,7 +6,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-;
 import { ClockInOutWidget } from "@/components/clock-in-out-widget";
 
 interface AdminViewProps {
@@ -18,7 +17,7 @@ export function AdminView({ userName, companyId }: AdminViewProps) {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">
-        You are an Admin, welcome {userName || "Guest"}!
+        Welcome {userName || "Guest"}!
       </h1>
       <p className="text-muted-foreground">
         You have administrative access to manage users, settings, and business
