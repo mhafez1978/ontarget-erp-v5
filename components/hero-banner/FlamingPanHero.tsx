@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export const FlamingPanHero: React.FC = () => {
   return (
@@ -53,12 +54,12 @@ export const FlamingPanHero: React.FC = () => {
 
         {/* Strong CTA */}
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-          <a
-            href="/signup"
+          <Link
+            href="/register?trial=true"
             className="px-12 py-6 bg-purple-600 text-white font-bold text-2xl rounded-full shadow-2xl hover:shadow-purple-500/60 hover:bg-purple-700 transform hover:scale-105 transition-all duration-300"
           >
             Start Your Free 14-Day Trial
-          </a>
+          </Link>
 
           <a
             href="/demo"

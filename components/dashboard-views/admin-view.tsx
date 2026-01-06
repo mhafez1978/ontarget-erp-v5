@@ -6,7 +6,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-;
 import { ClockInOutWidget } from "@/components/clock-in-out-widget";
 
 interface AdminViewProps {
@@ -18,12 +17,8 @@ export function AdminView({ userName, companyId }: AdminViewProps) {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">
-        You are an Admin, welcome {userName || "Guest"}!
+        Welcome {userName || "Guest"}!
       </h1>
-      <p className="text-muted-foreground">
-        You have administrative access to manage users, settings, and business
-        operations.
-      </p>
 
       {companyId && (
         <div className="max-w-md">
@@ -32,7 +27,12 @@ export function AdminView({ userName, companyId }: AdminViewProps) {
       )}
 
       {/* Audit Logs Display in Accordion */}
-      <Accordion type="single" collapsible className="w-full">
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue="audit-logs"
+        className="w-full"
+      >
         <AccordionItem value="audit-logs">
           <AccordionTrigger className="text-lg font-semibold">
             <div className="flex items-center gap-2">
