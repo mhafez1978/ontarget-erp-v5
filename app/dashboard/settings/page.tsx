@@ -746,6 +746,10 @@ export default function SettingsPage() {
 
     setOauthLoading({ ...oauthLoading, [provider]: true });
     try {
+      const secret = oauthProviders[provider].clientSecret;
+      // Don't send masked secret - only send if it's a real value (not "••••••••")
+      const shouldSendSecret = secret && !secret.match(/^•+$/);
+
       const response = await fetch("/api/settings/oauth-providers", {
         method: "POST",
         headers: {
@@ -755,7 +759,7 @@ export default function SettingsPage() {
           provider,
           enabled: oauthProviders[provider].enabled,
           clientId: oauthProviders[provider].clientId,
-          clientSecret: oauthProviders[provider].clientSecret,
+          ...(shouldSendSecret && { clientSecret: secret }),
         }),
       });
 
