@@ -52,7 +52,7 @@ export function HeroSection() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-2">
-          <Link href="/register?plan=ESSENTIAL">
+          <Link href="/register">
             <Button size="lg" className="group">
               Get Started Free
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

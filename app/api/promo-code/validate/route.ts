@@ -12,12 +12,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Find promo code by exact match (Prisma MySQL doesn't support case-insensitive by default)
-    const promoCode = await db.promoCode.findUnique({
-      where: {
-        code: code.trim(),
-      },
-    });
+    // Find promo code (case-insensitive by getting all and comparing)
+    const allPromoCodes = await db.promoCode.findMany();
+    const promoCode = allPromoCodes.find(
+      (pc) => pc.code.toUpperCase() === code.trim().toUpperCase()
+    );
 
     if (!promoCode) {
       return NextResponse.json(

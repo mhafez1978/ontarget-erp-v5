@@ -8,6 +8,7 @@ import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
 } from "@/lib/mfa-pending";
+import { decrypt } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,6 +39,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Decrypt the client secret before using it and trim whitespace
+    const clientSecret = decrypt(settings.clientSecret).trim();
+
     // Exchange code for access token
     const tokenResponse = await fetch("https://oauth.yandex.com/token", {
       method: "POST",
@@ -48,7 +52,7 @@ export async function GET(request: NextRequest) {
         grant_type: "authorization_code",
         code,
         client_id: settings.clientId,
-        client_secret: settings.clientSecret,
+        client_secret: clientSecret,
       }),
     });
 
@@ -107,7 +111,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    let isNewUser = false;
+    const isNewUser = false;
 
     if (user) {
       // User exists - check if they can login with OAuth

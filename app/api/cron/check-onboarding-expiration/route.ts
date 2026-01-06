@@ -107,7 +107,10 @@ export async function GET(request: Request) {
           entityType: ENTITY_TYPES.STAFF_MEMBER,
           entityId: staff.id,
           description: `Onboarding token expired for ${staff.user.email}`,
-          metadata: { token: token.token, expiresAt: token.expiresAt.toISOString() },
+          metadata: {
+            token: token.token,
+            expiresAt: token.expiresAt.toISOString(),
+          },
         });
 
         disabledAccounts.push(staff.user.email || "");
@@ -292,7 +295,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         error: "Failed to check onboarding expiration",
-        details: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

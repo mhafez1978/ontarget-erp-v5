@@ -59,6 +59,39 @@ export async function GET(request: NextRequest) {
     // The first one is the real client IP
     const clientIp = forwardedFor?.split(",")[0]?.trim() || realIp;
 
+    // Check if this is a localhost/private IP
+    const isLocalhost =
+      !clientIp ||
+      clientIp === "127.0.0.1" ||
+      clientIp === "::1" ||
+      clientIp === "localhost" ||
+      clientIp.startsWith("192.168.") ||
+      clientIp.startsWith("10.") ||
+      clientIp.startsWith("172.16.");
+
+    // For localhost, return mock data immediately
+    if (isLocalhost) {
+      console.log(
+        `[Get Location] Localhost detected (${
+          clientIp || "unknown"
+        }), returning mock data`
+      );
+      const mockData = {
+        ip: "127.0.0.1",
+        ipv4: "127.0.0.1",
+        ipv6: null,
+        city: "Localhost",
+        region: null,
+        country_name: "Local Development",
+        country_code: "LOCAL",
+        flag: "🏠",
+        latitude: null,
+        longitude: null,
+        timezone: null,
+      };
+      return NextResponse.json(mockData);
+    }
+
     // Cache key - prefer client IP but fall back to server-level key
     const origin = request?.nextUrl?.origin || "unknown";
     const cacheKey = clientIp ? `ip:${clientIp}` : `server:${origin}`;

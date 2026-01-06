@@ -7,6 +7,7 @@ import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
 } from "@/lib/mfa-pending";
+import { decrypt } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,6 +38,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Decrypt the client secret before using it and trim whitespace
+    const clientSecret = decrypt(settings.clientSecret).trim();
+
     // Exchange code for access token
     const tokenResponse = await fetch(
       "https://api.login.yahoo.com/oauth2/get_token",
@@ -45,7 +49,7 @@ export async function GET(request: NextRequest) {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization: `Basic ${Buffer.from(
-            `${settings.clientId}:${settings.clientSecret}`
+            `${settings.clientId}:${clientSecret}`
           ).toString("base64")}`,
         },
         body: new URLSearchParams({

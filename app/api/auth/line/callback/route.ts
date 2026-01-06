@@ -8,6 +8,7 @@ import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
 } from "@/lib/mfa-pending";
+import { decrypt } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,6 +39,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Decrypt the client secret before using it and trim whitespace
+    const clientSecret = decrypt(settings.clientSecret).trim();
+
     // Exchange code for access token
     const tokenResponse = await fetch("https://api.line.me/oauth2/v2.1/token", {
       method: "POST",
@@ -49,7 +53,7 @@ export async function GET(request: NextRequest) {
         code,
         redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/line/callback`,
         client_id: settings.clientId,
-        client_secret: settings.clientSecret,
+        client_secret: clientSecret,
       }),
     });
 

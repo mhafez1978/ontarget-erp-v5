@@ -7,14 +7,8 @@ import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const {
-      name,
-      email,
-      password,
-      systemName,
-      companyName,
-      companySlogan,
-    } = body;
+    const { name, email, password, systemName, companyName, companySlogan } =
+      body;
 
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const normalizedEmail =
@@ -30,7 +24,12 @@ export async function POST(request: NextRequest) {
       typeof companySlogan === "string" ? companySlogan.trim() : "";
 
     // Validate required fields
-    if (!trimmedName || !normalizedEmail || !sanitizedPassword || !trimmedCompanyName) {
+    if (
+      !trimmedName ||
+      !normalizedEmail ||
+      !sanitizedPassword ||
+      !trimmedCompanyName
+    ) {
       return NextResponse.json(
         { error: "All required fields must be provided" },
         { status: 400 }
@@ -111,6 +110,14 @@ export async function POST(request: NextRequest) {
           employmentType: "FULL_TIME",
           status: "ACTIVE",
           hireDate: new Date(),
+        },
+      });
+
+      // Initialize geo tracking settings (enabled by default with free IP-API provider)
+      await tx.geoTrackingSetting.create({
+        data: {
+          enabled: true,
+          provider: "IP_API", // Free provider, no API key needed
         },
       });
 

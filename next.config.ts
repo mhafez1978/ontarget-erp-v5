@@ -65,6 +65,31 @@ const nextConfig: NextConfig = {
         hostname: "robohash.org",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "thumbs.dreamstime.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.prismic.io",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "thumbs.dreamstime.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "t3.ftcdn.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "techvidvan.com",
+        pathname: "/**",
+      },
     ],
   },
   async headers() {

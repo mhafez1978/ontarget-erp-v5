@@ -8,6 +8,7 @@ import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
 } from "@/lib/mfa-pending";
+import { decrypt } from "@/lib/encryption";
 
 // GET /api/auth/google/callback
 // Handles OAuth callback from Google
@@ -44,6 +45,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Decrypt the client secret before using it
+    const clientSecret = decrypt(oauthSettings.clientSecret);
+
     // Exchange authorization code for access token
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/google`;
 
@@ -55,7 +59,7 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         code,
         client_id: oauthSettings.clientId,
-        client_secret: oauthSettings.clientSecret,
+        client_secret: clientSecret,
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),

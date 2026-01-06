@@ -46,6 +46,24 @@ export async function POST(request: NextRequest) {
         password: true,
         role: true,
         isActive: true,
+        ownedCompanies: {
+          select: {
+            id: true,
+            isActive: true,
+            ownerId: true,
+          },
+        },
+        companyMemberships: {
+          select: {
+            companyId: true,
+            company: {
+              select: {
+                isActive: true,
+                ownerId: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -62,6 +80,56 @@ export async function POST(request: NextRequest) {
         { error: "Your account has been disabled. Please contact support." },
         { status: 403 }
       );
+    }
+
+    // Check if user's company is disabled (for ERP_CUSTOMER role)
+    if (user.role === "ERP_CUSTOMER") {
+      // Get root company to check for super admin
+      const rootCompany = await db.company.findFirst({
+        where: { isRoot: true },
+        select: { ownerId: true },
+      });
+
+      const isSuperAdmin = rootCompany && user.id === rootCompany.ownerId;
+
+      // Check owned companies
+      const ownedCompany = user.ownedCompanies[0];
+      if (ownedCompany && !ownedCompany.isActive) {
+        // Company is disabled
+        const isCompanyOwner = ownedCompany.ownerId === user.id;
+
+        if (isCompanyOwner) {
+          // Allow company owner to log in with a warning flag
+          // They can pay invoices to reactivate
+          // We'll add a flag to indicate company is disabled
+        } else if (!isSuperAdmin) {
+          // Block non-owner team members from logging in
+          return NextResponse.json(
+            {
+              error:
+                "Your company account has been suspended due to unpaid invoices. Please contact your company administrator.",
+            },
+            { status: 403 }
+          );
+        }
+      }
+
+      // Check company memberships (if user is a member of other companies)
+      for (const membership of user.companyMemberships) {
+        if (!membership.company.isActive && !isSuperAdmin) {
+          // If the user is only a member (not owner), block login
+          const isOwner = membership.company.ownerId === user.id;
+          if (!isOwner) {
+            return NextResponse.json(
+              {
+                error:
+                  "Your company account has been suspended. Please contact your company administrator.",
+              },
+              { status: 403 }
+            );
+          }
+        }
+      }
     }
 
     // Verify password

@@ -49,6 +49,7 @@ import { PricingManagement } from "@/components/admin/pricing-management";
 import { PasswordManagementTab } from "@/components/password-management-tab";
 import { WebhookManager } from "@/components/dashboard/webhook-manager";
 import { DangerZone } from "@/components/danger-zone";
+import { BorderBeam } from "@/components/ui/border-beam";
 import {
   getModelsForProvider,
   estimateGenerationCost,
@@ -77,8 +78,6 @@ interface OAuthProvider {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [geoTrackingEnabled, setGeoTrackingEnabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   // OAuth Providers state
   const [oauthProviders, setOauthProviders] = useState<{
@@ -246,13 +245,6 @@ export default function SettingsPage() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        // Load geo-tracking settings
-        const geoResponse = await fetch("/api/settings/geo-tracking");
-        if (geoResponse.ok) {
-          const geoData = await geoResponse.json();
-          setGeoTrackingEnabled(geoData.enabled || false);
-        }
-
         // Load OAuth provider settings
         let providers: OAuthProvider[] = [];
         const oauthResponse = await fetch("/api/settings/oauth-providers");
@@ -296,6 +288,7 @@ export default function SettingsPage() {
             const data = await captchaResp.json();
             setGlobalCaptchaActive(!!data.isActive);
             setGlobalCaptchaSiteKey(data.siteKey || "");
+            // Never set secret key for security - but we know it exists if siteKey exists
             setCompanyCaptchaFallback({
               active: !!data.fallback?.isActive,
               siteKey: data.fallback?.siteKey || "",
@@ -303,57 +296,59 @@ export default function SettingsPage() {
           }
         } catch (e) {
           console.warn("Failed to load captcha settings", e);
-          const microsoftProvider = microsoftProviderPre;
-          const githubProvider = githubProviderPre;
-          const linkedinProvider = linkedinProviderPre;
-          const yahooProvider = yahooProviderPre;
-          const lineProvider = lineProviderPre;
-          const yandexProvider = yandexProviderPre;
-          const wechatProvider = wechatProviderPre;
-
-          setOauthProviders({
-            google: {
-              enabled: googleProvider?.enabled || false,
-              clientId: googleProvider?.clientId || "",
-              clientSecret: googleProvider?.clientSecret || "",
-            },
-            microsoft: {
-              enabled: microsoftProvider?.enabled || false,
-              clientId: microsoftProvider?.clientId || "",
-              clientSecret: microsoftProvider?.clientSecret || "",
-            },
-            github: {
-              enabled: githubProvider?.enabled || false,
-              clientId: githubProvider?.clientId || "",
-              clientSecret: githubProvider?.clientSecret || "",
-            },
-            linkedin: {
-              enabled: linkedinProvider?.enabled || false,
-              clientId: linkedinProvider?.clientId || "",
-              clientSecret: linkedinProvider?.clientSecret || "",
-            },
-            yahoo: {
-              enabled: yahooProvider?.enabled || false,
-              clientId: yahooProvider?.clientId || "",
-              clientSecret: yahooProvider?.clientSecret || "",
-            },
-            line: {
-              enabled: lineProvider?.enabled || false,
-              clientId: lineProvider?.clientId || "",
-              clientSecret: lineProvider?.clientSecret || "",
-            },
-            yandex: {
-              enabled: yandexProvider?.enabled || false,
-              clientId: yandexProvider?.clientId || "",
-              clientSecret: yandexProvider?.clientSecret || "",
-            },
-            wechat: {
-              enabled: wechatProvider?.enabled || false,
-              clientId: wechatProvider?.clientId || "",
-              clientSecret: wechatProvider?.clientSecret || "",
-            },
-          });
         }
+
+        // Set OAuth providers (moved outside captcha try-catch)
+        const microsoftProvider = microsoftProviderPre;
+        const githubProvider = githubProviderPre;
+        const linkedinProvider = linkedinProviderPre;
+        const yahooProvider = yahooProviderPre;
+        const lineProvider = lineProviderPre;
+        const yandexProvider = yandexProviderPre;
+        const wechatProvider = wechatProviderPre;
+
+        setOauthProviders({
+          google: {
+            enabled: googleProvider?.enabled || false,
+            clientId: googleProvider?.clientId || "",
+            clientSecret: googleProvider?.clientSecret || "",
+          },
+          microsoft: {
+            enabled: microsoftProvider?.enabled || false,
+            clientId: microsoftProvider?.clientId || "",
+            clientSecret: microsoftProvider?.clientSecret || "",
+          },
+          github: {
+            enabled: githubProvider?.enabled || false,
+            clientId: githubProvider?.clientId || "",
+            clientSecret: githubProvider?.clientSecret || "",
+          },
+          linkedin: {
+            enabled: linkedinProvider?.enabled || false,
+            clientId: linkedinProvider?.clientId || "",
+            clientSecret: linkedinProvider?.clientSecret || "",
+          },
+          yahoo: {
+            enabled: yahooProvider?.enabled || false,
+            clientId: yahooProvider?.clientId || "",
+            clientSecret: yahooProvider?.clientSecret || "",
+          },
+          line: {
+            enabled: lineProvider?.enabled || false,
+            clientId: lineProvider?.clientId || "",
+            clientSecret: lineProvider?.clientSecret || "",
+          },
+          yandex: {
+            enabled: yandexProvider?.enabled || false,
+            clientId: yandexProvider?.clientId || "",
+            clientSecret: yandexProvider?.clientSecret || "",
+          },
+          wechat: {
+            enabled: wechatProvider?.enabled || false,
+            clientId: wechatProvider?.clientId || "",
+            clientSecret: wechatProvider?.clientSecret || "",
+          },
+        });
       } catch (error) {
         console.error("Failed to load settings:", error);
       }
@@ -476,28 +471,7 @@ export default function SettingsPage() {
     };
 
     fetchDynamicModels();
-  }, [aiProviderType, aiHasExistingKey, aiApiKey]);
-
-  const handleGeoTrackingToggle = async (checked: boolean) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/settings/geo-tracking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ enabled: checked }),
-      });
-
-      if (response.ok) {
-        setGeoTrackingEnabled(checked);
-      }
-    } catch (error) {
-      console.error("Failed to update geo-tracking setting:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [aiProviderType, aiHasExistingKey, aiApiKey, aiModel]);
 
   const handleAiProviderSave = async () => {
     if (user.role !== "SUPER_ADMIN") {
@@ -696,21 +670,6 @@ export default function SettingsPage() {
         }
       );
       return;
-    }
-
-    // If enabling, require Client ID and Client Secret
-    if (checked) {
-      const hasClientId = oauthProviders[provider].clientId?.trim();
-      const hasClientSecret = oauthProviders[provider].clientSecret?.trim();
-
-      if (!hasClientId || !hasClientSecret) {
-        toast.error(`Cannot enable ${provider}`, {
-          description:
-            "Please provide both Client ID and Client Secret before enabling this OAuth provider.",
-          duration: 5000,
-        });
-        return;
-      }
     }
 
     setOauthLoading({ ...oauthLoading, [provider]: true });
@@ -1000,7 +959,7 @@ export default function SettingsPage() {
                         ) : (
                           <XCircle className="h-4 w-4 text-gray-400" />
                         )}
-                        <span className="text-sm font-medium">
+                        <span className="text-sm text-green-500 font-medium">
                           {oauthProviders.google.enabled
                             ? "Enabled"
                             : "Disabled"}
@@ -2649,6 +2608,7 @@ export default function SettingsPage() {
                         <Input
                           id="ai-api-key"
                           type="password"
+                          autoComplete="off"
                           placeholder={
                             aiHasExistingKey
                               ? "•••••••••••••••• (stored)"
@@ -2674,7 +2634,23 @@ export default function SettingsPage() {
                           id="ai-provider-type"
                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                           value={aiProviderType}
-                          onChange={(e) => setAiProviderType(e.target.value)}
+                          onChange={(e) => {
+                            const newProvider = e.target.value;
+                            setAiProviderType(newProvider);
+
+                            // Auto-select recommended model for the new provider
+                            const models = getModelsForProvider(
+                              newProvider as "openai" | "anthropic" | "deepseek"
+                            );
+                            const recommendedModel = models.find(
+                              (m) => m.recommended
+                            );
+                            if (recommendedModel) {
+                              setAiModel(recommendedModel.id);
+                            } else if (models[0]) {
+                              setAiModel(models[0].id);
+                            }
+                          }}
                           disabled={aiProviderLoading}
                         >
                           <option value="openai">
@@ -3037,7 +3013,16 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   {user.role === "SUPER_ADMIN" && (
-                    <div className="rounded-lg border p-4 space-y-4">
+                    <div className="rounded-lg border p-4 space-y-4 relative">
+                      {globalCaptchaActive && globalCaptchaSiteKey && (
+                        <BorderBeam
+                          size={250}
+                          duration={12}
+                          delay={9}
+                          colorFrom="#10b981"
+                          colorTo="#3b82f6"
+                        />
+                      )}
                       <div className="flex items-center justify-between">
                         <Label className="font-medium">
                           Enable Global Captcha
@@ -3066,8 +3051,17 @@ export default function SettingsPage() {
                             onChange={(e) =>
                               setGlobalCaptchaSecretKey(e.target.value)
                             }
-                            placeholder="Google reCAPTCHA secret key"
+                            placeholder={
+                              globalCaptchaSiteKey
+                                ? "••••••••••••••••• (stored securely)"
+                                : "Google reCAPTCHA secret key"
+                            }
                           />
+                          {globalCaptchaSiteKey && !globalCaptchaSecretKey && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Leave blank to keep existing secret key
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2">

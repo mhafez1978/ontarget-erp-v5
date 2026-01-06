@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { Globe, CheckCircle2, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -133,6 +133,7 @@ export function GeoTrackingProviderCards() {
         toast.error(data.error || "Connection test failed");
       }
     } catch (error) {
+      console.log(error);
       toast.error("Failed to test connection");
     } finally {
       setIsTesting(false);
@@ -170,6 +171,7 @@ export function GeoTrackingProviderCards() {
         toast.error(data.error || "Failed to save settings");
       }
     } catch (error) {
+      console.log(error);
       toast.error("Failed to save settings");
     } finally {
       setIsSaving(false);
@@ -197,6 +199,7 @@ export function GeoTrackingProviderCards() {
         toast.error("Failed to update settings");
       }
     } catch (error) {
+      console.log(error);
       toast.error("Failed to update settings");
     }
   };
@@ -220,10 +223,14 @@ export function GeoTrackingProviderCards() {
           </p>
         </div>
         <Button
-          variant={isEnabled ? "default" : "outline"}
+          className={
+            isEnabled
+              ? "bg-green-500 hover:bg-slate-500 hover:text-white"
+              : "bg-slate-500 text-white hover:bg-green-500 hover:text-slate-900"
+          }
           onClick={() => handleToggle(!isEnabled)}
         >
-          {isEnabled ? "Enabled" : "Disabled"}
+          {isEnabled ? "Enabled" : "Enable"}
         </Button>
       </div>
 
@@ -237,7 +244,7 @@ export function GeoTrackingProviderCards() {
       )}
 
       {/* Provider Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-4">
         {PROVIDERS.map((provider) => {
           const isActive = provider.type === activeProvider;
 
