@@ -246,7 +246,7 @@ export function GeoTrackingProviderCards() {
       {/* Provider Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-4">
         {PROVIDERS.map((provider) => {
-          const isActive = provider.type === activeProvider;
+          const isActive = isEnabled && provider.type === activeProvider;
 
           return (
             <Card
