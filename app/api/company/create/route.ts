@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { PLAN_LIMITS } from "@/lib/plan-limits";
+import { transferUserInvoicesToCompany } from "@/lib/invoice-storage";
 
 export async function POST(request: NextRequest) {
   try {
@@ -200,6 +201,25 @@ export async function POST(request: NextRequest) {
 
     // Create audit logs (outside transaction to not fail the main operation)
     try {
+      // Transfer user invoices to company file tree
+      const transferResult = await transferUserInvoicesToCompany(
+        user.id,
+        result.company.id
+      );
+
+      if (transferResult.transferred > 0) {
+        console.log(
+          `Transferred ${transferResult.transferred} invoice(s) to company ${result.company.name}`
+        );
+      }
+
+      if (transferResult.errors.length > 0) {
+        console.error(
+          "Some invoices failed to transfer:",
+          transferResult.errors
+        );
+      }
+
       // Create single audit log for company creation
       await createAuditLog({
         action: AUDIT_ACTIONS.COMPANY_CREATED,
@@ -214,6 +234,7 @@ export async function POST(request: NextRequest) {
           userRole: updatedUser?.role || user.role,
           plan: user.plan,
           companyCount: currentCompanyCount + 1,
+          invoicesTransferred: transferResult.transferred,
         },
         ipAddress: geoData?.ip || null,
         ipv4: geoData?.ipv4 || null,

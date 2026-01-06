@@ -36,6 +36,7 @@ export default function PaymentProviderCards({
   const [publicKey, setPublicKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
+  const [stripeConnectClientId, setStripeConnectClientId] = useState("");
   const [isTestMode, setIsTestMode] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -128,6 +129,7 @@ export default function PaymentProviderCards({
       const data = await resp.json();
       if (resp.ok && data.provider) {
         setPublicKey(data.provider.publicKey || "");
+        setStripeConnectClientId(data.provider.stripeConnectClientId || "");
         // secrets not returned
         setSecretKey("");
         setWebhookSecret("");
@@ -136,6 +138,7 @@ export default function PaymentProviderCards({
         setPublicKey("");
         setSecretKey("");
         setWebhookSecret("");
+        setStripeConnectClientId("");
         setIsTestMode(true);
       }
     } catch (err) {
@@ -163,6 +166,7 @@ export default function PaymentProviderCards({
         publicKey: string;
         secretKey: string;
         webhookSecret: string;
+        stripeConnectClientId?: string;
         isTestMode: boolean;
         isEnabled: boolean;
         companyId?: string;
@@ -175,6 +179,12 @@ export default function PaymentProviderCards({
         isTestMode,
         isEnabled: true,
       };
+
+      // Add Stripe Connect Client ID if it's Stripe provider
+      if (selectedProvider === "stripe" && stripeConnectClientId) {
+        body.stripeConnectClientId = stripeConnectClientId;
+      }
+
       if (selectedCompanyId !== "GLOBAL") body.companyId = selectedCompanyId;
       else body.scope = "GLOBAL";
 
@@ -658,6 +668,33 @@ export default function PaymentProviderCards({
                 {selectedProvider === "stripe" ? "Stripe" : "PayPal"}.
               </p>
             </div>
+
+            {selectedProvider === "stripe" && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="stripeConnectClientId"
+                  className="text-sm font-medium"
+                >
+                  Stripe Connect Client ID (Optional)
+                </Label>
+                <Input
+                  id="stripeConnectClientId"
+                  type="text"
+                  placeholder="ca_..."
+                  value={stripeConnectClientId}
+                  onChange={(e) =>
+                    setStripeConnectClientId(
+                      (e.target as HTMLInputElement).value
+                    )
+                  }
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  For marketplace platform fees. Found in Stripe Dashboard →
+                  Connect → Settings
+                </p>
+              </div>
+            )}
 
             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
               <div className="space-y-0.5">

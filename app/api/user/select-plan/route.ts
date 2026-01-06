@@ -2,10 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { getClientIp } from "@/lib/get-client-ip";
 import Stripe from "stripe";
 
 const VALID_PLANS = ["ESSENTIAL", "GROWTH", "ENTERPRISE"];
+
+// Extract client IP from request headers
+function getClientIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-real-ip") ||
+    "127.0.0.1"
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -218,8 +227,11 @@ export async function POST(req: NextRequest) {
       console.log("Tax calculation:", {
         subtotal: taxCalculation.amount_total,
         tax: taxCalculation.tax_amount_exclusive,
-        total: taxCalculation.amount_total + taxCalculation.tax_amount_exclusive,
-        taxRate: taxCalculation.tax_breakdown?.[0]?.tax_rate_details?.percentage_decimal,
+        total:
+          taxCalculation.amount_total + taxCalculation.tax_amount_exclusive,
+        taxRate:
+          taxCalculation.tax_breakdown?.[0]?.tax_rate_details
+            ?.percentage_decimal,
       });
     } catch (taxError) {
       console.error("Tax calculation failed (continuing without):", taxError);
@@ -289,8 +301,6 @@ export async function POST(req: NextRequest) {
         promoCode: promoCode?.code || null,
         stripeSubscriptionId: subscription.id,
         clientIp,
-      },
-    });
       },
     });
 
