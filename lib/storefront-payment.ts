@@ -3,9 +3,11 @@ import { db } from "@/lib/db";
 import { calculatePlatformFee } from "@/lib/platform-fees";
 import { getGatewayForCompany, getRootGateway } from "@/lib/payments/service";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-10-29.clover",
-});
+function getStripeClient() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2025-10-29.clover",
+  });
+}
 
 export interface CheckoutPaymentIntent {
   clientSecret: string;
@@ -65,6 +67,7 @@ export async function createStorefrontPaymentIntent(params: {
 
   if (hasConnectedAccount) {
     // Use Stripe Connect - payment goes directly to company
+    const stripe = getStripeClient();
     const paymentIntent = await stripe.paymentIntents.create(
       {
         amount: amountCents,
@@ -102,6 +105,7 @@ export async function createStorefrontPaymentIntent(params: {
 
     // Create payment intent on ROOT account
     // The full amount goes to root, we'll handle payout separately
+    const stripe = getStripeClient();
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency,
@@ -173,6 +177,7 @@ export async function verifyAndCompletePayment(params: {
     company.stripeAccountStatus === "active";
 
   // Retrieve payment intent to verify status
+  const stripe = getStripeClient();
   let paymentIntent: Stripe.PaymentIntent;
   if (isConnectedAccount) {
     paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {

@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 
+interface PaymentMetadata {
+  platformFee?: {
+    amountCents: number;
+    percent: number;
+  };
+  [key: string]: unknown;
+}
+
 /**
  * Get platform fee statistics (Super Admin only)
  * GET /api/admin/platform-fees/stats?days=30
@@ -56,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     // Filter for payments with platform fees
     const payments = allPayments.filter((payment) => {
-      const metadata = payment.metadata as any;
+      const metadata = payment.metadata as PaymentMetadata;
       return metadata && metadata.platformFee;
     });
 
@@ -78,7 +86,7 @@ export async function GET(request: NextRequest) {
     > = {};
 
     for (const payment of payments) {
-      const platformFee = payment.metadata as any;
+      const platformFee = payment.metadata as PaymentMetadata;
       if (!platformFee?.platformFee) continue;
 
       const feeAmount = platformFee.platformFee.amountCents || 0;
@@ -133,7 +141,7 @@ export async function GET(request: NextRequest) {
 
     // Recent transactions (last 20)
     const recentTransactions = payments.slice(0, 20).map((payment) => {
-      const platformFee = payment.metadata as any;
+      const platformFee = payment.metadata as PaymentMetadata;
       return {
         id: payment.id,
         companyName: payment.company.name,
