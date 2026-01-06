@@ -27,7 +27,12 @@ export function AdminView({ userName, companyId }: AdminViewProps) {
       )}
 
       {/* Audit Logs Display in Accordion */}
-      <Accordion type="single" collapsible className="w-full">
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue="audit-logs"
+        className="w-full"
+      >
         <AccordionItem value="audit-logs">
           <AccordionTrigger className="text-lg font-semibold">
             <div className="flex items-center gap-2">
