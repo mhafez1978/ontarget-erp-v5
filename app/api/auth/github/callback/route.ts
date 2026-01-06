@@ -8,6 +8,7 @@ import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
 } from "@/lib/mfa-pending";
+import { decrypt } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,6 +68,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Decrypt the client secret before using it and trim whitespace
+    const clientSecret = decrypt(settings.clientSecret).trim();
+
     // Exchange code for access token
     const tokenResponse = await fetch(
       "https://github.com/login/oauth/access_token",
@@ -78,7 +82,7 @@ export async function GET(request: NextRequest) {
         },
         body: JSON.stringify({
           client_id: settings.clientId,
-          client_secret: settings.clientSecret,
+          client_secret: clientSecret,
           code,
           redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/github/callback`,
         }),

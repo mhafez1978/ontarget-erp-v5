@@ -8,6 +8,7 @@ import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
 } from "@/lib/mfa-pending";
+import { decrypt } from "@/lib/encryption";
 
 // GET /api/auth/microsoft/callback
 // Handles OAuth callback from Microsoft
@@ -58,6 +59,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Decrypt the client secret before using it and trim whitespace
+    const clientSecret = decrypt(oauthSettings.clientSecret).trim();
+
     // Exchange authorization code for access token
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/microsoft/callback`;
 
@@ -71,7 +75,7 @@ export async function GET(request: NextRequest) {
         body: new URLSearchParams({
           code,
           client_id: oauthSettings.clientId,
-          client_secret: oauthSettings.clientSecret,
+          client_secret: clientSecret,
           redirect_uri: redirectUri,
           grant_type: "authorization_code",
           scope: "openid email profile User.Read",

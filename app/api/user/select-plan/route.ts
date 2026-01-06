@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { decrypt } from "@/lib/encryption";
 import Stripe from "stripe";
 
 const VALID_PLANS = ["ESSENTIAL", "GROWTH", "ENTERPRISE"];
@@ -134,8 +135,41 @@ export async function POST(req: NextRequest) {
           : promoCode.flatFeeAmount.toNumber();
     }
 
+    // Get Stripe secret key from database (GLOBAL scope)
+    const rootCompany = await db.company.findFirst({
+      where: { isRoot: true },
+    });
+
+    if (!rootCompany) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "System configuration error: No root company found",
+        },
+        { status: 500 }
+      );
+    }
+
+    const stripeGateway = await db.paymentGateway.findFirst({
+      where: {
+        companyId: rootCompany.id,
+        provider: "stripe",
+        isEnabled: true,
+      },
+    });
+
+    if (!stripeGateway || !stripeGateway.secretKey) {
+      return NextResponse.json(
+        { success: false, message: "Stripe payment gateway not configured" },
+        { status: 500 }
+      );
+    }
+
+    // Decrypt the secret key
+    const stripeSecretKey = decrypt(stripeGateway.secretKey).trim();
+
     // Create Stripe subscription
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2025-10-29.clover",
     });
 
@@ -239,16 +273,22 @@ export async function POST(req: NextRequest) {
     }
 
     // Create subscription with the price and automatic tax
+    // Note: automatic_tax disabled for test mode if Stripe Tax not configured
+    const isTestMode = stripeSecretKey.includes("_test_");
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: price.id }],
       payment_behavior: "default_incomplete",
       payment_settings: { payment_method_types: ["card"] },
       expand: ["latest_invoice.payment_intent"],
-      // Enable automatic tax collection
-      automatic_tax: {
-        enabled: true,
-      },
+      // Only enable automatic tax in production or if configured
+      ...(isTestMode
+        ? {}
+        : {
+            automatic_tax: {
+              enabled: true,
+            },
+          }),
       metadata: {
         userId: user.id,
         plan: plan,

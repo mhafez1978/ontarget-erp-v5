@@ -1,15 +1,16 @@
 "use client";
 
-
-import { Plus, Trash2, Edit2, MapPin, Building2, Phone, Mail } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  MapPin,
+  Building2,
+  Phone,
+  Mail,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-
-
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -145,6 +146,7 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
   const handleAddressSelect = useCallback(
     (address: {
       addressLine1: string;
+      addressLine2?: string;
       city: string;
       country: string;
       state?: string;
@@ -155,6 +157,7 @@ export default function LocationsManager({ companyId }: LocationsManagerProps) {
       setFormData((prev) => ({
         ...prev,
         addressLine1: address.addressLine1,
+        addressLine2: address.addressLine2 || prev.addressLine2 || "",
         city: address.city,
         state: address.state || "",
         country: address.country,

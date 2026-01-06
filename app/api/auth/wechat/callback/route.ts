@@ -7,6 +7,7 @@ import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
 } from "@/lib/mfa-pending";
+import { decrypt } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,9 +38,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Decrypt the client secret before using it and trim whitespace
+    const clientSecret = decrypt(settings.clientSecret).trim();
+
     // Exchange code for access token
     const tokenResponse = await fetch(
-      `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${settings.clientId}&secret=${settings.clientSecret}&code=${code}&grant_type=authorization_code`
+      `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${settings.clientId}&secret=${clientSecret}&code=${code}&grant_type=authorization_code`
     );
 
     if (!tokenResponse.ok) {

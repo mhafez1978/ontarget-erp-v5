@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +26,17 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      return NextResponse.json({ providers, scope: "GLOBAL" });
+      // Decrypt clientSecret for display (show that it exists but don't expose the actual value)
+      const providersWithDecryption = providers.map((p) => ({
+        ...p,
+        clientSecret: p.clientSecret ? "••••••••" : null, // Mask the secret, don't send actual value
+        hasClientSecret: !!p.clientSecret, // Flag to indicate if secret exists
+      }));
+
+      return NextResponse.json({
+        providers: providersWithDecryption,
+        scope: "GLOBAL",
+      });
     }
 
     // Other users see ONLY company-specific settings (never global settings)
@@ -74,14 +85,22 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Mask clientSecret for company providers too
+    const maskedCompanyProviders = companyProviders.map((p) => ({
+      ...p,
+      clientSecret: p.clientSecret ? "••••••••" : null,
+      hasClientSecret: !!p.clientSecret,
+    }));
+
     // Check if user's plan allows OAuth customization (GROWTH and ENTERPRISE only)
+    // SUPER_ADMIN always has access regardless of plan
     const userPlan = userWithCompany?.plan || "ESSENTIAL";
-    const canCustomize = ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
-      userPlan
-    );
+    const canCustomize =
+      user.role === "SUPER_ADMIN" ||
+      ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(userPlan);
 
     return NextResponse.json({
-      providers: companyProviders,
+      providers: maskedCompanyProviders,
       scope: "COMPANY",
       companyId,
       plan: userPlan,
@@ -120,6 +139,9 @@ export async function POST(request: NextRequest) {
         where: { provider },
       });
 
+      // Encrypt clientSecret if provided
+      const encryptedSecret = clientSecret ? encrypt(clientSecret) : undefined;
+
       let providerSettings;
       if (existingProvider) {
         providerSettings = await db.oAuthProviderSetting.update({
@@ -127,7 +149,9 @@ export async function POST(request: NextRequest) {
           data: {
             enabled,
             ...(clientId !== undefined && { clientId }),
-            ...(clientSecret !== undefined && { clientSecret }),
+            ...(encryptedSecret !== undefined && {
+              clientSecret: encryptedSecret,
+            }),
           },
           select: {
             id: true,
@@ -143,7 +167,7 @@ export async function POST(request: NextRequest) {
             provider,
             enabled,
             clientId,
-            clientSecret,
+            clientSecret: encryptedSecret,
           },
           select: {
             id: true,
@@ -210,6 +234,9 @@ export async function POST(request: NextRequest) {
       where: { companyId, provider },
     });
 
+    // Encrypt clientSecret if provided
+    const encryptedSecret = clientSecret ? encrypt(clientSecret) : undefined;
+
     let providerSettings;
     if (existingProvider) {
       providerSettings = await db.companyOAuthSetting.update({
@@ -217,7 +244,9 @@ export async function POST(request: NextRequest) {
         data: {
           enabled,
           ...(clientId !== undefined && { clientId }),
-          ...(clientSecret !== undefined && { clientSecret }),
+          ...(encryptedSecret !== undefined && {
+            clientSecret: encryptedSecret,
+          }),
         },
         select: {
           id: true,
@@ -234,7 +263,7 @@ export async function POST(request: NextRequest) {
           provider,
           enabled,
           clientId,
-          clientSecret,
+          clientSecret: encryptedSecret,
         },
         select: {
           id: true,

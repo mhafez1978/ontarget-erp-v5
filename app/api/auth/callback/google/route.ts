@@ -7,6 +7,7 @@ import {
   buildMfaRedirectResponse,
   createPendingMfaToken,
 } from "@/lib/mfa-pending";
+import { decrypt } from "@/lib/encryption";
 
 // GET /api/auth/google/callback
 // Handles OAuth callback from Google
@@ -74,6 +75,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Decrypt the client secret before using it and trim whitespace
+    const clientSecret = decrypt(oauthSettings.clientSecret).trim();
+
+    console.log("[Google OAuth] Token exchange debug:", {
+      hasClientId: !!oauthSettings.clientId,
+      clientIdLength: oauthSettings.clientId?.length,
+      hasEncryptedSecret: !!oauthSettings.clientSecret,
+      encryptedSecretLength: oauthSettings.clientSecret?.length,
+      hasDecryptedSecret: !!clientSecret,
+      decryptedSecretLength: clientSecret?.length,
+      decryptedSecretPrefix: clientSecret?.substring(0, 10),
+    });
+
     // Exchange authorization code for access token
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/google`;
 
@@ -85,14 +99,24 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         code,
         client_id: oauthSettings.clientId,
-        client_secret: oauthSettings.clientSecret,
+        client_secret: clientSecret,
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
     });
 
     if (!tokenResponse.ok) {
-      console.error("Token exchange failed:", await tokenResponse.text());
+      const errorText = await tokenResponse.text();
+      console.error("Token exchange failed:", errorText);
+      console.error(
+        "[Google OAuth] Debug - client_id being sent:",
+        oauthSettings.clientId
+      );
+      console.error(
+        "[Google OAuth] Debug - client_secret length:",
+        clientSecret?.length
+      );
+      console.error("[Google OAuth] Debug - redirect_uri:", redirectUri);
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL}/login?error=oauth_token_failed`
       );

@@ -219,6 +219,14 @@ export async function validateSession(
             plan: true,
             image: true,
             isActive: true,
+            ownedCompanies: {
+              select: {
+                id: true,
+                isActive: true,
+                isRoot: true,
+                ownerId: true,
+              },
+            },
           },
         },
       },
@@ -238,6 +246,40 @@ export async function validateSession(
     // Check if user account is active
     if (!session.user.isActive) {
       return { valid: false, reason: "User account is inactive" };
+    }
+
+    // Check if user's company is disabled (except for company admins)
+    // Company admins (owners) can still log in to disabled companies to make payments
+    // But non-admin members are blocked
+    if (session.user.role === "ERP_CUSTOMER") {
+      const userCompany = session.user.ownedCompanies[0];
+
+      if (userCompany) {
+        // Get root company to check if this is a super admin company
+        const rootCompany = await db.company.findFirst({
+          where: { isRoot: true },
+          select: { ownerId: true },
+        });
+
+        // Check if company is disabled
+        if (!userCompany.isActive) {
+          // Allow company owner (admin) to log in even if company is disabled
+          // This allows them to pay invoices and reactivate
+          const isCompanyOwner = userCompany.ownerId === session.user.id;
+
+          // Block access for non-owners unless they're super admin
+          const isSuperAdmin =
+            rootCompany && session.user.id === rootCompany.ownerId;
+
+          if (!isCompanyOwner && !isSuperAdmin) {
+            return {
+              valid: false,
+              reason:
+                "Company is suspended. Contact your company administrator.",
+            };
+          }
+        }
+      }
     }
 
     // Optional: Validate IP address hasn't changed (stricter security)

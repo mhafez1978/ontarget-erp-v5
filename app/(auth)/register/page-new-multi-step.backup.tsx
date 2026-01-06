@@ -649,9 +649,7 @@ function RegisterForm() {
         <h2 className="text-2xl font-bold mb-2">Payment Information</h2>
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
           <CheckCircle2 className="h-5 w-5 text-green-600" />
-          <p className="text-sm font-medium text-green-800 dark:text-green-200">
-            30-day free trial • Cancel anytime • No charge until trial ends
-          </p>
+         
         </div>
       </div>
 

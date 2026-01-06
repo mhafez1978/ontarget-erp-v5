@@ -1,6 +1,12 @@
 import { cache } from "react";
 import dynamic from "next/dynamic";
-import { HeroSection } from "@/components/homepage/HeroSection";
+//import { HeroSection } from "@/components/homepage/HeroSection";
+import { HeroBanner } from "@/components/hero-banner/HeroBanner";
+//import { SocialProof } from "@/components/social-proof/SocialProof";
+import { CloudKitchenHero } from "@/components/hero-banner/CloudKitchenHero";
+import { FlamingPanHero } from "@/components/hero-banner/FlamingPanHero";
+import { MechanicsTaregtedHero } from "@/components/hero-banner/MechanicsTaregtedHero";
+import { FeaturesShowcase } from "@/components/hero-banner/FeaturesShowcase";
 
 // Lazy load below-the-fold components to reduce initial JS
 const CTA1Section = dynamic(() =>
@@ -120,8 +126,14 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <HeroBanner />
+      <FlamingPanHero />
+      <MechanicsTaregtedHero />
+      <CloudKitchenHero />
+      <FeaturesShowcase />
+      {/* <SocialProof /> */}
       {/* Hero Section */}
-      <HeroSection />
+      {/* <HeroSection /> */}
       {/* Features Section */}
       <PowerfulFeaturesSection />
       {/* Testimonials Section */}

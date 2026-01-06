@@ -33,17 +33,21 @@ export async function getGeoLocation(): Promise<GeoLocation | null> {
     });
 
     if (!response.ok) {
-      console.error(
-        `[Geo Tracking] API returned ${response.status} ${response.statusText}`
-      );
-      try {
-        const errorData = await response.json();
-        console.error("[Geo Tracking] Error details:", errorData);
-      } catch (e) {
-        console.error("[Geo Tracking] Could not parse error response", e);
+      // For 403 (geo tracking disabled), this is expected - don't log as error
+      if (response.status === 403) {
+        console.log("[Geo Tracking] Geo tracking is disabled, using fallback");
+      } else {
+        console.error(
+          `[Geo Tracking] API returned ${response.status} ${response.statusText}`
+        );
+        try {
+          const errorData = await response.json();
+          console.error("[Geo Tracking] Error details:", errorData);
+        } catch (e) {
+          console.error("[Geo Tracking] Could not parse error response", e);
+        }
       }
 
-      console.warn("Geo-tracking API unavailable, using fallback");
       // Return localhost fallback
       return {
         ip: "127.0.0.1",

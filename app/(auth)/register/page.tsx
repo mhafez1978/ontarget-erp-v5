@@ -40,10 +40,16 @@ type SubscriptionPlan = "ESSENTIAL" | "GROWTH" | "ENTERPRISE";
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Check if this is a free trial registration
+  const isTrial = searchParams.get("trial") === "true";
+
   const [publishableKey, setPublishableKey] = useState<string>("");
   const [stripePromise, setStripePromise] =
     useState<Promise<Stripe | null> | null>(null);
-  const [isLoadingPublishableKey, setIsLoadingPublishableKey] = useState(true);
+  const [isLoadingPublishableKey, setIsLoadingPublishableKey] = useState(
+    !isTrial
+  ); // Skip loading publishable key for trial
   const [publishableKeyError, setPublishableKeyError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -288,9 +294,14 @@ function RegisterForm() {
         return;
       }
 
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      // Validate payment info
+      // For trial mode, skip payment step and go directly to account setup
+      if (isTrial) {
+        setCurrentStep(2); // In trial mode, step 2 is account setup
+      } else {
+        setCurrentStep(2); // In paid mode, step 2 is payment
+      }
+    } else if (currentStep === 2 && !isTrial) {
+      // Validate payment info (only for non-trial mode)
       if (!isPaymentValid) {
         setError("Please complete your payment information");
         return;
@@ -345,9 +356,10 @@ function RegisterForm() {
           password: formData.password,
           plan: selectedPlan,
           billingCycle: billingCycle.toUpperCase(),
-          paymentMethodId,
-          stripeCustomerId: customerId,
-          billingAddress,
+          isTrial: isTrial, // Pass trial mode flag
+          paymentMethodId: isTrial ? undefined : paymentMethodId, // Skip payment for trial
+          stripeCustomerId: isTrial ? undefined : customerId,
+          billingAddress: isTrial ? undefined : billingAddress,
         }),
       });
 
@@ -368,7 +380,7 @@ function RegisterForm() {
   // Render step indicator
   const StepIndicator = () => (
     <div className="flex items-center justify-center mb-8">
-      {[1, 2, 3].map((step) => (
+      {(isTrial ? [1, 2] : [1, 2, 3]).map((step, index) => (
         <div key={step} className="flex items-center">
           <div
             className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
@@ -383,7 +395,7 @@ function RegisterForm() {
               <span className="text-sm font-semibold">{step}</span>
             )}
           </div>
-          {step < 3 && (
+          {index < (isTrial ? 1 : 2) && (
             <div
               className={`w-16 h-0.5 mx-2 transition-all ${
                 currentStep > step ? "bg-primary" : "bg-muted-foreground"
@@ -399,9 +411,13 @@ function RegisterForm() {
   const renderPlanSelection = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Choose Your Plan !!!</h2>
+        <h2 className="text-2xl font-bold mb-2">
+          {isTrial ? "Start Your Free Trial" : "Choose Your Plan"}
+        </h2>
         <p className="text-muted-foreground text-sm">
-          Start with a 30-day free trial • Cancel anytime
+          {isTrial
+            ? "Start with a 14-day free trial • No credit card required"
+            : "Start with a 30-day free trial • Cancel anytime"}
         </p>
       </div>
 
@@ -537,7 +553,7 @@ function RegisterForm() {
           className="w-full max-w-md"
           size="lg"
         >
-          Continue to Payment
+          {isTrial ? "Continue to Account Setup" : "Continue to Payment"}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
@@ -551,9 +567,6 @@ function RegisterForm() {
         <h2 className="text-2xl font-bold mb-2">Payment Information</h2>
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
           <CheckCircle2 className="h-5 w-5 text-green-600" />
-          <p className="text-sm font-medium text-green-800 dark:text-green-200">
-            30-day free trial • Cancel anytime • No charge until trial ends
-          </p>
         </div>
       </div>
 
@@ -915,8 +928,10 @@ function RegisterForm() {
 
           <form onSubmit={handleSubmit}>
             {currentStep === 1 && renderPlanSelection()}
-            {currentStep === 2 && renderPaymentStep()}
-            {currentStep === 3 && renderAccountStep()}
+            {currentStep === 2 && !isTrial && renderPaymentStep()}
+            {((currentStep === 3 && !isTrial) ||
+              (currentStep === 2 && isTrial)) &&
+              renderAccountStep()}
           </form>
         </CardContent>
       </Card>

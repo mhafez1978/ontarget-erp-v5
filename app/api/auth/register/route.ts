@@ -35,6 +35,7 @@ const registerSchema = z.object({
   billingCycle: z.enum(["MONTHLY", "ANNUAL"]).optional().default("MONTHLY"),
   paymentMethodId: z.string().optional(), // Payment method from Stripe
   stripeCustomerId: z.string().optional(), // Stripe customer ID from setup intent
+  isTrial: z.boolean().optional().default(false), // Free trial mode (14 days, no payment required)
   billingAddress: z
     .object({
       addressLine1: z.string(),
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
       billingCycle,
       paymentMethodId,
       stripeCustomerId,
+      isTrial,
       billingAddress,
     } = validationResult.data;
 
@@ -97,9 +99,10 @@ export async function POST(request: NextRequest) {
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const verificationTokenExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Calculate trial end date (30 days from now)
+    // Calculate trial end date (14 days for free trial, 30 days for paid)
     const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+    const trialDays = isTrial ? 14 : 30;
+    trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
 
     // Create user (emailVerified = null until verified)
     const user = await db.user.create({
@@ -182,6 +185,8 @@ export async function POST(request: NextRequest) {
           userEmail: email,
           plan: plan,
           billingCycle: billingCycle,
+          isTrial: isTrial,
+          trialDays: trialDays,
           hasPaymentMethod: !!stripeCustomerId || !!paymentMethodId,
         },
         ipAddress: geoData?.ip || null,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { decrypt } from "@/lib/encryption";
 import type {
   User,
   Company,
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
         provider: gateway.provider,
         isEnabled: gateway.isEnabled,
         isTestMode: gateway.isTestMode,
-        publicKey: gateway.publicKey,
+        publicKey: gateway.publicKey ? decrypt(gateway.publicKey) : null,
         stripeConnectClientId: gateway.stripeConnectClientId,
         lastTestedAt: gateway.lastTestedAt,
         lastTestResult: gateway.lastTestResult,

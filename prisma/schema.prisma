@@ -238,6 +238,7 @@ model Company {
   salesEmail    String? // Sales inquiries email
   supportEmail  String? // Customer support email
   isRoot        Boolean @default(false) // True for OnTarget ERP (the SaaS provider)
+  isActive      Boolean @default(true) // Company active status (disabled if trial expired and invoice unpaid)
 
   // Storefront fields
   slug              String?   @unique // URL-friendly slug: "my-company-name" -> /store/my-company-name
@@ -1476,6 +1477,7 @@ model PaymentWebhook {
 // Invoice Type Enum
 enum InvoiceType {
   SUBSCRIPTION // Subscription billing (Essential, Growth, Enterprise plans)
+  TRIAL_SUBSCRIPTION // Trial subscription invoice (generated after trial expires)
   STOREFRONT // Storefront order invoice
   CUSTOM // Custom invoice created by staff
   RECURRING // Recurring invoice (auto-generated)
