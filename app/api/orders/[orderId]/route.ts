@@ -180,7 +180,7 @@ export async function GET(
     const { orderId } = await params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const { status, body } = await getOrderForUser(validation.user.id, orderId);
@@ -203,7 +203,7 @@ export async function PATCH(
     const { orderId } = await params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const body = await request.json();

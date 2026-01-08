@@ -13,7 +13,7 @@ export async function POST(
   try {
     const validation = await validateSessionForAPI(req);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
     const { user } = validation;
 

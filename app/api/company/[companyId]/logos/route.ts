@@ -35,7 +35,7 @@ export async function POST(
     const { companyId: id } = await params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -264,7 +264,7 @@ export async function GET(
     const { companyId: id } = await params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const userId = validation.user.id;

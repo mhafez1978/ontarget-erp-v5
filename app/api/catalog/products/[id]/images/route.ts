@@ -55,7 +55,7 @@ export async function POST(
     const { id } = await params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const userId = validation.user.id;

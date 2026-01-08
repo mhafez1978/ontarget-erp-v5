@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) return validation.response as NextResponse;
+    if (!validation.valid) return validation.response;
 
     const { user } = validation;
     const { companyId } = await params;

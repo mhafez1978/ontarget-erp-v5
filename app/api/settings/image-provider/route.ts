@@ -16,7 +16,7 @@ type ImageProviderRequestBody = {
 export async function GET(req: NextRequest) {
   try {
     const validation = await validateSessionForAPI(req);
-    if (!validation.valid) return validation.response as NextResponse;
+    if (!validation.valid) return validation.response;
 
     const user = validation.user;
     const { searchParams } = new URL(req.url);
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const validation = await validateSessionForAPI(req);
-    if (!validation.valid) return validation.response as NextResponse;
+    if (!validation.valid) return validation.response;
     const user = validation.user;
 
     const body = await req.json();

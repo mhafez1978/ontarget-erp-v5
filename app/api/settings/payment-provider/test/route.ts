@@ -5,7 +5,7 @@ import { createPaymentProvider } from "@/lib/payment-providers";
 export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) return validation.response as NextResponse;
+    if (!validation.valid) return validation.response;
 
     const body = await request.json();
     const { provider, publicKey, secretKey, webhookSecret, isTestMode } =

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     // Check authentication
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const user = validation.user;

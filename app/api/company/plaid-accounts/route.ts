@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     // Get user from cookie
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const userId = validation.user.id;

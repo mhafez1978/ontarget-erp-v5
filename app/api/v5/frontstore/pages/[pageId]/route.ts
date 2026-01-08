@@ -16,7 +16,7 @@ export async function PUT(
   context: { params?: { pageId?: string } | Promise<{ pageId?: string }> }
 ) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response as NextResponse;
+  if (!validation.valid) return validation.response;
   const user = validation.user as SessionUser;
   const params = (await (context?.params ?? {})) as { pageId?: string };
   const { pageId } = params || {};
@@ -111,7 +111,7 @@ export async function GET(
   context: { params?: { pageId?: string } | Promise<{ pageId?: string }> }
 ) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response as NextResponse;
+  if (!validation.valid) return validation.response;
   const params = (await (context?.params ?? {})) as { pageId?: string };
   const { pageId } = params || {};
   if (!pageId) {

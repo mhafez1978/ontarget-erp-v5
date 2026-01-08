@@ -12,7 +12,7 @@ type ImageProviderRequestBody = {
 export async function POST(req: NextRequest) {
   try {
     const validation = await validateSessionForAPI(req);
-    if (!validation.valid) return validation.response as NextResponse;
+    if (!validation.valid) return validation.response;
     const user = validation.user;
 
     const body = await req.json();

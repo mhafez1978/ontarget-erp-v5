@@ -12,7 +12,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const { user } = validation;
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const { user } = validation;

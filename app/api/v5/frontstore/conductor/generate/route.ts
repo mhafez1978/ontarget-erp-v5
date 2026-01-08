@@ -34,7 +34,7 @@ import { db } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response as NextResponse;
+  if (!validation.valid) return validation.response;
   const user =
     validation.user as import("@/lib/frontstore/v5-types").SessionUser;
 

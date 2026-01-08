@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
     const user = validation.user;
 
@@ -148,26 +148,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Check company access
-    type CompanyMember = { userId: string; role: string };
-    type CompanyWithOwnerAndMembers = {
-      id: string;
-      ownerId: string;
-      owner?: { id: string } | null;
-      members?: CompanyMember[];
-      name?: string | null;
-    };
-
-    const company = (await db.company.findUnique({
+    const company = await db.company.findUnique({
       where: { id: companyId },
       include: { owner: true, members: { where: { userId: user.id } } },
-    })) as CompanyWithOwnerAndMembers | null;
+    });
 
     if (!company)
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
 
     const isOwner = company.ownerId === user.id;
-    const members: CompanyMember[] = company.members ?? [];
-    const isMember = members.length > 0;
+    const isMember = company.members.length > 0;
 
     if (!isOwner && !isMember && user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
@@ -341,6 +331,15 @@ export async function POST(request: NextRequest) {
             },
             include: {
               user: { select: { id: true, name: true, email: true } },
+            },
+          });
+
+          // Create CompanyMember record to link user to company
+          await tx.companyMember.create({
+            data: {
+              userId: newUser.id,
+              companyId,
+              role: roleVal,
             },
           });
 
