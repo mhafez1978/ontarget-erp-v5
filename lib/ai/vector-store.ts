@@ -1,11 +1,30 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 // Embeddings are imported dynamically within upsert/query to make stubbing easier in tests
 
 import { scrubPII } from "./pii";
 
-const STORAGE_DIR = path.resolve(process.cwd(), ".ai_vectors");
-if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR, { recursive: true });
+let STORAGE_DIR = path.resolve(process.cwd(), ".ai_vectors");
+try {
+  if (!fs.existsSync(STORAGE_DIR))
+    fs.mkdirSync(STORAGE_DIR, { recursive: true });
+} catch (err) {
+  console.warn(
+    "Vector store storage path not writable, falling back to tmpdir:",
+    err instanceof Error ? err.message : String(err)
+  );
+  STORAGE_DIR = path.resolve(os.tmpdir(), "ontarget_ai_vectors");
+  try {
+    if (!fs.existsSync(STORAGE_DIR))
+      fs.mkdirSync(STORAGE_DIR, { recursive: true });
+  } catch (err2) {
+    console.error(
+      "Failed to create fallback vector store directory:",
+      err2 instanceof Error ? err2.message : String(err2)
+    );
+  }
+}
 
 export interface VectorEntry {
   id: string;
@@ -17,7 +36,7 @@ export interface VectorEntry {
 export class FileVectorStore {
   basePath: string;
 
-  constructor(private providerConfig?: any) {
+  constructor(private providerConfig?: Record<string, unknown>) {
     this.basePath = STORAGE_DIR;
   }
 
