@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import type { SessionUser } from "@/lib/frontstore/v5-types";
@@ -15,7 +16,7 @@ export async function PUT(
   context: { params?: { pageId?: string } | Promise<{ pageId?: string }> }
 ) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response;
+  if (!validation.valid) return validation.response as NextResponse;
   const user = validation.user as SessionUser;
   const params = (await (context?.params ?? {})) as { pageId?: string };
   const { pageId } = params || {};
@@ -110,7 +111,7 @@ export async function GET(
   context: { params?: { pageId?: string } | Promise<{ pageId?: string }> }
 ) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response;
+  if (!validation.valid) return validation.response as NextResponse;
   const params = (await (context?.params ?? {})) as { pageId?: string };
   const { pageId } = params || {};
   if (!pageId) {

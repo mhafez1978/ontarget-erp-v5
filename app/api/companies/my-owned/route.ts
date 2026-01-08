@@ -8,7 +8,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 export async function GET(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) return validation.response;
+    if (!validation.valid) return validation.response as NextResponse;
 
     const { user } = validation;
 

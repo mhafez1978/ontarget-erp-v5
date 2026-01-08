@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const user = validation.user;
@@ -192,7 +192,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const user = validation.user;

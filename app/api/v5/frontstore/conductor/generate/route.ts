@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import type {
   GenerateRequest,
   Variant,
@@ -33,7 +34,7 @@ import { db } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response;
+  if (!validation.valid) return validation.response as NextResponse;
   const user =
     validation.user as import("@/lib/frontstore/v5-types").SessionUser;
 

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     // Validate session
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const { user, session: currentSession } = validation;
@@ -52,7 +52,7 @@ export async function DELETE(request: NextRequest) {
     // Validate session
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const { user, session: currentSession } = validation;

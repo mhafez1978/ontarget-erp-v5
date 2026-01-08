@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
       console.log("[API /customers/my-companies] Invalid session");
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const user = validation.user;

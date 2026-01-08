@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   try {
     const validation = await validateSessionForAPI(req);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const user = validation.user;

@@ -7,7 +7,7 @@ import { encrypt } from "@/lib/encryption";
 export async function GET(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) return validation.response;
+    if (!validation.valid) return validation.response as NextResponse;
     const user = validation.user;
 
     type CaptchaDelegate = {
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) return validation.response;
+    if (!validation.valid) return validation.response as NextResponse;
     const user = validation.user;
     type CaptchaDelegate = {
       findFirst?: (opts?: unknown) => Promise<Record<string, unknown> | null>;

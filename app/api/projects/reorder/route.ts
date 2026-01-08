@@ -9,7 +9,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const validation = await validateSessionForAPI(req);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;

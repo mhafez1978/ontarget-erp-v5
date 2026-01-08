@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;
@@ -93,7 +93,7 @@ export async function PUT(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;
