@@ -1,0 +1,3 @@
+name*,price*,sku,category,description,quantity,isPublished,isFeatured,city,country
+"Blue T-Shirt",19.99,TSHIRT-01,Apparel,"Comfortable cotton t-shirt",100,true,false,"New York","United States"
+"Coffee Mug",9.95,MUG-02,Kitchen,"Ceramic mug with logo",200,true,false,"Austin","United States"
