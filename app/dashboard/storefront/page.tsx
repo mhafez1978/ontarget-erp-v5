@@ -32,6 +32,23 @@ import { ContentWizard } from "@/components/storefront/content-wizard";
 import { StorefrontReadinessWidget } from "@/components/storefront/storefront-readiness-widget";
 import { V4ChatInterface } from "@/components/storefront/v4-chat-interface";
 import { V4WebsitePreview } from "@/components/storefront/v4-website-preview";
+
+// V5 components (client)
+type FrontstoreV5Props = {
+  companyId: string;
+  renderPageSelector?: (args: {
+    pages: { id: string; title: string; slug?: string }[];
+    activePageId: string | null;
+    setActivePageId: (id: string | null) => void;
+  }) => React.ReactNode;
+  pageSelectorPortal?: (node: React.ReactNode) => void;
+};
+
+const FrontstoreV5 = dynamic(
+  () => import("@/app/dashboard/frontstore/v5/frontstore-v5-client"),
+  { ssr: false }
+) as unknown as React.ComponentType<FrontstoreV5Props>;
+
 import { ThemeSection, defaultThemes } from "@/lib/storefront-themes";
 import { AiStorefrontRenderer } from "@/components/storefront/ai-storefront-renderer";
 import {
@@ -319,6 +336,38 @@ export default function StorefrontPage() {
     "balanced" | "products" | "services" | "testimonials"
   >("balanced");
   const [aiRefining, setAiRefining] = useState(false);
+  const [v5PageSelector, setV5PageSelector] = useState<React.ReactNode>(null);
+
+  const renderV5PageSelector = useCallback(
+    ({
+      pages,
+      activePageId,
+      setActivePageId,
+    }: {
+      pages: { id: string; title: string; slug?: string }[];
+      activePageId: string | null;
+      setActivePageId: (id: string | null) => void;
+    }) => (
+      <div className="flex items-center justify-end gap-2">
+        <span className="text-sm text-muted-foreground">Page</span>
+        <select
+          className="block w-full max-w-xs rounded border border-slate-200 px-3 py-2 text-sm"
+          value={activePageId ?? ""}
+          onChange={(e) => setActivePageId(e.target.value || null)}
+        >
+          <option value="" disabled>
+            Select a page
+          </option>
+          {pages.map((p: { id: string; title: string }) => (
+            <option key={p.id} value={p.id}>
+              {p.title}
+            </option>
+          ))}
+        </select>
+      </div>
+    ),
+    []
+  );
 
   const planAllowsAiStorefront =
     user.role === "SUPER_ADMIN" ||
@@ -1147,9 +1196,13 @@ export default function StorefrontPage() {
                 </p>
               </div>
               <Switch
-                checked={settings.isStoreEnabled}
+                checked={!!settings.isStoreEnabled}
                 onCheckedChange={(checked) =>
-                  setSettings((prev) => ({ ...prev, isStoreEnabled: checked }))
+                  setSettings((prev) =>
+                    prev.isStoreEnabled === !!checked
+                      ? prev
+                      : { ...prev, isStoreEnabled: !!checked }
+                  )
                 }
               />
             </div>
@@ -1175,29 +1228,49 @@ export default function StorefrontPage() {
             }
           }}
         >
-          <TabsList>
-            <TabsTrigger value="general">
+          <TabsList className="w-full justify-start gap-2 overflow-x-auto whitespace-nowrap sm:flex-nowrap flex-wrap px-2">
+            <TabsTrigger
+              value="general"
+              className="flex-none whitespace-nowrap"
+            >
               <Globe className="h-4 w-4 mr-2" />
               General
             </TabsTrigger>
-            <TabsTrigger value="theme">
+            <TabsTrigger value="theme" className="flex-none whitespace-nowrap">
               <Palette className="h-4 w-4 mr-2" />
               Theme & Branding
             </TabsTrigger>
-            <TabsTrigger value="content">Content Wizard</TabsTrigger>
-            <TabsTrigger value="seo">SEO & Metadata</TabsTrigger>
+            <TabsTrigger
+              value="content"
+              className="flex-none whitespace-nowrap"
+            >
+              Content Wizard
+            </TabsTrigger>
+            <TabsTrigger value="seo" className="flex-none whitespace-nowrap">
+              SEO & Metadata
+            </TabsTrigger>
             {settings.storeBlogEnabled && (
-              <TabsTrigger value="posts">Posts</TabsTrigger>
+              <TabsTrigger
+                value="posts"
+                className="flex-none whitespace-nowrap"
+              >
+                Posts
+              </TabsTrigger>
             )}
-            <TabsTrigger value="ai">
+            <TabsTrigger value="ai" className="flex-none whitespace-nowrap">
               <Sparkles className="h-4 w-4 mr-2" />
               AI Storefront V1
             </TabsTrigger>
             {(user.role === "SUPER_ADMIN" ||
               ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
                 user.plan?.toUpperCase() || ""
-              )) && (
-              <TabsTrigger value="ai-v2">
+              ) ||
+              aiEnabled ||
+              process.env.NEXT_PUBLIC_SHOW_AIV5 === "1") && (
+              <TabsTrigger
+                value="ai-v2"
+                className="flex-none whitespace-nowrap"
+              >
                 <Sparkles className="h-4 w-4 mr-2" />
                 AI Storefront V2
               </TabsTrigger>
@@ -1205,8 +1278,13 @@ export default function StorefrontPage() {
             {(user.role === "SUPER_ADMIN" ||
               ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
                 user.plan?.toUpperCase() || ""
-              )) && (
-              <TabsTrigger value="ai-v3">
+              ) ||
+              aiEnabled ||
+              process.env.NEXT_PUBLIC_SHOW_AIV5 === "1") && (
+              <TabsTrigger
+                value="ai-v3"
+                className="flex-none whitespace-nowrap"
+              >
                 <Globe className="h-4 w-4 mr-2" />
                 AI Storefront V3
               </TabsTrigger>
@@ -1214,11 +1292,25 @@ export default function StorefrontPage() {
             {(user.role === "SUPER_ADMIN" ||
               ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
                 user.plan?.toUpperCase() || ""
-              )) && (
-              <TabsTrigger value="ai-v4">
-                <Sparkles className="h-4 w-4 mr-2" />
-                AI Storefront V4
-              </TabsTrigger>
+              ) ||
+              aiEnabled ||
+              process.env.NEXT_PUBLIC_SHOW_AIV5 === "1") && (
+              <>
+                <TabsTrigger
+                  value="ai-v4"
+                  className="flex-none whitespace-nowrap"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Storefront V4
+                </TabsTrigger>
+                <TabsTrigger
+                  value="ai-v5"
+                  className="flex-none whitespace-nowrap"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Storefront V5
+                </TabsTrigger>
+              </>
             )}
 
             {/* Webhooks (company-level) */}
@@ -1371,10 +1463,11 @@ export default function StorefrontPage() {
                 <Switch
                   checked={!!settings.storeBlogEnabled}
                   onCheckedChange={(checked) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      storeBlogEnabled: checked,
-                    }))
+                    setSettings((prev) =>
+                      prev.storeBlogEnabled === !!checked
+                        ? prev
+                        : { ...prev, storeBlogEnabled: !!checked }
+                    )
                   }
                 />
               </CardContent>
@@ -3018,6 +3111,7 @@ export default function StorefrontPage() {
               <CardContent>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[60vh]">
                   {/* LEFT: Chat Interface */}
+
                   <div className="lg:col-span-5">
                     <Card className="flex flex-col h-full">
                       <CardHeader className="flex items-center justify-between">
@@ -3433,6 +3527,60 @@ export default function StorefrontPage() {
                       </CardContent>
                     </Card>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* AI Storefront V5 */}
+          <TabsContent value="ai-v5" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-row items-center justify-between w-full">
+                  <div className="w-1/2 flex flex-col">
+                    <CardTitle className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      AI Storefront Builder V5 - Variant Generation
+                    </CardTitle>
+                    <CardDescription>
+                      Advanced section variant generation with drag-and-drop
+                      live preview. Create, customize, and arrange unique
+                      sections to build your perfect website.
+                    </CardDescription>
+                  </div>
+                  <div className="w-1/2 flex flex-col">
+                    {v5PageSelector || (
+                      <div className="text-sm text-muted-foreground text-right">
+                        Loading pages…
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {!selectedCompanyId && (
+                    <p className="text-sm text-muted-foreground">
+                      Select a company above to use the V5 generator.
+                    </p>
+                  )}
+
+                  {selectedCompanyId && (
+                    <div>
+                      {/* Client component mounts when a companyId is selected. If detailed company data isn't loaded yet, we still mount using the id. */}
+                      {!selectedCompany ? (
+                        <div className="mb-3 text-sm text-muted-foreground">
+                          Loading company details…
+                        </div>
+                      ) : null}
+
+                      <FrontstoreV5
+                        companyId={selectedCompanyId}
+                        pageSelectorPortal={setV5PageSelector}
+                        renderPageSelector={renderV5PageSelector}
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

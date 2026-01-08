@@ -4,15 +4,15 @@
  * Generates multi-page, SEO-optimized, WCAG 2.1 AA compliant websites
  */
 
-import { V3_SYSTEM_PROMPT } from "./v3-system-prompt";
+import { V3_SYSTEM_PROMPT } from "./v3-system-prompt.ts";
 import {
   CompanyContext,
   V3Website,
   V3GenerationInput,
   V3GenerationResult,
   V3WebsiteSchema,
-} from "./v3-types";
-import { callStorefrontModel } from "./model-client";
+} from "./v3-types.ts";
+import { callStorefrontModel } from "./model-client.ts";
 import { z } from "zod";
 import type { PrismaClient } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";

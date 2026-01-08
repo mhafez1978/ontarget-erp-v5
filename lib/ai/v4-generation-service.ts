@@ -6,15 +6,15 @@
  */
 
 import { z } from "zod";
-import { callStorefrontModel } from "./model-client";
-import { generateUnsplashUrl } from "./unsplash-helper";
+import { callStorefrontModel } from "./model-client.ts";
+import { generateUnsplashUrl } from "./unsplash-helper.ts";
 import type {
   V4CompanyContext,
   V4Website,
   V4GenerationResult,
-} from "./v4-types";
-import type { V4DesignPreferences } from "./v4-conversation-types";
-import type { AiProviderConfig } from "./model-client";
+} from "./v4-types.ts";
+import type { V4DesignPreferences } from "./v4-conversation-types.ts";
+import type { AiProviderConfig } from "./model-client.ts";
 
 // Internal types for generation
 interface DesignSystem {

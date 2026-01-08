@@ -1760,6 +1760,28 @@ enum CaptchaProviderType {
   GOOGLE_RECAPTCHA
 }
 
+// Image Provider Type Enum
+enum ImageProviderType {
+  UNSPLASH
+  PEXELS
+}
+
+// Image Provider Configuration
+model ImageProvider {
+  id         String            @id @default(cuid())
+  provider   ImageProviderType
+  isActive   Boolean           @default(false)
+  scope      String            // either 'GLOBAL' or companyId
+  companyId  String?
+  apiKey     String?           @db.Text
+  apiSecret  String?           @db.Text
+  createdById String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([companyId])
+}
+
 // Email Provider Configuration
 model EmailProvider {
   id       String            @id @default(cuid())
@@ -3054,3 +3076,235 @@ model PromoCode {
   @@index([isActive])
   @@index([expiresAt])
 }
+// Frontstore V5: Persona-driven generation models
+
+enum SectionKind {
+  HERO
+  ABOUT
+  FOOD_MENU         // food/restaurant menu
+
+  // Top navbars (explicit logged-in / logged-out variants)
+  LOGGED_IN_TOP_NAVBAR
+  LOGGED_OUT_TOP_NAVBAR
+
+  // Side navbars
+  LOGGED_IN_SIDE_NAVBAR
+  LOGGED_OUT_SIDE_NAVBAR
+
+  // Mobile navbars (hamburger/drawer)
+  LOGGED_IN_MOBILE_NAVBAR
+  LOGGED_OUT_MOBILE_NAVBAR
+
+  TESTIMONIAL
+  CTA
+  GALLERY
+  SERVICES
+  FEEDBACK
+  CUSTOM
+}
+
+enum SectionStatus {
+  PENDING
+  GENERATED
+  ACCEPTED
+  REJECTED
+  EDITED
+}
+
+enum DraftStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum JobStatus {
+  QUEUED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Persona {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  promptTemplate String? @db.Text
+  defaultModel  String?
+  promptVersion String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CompanyVocabulary {
+  id            String   @id @default(cuid())
+  companyId     String
+  key           String   // e.g., "product", "service", "menu"
+  singularLabel String
+  pluralLabel   String
+  schemaOverrides Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([companyId, key])
+  @@index([companyId])
+}
+
+enum SectionLayout {
+  IMAGE_LEFT
+  IMAGE_RIGHT
+  IMAGE_CENTER
+  SPLIT
+  TEXT_ONLY
+  CTA_GRID
+  MEDIA_COVER
+}
+
+enum BackgroundStyle {
+  SOLID_COLOR
+  GRADIENT
+  IMAGE_COVER
+  IMAGE_COVER_OVERLAY
+  TRANSPARENT
+}
+
+model GeneratedSection {
+  id             String         @id @default(cuid())
+  companyId      String
+  pageId         String?        // optional page-scoped section
+  personaId      String?
+  kind           SectionKind
+  layout         SectionLayout? // layout variant for rendering (image-left, split, etc.)
+  background     BackgroundStyle? // background style (solid, gradient, image)
+  backgroundConfig Json?         // color, gradient stops, overlay opacity
+  componentName  String?        // optional: TSX component key to render
+  schema         Json           // structured content for the section
+  props          Json?          // optional explicit props for component rendering
+  variants       Json?          // array of variant objects { variantId, layout, schema, assets, meta }
+  assets         Json?          // array of asset objects { url, alt, type }
+  status         SectionStatus  @default(PENDING)
+  generatedBy    String?        // user id
+  generatedAt    DateTime?
+  acceptedAt     DateTime?
+  version        Int            @default(1)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([companyId])
+  @@index([pageId])
+}
+
+model GeneratedPageDraft {
+  id         String   @id @default(cuid())
+  companyId  String
+  pageId     String?  // reference to Page model when draft is page-scoped
+  pageSlug   String?
+  pageTitle  String?
+  name       String?
+  sections   Json     // ordered array of section IDs
+  meta       Json?
+  version    Int      @default(1)
+  createdBy  String?
+  status     DraftStatus @default(DRAFT)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([pageId])
+}
+
+model GenerationJob {
+  id         String   @id @default(cuid())
+  companyId  String
+  sectionKind SectionKind
+  personaId  String?
+  inputPrompt String  @db.Text
+  status     JobStatus @default(QUEUED)
+  logs       Json?
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([companyId])
+}
+
+// Page model for multi-page sites
+model Page {
+  id             String   @id @default(cuid())
+  companyId      String
+  slug           String
+  title          String
+  meta           Json?
+  publishedDraftId String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([companyId])
+  @@unique([companyId, slug])
+}
+
+model NavigationItem {
+  id         String  @id @default(cuid())
+  companyId  String
+  label      String
+  pageId     String?
+  url        String?
+  order      Int     @default(0)
+  parentId   String?
+  visible    Boolean @default(true)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([pageId])
+}
+
+model ServiceSchedule {
+  id         String  @id @default(cuid())
+  companyId  String
+  serviceId  String? // link to product/service if applicable
+  title      String
+  timezone   String?
+  recurrence Json?   // e.g., rrule or recurrence rules
+  slots      Json?   // array of {start, end, capacity}
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Booking {
+  id        String       @id @default(cuid())
+  scheduleId String
+  customerName String
+  customerEmail String
+  slotStart DateTime
+  slotEnd   DateTime
+  status    BookingStatus @default(PENDING)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([scheduleId])
+}
+
+model Asset {
+  id        String  @id @default(cuid())
+  companyId String
+  url       String
+  type      String? // image, video, svg, generated
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+

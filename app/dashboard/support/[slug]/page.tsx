@@ -3550,6 +3550,7 @@ import TextAlignExtension from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
 import CodeBlock from "@tiptap/extension-code-block";
 import { toast } from "sonner";
+import Image from "next/image";
 
 // --- Helper: Upload File to your Cold Storage API ---
 const uploadFile = async (file: File): Promise<string> => {
@@ -4410,7 +4411,9 @@ export default function SupportArticlePage() {
                       <div className="relative group">
                         <div className="h-32 w-48 rounded-md border overflow-hidden bg-muted">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <Image
+                            width={900}
+                            height={600}
                             src={formData.featuredImage}
                             alt="Preview"
                             className="h-full w-full object-cover"
@@ -4538,7 +4541,9 @@ export default function SupportArticlePage() {
               {article.featuredImage && (
                 <div className="rounded-lg overflow-hidden border bg-muted/20">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
+                    width={900}
+                    height={600}
                     src={article.featuredImage}
                     alt={article.title}
                     className="w-full h-64 object-cover"

@@ -18,6 +18,7 @@ import {
   Lock,
   Webhook,
   AlertTriangle,
+  Image,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -48,6 +49,7 @@ import { AddTeamMemberDialog } from "@/components/add-team-member-dialog";
 import { PricingManagement } from "@/components/admin/pricing-management";
 import { PasswordManagementTab } from "@/components/password-management-tab";
 import { WebhookManager } from "@/components/dashboard/webhook-manager";
+import ImageProviderCards from "@/components/image-provider-cards";
 import { DangerZone } from "@/components/danger-zone";
 import { BorderBeam } from "@/components/ui/border-beam";
 import {
@@ -2903,6 +2905,23 @@ export default function SettingsPage() {
               </div>
             </AccordionContent>
           </AccordionItem>
+
+          {/* Image Providers */}
+          {user.role === "SUPER_ADMIN" && (
+            <AccordionItem value="image-providers">
+              <AccordionTrigger className="text-xl font-semibold">
+                <div className="flex items-center gap-2">
+                  <Image className="h-5 w-5" />
+                  Image Providers
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-4">
+                  <ImageProviderCards userRole={user.role} />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Webhooks Configuration */}
           {user.companyId && (

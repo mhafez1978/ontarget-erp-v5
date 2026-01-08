@@ -19,9 +19,8 @@
  * - Activity tracking
  */
 
-import { db } from "@/lib/db";
+import { db } from "./db.ts";
 import crypto from "crypto";
-import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 
 export interface GeoLocation {
@@ -79,7 +78,8 @@ async function fetchServerGeoLocation(
       headerStore = req.headers;
     } else {
       try {
-        const maybeHeaders = headers();
+        const mod = await import("next/headers");
+        const maybeHeaders = mod.headers();
         headerStore = isPromise<HeaderLike>(maybeHeaders)
           ? await maybeHeaders
           : (maybeHeaders as HeaderLike);
