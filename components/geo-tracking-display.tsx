@@ -54,6 +54,7 @@ export function GeoTrackingDisplay() {
   const [visitorsCursor, setVisitorsCursor] = useState<string | null>(null);
   const [hasMoreVisitors, setHasMoreVisitors] = useState(true);
   const [loadingMoreVisitors, setLoadingMoreVisitors] = useState(false);
+  const [totalVisitorsCount, setTotalVisitorsCount] = useState(0);
 
   useEffect(() => {
     // Fetch user role
@@ -98,6 +99,10 @@ export function GeoTrackingDisplay() {
           }
           setVisitorsCursor(visitorsData.nextCursor || null);
           setHasMoreVisitors(visitorsData.hasMore || false);
+          // Use totalCount (all-time) when available for dashboard totals
+          setTotalVisitorsCount(
+            visitorsData.totalCount ?? visitorsData.visitors?.length ?? 0
+          );
         }
 
         if (sessionsRes.ok) {
@@ -242,7 +247,7 @@ export function GeoTrackingDisplay() {
               No active logged-in users at the moment
             </p>
           ) : (
-            <div className="max-h-80 overflow-y-auto space-y-2 pr-2">
+            <div className="max-h-[600px] overflow-y-auto space-y-2 pr-2">
               {activeSessions.map((session) => (
                 <div
                   key={session.id}
@@ -316,10 +321,10 @@ export function GeoTrackingDisplay() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Recent Visitors (Guests: {visitors.length})
+                Visitors (Guests: {totalVisitorsCount})
               </CardTitle>
               <CardDescription>
-                Non-logged-in visitors from the last 24 hours
+                Non-logged-in visitors (all time)
               </CardDescription>
             </div>
             <Button

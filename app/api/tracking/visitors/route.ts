@@ -7,15 +7,21 @@ export async function GET(request: Request) {
     const cursor = searchParams.get("cursor");
     const limit = parseInt(searchParams.get("limit") || "20", 10);
 
-    // Get visitors from the last 24 hours
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    // Optional filter: lastHours (e.g., ?lastHours=24). If not provided, return all-time visitors.
+    const lastHoursParam = searchParams.get("lastHours");
+    let where: any = {};
 
-    const where = {
-      visitedAt: {
-        gte: twentyFourHoursAgo,
-      },
-    };
+    if (lastHoursParam) {
+      const lastHours = parseInt(lastHoursParam, 10);
+      if (!Number.isNaN(lastHours) && lastHours > 0) {
+        const since = new Date();
+        since.setHours(since.getHours() - lastHours);
+        where.visitedAt = { gte: since };
+      }
+    }
+
+    // Total count for the given filter (all-time if no lastHours)
+    const totalCount = await db.visitorTracking.count({ where });
 
     const visitors = await db.visitorTracking.findMany({
       where,
@@ -34,6 +40,7 @@ export async function GET(request: Request) {
       visitors: items,
       nextCursor,
       hasMore,
+      totalCount,
     });
   } catch (error) {
     console.error("Error fetching visitors:", error);
