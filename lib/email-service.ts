@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import { decrypt } from "./encryption";
 import { db } from "./db";
+import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 
 export interface EmailOptions {
   to: string | string[];
@@ -256,7 +257,8 @@ function createTransporter(provider: EmailProvider) {
  */
 export async function sendEmail(
   options: EmailOptions,
-  companyId?: string
+  companyId?: string,
+  actorUserId?: string
 ): Promise<boolean> {
   try {
     console.log("[Email Service] Attempting to send email to:", options.to);
@@ -346,9 +348,53 @@ export async function sendEmail(
         console.log(
           "[Email Service] Email sent successfully via Microsoft Graph"
         );
+        try {
+          await createAuditLog({
+            action: AUDIT_ACTIONS.EMAIL_SENT,
+            userId: actorUserId ?? null,
+            companyId: companyId ?? null,
+            entityType: ENTITY_TYPES.COMPANY,
+            entityId: companyId ?? null,
+            description: `Email sent via ${provider.provider} to ${
+              Array.isArray(options.to) ? options.to.join(", ") : options.to
+            }`,
+            metadata: {
+              subject: options.subject,
+              provider: provider.provider,
+              recipients: options.to,
+            },
+          });
+        } catch (auditErr) {
+          console.error(
+            "[Email Service] Failed to create audit log for sent email:",
+            auditErr
+          );
+        }
         return true;
       } catch (graphError) {
         console.error("[Email Service] Microsoft Graph API error:", graphError);
+        try {
+          await createAuditLog({
+            action: AUDIT_ACTIONS.EMAIL_FAILED,
+            userId: actorUserId ?? null,
+            companyId: companyId ?? null,
+            entityType: ENTITY_TYPES.COMPANY,
+            entityId: companyId ?? null,
+            description: `Email failed to send via ${provider.provider} to ${
+              Array.isArray(options.to) ? options.to.join(", ") : options.to
+            }`,
+            metadata: {
+              subject: options.subject,
+              provider: provider.provider,
+              error: String(graphError),
+            },
+          });
+        } catch (auditErr) {
+          console.error(
+            "[Email Service] Failed to create audit log for failed email:",
+            auditErr
+          );
+        }
         return false;
       }
     }
@@ -374,9 +420,50 @@ export async function sendEmail(
     });
 
     console.log("[Email Service] Email sent successfully");
+    try {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.EMAIL_SENT,
+        userId: actorUserId ?? null,
+        companyId: companyId ?? null,
+        entityType: ENTITY_TYPES.COMPANY,
+        entityId: companyId ?? null,
+        description: `Email sent via ${provider.provider} to ${
+          Array.isArray(options.to) ? options.to.join(", ") : options.to
+        }`,
+        metadata: {
+          subject: options.subject,
+          provider: provider.provider,
+          recipients: options.to,
+        },
+      });
+    } catch (auditErr) {
+      console.error(
+        "[Email Service] Failed to create audit log for sent email:",
+        auditErr
+      );
+    }
+
     return true;
   } catch (error) {
     console.error("[Email Service] Error sending email:", error);
+    try {
+      await createAuditLog({
+        action: AUDIT_ACTIONS.EMAIL_FAILED,
+        userId: actorUserId ?? null,
+        companyId: companyId ?? null,
+        entityType: ENTITY_TYPES.COMPANY,
+        entityId: companyId ?? null,
+        description: `Email failed to send to ${
+          Array.isArray(options.to) ? options.to.join(", ") : options.to
+        }`,
+        metadata: { subject: options.subject, error: String(error) },
+      });
+    } catch (auditErr) {
+      console.error(
+        "[Email Service] Failed to create audit log for failed email:",
+        auditErr
+      );
+    }
     return false;
   }
 }
