@@ -1,7 +1,14 @@
 "use client";
 
-
-import { Package, Briefcase, Loader2, Search, Grid3x3, List } from "lucide-react";
+import {
+  Package,
+  Briefcase,
+  Loader2,
+  Search,
+  Grid3x3,
+  List,
+  FileSpreadsheet,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,15 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-
-
-
-;
 import { AddProductSheet } from "@/components/add-product-sheet";
 import { AddServiceSheet } from "@/components/add-service-sheet";
 import { EditProductSheet } from "@/components/edit-product-sheet";
 import { EditServiceSheet } from "@/components/edit-service-sheet";
+import { BulkImportProducts } from "@/components/bulk-import-products";
+import { BulkImportServices } from "@/components/bulk-import-services";
 import {
   Table,
   TableBody,
@@ -125,6 +129,8 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
   const [isAddingService, setIsAddingService] = useState(false);
   const [isEditingProduct, setIsEditingProduct] = useState(false);
   const [isEditingService, setIsEditingService] = useState(false);
+  const [isProductImportOpen, setIsProductImportOpen] = useState(false);
+  const [isServiceImportOpen, setIsServiceImportOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -504,16 +510,42 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
           </p>
         </div>
         {activeTab === "products" && (
-          <Button onClick={() => setIsAddingProduct(true)} className="shrink-0">
-            <Package className="h-4 w-4 mr-2" />
-            Add Product
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsAddingProduct(true)}
+              className="shrink-0"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Add Product
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsProductImportOpen(true)}
+              className="shrink-0"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Bulk Import
+            </Button>
+          </div>
         )}
         {activeTab === "services" && (
-          <Button onClick={() => setIsAddingService(true)} className="shrink-0">
-            <Briefcase className="h-4 w-4 mr-2" />
-            Add Service
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsAddingService(true)}
+              className="shrink-0"
+            >
+              <Briefcase className="h-4 w-4 mr-2" />
+              Add Service
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsServiceImportOpen(true)}
+              className="shrink-0"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Bulk Import
+            </Button>
+          </div>
         )}
       </div>
 
@@ -788,12 +820,28 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
         onSuccess={handleProductAdded}
       />
 
+      <BulkImportProducts
+        open={isProductImportOpen}
+        onOpenChange={setIsProductImportOpen}
+        onSuccess={() => {
+          handleProductAdded();
+        }}
+      />
+
       <AddServiceSheet
         open={isAddingService}
         onOpenChange={setIsAddingService}
         companies={companies}
         selectedCompanyId={selectedCompanyId}
         onSuccess={handleServiceAdded}
+      />
+
+      <BulkImportServices
+        open={isServiceImportOpen}
+        onOpenChange={setIsServiceImportOpen}
+        onSuccess={() => {
+          handleServiceAdded();
+        }}
       />
 
       <EditProductSheet
