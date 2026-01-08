@@ -13,21 +13,20 @@ export const HeroBanner: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center text-white">
-        <h1 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight">
-          Tired of Scattered Data,
-          <br />
-          Manual Onboarding, and No Online Store?
+      <div className="relative z-10 max-w-6xl mx-auto px-6 text-center text-white">
+        <h1 className="max-w-4xl mx-auto text-2xl md:text-4xl font-bold mb-8">
+          OnTarget ERP &reg; a smart all in one Business Suite
         </h1>
-
-        <p className="text-xl md:text-2xl mb-12 opacity-90 leading-relaxed max-w-3xl mx-auto">
-          OnTarget Brands ERP is your AI-driven all-in-one solution. Organize
-          your catalog, HR, customer contacts — then let AI build a powerful
-          storefront with payments, analytics, shopping cart, payouts,
-          geo-fencing, project management, invoicing, employee clock-in,
-          payroll, and seamless onboarding (including tax docs).
+        <h3 className="text-4xl md:text-5xl font-semibold mb-8 opacity-90 leading-tight">
+          Stop Juggling Apps. Start Running Your Business in One Dashboard
+        </h3>
+        <p className="text-xl md:text-2xl mb-12 opacity-90 leading-relaxed max-w-4xl mx-auto">
+          Create your company, onboard your team, start bulk importing your
+          products, services, and customers, and let our AI Conductor work with
+          a specific persona agentic Ai built specifically for your industry
+          type to craft your ultimate SEO compliant frontstore website and sales
+          funnels automatically.
         </p>
-
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
           <Link
             href="/register?trial=true" // Replace with your actual signup URL
@@ -45,7 +44,8 @@ export const HeroBanner: React.FC = () => {
         </div>
 
         <p className="mt-12 text-lg opacity-80">
-          No credit card required • Instant setup • Powered by AI
+          No credit card required for 14 days trial offer • Instant setup •
+          Powered by AI
         </p>
       </div>
 

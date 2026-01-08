@@ -4,7 +4,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { ModelInfo } from "./model-config";
+import type { ModelInfo } from "./model-config.ts";
 
 // Cache duration: 1 hour
 const CACHE_DURATION = 60 * 60 * 1000;

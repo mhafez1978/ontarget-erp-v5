@@ -5,7 +5,7 @@
  */
 
 import type { PrismaClient } from "@prisma/client";
-import type { V4CompanyContext } from "./v4-types";
+import type { V4CompanyContext } from "./v4-types.ts";
 
 export async function buildV4Context(
   companyId: string,

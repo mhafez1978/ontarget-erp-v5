@@ -5,8 +5,11 @@ import {
   callStorefrontModel,
   type ChatMessage,
   type AiProviderConfig,
-} from "./model-client";
-import { getContrastRatio, makeAccessible } from "@/lib/utils/wcag-contrast";
+} from "./model-client.ts";
+import { randomUUID } from "crypto";
+import { getContrastRatio, makeAccessible } from "../utils/wcag-contrast.ts";
+import { db } from "../db.ts";
+import { PERSONA_SECTION_TEMPLATES } from "./prompt-templates.ts";
 
 /**
  * 1. STRICT TYPE DEFINITIONS
@@ -343,6 +346,184 @@ export function runSafetyChecks(spec: AiFrontstoreSpec) {
   );
   return { blocked: hits.length > 0, reasons: hits };
 }
+
+// Simple retrieval helpers for RAG (phase 0): company vocabulary lookup + PII scrubbing
+export async function fetchCompanyContext(
+  companyId: string,
+  prompt: string,
+  limit = 5
+): Promise<string[]> {
+  try {
+    // Try semantic search first
+    try {
+      const { vectorStore } = await import("./vector-store");
+      const hits = await vectorStore.query(companyId, prompt, limit);
+      if (hits && hits.length > 0) {
+        return hits.map((h: any) => scrubPII(`${h.id}: ${h.text}`));
+      }
+    } catch (err) {
+      console.warn("Vector store query failed (falling back):", err);
+    }
+
+    const entries = await db.companyVocabulary.findMany({
+      where: { companyId },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+
+    if (!entries || entries.length === 0) return [];
+
+    const lower = (prompt || "").toLowerCase();
+
+    const matched = entries
+      .map((e) => ({
+        text: `${e.key}: ${e.pluralLabel || e.singularLabel}`,
+        score:
+          (e.key && lower.includes(e.key.toLowerCase()) ? 2 : 0) +
+          (e.singularLabel &&
+          lower.includes((e.singularLabel || "").toLowerCase())
+            ? 1
+            : 0) +
+          (e.pluralLabel && lower.includes((e.pluralLabel || "").toLowerCase())
+            ? 1
+            : 0),
+      }))
+      .filter((m) => m.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((m) => scrubPII(m.text));
+
+    if (matched.length > 0) return matched;
+
+    // Fallback to top N entries
+    return entries
+      .slice(0, limit)
+      .map((e) => scrubPII(`${e.key}: ${e.pluralLabel || e.singularLabel}`));
+  } catch (err) {
+    console.warn("Company context retrieval failed:", err);
+    return [];
+  }
+}
+
+import { scrubPII } from "./pii.ts";
+
+/**
+ * Generate per-section variants using the storefront model. Returns an array of variants
+ * Each variant: { variantId, layout, schema, assets, meta }
+ */
+export async function generateSectionVariants(
+  company: CompanySummary,
+  kind: string,
+  prompt: string,
+  personaSlug?: string,
+  providerConfig?: AiProviderConfig
+): Promise<
+  Array<{
+    variantId: string;
+    layout: string;
+    schema: Record<string, unknown>;
+    assets?: Array<{ url: string; alt?: string }>;
+    meta?: Record<string, unknown>;
+  }>
+> {
+  // Build a system prompt tailored to single-section generation
+  const personaTemplate =
+    PERSONA_SECTION_TEMPLATES[(personaSlug || "general") as string] ||
+    PERSONA_SECTION_TEMPLATES.general;
+  const system =
+    // persona-specific instructions (template)
+    personaTemplate +
+    `You are a persona-driven website section generator for ${
+      personaSlug || "general"
+    }.` +
+    `\\nGenerate 2-4 distinct layout variants for a single section of type: ${kind}.` +
+    "\\nEach variant must be a JSON object with fields: variantId (string), layout (image_left|image_right|split|text_only|media_cover|cta_grid), schema (object with copy/ctas/media), assets (array), meta (score, seo)" +
+    "\\nOnly return a single top-level JSON object: { variants: [ ... ] } and nothing else.";
+
+  const messages: ChatMessage[] = [
+    { role: "system", content: system },
+    { role: "user", content: `Company: ${company.name}. Prompt: ${prompt}` },
+  ];
+
+  // Add lightweight company RAG context (v0): pull vocabulary entries matching prompt
+  try {
+    const contextSnippets = await fetchCompanyContext(company.id, prompt);
+    if (contextSnippets.length > 0) {
+      messages.splice(1, 0, {
+        role: "user",
+        content: `Relevant company data:\n${contextSnippets.join("\n")}`,
+      });
+    }
+  } catch (err) {
+    console.warn("Failed to attach company context:", err);
+  }
+
+  // Call the storefront model with a permissive Zod schema (we'll validate in code)
+  const raw = await callStorefrontModel<Record<string, unknown>>(
+    messages,
+    z.record(z.string(), z.unknown()),
+    providerConfig
+  );
+
+  if (!raw) return []; // no API key configured - fallback will handle
+
+  // Normalize variants from raw
+  const variantsRaw = (raw as any)?.variants || [];
+  const variants: any[] = [];
+  for (const v of variantsRaw) {
+    const variantId =
+      typeof v.variantId === "string" ? v.variantId : randomUUID();
+    const layout = typeof v.layout === "string" ? v.layout : "TEXT_ONLY";
+    const schema = typeof v.schema === "object" && v.schema ? v.schema : {};
+    const assets = Array.isArray(v.assets) ? v.assets : [];
+    const meta = typeof v.meta === "object" && v.meta ? v.meta : {};
+    variants.push({ variantId, layout, schema, assets, meta });
+  }
+
+  // Factualness: check whether company context snippets are reflected in at least one variant
+  try {
+    const contextSnippets = await fetchCompanyContext(company.id, prompt);
+
+    function checkVariantFacts(variant: any, snippets: string[]) {
+      const text = JSON.stringify(variant.schema).toLowerCase();
+      let matched = 0;
+      for (const s of snippets) {
+        const raw = s.toLowerCase();
+        // Try exact phrase match, then token match
+        if (text.includes(raw)) {
+          matched++;
+          continue;
+        }
+        const tokens = raw.split(/[^a-z0-9]+/).filter(Boolean);
+        for (const t of tokens) {
+          if (t.length < 3) continue;
+          if (text.includes(t)) {
+            matched++;
+            break;
+          }
+        }
+      }
+      return matched;
+    }
+
+    for (const variant of variants) {
+      const matched = checkVariantFacts(variant, contextSnippets);
+      variant.meta = {
+        ...(variant.meta || {}),
+        factualness: { matched, total: contextSnippets.length },
+      };
+    }
+  } catch (err) {
+    console.warn("Factualness checks failed:", err);
+  }
+
+  return variants;
+}
+
+// Helper wrapper object to make runtime stubbing in tests easier (ESM exports are read-only bindings)
+export const aiStorefrontService = {
+  generateSectionVariants,
+};
 
 // v4.2
 

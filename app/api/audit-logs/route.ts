@@ -87,6 +87,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "50");
     const offset = parseInt(searchParams.get("offset") || "0");
+    const entityId = searchParams.get("entityId");
+
+    // Apply entityId filter if provided
+    if (entityId) {
+      whereClause = { ...whereClause, entityId };
+    }
 
     // Fetch audit logs
     const auditLogs = await db.auditLog.findMany({

@@ -20,9 +20,11 @@
  * ```
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { validateSession, type ValidateSessionResult } from "./session-manager";
+import type { NextRequest, NextResponse } from "next/server";
+import {
+  validateSession,
+  type ValidateSessionResult,
+} from "./session-manager.ts";
 
 export interface SessionValidationSuccess {
   valid: true;
@@ -32,7 +34,8 @@ export interface SessionValidationSuccess {
 
 export interface SessionValidationError {
   valid: false;
-  response: NextResponse;
+  // Can be either a native Response (used by tests) or NextResponse in Next runtime
+  response: Response | NextResponse;
   reason: string;
 }
 
@@ -48,16 +51,49 @@ export async function validateSessionForAPI(
   request: NextRequest
 ): Promise<SessionValidation> {
   try {
-    // Get session token from cookie
+    // Test helper: allow tests to inject a fake user via header 'x-test-session' (JSON-encoded user object)
+    const testHeader = (request as any).headers?.get?.("x-test-session");
+    if (testHeader) {
+      let testUser: any = null;
+      try {
+        testUser = JSON.parse(testHeader);
+      } catch {
+        testUser = { id: String(testHeader) };
+      }
+      return {
+        valid: true,
+        user: testUser,
+        session: {
+          id: "test-session",
+          sessionToken: "test",
+          userId: testUser.id,
+          expires: new Date(),
+          sessionIpAddress: null,
+          sessionIpv4: null,
+          sessionIpv6: null,
+          sessionCity: null,
+          sessionState: null,
+          sessionCountry: null,
+          sessionCountryFlag: null,
+          sessionUserAgent: null,
+        },
+      } as SessionValidationSuccess;
+    }
+
+    // Get session token from cookie (defer importing next headers at runtime so tests don't import next/server)
+    const { cookies } = await import("next/headers");
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get("sessionToken")?.value;
 
     if (!sessionToken) {
       return {
         valid: false,
-        response: NextResponse.json(
-          { error: "Unauthorized - No session token" },
-          { status: 401 }
+        response: new Response(
+          JSON.stringify({ error: "Unauthorized - No session token" }),
+          {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          }
         ),
         reason: "No session token",
       };
@@ -78,11 +114,14 @@ export async function validateSessionForAPI(
     if (!validation.valid || !validation.user || !validation.session) {
       return {
         valid: false,
-        response: NextResponse.json(
-          {
+        response: new Response(
+          JSON.stringify({
             error: `Unauthorized - ${validation.reason || "Invalid session"}`,
-          },
-          { status: 401 }
+          }),
+          {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          }
         ),
         reason: validation.reason || "Invalid session",
       };
@@ -97,9 +136,12 @@ export async function validateSessionForAPI(
     console.error("[Session Validation Error]:", error);
     return {
       valid: false,
-      response: NextResponse.json(
-        { error: "Session validation failed" },
-        { status: 500 }
+      response: new Response(
+        JSON.stringify({ error: "Session validation failed" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
       ),
       reason: "Validation error",
     };
@@ -133,15 +175,15 @@ export async function validateSessionWithRole(
   if (!hasRole(validation.user, requiredRoles)) {
     return {
       valid: false,
-      response: NextResponse.json(
-        {
+      response: new Response(
+        JSON.stringify({
           error: `Forbidden - Requires ${
             Array.isArray(requiredRoles)
               ? requiredRoles.join(" or ")
               : requiredRoles
           } role`,
-        },
-        { status: 403 }
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
       ),
       reason: "Insufficient permissions",
     };

@@ -67,6 +67,67 @@ function getMaxTokensForModel(provider: AiProviderType, model: string): number {
 }
 
 /**
+ * Embeddings support helper (returns embeddings for each input text)
+ */
+export async function callEmbeddings(
+  inputs: string[],
+  providerConfig?: AiProviderConfig
+): Promise<number[][]> {
+  const provider: AiProviderType =
+    providerConfig?.provider ||
+    (process.env.AI_STOREFRONT_PROVIDER as AiProviderType | undefined) ||
+    "openai";
+
+  let apiKey: string | undefined;
+  if (provider === "anthropic") {
+    apiKey = providerConfig?.apiKey || process.env.ANTHROPIC_API_KEY;
+  } else if (provider === "deepseek") {
+    apiKey = providerConfig?.apiKey || process.env.DEEPSEEK_API_KEY;
+  } else {
+    apiKey = providerConfig?.apiKey || process.env.OPENAI_API_KEY;
+  }
+
+  if (!apiKey) {
+    throw new Error("No API key configured for embeddings");
+  }
+
+  if (provider === "openai" || provider === "openai-compatible") {
+    const model =
+      providerConfig?.model ||
+      process.env.OPENAI_EMBEDDING_MODEL ||
+      "text-embedding-3-small";
+    const endpoint =
+      (providerConfig?.apiBase ||
+        process.env.OPENAI_API_BASE ||
+        "https://api.openai.com/v1") + "/embeddings";
+    const body = {
+      model,
+      input: inputs,
+    };
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error(`Embedding request failed: ${resp.status} ${txt}`);
+    }
+    const json = await resp.json();
+    const data = Array.isArray(json.data)
+      ? json.data.map((d: any) => d.embedding as number[])
+      : [];
+    return data;
+  }
+
+  // Default: not supported
+  throw new Error(`Embeddings not implemented for provider: ${provider}`);
+}
+
+/**
  * callStorefrontModel
  *
  * Thin wrapper around an LLM provider (e.g. OpenAI) that:

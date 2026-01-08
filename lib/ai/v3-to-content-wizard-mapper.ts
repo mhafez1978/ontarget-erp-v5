@@ -4,7 +4,7 @@
  * Converts V3 website sections to Content Wizard (ThemeSection) format
  */
 
-import type { V3Website, V3Page, V3Section } from "./v3-types";
+import type { V3Website, V3Page, V3Section } from "./v3-types.ts";
 import type { ThemeSection } from "@/lib/storefront-themes";
 
 /**

@@ -60,10 +60,21 @@ export async function createAuditLog(params: CreateAuditLogParams) {
     // or rely on session data. The old lookupGeoByIp uses ipapi.co which has limits.
     // Instead, callers should use /api/get-location or pass geo data directly.
 
+    // Ensure the userId exists in DB to avoid FK violations; use null if missing
+    let auditUserId = params.userId ?? null;
+    if (auditUserId) {
+      try {
+        const u = await db.user.findUnique({ where: { id: auditUserId } });
+        if (!u) auditUserId = null;
+      } catch (e) {
+        auditUserId = null;
+      }
+    }
+
     const auditLog = await db.auditLog.create({
       data: {
         action: params.action,
-        userId: params.userId,
+        userId: auditUserId,
         companyId: params.companyId,
         entityType: params.entityType,
         entityId: params.entityId,

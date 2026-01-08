@@ -7,7 +7,7 @@
  */
 
 import { z } from "zod";
-import type { AiProviderConfig } from "./model-client";
+import type { AiProviderConfig } from "./model-client.ts";
 
 /**
  * Input: Company Context provided to AI
