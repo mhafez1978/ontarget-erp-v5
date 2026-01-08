@@ -3,6 +3,7 @@ import path from "path";
 import os from "os";
 // Embeddings are imported dynamically within upsert/query to make stubbing easier in tests
 
+import type { AiProviderConfig } from "./model-client";
 import { scrubPII } from "./pii";
 
 let STORAGE_DIR = path.resolve(process.cwd(), ".ai_vectors");
@@ -36,7 +37,7 @@ export interface VectorEntry {
 export class FileVectorStore {
   basePath: string;
 
-  constructor(private providerConfig?: Record<string, unknown>) {
+  constructor(private providerConfig?: AiProviderConfig) {
     this.basePath = STORAGE_DIR;
   }
 

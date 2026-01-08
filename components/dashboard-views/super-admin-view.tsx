@@ -1,6 +1,5 @@
 "use client";
 
-
 import { MapPin, Users, Globe, LogsIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { GeoTrackingDisplay } from "@/components/geo-tracking-display";
@@ -8,10 +7,6 @@ import { AuditLog } from "@/components/audit-log";
 import { EmailSettingsWarningBanner } from "@/components/email-settings-warning-banner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-
-
-;
 
 import {
   Accordion,
@@ -43,7 +38,10 @@ export function SuperAdminView({ userName }: SuperAdminViewProps) {
 
         if (visitorsRes.ok) {
           const visitorsData = await visitorsRes.json();
-          setRecentVisitors(visitorsData.visitors?.length || 0);
+          // Prefer totalCount (all-time) when available, fall back to returned page length
+          setRecentVisitors(
+            visitorsData.totalCount ?? visitorsData.visitors?.length ?? 0
+          );
         }
       } catch (error) {
         console.error("Failed to fetch counts:", error);
@@ -88,14 +86,14 @@ export function SuperAdminView({ userName }: SuperAdminViewProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Recent Visitors (24h)
+              Total Visitors (All time)
             </CardTitle>
             <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{recentVisitors}</div>
             <p className="text-xs text-muted-foreground">
-              Guest visitors tracked
+              Guest visitors tracked (all time)
             </p>
           </CardContent>
         </Card>
