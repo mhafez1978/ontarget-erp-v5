@@ -109,8 +109,11 @@ export async function POST(req: NextRequest) {
           "NAVBAR",
         ].includes(k)
       ) {
-        // try to infer auth from prompt
+        // try to infer auth from prompt or the provided kind string
+        const kindLower = String(kindIn || "").toLowerCase();
         const auth: "LOGGED_IN" | "LOGGED_OUT" =
+          kindLower.includes("logged in") ||
+          kindLower.includes("logged-in") ||
           promptText.includes("logged in") ||
           promptText.includes("signed in") ||
           promptText.includes("account") ||
@@ -132,7 +135,10 @@ export async function POST(req: NextRequest) {
           "SIDE_NAV",
         ].includes(k)
       ) {
+        const kindLower = String(kindIn || "").toLowerCase();
         const auth: "LOGGED_IN" | "LOGGED_OUT" =
+          kindLower.includes("logged in") ||
+          kindLower.includes("logged-in") ||
           promptText.includes("logged in") ||
           promptText.includes("signed in") ||
           promptText.includes("account")
@@ -152,7 +158,10 @@ export async function POST(req: NextRequest) {
           "DRAWER",
         ].includes(k)
       ) {
+        const kindLower = String(kindIn || "").toLowerCase();
         const auth: "LOGGED_IN" | "LOGGED_OUT" =
+          kindLower.includes("logged in") ||
+          kindLower.includes("logged-in") ||
           promptText.includes("logged in") ||
           promptText.includes("signed in") ||
           promptText.includes("account")
@@ -160,6 +169,35 @@ export async function POST(req: NextRequest) {
             : "LOGGED_OUT";
         k = mapNav(auth, "MOBILE");
         return { dbKind: k, meta: { position: "mobile", auth } };
+      }
+
+      // Additional flexible handling: inputs like 'Navbar Logged out' or 'Navbar - logged out'
+      if (
+        k.includes("NAV") ||
+        k.includes("NAVBAR") ||
+        promptText.includes("navbar")
+      ) {
+        const kindLower = String(kindIn || "").toLowerCase();
+        const auth: "LOGGED_IN" | "LOGGED_OUT" =
+          kindLower.includes("logged in") ||
+          kindLower.includes("logged-in") ||
+          kindLower.includes("login") ||
+          promptText.includes("logged in")
+            ? "LOGGED_IN"
+            : "LOGGED_OUT";
+        // default to TOP unless specified otherwise
+        const position: "TOP" | "SIDE" | "MOBILE" =
+          kindLower.includes("side") ||
+          kindLower.includes("sidebar") ||
+          promptText.includes("side")
+            ? "SIDE"
+            : kindLower.includes("mobile") ||
+              kindLower.includes("hamburger") ||
+              promptText.includes("mobile")
+            ? "MOBILE"
+            : "TOP";
+        k = mapNav(auth, position);
+        return { dbKind: k, meta: { position: position.toLowerCase(), auth } };
       }
 
       // If user passed AUTO or unknown, try heuristics from prompt
@@ -685,6 +723,7 @@ export async function POST(req: NextRequest) {
               );
             } catch (err) {
               // Fallback: try a relative import (useful in the test runner environment)
+              console.warn(err);
               try {
                 aiModule = await import(
                   "../../../../../../lib/ai/ai-storefront-service.ts"
@@ -776,19 +815,40 @@ export async function POST(req: NextRequest) {
                   ? ` (${Object.values(detected.meta).join(", ")})`
                   : "";
 
+              const baseSchema: Record<string, unknown> = {
+                title: `${String(
+                  detected.dbKind || "Section"
+                )}${variantTitleSuffix} Variant ${i + 1}`,
+                description: `Generated variant ${i + 1} for ${
+                  detected.dbKind || "section"
+                } - prompt summary: ${String(prompt).slice(0, 120)}`,
+                meta: detected.meta || {},
+              };
+
+              // If it's a navbar, include helpful nav items so the UI shows text
+              if (
+                String(detected.dbKind).includes("NAVBAR") ||
+                String(detected.dbKind).includes("NAV")
+              ) {
+                baseSchema.nav = {
+                  items: [
+                    { text: "Home", url: "/" },
+                    { text: "About", url: "/about" },
+                    { text: "Products", url: "/products" },
+                    { text: "Contact", url: "/contact" },
+                  ],
+                  branding: {
+                    text: String(companyName) || "Your Brand",
+                  },
+                };
+              } else {
+                baseSchema.cta = [{ text: "Learn more", url: "/" }];
+              }
+
               const variant = {
                 variantId: vId,
                 layout,
-                schema: {
-                  title: `${String(
-                    detected.dbKind || "Section"
-                  )}${variantTitleSuffix} Variant ${i + 1}`,
-                  description: `Generated variant ${i + 1} for ${
-                    detected.dbKind || "section"
-                  } - prompt summary: ${String(prompt).slice(0, 120)}`,
-                  cta: [{ text: "Learn more", url: "/" }],
-                  meta: detected.meta || {},
-                },
+                schema: baseSchema,
                 assets: [],
                 meta: { score: 0.85 - i * 0.05 },
               };

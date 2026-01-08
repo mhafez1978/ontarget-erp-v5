@@ -1,6 +1,5 @@
 "use client";
 
-
 import { AlertCircle, CheckCircle2, Loader2, Crown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,9 +16,6 @@ import {
 } from "@/components/ui/sheet";
 import { BorderBeam } from "@/components/ui/border-beam";
 
-
-
-;
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -141,10 +137,25 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
         }
       };
       fetchCompanies();
-    }
+    } // Also fetch global provider early so ADMIN can see global indication
+    const fetchGlobalEarly = async () => {
+      try {
+        const res = await fetch("/api/settings/storage?scope=GLOBAL");
+        const j = await res.json();
+        if (res.ok && j.provider?.isActive)
+          setGlobalActiveProvider(j.provider.provider);
+      } catch (e) {
+        /* ignore */
+      }
+    };
+    fetchGlobalEarly();
   }, [userRole]);
 
-  // Fetch active provider
+  // Fetch active provider for selected scope and also fetch global active provider for fallback indication
+  const [globalActiveProvider, setGlobalActiveProvider] = useState<
+    string | null
+  >(null);
+
   useEffect(() => {
     const fetchActiveProvider = async () => {
       try {
@@ -163,6 +174,19 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
         }
       } catch (err) {
         console.error("Error fetching active provider:", err);
+      }
+
+      // Always fetch global provider to show global indicator to company admins
+      try {
+        const gRes = await fetch("/api/settings/storage?scope=GLOBAL");
+        const gData = await gRes.json();
+        if (gRes.ok && gData.provider?.isActive) {
+          setGlobalActiveProvider(gData.provider.provider);
+        } else {
+          setGlobalActiveProvider(null);
+        }
+      } catch (err) {
+        console.error("Error fetching global active provider:", err);
       }
     };
 
@@ -798,6 +822,17 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
         </Card>
       )}
 
+      {userRole === "ADMIN" && globalActiveProvider && (
+        <Alert>
+          <Crown className="h-4 w-4" />
+          <AlertDescription>
+            A <strong>global cold storage</strong> provider is active (
+            {globalActiveProvider}). You can override it for your company by
+            selecting a provider and saving company-specific settings.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {userRole === "SUPER_ADMIN" && (
         <Alert>
           <Crown className="h-4 w-4" />
@@ -823,13 +858,16 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
       <div className="ml-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {PROVIDERS.map((provider) => {
           const isActive = activeProvider === provider.type;
+          const isGlobalActive =
+            !isActive && globalActiveProvider === provider.type;
 
           return (
             <Card
               key={provider.id}
               className={cn(
                 "relative cursor-pointer transition-all hover:shadow-lg group overflow-hidden",
-                isActive && "ring-2 ring-primary"
+                isActive && "ring-2 ring-primary",
+                isGlobalActive && "ring-2 ring-blue-500"
               )}
               onClick={() => handleCardClick(provider)}
             >
@@ -858,6 +896,12 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                           Active
                         </span>
                       )}
+                      {isGlobalActive && (
+                        <span className="inline-flex items-center rounded-full bg-blue-500 px-2 py-0.5 text-xs font-medium text-white gap-1">
+                          <Crown className="h-3 w-3" />
+                          Global
+                        </span>
+                      )}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       {provider.description}
@@ -870,15 +914,21 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                     Currently storing files
                   </div>
                 )}
+                {isGlobalActive && (
+                  <div className="mt-4 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                    <Crown className="h-4 w-4" />
+                    Using global configuration
+                  </div>
+                )}
               </CardContent>
 
-              {isActive && (
+              {(isActive || isGlobalActive) && (
                 <BorderBeam
                   size={100}
                   duration={8}
                   borderWidth={4}
-                  colorFrom="#10b981"
-                  colorTo="#a855f7"
+                  colorFrom={isActive ? "#10b981" : "#3b82f6"}
+                  colorTo={isActive ? "#a855f7" : "#8b5cf6"}
                 />
               )}
             </Card>

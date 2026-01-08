@@ -70,13 +70,37 @@ export async function GET(request: NextRequest) {
             "[Branding API] Returning white-label branding for:",
             membership.company.name
           );
-          // Return company-specific branding (only in dashboard context)
+
+          // If the company hasn't uploaded logos yet, fall back to root logos
+          const rootCompany = await db.company.findFirst({
+            where: { isRoot: true },
+            select: { logo: true, logoLight: true, logoDark: true },
+          });
+
+          const mergedLogo =
+            membership.company.logo ?? rootCompany?.logo ?? null;
+          const mergedLogoLight =
+            membership.company.logoLight ?? rootCompany?.logoLight ?? null;
+          const mergedLogoDark =
+            membership.company.logoDark ?? rootCompany?.logoDark ?? null;
+
+          // If we merged root logos in, log for observability
+          if (
+            (!membership.company.logo && !!rootCompany?.logo) ||
+            (!membership.company.logoLight && !!rootCompany?.logoLight) ||
+            (!membership.company.logoDark && !!rootCompany?.logoDark)
+          ) {
+            console.log(
+              "[Branding API] Company missing logo(s); merged root company logos as fallback"
+            );
+          }
+
           return NextResponse.json({
             name: membership.company.name,
             slogan: membership.company.slogan || "People Driven & AI Insight",
-            logo: membership.company.logo,
-            logoLight: membership.company.logoLight,
-            logoDark: membership.company.logoDark,
+            logo: mergedLogo,
+            logoLight: mergedLogoLight,
+            logoDark: mergedLogoDark,
             isWhiteLabel: true,
           });
         } else {
