@@ -390,7 +390,8 @@ export async function POST(request: NextRequest) {
           subject: `Welcome to ${company.name} - Complete Your Onboarding 🎉`,
           html,
         },
-        companyId
+        companyId,
+        user.id
       );
 
       if (!emailSent) {

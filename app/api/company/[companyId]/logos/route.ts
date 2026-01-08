@@ -101,6 +101,7 @@ export async function POST(
     console.log("[POST Logos] Files to upload:", files.length);
 
     const uploadedLogos = [];
+    let usedFallback = false;
 
     // Process each file
     for (const file of files) {
@@ -135,11 +136,21 @@ export async function POST(
             `[POST Logos] Failed to create directory ${uploadDir}:`,
             mkdirError
           );
-          throw new Error(
-            `Failed to create storage directory: ${
-              mkdirError instanceof Error ? mkdirError.message : "Unknown error"
-            }. Check volume permissions (needs UID 1001 write access).`
+          console.warn(
+            "[POST Logos] Falling back to DB base64 storage for this file due to mkdir failure"
           );
+          const dataUrl = bufferToDataURL(buffer, file.type);
+          const uniqueSuffix = `${Date.now()}-${Math.round(
+            Math.random() * 1e9
+          )}`;
+          filename = `${file.name.replace(
+            /\.[^/.]+$/,
+            ""
+          )}-${uniqueSuffix}${extname(file.name)}`;
+          uploadedLogos.push({ url: dataUrl, filename });
+          usedFallback = true;
+          // Skip filesystem write for this file
+          continue;
         }
 
         const filepath = resolve(uploadDir, filename);
@@ -151,11 +162,13 @@ export async function POST(
             `[POST Logos] Failed to write file ${filepath}:`,
             writeError
           );
-          throw new Error(
-            `Failed to write file: ${
-              writeError instanceof Error ? writeError.message : "Unknown error"
-            }. Check volume permissions (needs UID 1001 write access).`
+          console.warn(
+            "[POST Logos] Falling back to DB base64 storage for this file due to write failure"
           );
+          const dataUrl = bufferToDataURL(buffer, file.type);
+          uploadedLogos.push({ url: dataUrl, filename });
+          usedFallback = true;
+          continue;
         }
 
         // Return path for serving via /uploads/logos route
@@ -221,7 +234,9 @@ export async function POST(
         action: "upload_multiple",
         count: uploadedLogos.length,
         storageType: storageConfig
-          ? `COLD_STORAGE_${storageConfig.provider}`
+          ? `COLD_STORAGE_${storageConfig.provider}${
+              usedFallback ? "_PARTIAL_FALLBACK" : ""
+            }`
           : "DB_BASE64_FALLBACK",
       },
     });

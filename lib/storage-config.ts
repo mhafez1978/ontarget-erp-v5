@@ -26,9 +26,61 @@ export async function getStorageConfig(): Promise<{
   // Use absolute path /var/storage/cold in production (Docker), or relative path for dev
   let basePath = config.path || "../var/storage/cold";
   if (globalStorage.provider === "LOCAL") {
-    // If path is relative and starts with ../, resolve to /var/storage/cold for Docker
+    // If path is relative and starts with ../, try resolving to the repo-relative path first (good for local dev).
+    // If that path does not exist or is not writable, fall back to the Docker-friendly absolute path /var/storage/cold.
     if (basePath.startsWith("../var/storage")) {
-      basePath = "/var/storage/cold";
+      try {
+        // Prefer resolving relative to the current project when running locally.
+        // Try two candidates: the original parent-relative path and a repo-local path
+        const { resolve } = await import("path");
+        const { access, constants } = await import("fs/promises");
+        const candidate1 = resolve(process.cwd(), basePath); // ../var/storage/cold -> parent/var/storage/cold
+        const candidate2 = resolve(
+          process.cwd(),
+          basePath.replace(/^\.\.(\/)?/, "")
+        ); // var/storage/cold inside repo
+
+        let chosen: string | null = null;
+
+        try {
+          await access(candidate1, constants.W_OK);
+          chosen = candidate1;
+          console.log(
+            `[getStorageConfig] Using candidate1 path: ${candidate1}`
+          );
+        } catch (e) {
+          // candidate1 not available
+        }
+
+        if (!chosen) {
+          try {
+            await access(candidate2, constants.W_OK);
+            chosen = candidate2;
+            console.log(
+              `[getStorageConfig] Using candidate2 path: ${candidate2}`
+            );
+          } catch (e) {
+            // candidate2 not available
+          }
+        }
+
+        if (chosen) {
+          basePath = chosen;
+        } else {
+          // Fallback to the Docker absolute path
+          console.warn(
+            `[getStorageConfig] Neither candidate path exists/writable (candidate1=${candidate1}, candidate2=${candidate2}). Falling back to /var/storage/cold`
+          );
+          basePath = "/var/storage/cold";
+        }
+      } catch (err) {
+        // In case of any unexpected error, use the safe Docker path
+        console.error(
+          "[getStorageConfig] Error while resolving storage path:",
+          err
+        );
+        basePath = "/var/storage/cold";
+      }
     }
   } else {
     basePath = "";

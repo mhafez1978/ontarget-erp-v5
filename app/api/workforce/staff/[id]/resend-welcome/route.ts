@@ -98,7 +98,8 @@ export async function POST(
           subject: `Welcome to ${staff.company.name} - Your Account Details`,
           html,
         },
-        staff.companyId // Use company-specific email provider if configured
+        staff.companyId, // Use company-specific email provider if configured
+        user.id
       );
 
       if (!emailSent) {

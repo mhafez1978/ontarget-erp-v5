@@ -1,7 +1,19 @@
 "use client";
 
-
-import { Users, Loader2, Search, Pencil, UserPlus, Grid3x3, List, Send, Eye, EyeOff, Trash2 } from "lucide-react";
+import {
+  Users,
+  Loader2,
+  Search,
+  Pencil,
+  UserPlus,
+  Grid3x3,
+  List,
+  Send,
+  Eye,
+  EyeOff,
+  Trash2,
+  FileSpreadsheet,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,16 +34,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
+import { BulkImportWorkforce } from "@/components/bulk-import-workforce";
 
-
-
-
-
-
-
-
-
-;
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -128,6 +132,7 @@ export function SuperAdminWorkforceView() {
   // Sheet states
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
   const [isEditStaffOpen, setIsEditStaffOpen] = useState(false);
+  const [isWorkforceImportOpen, setIsWorkforceImportOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string>("");
@@ -402,10 +407,19 @@ export function SuperAdminWorkforceView() {
             Manage staff across your companies
           </p>
         </div>
-        <Button onClick={() => setIsAddStaffOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Staff Member
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsAddStaffOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add Staff Member
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setIsWorkforceImportOpen(true)}
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Bulk Import
+          </Button>
+        </div>
       </div>
 
       {/* Company Selector */}
@@ -1636,6 +1650,16 @@ export function SuperAdminWorkforceView() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Bulk Import Sheet (Super Admin) */}
+      <BulkImportWorkforce
+        open={isWorkforceImportOpen}
+        onOpenChange={setIsWorkforceImportOpen}
+        onSuccess={() => {
+          // Refresh staff list after successful import
+          fetchStaff();
+        }}
+      />
     </div>
   );
 }
