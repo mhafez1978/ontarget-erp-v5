@@ -11,7 +11,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) return validation.response as NextResponse;
+    if (!validation.valid) return validation.response;
 
     const user = validation.user;
     const body = await request.json();

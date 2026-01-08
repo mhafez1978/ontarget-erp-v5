@@ -20,7 +20,7 @@
  * ```
  */
 
-import type { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import {
   validateSession,
   type ValidateSessionResult,
@@ -35,7 +35,7 @@ export interface SessionValidationSuccess {
 export interface SessionValidationError {
   valid: false;
   // Can be either a native Response (used by tests) or NextResponse in Next runtime
-  response: Response | NextResponse;
+  response: Response | import("next/server").NextResponse;
   reason: string;
 }
 
@@ -86,17 +86,26 @@ export async function validateSessionForAPI(
     const sessionToken = cookieStore.get("sessionToken")?.value;
 
     if (!sessionToken) {
-      return {
-        valid: false,
-        response: new Response(
-          JSON.stringify({ error: "Unauthorized - No session token" }),
-          {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          }
-        ),
-        reason: "No session token",
-      };
+      try {
+        const { NextResponse } = await import("next/server");
+        return {
+          valid: false,
+          response: NextResponse.json(
+            { error: "Unauthorized - No session token" },
+            { status: 401 }
+          ),
+          reason: "No session token",
+        };
+      } catch (e) {
+        return {
+          valid: false,
+          response: new Response(
+            JSON.stringify({ error: "Unauthorized - No session token" }),
+            { status: 401, headers: { "Content-Type": "application/json" } }
+          ),
+          reason: "No session token",
+        };
+      }
     }
 
     // Get client IP for validation
@@ -112,19 +121,30 @@ export async function validateSessionForAPI(
     });
 
     if (!validation.valid || !validation.user || !validation.session) {
-      return {
-        valid: false,
-        response: new Response(
-          JSON.stringify({
-            error: `Unauthorized - ${validation.reason || "Invalid session"}`,
-          }),
-          {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          }
-        ),
-        reason: validation.reason || "Invalid session",
-      };
+      try {
+        const { NextResponse } = await import("next/server");
+        return {
+          valid: false,
+          response: NextResponse.json(
+            {
+              error: `Unauthorized - ${validation.reason || "Invalid session"}`,
+            },
+            { status: 401 }
+          ),
+          reason: validation.reason || "Invalid session",
+        };
+      } catch (e) {
+        return {
+          valid: false,
+          response: new Response(
+            JSON.stringify({
+              error: `Unauthorized - ${validation.reason || "Invalid session"}`,
+            }),
+            { status: 401, headers: { "Content-Type": "application/json" } }
+          ),
+          reason: validation.reason || "Invalid session",
+        };
+      }
     }
 
     return {
@@ -134,17 +154,26 @@ export async function validateSessionForAPI(
     };
   } catch (error) {
     console.error("[Session Validation Error]:", error);
-    return {
-      valid: false,
-      response: new Response(
-        JSON.stringify({ error: "Session validation failed" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      ),
-      reason: "Validation error",
-    };
+    try {
+      const { NextResponse } = await import("next/server");
+      return {
+        valid: false,
+        response: NextResponse.json(
+          { error: "Session validation failed" },
+          { status: 500 }
+        ),
+        reason: "Validation error",
+      };
+    } catch (e) {
+      return {
+        valid: false,
+        response: new Response(
+          JSON.stringify({ error: "Session validation failed" }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        ),
+        reason: "Validation error",
+      };
+    }
   }
 }
 
@@ -173,17 +202,18 @@ export async function validateSessionWithRole(
   }
 
   if (!hasRole(validation.user, requiredRoles)) {
+    const { NextResponse } = await import("next/server");
     return {
       valid: false,
-      response: new Response(
-        JSON.stringify({
+      response: NextResponse.json(
+        {
           error: `Forbidden - Requires ${
             Array.isArray(requiredRoles)
               ? requiredRoles.join(" or ")
               : requiredRoles
           } role`,
-        }),
-        { status: 403, headers: { "Content-Type": "application/json" } }
+        },
+        { status: 403 }
       ),
       reason: "Insufficient permissions",
     };

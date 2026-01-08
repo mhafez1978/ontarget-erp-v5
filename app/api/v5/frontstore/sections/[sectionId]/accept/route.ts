@@ -1,5 +1,4 @@
 import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import type {
   AcceptRequest,
   AcceptResponseBody,
@@ -13,12 +12,28 @@ export async function POST(
   context: { params: Promise<{ sectionId: string }> }
 ) {
   const params = await context.params;
+  let NextResponseLocal: any;
+  try {
+    const mod = await import("next/server");
+    NextResponseLocal = mod.NextResponse;
+  } catch {
+    NextResponseLocal = {
+      json: (body: any, init: any = {}) =>
+        new Response(JSON.stringify(body), {
+          status: init?.status,
+          headers: {
+            "Content-Type": "application/json",
+            ...(init?.headers || {}),
+          },
+        }),
+    };
+  }
   const { pathToFileURL } = await import("url");
   const vs = await import(
     pathToFileURL(`${process.cwd()}/lib/validate-session.ts`).href
   );
   const validation = await vs.validateSessionForAPI(req);
-  if (!validation.valid) return validation.response as NextResponse;
+  if (!validation.valid) return validation.response;
   const user = validation.user as SessionUser; // typed user
   const firstCompany = user.ownedCompanies?.[0];
   const companyId = user.companyId || firstCompany?.id;

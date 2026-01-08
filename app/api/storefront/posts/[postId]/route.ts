@@ -21,7 +21,7 @@ export async function PUT(
     const { postId } = await context.params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const body = await request.json();
@@ -174,7 +174,7 @@ export async function DELETE(
     const { postId } = await context.params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const existingPost = await db.storefrontPost.findUnique({

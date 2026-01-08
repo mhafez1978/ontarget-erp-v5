@@ -77,7 +77,7 @@ const ProductRowSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) return validation.response as NextResponse;
+    if (!validation.valid) return validation.response;
     const user = validation.user;
 
     // Only allow SUPER_ADMIN, ADMIN, MANAGER
@@ -131,9 +131,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
 
     const isOwner = company.ownerId === user.id;
-    const members = (company as unknown as { members?: Array<unknown> })
-      .members;
-    const isMember = !!(members && members.length > 0);
+    const isMember = company.members.length > 0;
     if (!isOwner && !isMember && user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "You don't have access to this company" },

@@ -12,11 +12,11 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { getTotalUserLimit } from "@/lib/plan-limits";
 
 // GET /api/workforce/staff
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<Response> {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -93,11 +93,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 // POST /api/workforce/staff
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<Response> {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response as Response;
     }
 
     const userId = validation.user.id;

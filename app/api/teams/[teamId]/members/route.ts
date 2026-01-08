@@ -15,7 +15,7 @@ export async function GET(
   try {
     const validation = await validateSessionForAPI(req);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const { teamId } = await params;
@@ -72,7 +72,7 @@ export async function POST(
   try {
     const validation = await validateSessionForAPI(req);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -233,7 +233,7 @@ export async function DELETE(
   try {
     const validation = await validateSessionForAPI(req);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const userId = validation.user.id;
@@ -353,7 +353,7 @@ export async function PATCH(
   try {
     const validation = await validateSessionForAPI(req);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const userId = validation.user.id;

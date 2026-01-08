@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     const validation = await validateSessionForAPI(req);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const userId = validation.user.id;

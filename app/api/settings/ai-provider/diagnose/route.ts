@@ -6,7 +6,7 @@ import { decrypt, isEncrypted } from "@/lib/crypto";
 export async function GET(req: NextRequest) {
   try {
     const validation = await validateSessionForAPI(req);
-    if (!validation.valid) return validation.response as NextResponse;
+    if (!validation.valid) return validation.response;
 
     const user = validation.user;
     if (user.role !== "SUPER_ADMIN") {

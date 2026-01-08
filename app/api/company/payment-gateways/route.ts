@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     // Validate session
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const { user } = validation;
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     // Validate session
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const { user } = validation;
@@ -228,7 +228,7 @@ export async function PUT(request: NextRequest) {
     // Validate session
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response as NextResponse;
+      return validation.response;
     }
 
     const { user } = validation;

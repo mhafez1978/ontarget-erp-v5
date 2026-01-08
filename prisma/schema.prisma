@@ -713,6 +713,10 @@ enum CompanyMemberRole {
   STAFF
   CONTRACTOR
   SUPPLIER
+  COMPANY_CUSTOMER
+  ERP_CUSTOMER
+  GUEST
+  AUDITOR
 }
 
 // Company Staff (Enhanced employee tracking)
