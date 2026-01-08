@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type {
+  CompanyMemberRole,
+  EmploymentType,
+  JobTitle,
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { sendEmail } from "@/lib/email-service";
@@ -7,11 +12,11 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { getTotalUserLimit } from "@/lib/plan-limits";
 
 // GET /api/workforce/staff
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;
@@ -88,15 +93,36 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/workforce/staff
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;
     const user = validation.user;
+
+    // Typed request body for staff creation
+    type StaffCreateRequest = {
+      companyId: string;
+      name: string;
+      email: string;
+      password: string;
+      role: CompanyMemberRole;
+      jobTitle: JobTitle;
+      employmentType: EmploymentType;
+      payRate?: string | number | null;
+      isFeatured?: boolean;
+      bio?: string | null;
+      displayOrder?: number | null;
+      addressLine1?: string | null;
+      addressLine2?: string | null;
+      city?: string | null;
+      state?: string | null;
+      country?: string | null;
+      postalCode?: string | null;
+    };
 
     const {
       companyId,
@@ -116,7 +142,7 @@ export async function POST(request: NextRequest) {
       state,
       country,
       postalCode,
-    } = await request.json();
+    } = (await request.json()) as StaffCreateRequest;
 
     if (
       !companyId ||
@@ -134,7 +160,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user has access to add staff to this company (owner, admin, or manager)
-    const company = await db.company.findFirst({
+    type CompanyOwner = { id: string; plan?: string | null } | null;
+    type CompanyWithOwner = {
+      id: string;
+      ownerId?: string | null;
+      owner?: CompanyOwner;
+      name?: string | null;
+    } | null;
+
+    const company = (await db.company.findFirst({
       where: {
         id: companyId,
         OR: [
@@ -153,7 +187,7 @@ export async function POST(request: NextRequest) {
       include: {
         owner: true,
       },
-    });
+    })) as CompanyWithOwner;
 
     if (!company) {
       return NextResponse.json(
@@ -163,7 +197,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user limit (skip for SUPER_USER)
-    if (company.owner.plan !== "SUPER_USER") {
+    if ((company.owner?.plan || null) !== "SUPER_USER") {
       // Get company's subscription plan
       const subscription = await db.subscription.findFirst({
         where: {
@@ -302,8 +336,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Send welcome email with onboarding link
-    let emailSent = false;
-    let emailError = null;
+    let emailSent: boolean = false;
+    let emailError: string | null = null;
     try {
       const onboardingUrl = `${
         process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"

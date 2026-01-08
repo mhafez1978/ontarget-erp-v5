@@ -4,7 +4,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 
 export async function GET(req: NextRequest) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response;
+  if (!validation.valid) return validation.response as NextResponse;
 
   try {
     const personas = await db.persona.findMany({

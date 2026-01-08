@@ -14,7 +14,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     // Get user from cookie
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const sessionUser = validation.user;
@@ -116,7 +116,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     // Get user from cookie
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const sessionUser = validation.user;

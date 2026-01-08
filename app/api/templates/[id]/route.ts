@@ -10,7 +10,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const user = validation.user;

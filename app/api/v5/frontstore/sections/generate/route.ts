@@ -12,7 +12,7 @@ import { randomUUID } from "crypto";
 
 export async function POST(req: NextRequest) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response;
+  if (!validation.valid) return validation.response as NextResponse;
   const user = validation.user as SessionUser;
   const firstCompany = user.ownedCompanies?.[0];
   const companyId = user.companyId || firstCompany?.id;

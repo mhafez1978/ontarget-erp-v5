@@ -13,7 +13,7 @@ export async function PATCH(
     // Validate session
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const { user: sessionUser } = validation;
@@ -225,7 +225,7 @@ export async function DELETE(
     // Validate session
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const { user: sessionUser } = validation;

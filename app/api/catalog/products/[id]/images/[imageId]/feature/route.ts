@@ -11,7 +11,7 @@ export async function PATCH(
     const { id: productId, imageId } = await params;
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;

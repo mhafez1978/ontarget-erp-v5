@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type {
+  CompanyMemberRole,
+  EmploymentType,
+  JobTitle,
+  EmploymentStatus,
+} from "@prisma/client";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
@@ -7,17 +13,38 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;
     const user = validation.user;
 
     const { id } = await params;
+
+    type StaffUpdateRequest = {
+      name?: string | null;
+      email?: string | null;
+      role?: CompanyMemberRole | null;
+      jobTitle?: JobTitle | null;
+      employmentType?: EmploymentType | null;
+      status?: EmploymentStatus | null;
+      payRate?: string | number | null;
+      isFeatured?: boolean;
+      bio?: string | null;
+      displayOrder?: number | null;
+      addressLine1?: string | null;
+      addressLine2?: string | null;
+      city?: string | null;
+      state?: string | null;
+      country?: string | null;
+      postalCode?: string | null;
+      canSetupPersonalEmail?: boolean;
+    };
+
     const {
       name,
       email,
@@ -36,7 +63,7 @@ export async function PATCH(
       country,
       postalCode,
       canSetupPersonalEmail,
-    } = await request.json();
+    } = (await request.json()) as StaffUpdateRequest;
 
     // Get the staff member
     const staffMember = await db.companyStaff.findUnique({
@@ -104,7 +131,9 @@ export async function PATCH(
           payRate !== undefined
             ? payRate === "" || payRate === null
               ? null
-              : parseFloat(payRate as any)
+              : typeof payRate === "number"
+              ? payRate
+              : parseFloat(String(payRate))
             : undefined,
         status: status || undefined,
         isFeatured: isFeatured !== undefined ? isFeatured : undefined,
@@ -158,11 +187,11 @@ export async function PATCH(
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;

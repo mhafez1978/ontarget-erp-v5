@@ -412,7 +412,7 @@ export async function GET(
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const { id } = await params;
@@ -464,7 +464,7 @@ export async function PATCH(
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const { user: sessionUser } = validation;
@@ -585,7 +585,7 @@ export async function DELETE(
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const { user: sessionUser } = validation;

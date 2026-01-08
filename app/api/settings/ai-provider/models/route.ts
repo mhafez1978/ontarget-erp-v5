@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
       console.log("[Models API] Validation failed");
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const { provider, forceRefresh } = await request.json();
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const searchParams = request.nextUrl.searchParams;

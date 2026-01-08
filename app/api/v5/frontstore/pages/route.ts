@@ -8,7 +8,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 
 export async function GET(req: NextRequest) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response;
+  if (!validation.valid) return validation.response as NextResponse;
   const user = validation.user as SessionUser;
 
   // Prefer explicit query param if present, otherwise use user's company context
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const validation = await validateSessionForAPI(req);
-  if (!validation.valid) return validation.response;
+  if (!validation.valid) return validation.response as NextResponse;
   const user = validation.user as SessionUser;
   const firstCompany = user.ownedCompanies?.[0];
   const companyId = user.companyId || firstCompany?.id;

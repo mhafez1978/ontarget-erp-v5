@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import {
+  EmploymentStatus,
+  EmploymentType,
+  JobTitle,
+  CompanyMemberRole,
+} from "@prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import * as XLSX from "xlsx";
 import { z } from "zod";
@@ -73,10 +79,24 @@ const WorkforceRowSchema = z.object({
   country: z.string().optional(),
 });
 
+// Result row structure for response
+type BulkImportResult = {
+  row: number;
+  name?: string;
+  email?: string;
+  status: "created" | "skipped";
+  message?: string;
+  id?: string;
+  emailSent?: boolean | null;
+  emailError?: string | null;
+};
+
 export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) return validation.response;
+    if (!validation.valid) {
+      return validation.response as NextResponse;
+    }
     const user = validation.user;
 
     if (!["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(user.role)) {
@@ -121,22 +141,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "CSV must include 'name','email','role','jobTitle','employmentType' columns",
+            "CSV must include 'name','email','role','jobtitle','employmenttype' columns (headers are normalized to lowercase)",
         },
         { status: 400 }
       );
     }
 
     // Check company access
-    const company = await db.company.findUnique({
+    type CompanyMember = { userId: string; role: string };
+    type CompanyWithOwnerAndMembers = {
+      id: string;
+      ownerId: string;
+      owner?: { id: string } | null;
+      members?: CompanyMember[];
+      name?: string | null;
+    };
+
+    const company = (await db.company.findUnique({
       where: { id: companyId },
       include: { owner: true, members: { where: { userId: user.id } } },
-    });
+    })) as CompanyWithOwnerAndMembers | null;
+
     if (!company)
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
+
     const isOwner = company.ownerId === user.id;
-    const members = (company as any).members;
-    const isMember = !!(members && members.length > 0);
+    const members: CompanyMember[] = company.members ?? [];
+    const isMember = members.length > 0;
+
     if (!isOwner && !isMember && user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "You don't have access to this company" },
@@ -144,15 +176,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const results: Array<{
-      row: number;
-      name?: string;
-      email?: string;
-      status: string;
-      message?: string;
-      id?: string;
-    }> = [];
+    const results: BulkImportResult[] = [];
     let created = 0;
+
+    // Accumulate emails to send after the successful transaction commit
+    const pendingEmails: Array<{
+      to: string;
+      subject: string;
+      html: string;
+      companyId: string;
+      actorUserId: string;
+      resultIndex: number;
+    }> = [];
 
     await db.$transaction(async (tx) => {
       for (let i = 0; i < rows.length; i++) {
@@ -202,15 +237,104 @@ export async function POST(request: NextRequest) {
             },
           });
 
+          // Normalize and validate status and employmentType against Prisma enums
+          const statusStr = (row.status || "ACTIVE").toUpperCase();
+          const statusVal = (
+            Object.values(EmploymentStatus) as string[]
+          ).includes(statusStr)
+            ? (statusStr as EmploymentStatus)
+            : ("ACTIVE" as EmploymentStatus);
+
+          const employmentStr = (row.employmenttype || "").toUpperCase();
+          if (
+            !(Object.values(EmploymentType) as string[]).includes(employmentStr)
+          ) {
+            results.push({
+              row: i + 2,
+              name: row.name,
+              email: row.email,
+              status: "skipped",
+              message: `Invalid employmenttype: ${row.employmenttype}`,
+            });
+            continue;
+          }
+          const employmentTypeVal = employmentStr as EmploymentType;
+
+          // Validate jobTitle against Prisma enum values and normalize
+          let jobTitleVal: JobTitle | undefined = undefined;
+          if (row.jobtitle && row.jobtitle.trim() !== "") {
+            const jt = (Object.values(JobTitle) as string[]).find(
+              (j) => j.toLowerCase() === row.jobtitle.trim().toLowerCase()
+            ) as JobTitle | undefined;
+            if (!jt) {
+              // cleanup created user to avoid orphan user record in this transaction
+              try {
+                await tx.user.delete({ where: { id: newUser.id } });
+              } catch (e) {
+                // ignore delete errors; we'll still report the invalid job title
+                console.error(
+                  "Failed to delete user after invalid jobtitle:",
+                  e
+                );
+              }
+              results.push({
+                row: i + 2,
+                name: row.name,
+                email: row.email,
+                status: "skipped",
+                message: `Invalid jobtitle: ${row.jobtitle}`,
+              });
+              continue;
+            }
+            jobTitleVal = jt;
+          }
+
+          // Validate role against CompanyMemberRole enum
+          let roleVal: CompanyMemberRole | undefined = undefined;
+          const roleStr = (row.role || "").toUpperCase();
+          if (
+            !(Object.values(CompanyMemberRole) as string[]).includes(roleStr)
+          ) {
+            // cleanup created user
+            try {
+              await tx.user.delete({ where: { id: newUser.id } });
+            } catch (e) {
+              console.error("Failed to delete user after invalid role:", e);
+            }
+            results.push({
+              row: i + 2,
+              name: row.name,
+              email: row.email,
+              status: "skipped",
+              message: `Invalid role: ${
+                row.role
+              }. Valid values: ${Object.values(CompanyMemberRole).join(", ")}`,
+            });
+            continue;
+          }
+          roleVal = roleStr as CompanyMemberRole;
+
+          // Ensure roleVal and jobTitleVal are defined before staff creation
+          if (!roleVal) {
+            results.push({
+              row: i + 2,
+              name: row.name,
+              email: row.email,
+              status: "skipped",
+              message: "Role validation failed",
+            });
+            continue;
+          }
+
           const staff = await tx.companyStaff.create({
             data: {
               companyId,
               userId: newUser.id,
-              role: row.role,
-              jobTitle: row.jobtitle,
-              employmentType: row.employmenttype,
+              role: roleVal,
+              jobTitle: jobTitleVal ?? undefined,
+              employmentType: employmentTypeVal,
               payRate: row.payrate ? parseFloat(row.payrate) : undefined,
-              status: row.status || "ACTIVE",
+              status: statusVal,
               hireDate: row.hiredate ? new Date(row.hiredate) : new Date(),
               city: row.city || undefined,
               country: row.country || undefined,
@@ -227,30 +351,31 @@ export async function POST(request: NextRequest) {
             data: { staffId: staff.id, expiresAt },
           });
 
-          // send welcome email (best-effort)
-          try {
-            const onboardingUrl = `${
-              process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-            }/onboarding/${onboardingToken.token}`;
-            await sendEmail(
-              {
-                to: row.email,
-                subject: `Welcome to ${company.name}`,
-                html: `<p>Hello ${row.name}, please complete onboarding: <a href="${onboardingUrl}">Start Onboarding</a></p>`,
-              },
-              companyId,
-              user.id
-            );
-          } catch (e) {
-            console.error("Failed to send welcome email for bulk staff", e);
-          }
+          // Prepare email to be sent after transaction commits
+          const onboardingUrl = `${
+            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          }/onboarding/${onboardingToken.token}`;
+          const emailHtml = `<p>Hello ${row.name}, please complete onboarding: <a href="${onboardingUrl}">Start Onboarding</a></p>`;
 
+          // Record pending email to send after transaction
+          pendingEmails.push({
+            to: row.email,
+            subject: `Welcome to ${company.name}`,
+            html: emailHtml,
+            companyId,
+            actorUserId: user.id,
+            resultIndex: results.length,
+          });
+
+          // Record result immediately (email fields will be filled later)
           results.push({
             row: i + 2,
             name: row.name,
             email: row.email,
             status: "created",
             id: staff.id,
+            emailSent: null,
+            emailError: null,
           });
           created += 1;
         } catch (err) {
@@ -266,6 +391,24 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Send pending emails (best-effort) and update result rows with email status
+    for (const pending of pendingEmails) {
+      try {
+        const ok = await sendEmail(
+          { to: pending.to, subject: pending.subject, html: pending.html },
+          pending.companyId,
+          pending.actorUserId
+        );
+        results[pending.resultIndex].emailSent = ok;
+        results[pending.resultIndex].emailError = ok ? null : "Failed to send";
+      } catch (emailErr) {
+        console.error("Failed to send bulk onboarding email:", emailErr);
+        results[pending.resultIndex].emailSent = false;
+        results[pending.resultIndex].emailError =
+          emailErr instanceof Error ? emailErr.message : String(emailErr);
+      }
+    }
+
     await createAuditLog({
       action: AUDIT_ACTIONS.BULK_STAFF_IMPORT || "BULK_STAFF_IMPORT",
       userId: user.id,
@@ -273,12 +416,12 @@ export async function POST(request: NextRequest) {
       entityType: ENTITY_TYPES.COMPANY,
       entityId: companyId,
       description: `Bulk import performed: created ${created} staff from file ${file.name}`,
-      metadata: JSON.stringify({
+      metadata: {
         file: file.name,
         created,
         totalRows: rows.length,
         results,
-      }),
+      },
     });
 
     return NextResponse.json({

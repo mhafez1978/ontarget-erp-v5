@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     } else {
       const validation = await validateSessionForAPI(request);
       if (!validation.valid) {
-        return validation.response;
+        return validation.response as NextResponse;
       }
 
       user = validation.user;

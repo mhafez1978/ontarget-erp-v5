@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     // Validate session (admin-only)
     const validation = await validateSessionForAPI(request);
-    if (!validation.valid) return validation.response;
+    if (!validation.valid) return validation.response as NextResponse;
 
     const user = validation.user;
     if (!user || !(user.role === "ADMIN" || user.role === "SUPER_ADMIN")) {

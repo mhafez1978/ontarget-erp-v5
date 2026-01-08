@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     // Get user from session
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) {
-      return validation.response;
+      return validation.response as NextResponse;
     }
 
     const userId = validation.user.id;
