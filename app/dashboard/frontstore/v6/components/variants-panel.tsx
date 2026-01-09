@@ -18,6 +18,14 @@ export default function VariantsPanel() {
     { id: "v4", title: "Minimal", type: "image" },
   ]);
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selected, setSelected] = useState<null | {
+    id: string;
+    title: string;
+    type: string;
+    assets?: any[];
+  }>(null);
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
@@ -43,13 +51,37 @@ export default function VariantsPanel() {
                   id={d.id}
                   title={d.title}
                   type={d.type as any}
-                  onView={() => alert(`${d.title} — View (modal placeholder)`)}
+                  onView={() => {
+                    setSelected(d);
+                    setModalOpen(true);
+                  }}
                 />
               </div>
             ))}
           </div>
         </SortableContext>
       </DndContext>
+
+      {/* View & Edit Modal */}
+      {typeof window !== "undefined" && (
+        <React.Suspense>
+          <ViewEditModal
+            open={modalOpen}
+            onOpenChange={(open) => setModalOpen(open)}
+            variant={selected}
+            onSave={(payload) => {
+              setItems((prev) =>
+                prev.map((it) =>
+                  it.id === payload.id
+                    ? { ...it, title: payload.title, assets: payload.assets }
+                    : it
+                )
+              );
+              setSelected(null);
+            }}
+          />
+        </React.Suspense>
+      )}
     </aside>
   );
 }
