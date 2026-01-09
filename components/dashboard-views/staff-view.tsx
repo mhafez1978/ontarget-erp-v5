@@ -1,4 +1,5 @@
 import { ClockInOutWidget } from "@/components/clock-in-out-widget";
+import { StaffStatsWidget } from "@/components/staff-stats-widget";
 
 interface StaffViewProps {
   userName?: string | null;
@@ -16,8 +17,9 @@ export function StaffView({ userName, companyId }: StaffViewProps) {
       </p>
 
       {companyId && (
-        <div className="max-w-md">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <ClockInOutWidget companyId={companyId} />
+          <StaffStatsWidget companyId={companyId} />
         </div>
       )}
     </div>

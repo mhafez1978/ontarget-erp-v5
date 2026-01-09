@@ -3219,7 +3219,7 @@ export default function SettingsPage() {
 
                   {/* Tab Content */}
                   {activeUserManagementTab === "users" ? (
-                    <UserManagementTable />
+                    <UserManagementTable currentUserRole={user.role} />
                   ) : activeUserManagementTab === "passwords" ? (
                     <PasswordManagementTab currentUserRole={user.role} />
                   ) : (

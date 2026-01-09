@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import type {
   CompanyMemberRole,
   EmploymentType,
-  JobTitle,
   EmploymentStatus,
 } from "@prisma/client";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
@@ -29,7 +28,7 @@ export async function PATCH(
       name?: string | null;
       email?: string | null;
       role?: CompanyMemberRole | null;
-      jobTitle?: JobTitle | null;
+      jobTitle?: string | null;
       employmentType?: EmploymentType | null;
       status?: EmploymentStatus | null;
       payRate?: string | number | null;

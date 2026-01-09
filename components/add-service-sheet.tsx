@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Briefcase, X, Upload, Star } from "lucide-react";
 import { useState, useRef } from "react";
 import Image from "next/image";
@@ -22,11 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-
-
-
-;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import { z } from "zod";
 import {
@@ -144,6 +138,8 @@ export function AddServiceSheet({
       return;
     }
 
+    setIsUploadingFiles(true);
+
     // Upload each file separately to show per-file progress
     for (const entry of newEntries) {
       if (!entry.file) continue;
@@ -224,6 +220,8 @@ export function AddServiceSheet({
         );
       }
     }
+
+    setIsUploadingFiles(false);
   };
 
   const handleAddImage = () => {
@@ -319,7 +317,7 @@ export function AddServiceSheet({
       }
 
       // Service created successfully with all images
-      const createData = await response.json();
+      await response.json();
 
       // Reset form and close sheet
       setFormData(initialFormData);

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { countryCodeToFlag, lookupGeoByIp } from "@/lib/ip-lookup";
+import { triggerStaffStatusUpdate } from "@/lib/staff-status-events";
 
 export interface CreateAuditLogParams {
   action: string;
@@ -90,6 +91,11 @@ export async function createAuditLog(params: CreateAuditLogParams) {
       },
     });
 
+    // Trigger staff status update for relevant events
+    if (params.companyId) {
+      triggerStaffStatusUpdate(params.companyId, params.action);
+    }
+
     return auditLog;
   } catch (error) {
     console.error("Failed to create audit log:", error);
@@ -133,6 +139,15 @@ export const AUDIT_ACTIONS = {
   STAFF_MEMBER_UPDATED: "STAFF_MEMBER_UPDATED",
   STAFF_MEMBER_DELETED: "STAFF_MEMBER_DELETED",
   BULK_STAFF_IMPORT: "BULK_STAFF_IMPORT",
+
+  // Customer actions
+  BULK_CUSTOMER_IMPORT: "BULK_CUSTOMER_IMPORT",
+
+  // Product bulk actions
+  BULK_PRODUCT_IMPORT: "BULK_PRODUCT_IMPORT",
+
+  // Service bulk actions
+  BULK_SERVICE_IMPORT: "BULK_SERVICE_IMPORT",
 
   // Subscriber actions
   SUBSCRIBER_CUSTOMER_CREATED: "SUBSCRIBER_CUSTOMER_CREATED",

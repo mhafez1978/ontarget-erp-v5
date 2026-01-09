@@ -1,14 +1,9 @@
 "use client";
 
-
 import { Clock, Coffee, LogOut, Loader2 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-
-
-;
 import { toast } from "sonner";
 
 interface ClockInOutWidgetProps {
@@ -199,56 +194,71 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Clock className="h-5 w-5" />
-          Time Clock
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Status Display */}
-        <div className="text-center">
-          <div
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
-              status === "CLOCKED_IN"
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : status === "ON_BREAK"
-                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
-            }`}
-          >
+    <Card className="overflow-hidden border-2 shadow-lg">
+      {/* linear Header */}
+      <div
+        className={`relative px-6 py-8 text-white transition-all duration-500 ${
+          status === "CLOCKED_IN"
+            ? "bg-linear-to-br from-green-500 to-emerald-600"
+            : status === "ON_BREAK"
+            ? "bg-linear-to-br from-yellow-500 to-orange-600"
+            : "bg-linear-to-br from-slate-500 to-slate-600"
+        }`}
+      >
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-white/10 backdrop-blur-3xl" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12" />
+
+        {/* Content */}
+        <div className="relative text-center space-y-3">
+          <div className="flex items-center justify-center gap-2">
+            <Clock className="h-6 w-6 drop-shadow-lg" />
+            <h3 className="text-xl font-bold tracking-tight">Time Clock</h3>
+          </div>
+
+          {/* Status Badge */}
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-5 py-2 border border-white/30">
             <div
-              className={`h-2 w-2 rounded-full ${
-                status === "CLOCKED_IN"
-                  ? "bg-green-600 animate-pulse"
-                  : status === "ON_BREAK"
-                  ? "bg-yellow-600 animate-pulse"
-                  : "bg-gray-400"
+              className={`h-3 w-3 rounded-full bg-white shadow-lg ${
+                status !== "CLOCKED_OUT" ? "animate-pulse" : ""
               }`}
             />
-            {status === "CLOCKED_IN" && "Working"}
-            {status === "ON_BREAK" && "On Break"}
-            {status === "CLOCKED_OUT" && "Clocked Out"}
+            <span className="text-sm font-semibold tracking-wide">
+              {status === "CLOCKED_IN" && "Working"}
+              {status === "ON_BREAK" && "On Break"}
+              {status === "CLOCKED_OUT" && "Clocked Out"}
+            </span>
           </div>
+
+          {/* Elapsed Time */}
           {elapsedTime && (
-            <div className="mt-2 text-2xl font-bold">{elapsedTime}</div>
+            <div className="pt-2">
+              <div className="text-5xl font-bold tracking-tight drop-shadow-2xl">
+                {elapsedTime}
+              </div>
+              <div className="text-sm font-medium text-white/80 mt-1">
+                {status === "ON_BREAK" ? "break duration" : "time worked"}
+              </div>
+            </div>
           )}
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-2">
+      {/* Action Buttons Section */}
+      <CardContent className="p-6 bg-linear-to-b from-muted/30 to-background">
+        <div className="flex flex-col gap-3">
           {status === "CLOCKED_OUT" && (
             <Button
               onClick={handleClockIn}
               disabled={actionLoading}
-              className="w-full"
+              className="w-full h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
               size="lg"
             >
               {actionLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               ) : (
-                <Clock className="h-4 w-4 mr-2" />
+                <Clock className="h-5 w-5 mr-2" />
               )}
               Clock In
             </Button>
@@ -260,12 +270,12 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
                 onClick={handleBreakStart}
                 disabled={actionLoading}
                 variant="outline"
-                className="w-full"
+                className="w-full h-12 font-semibold border-2 hover:bg-yellow-50 hover:border-yellow-400 hover:text-yellow-700 dark:hover:bg-yellow-900/20 transition-all duration-200"
               >
                 {actionLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                 ) : (
-                  <Coffee className="h-4 w-4 mr-2" />
+                  <Coffee className="h-5 w-5 mr-2" />
                 )}
                 Start Break
               </Button>
@@ -273,12 +283,12 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
                 onClick={handleClockOut}
                 disabled={actionLoading}
                 variant="destructive"
-                className="w-full"
+                className="w-full h-12 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
               >
                 {actionLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                 ) : (
-                  <LogOut className="h-4 w-4 mr-2" />
+                  <LogOut className="h-5 w-5 mr-2" />
                 )}
                 Clock Out
               </Button>
@@ -289,15 +299,15 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
             <Button
               onClick={handleBreakEnd}
               disabled={actionLoading}
-              className="w-full"
+              className="w-full h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
               size="lg"
             >
               {actionLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               ) : (
-                <Clock className="h-4 w-4 mr-2" />
+                <Clock className="h-5 w-5 mr-2" />
               )}
-              End Break
+              End Break & Resume
             </Button>
           )}
         </div>

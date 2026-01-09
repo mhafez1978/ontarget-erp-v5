@@ -3,7 +3,10 @@
 export type SubscriptionPlan =
   | "SUPER_USER"
   | "GUEST"
+  | "ERP_CUSTOMER"
   | "COMPANY_CUSTOMER"
   | "ESSENTIAL"
   | "GROWTH"
-  | "ENTERPRISE";
+  | "ENTERPRISE"
+  | "COMPANY_STAFF"
+  | "TRIAL";

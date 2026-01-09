@@ -29,7 +29,17 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!staff) {
+    // Check if user is the company owner (ADMIN who owns the company)
+    const isOwner =
+      user.role === "ADMIN" &&
+      (await db.company.findFirst({
+        where: {
+          id: companyId,
+          ownerId: user.id,
+        },
+      }));
+
+    if (!staff && !isOwner) {
       return NextResponse.json(
         {
           success: true,
@@ -41,22 +51,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Find active time entry
-    const activeEntry = await db.timeEntry.findFirst({
-      where: {
-        staffId: staff.id,
-        status: {
-          in: ["CLOCKED_IN", "ON_BREAK"],
+    // Find active time entry (only if staff exists)
+    let activeEntry = null;
+    if (staff !== null) {
+      const staffId = staff.id;
+      activeEntry = await db.timeEntry.findFirst({
+        where: {
+          staffId,
+          status: {
+            in: ["CLOCKED_IN", "ON_BREAK"],
+          },
         },
-      },
-      orderBy: {
-        clockIn: "desc",
-      },
-    });
+        orderBy: {
+          clockIn: "desc",
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      isStaff: true,
+      isStaff: !!staff || isOwner,
       status: activeEntry?.status || "CLOCKED_OUT",
       entry: activeEntry || null,
     });

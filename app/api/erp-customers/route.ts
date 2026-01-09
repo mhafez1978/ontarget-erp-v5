@@ -15,13 +15,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch ERP customers (individual signups) who have an ERP plan
+    // Fetch ERP customers (individual signups) who have the ERP_CUSTOMER plan only
+    // Paying customers (TRIAL, ESSENTIAL, GROWTH, ENTERPRISE) are shown in Subscriber Directory
     const customers = await db.user.findMany({
       where: {
         role: "ERP_CUSTOMER",
-        plan: {
-          in: ["ESSENTIAL", "GROWTH", "ENTERPRISE"],
-        },
+        plan: "ERP_CUSTOMER",
       },
       select: {
         id: true,

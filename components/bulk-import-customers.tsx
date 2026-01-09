@@ -1,7 +1,12 @@
 "use client";
 
-
-import { Loader2, Upload, FileSpreadsheet, X, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  Upload,
+  FileSpreadsheet,
+  X,
+  CheckCircle2,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-
-
-
-
-;
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -247,53 +247,54 @@ export function BulkImportCustomers({
           <SheetTitle>Bulk Import Customers</SheetTitle>
         </SheetHeader>
 
-        <div className="space-y-4 px-6 mt-4">
+        <div className="space-y-4 px-6 mt-4 dark:text-green-400">
           {/* Instructions Panel */}
-          <div className="p-3 rounded-md border bg-emerald-100/50">
-            <h3 className="text-sm font-semibold mb-1">Import Instructions</h3>
-            <p className="text-xs text-muted-foreground mb-2">
+          <div className="p-3 rounded-md border">
+            <h3 className="text-md mb-2">Import Instructions</h3>
+            <p className="text-sm text-white font-mono mb-2">
               Upload a CSV or XLSX file with a header row. Required columns are
               marked with <strong>*</strong>.
             </p>
-            <div className="text-xs text-muted-foreground mb-2">
-              <div>
+            <div className="text-sm mb-4">
+              <div className="mb-4">
                 <strong>Required:</strong>{" "}
                 <span className="font-medium">email*</span>,{" "}
                 <span className="font-medium">name*</span>
               </div>
-              <div className="mt-1">
-                <strong>Optional:</strong> password, phone, addressLine1,
-                addressLine2, city, state, country, countryCode, postalCode,
-                latitude, longitude, image
+              <div className="mt-4">
+                <strong>Optional:</strong>{" "}
+                <span className="text-black dark:text-white">
+                  password, phone, addressLine1, addressLine2, city, state,
+                  country, countryCode, postalCode, latitude, longitude, image
+                </span>
               </div>
-              <div className="mt-1 text-xs">
-                <strong>Note:</strong> The <em>password</em> column sets a
-                temporary password for each customer. If omitted, defaults to{" "}
-                <code className="bg-gray-200 px-1 rounded">Welcome2024!</code>
-              </div>
-              <div className="mt-2 text-xs">
-                <strong>Tip:</strong> Download the <em>XLSX (modern .xlsx)</em>{" "}
-                template and edit it in Excel or OpenOffice. You can upload it
-                directly as .xlsx or save as CSV — both formats are supported.
+
+              <div className="mt-2 text-sm">
+                <strong>Tip:</strong>
+                <span className="text-black dark:text-white">
+                  Download the <em>XLSX (modern .xlsx)</em> template and edit it
+                  in Excel or OpenOffice. You can upload it directly as .xlsx or
+                  save as CSV — both formats are supported.
+                </span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm">
               <span className="mr-2">Download a sample template:</span>
               <a
                 href="/samples/customers-sample.csv"
                 download
-                className="underline mr-2 hover:text-primary"
+                className="underline mr-2 hover:text-primary dark:text-white"
               >
                 CSV
               </a>
               <a
                 href="/api/samples/customers-xlsx"
-                className="underline hover:text-primary"
+                className="underline hover:text-primary dark:text-white"
               >
-                XLSX (Excel)
+                Excel
               </a>
             </p>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-sm mt-2 dark:text-white">
               The import will link existing users to the selected company (if
               the email exists) or create new COMPANY_CUSTOMER users.
             </p>

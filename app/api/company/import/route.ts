@@ -160,6 +160,7 @@ export async function POST(request: NextRequest) {
                   name: staffMember.userName,
                   password: tempPassword,
                   role: "ERP_CUSTOMER", // Default role, can be upgraded
+                  plan: "ERP_CUSTOMER", // Ensure ERP_CUSTOMER role gets ERP_CUSTOMER plan
                 },
               });
               stats.skipped.push(

@@ -1,60 +1,46 @@
 "use client";
 
-
-import { Trash2, Pencil, PlusCircle, Settings, Download, Upload, Archive, Lock, ShieldCheck, UserPlus, Building2, Package, Wrench, ShoppingCart, CalendarCheck, Info, Zap, LogIn, LogOut, Key, FileText, Users, Mail, MailX } from "lucide-react";
+import {
+  Trash2,
+  Pencil,
+  PlusCircle,
+  Settings,
+  Download,
+  Upload,
+  Archive,
+  Lock,
+  ShieldCheck,
+  UserPlus,
+  Building2,
+  Package,
+  Wrench,
+  ShoppingCart,
+  CalendarCheck,
+  Info,
+  Zap,
+  LogIn,
+  LogOut,
+  Key,
+  FileText,
+  Users,
+  Mail,
+  MailX,
+} from "lucide-react";
 import React, { useState, useEffect } from "react";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-;
 import { Button } from "@/components/ui/button";
+import type { AuditLog, User, Company } from "@prisma/client";
 
-// Types
-export interface AuditEvent {
-  id: string;
-  action: string;
-  entityType?: string | null;
-  entityId?: string | null;
-  description?: string | null;
-  metadata?: string | null;
-  ipAddress?: string | null;
-  ipv4?: string | null;
-  ipv6?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  countryFlag?: string | null;
-  createdAt: string | Date;
-  user: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    role: string;
-  };
-  company?: {
-    id: string;
-    name: string;
-  } | null;
+// Type for audit log with relations
+export type AuditEvent = AuditLog & {
+  user: Pick<User, "id" | "name" | "email" | "role">;
+  company?: Pick<Company, "id" | "name"> | null;
+};
+
+export interface AuditLogProps {
+  title?: string;
+  className?: string;
+  maxHeight?: number; // px
+  limit?: number;
 }
 
 // UI mapping for actions
@@ -340,13 +326,6 @@ function formatDateTime(value: string | Date) {
   } catch {
     return String(value);
   }
-}
-
-export interface AuditLogProps {
-  title?: string;
-  className?: string;
-  maxHeight?: number; // px
-  limit?: number;
 }
 
 export function AuditLog({ maxHeight = 600, limit = 50 }: AuditLogProps) {

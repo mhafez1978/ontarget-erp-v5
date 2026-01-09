@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
           name: name || email.split("@")[0],
           image: picture,
           role: "ERP_CUSTOMER",
-          plan: "GUEST", // Set to GUEST so they're forced to select a plan
+          plan: "ERP_CUSTOMER", // Default to ERP_CUSTOMER for root platform signups
           authMethod: "oauth",
           emailVerified: new Date(), // LinkedIn emails are verified
           isActive: true,

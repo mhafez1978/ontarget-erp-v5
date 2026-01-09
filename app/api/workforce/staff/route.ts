@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import type {
-  CompanyMemberRole,
-  EmploymentType,
-  JobTitle,
-} from "@prisma/client";
+import type { CompanyMemberRole, EmploymentType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { sendEmail } from "@/lib/email-service";
@@ -110,7 +106,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       email: string;
       password: string;
       role: CompanyMemberRole;
-      jobTitle: JobTitle;
+      jobTitle: string;
       employmentType: EmploymentType;
       payRate?: string | number | null;
       isFeatured?: boolean;
@@ -249,7 +245,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         email,
         password: hashedPassword,
         role: "STAFF", // Staff members get STAFF role (not ERP_CUSTOMER)
-        plan: "GUEST", // Staff don't need paid subscription plans
+        plan: "COMPANY_STAFF", // Staff are on company staff subscription plan
         emailVerified: new Date(), // Auto-verify staff members created by admins
         addressLine1: addressLine1 || undefined,
         addressLine2: addressLine2 || undefined,

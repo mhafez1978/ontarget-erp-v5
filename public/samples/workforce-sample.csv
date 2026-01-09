@@ -1,3 +1,3 @@
-name*,email*,role*,jobTitle*,employmentType*,password,payRate,hireDate,city,country
-"Jane Employee",jane.employee@example.com,STAFF,ENGINEER,FULL_TIME,TempPass123!,45.00,2024-01-01,New York,United States
-"John Contractor",john.contractor@example.com,CONTRACTOR,DEVELOPER,CONTRACTOR_1099,,80.00,2024-02-01,Remote,USA
+name*,email*,role*,jobTitle,employmentType*,password,payRate,city,country
+"Jane Employee",jane.employee@example.com,STAFF,ENGINEER,FULL_TIME,TempPass123!,45.00,New York,United States
+"John Contractor",john.contractor@example.com,CONTRACTOR,DEVELOPER,CONTRACTOR_1099,,80.00,Remote,USA

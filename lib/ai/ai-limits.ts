@@ -10,10 +10,13 @@ export const AI_STOREFRONT_MONTHLY_LIMITS: Record<
 > = {
   SUPER_USER: "unlimited",
   GUEST: 0,
+  ERP_CUSTOMER: 0,
   COMPANY_CUSTOMER: 0,
   ESSENTIAL: 0,
   GROWTH: 10,
   ENTERPRISE: 20,
+  COMPANY_STAFF: 0,
+  TRIAL: 0,
 };
 
 export function getAiStorefrontMonthlyLimit(

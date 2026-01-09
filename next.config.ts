@@ -95,6 +95,11 @@ const nextConfig: NextConfig = {
         hostname: "techvidvan.com",
         pathname: "/**",
       },
+      {
+        protocol: "http",
+        hostname: "example.com",
+        pathname: "/**",
+      },
     ],
   },
   async headers() {

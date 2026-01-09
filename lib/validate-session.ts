@@ -21,6 +21,7 @@
  */
 
 import type { NextRequest } from "next/server";
+import type { User } from "@prisma/client";
 import {
   validateSession,
   type ValidateSessionResult,
@@ -52,21 +53,33 @@ export async function validateSessionForAPI(
 ): Promise<SessionValidation> {
   try {
     // Test helper: allow tests to inject a fake user via header 'x-test-session' (JSON-encoded user object)
-    const testHeader = (request as any).headers?.get?.("x-test-session");
+    const testHeader = (
+      request as { headers?: { get?: (name: string) => string | null } }
+    ).headers?.get?.("x-test-session");
     if (testHeader) {
-      let testUser: any = null;
+      let testUser: Pick<
+        User,
+        "id" | "name" | "email" | "role" | "plan" | "image"
+      > | null = null;
       try {
         testUser = JSON.parse(testHeader);
       } catch {
-        testUser = { id: String(testHeader) };
+        testUser = {
+          id: String(testHeader),
+          name: null,
+          email: null,
+          role: "ERP_CUSTOMER" as const,
+          plan: "TRIAL" as const,
+          image: null,
+        };
       }
       return {
         valid: true,
-        user: testUser,
+        user: testUser!,
         session: {
           id: "test-session",
           sessionToken: "test",
-          userId: testUser.id,
+          userId: testUser!.id,
           expires: new Date(),
           sessionIpAddress: null,
           sessionIpv4: null,
@@ -96,7 +109,7 @@ export async function validateSessionForAPI(
           ),
           reason: "No session token",
         };
-      } catch (e) {
+      } catch {
         return {
           valid: false,
           response: new Response(
@@ -133,7 +146,7 @@ export async function validateSessionForAPI(
           ),
           reason: validation.reason || "Invalid session",
         };
-      } catch (e) {
+      } catch {
         return {
           valid: false,
           response: new Response(
@@ -164,7 +177,7 @@ export async function validateSessionForAPI(
         ),
         reason: "Validation error",
       };
-    } catch (e) {
+    } catch {
       return {
         valid: false,
         response: new Response(

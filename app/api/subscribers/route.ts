@@ -19,47 +19,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get the root company
-    const ownedCompanies = await db.company.findMany({
+    // Fetch all companies with subscriber plans (TRIAL, ESSENTIAL, GROWTH, ENTERPRISE)
+    // These are companies that are paying or will pay for the ERP service
+    const companies = await db.company.findMany({
       where: {
-        ownerId: currentUser.id,
-        isRoot: true,
-      },
-      select: { id: true },
-    });
-
-    const rootCompany = ownedCompanies[0];
-    if (!rootCompany) {
-      return NextResponse.json(
-        { error: "Root company not found. Please complete setup first." },
-        { status: 400 }
-      );
-    }
-
-    // Fetch only ERP subscriber subscriptions (ESSENTIAL, GROWTH, ENTERPRISE)
-    // Exclude SUPER_USER, GUEST, and COMPANY_CUSTOMER plans
-    const subscriptions = await db.subscription.findMany({
-      where: {
-        rootCompanyId: rootCompany.id,
-        plan: {
-          in: ["ESSENTIAL", "GROWTH", "ENTERPRISE"],
+        owner: {
+          plan: {
+            in: ["TRIAL", "ESSENTIAL", "GROWTH", "ENTERPRISE"],
+          },
         },
       },
       include: {
-        subscriberCompany: {
-          include: {
-            owner: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-            members: {
-              select: {
-                id: true,
-              },
-            },
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            plan: true,
+            trialEndsAt: true,
+            createdAt: true,
+          },
+        },
+        members: {
+          select: {
+            id: true,
           },
         },
       },
@@ -68,23 +51,23 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Format the response
-    const subscribers = subscriptions.map((subscription) => ({
-      id: subscription.id,
-      companyId: subscription.subscriberCompany.id,
-      companyName: subscription.subscriberCompany.name,
-      companyDescription: subscription.subscriberCompany.description,
-      ownerId: subscription.subscriberCompany.owner.id,
-      ownerName: subscription.subscriberCompany.owner.name || "Unknown",
-      ownerEmail: subscription.subscriberCompany.owner.email || "Unknown",
-      memberCount: subscription.subscriberCompany.members.length,
-      plan: subscription.plan,
-      status: subscription.status,
-      trialEndsAt: subscription.trialEndsAt?.toISOString() || null,
-      billingCycleStart: subscription.billingCycleStart?.toISOString() || null,
-      billingCycleEnd: subscription.billingCycleEnd?.toISOString() || null,
-      createdAt: subscription.createdAt.toISOString(),
-      updatedAt: subscription.updatedAt.toISOString(),
+    // Format the response to match existing structure
+    const subscribers = companies.map((company) => ({
+      id: company.id, // Use company ID as subscription ID
+      companyId: company.id,
+      companyName: company.name,
+      companyDescription: company.description,
+      ownerId: company.owner.id,
+      ownerName: company.owner.name || "Unknown",
+      ownerEmail: company.owner.email || "Unknown",
+      memberCount: company.members.length,
+      plan: company.owner.plan,
+      status: "ACTIVE", // Simplified - can add logic to check if trial expired
+      trialEndsAt: company.owner.trialEndsAt?.toISOString() || null,
+      billingCycleStart: null, // Can be added if needed
+      billingCycleEnd: null, // Can be added if needed
+      createdAt: company.createdAt.toISOString(),
+      updatedAt: company.updatedAt.toISOString(),
     }));
 
     return NextResponse.json({
