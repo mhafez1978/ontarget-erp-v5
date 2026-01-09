@@ -14,7 +14,23 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```
 
-## ░▒▓█ ABOUT █▓▒░
+<div align="center">
+
+![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge&logo=checkmarx&logoColor=white)
+![Version](https://img.shields.io/badge/Version-5.0-blue?style=for-the-badge&logo=semantic-release&logoColor=white)
+![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge&logo=law&logoColor=white)
+![Made with](https://img.shields.io/badge/Made%20with-❤️-ff69b4?style=for-the-badge)
+
+![Next.js](https://img.shields.io/badge/Next.js-15.1.4-black?style=flat-square&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React-19.2.0-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-6.2.1-2D3748?style=flat-square&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind-3.4.1-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+
+</div>
+
+## 🌟 ░▒▓█ ABOUT █▓▒░ 🌟
 
 **OnTarget ERP** is a groovy, all in one business gem, full-stack Enterprise Resource Planning system built
 with cutting-edge technology including Ai integrations. Born in 2026, engineered for the
@@ -30,9 +46,9 @@ modern workspace needing mainframe reliability.
 
 ---
 
-## ░▒▓█ CORE FEATURES █▓▒░
+## 🚀 ░▒▓█ CORE FEATURES █▓▒░ 🚀
 
-### 🎯 MULTI-COMPANY MANAGEMENT
+### 🎯 MULTI-COMPANY MANAGEMENT 🏢
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -49,7 +65,7 @@ modern workspace needing mainframe reliability.
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 👥 USER & ROLE MANAGEMENT
+### 👥 USER & ROLE MANAGEMENT 🎭
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -306,7 +322,38 @@ modern workspace needing mainframe reliability.
 
 ---
 
-## ░▒▓█ TECH STACK █▓▒░
+## 💻 ░▒▓█ TECH STACK █▓▒░ 🛠️
+
+<div align="center">
+
+### 🎨 Frontend Arsenal
+
+![Next.js](https://img.shields.io/badge/Next.js%2015.1.4-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React%2019.2.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript%205.7.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%203.4.1-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Shadcn/UI](https://img.shields.io/badge/Shadcn/UI-000000?style=for-the-badge&logo=shadcnui&logoColor=white)
+
+### ⚡ Backend Power
+
+![Prisma](https://img.shields.io/badge/Prisma%206.2.1-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![bcrypt](https://img.shields.io/badge/bcrypt-Security-red?style=for-the-badge&logo=lock&logoColor=white)
+
+### 🔐 Authentication & Security
+
+![OAuth 2.0](https://img.shields.io/badge/OAuth%202.0-8%20Providers-4285F4?style=for-the-badge&logo=auth0&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=json-web-tokens&logoColor=white)
+![2FA](https://img.shields.io/badge/2FA%2FMFA-Enabled-success?style=for-the-badge&logo=authy&logoColor=white)
+
+### 📦 Tools & Libraries
+
+![XLSX](https://img.shields.io/badge/XLSX%200.20.3-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white)
+![Radix UI](https://img.shields.io/badge/Radix%20UI-161618?style=for-the-badge&logo=radix-ui&logoColor=white)
+
+</div>
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -349,7 +396,7 @@ modern workspace needing mainframe reliability.
 
 ---
 
-## ░▒▓█ GETTING STARTED █▓▒░
+## 🎬 ░▒▓█ GETTING STARTED █▓▒░ 🎬
 
 ### 📀 INSTALLATION
 

@@ -195,14 +195,14 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
 
   return (
     <Card className="overflow-hidden border-2 shadow-lg">
-      {/* linear Header */}
+      {/* Gradient Header */}
       <div
         className={`relative px-6 py-8 text-white transition-all duration-500 ${
           status === "CLOCKED_IN"
-            ? "bg-linear-to-br from-green-500 to-emerald-600"
+            ? "bg-gradient-to-br from-green-500 to-emerald-600"
             : status === "ON_BREAK"
-            ? "bg-linear-to-br from-yellow-500 to-orange-600"
-            : "bg-linear-to-br from-slate-500 to-slate-600"
+            ? "bg-gradient-to-br from-yellow-500 to-orange-600"
+            : "bg-gradient-to-br from-slate-500 to-slate-600"
         }`}
       >
         {/* Background decoration */}
@@ -231,17 +231,19 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
             </span>
           </div>
 
-          {/* Elapsed Time */}
-          {elapsedTime && (
-            <div className="pt-2">
-              <div className="text-5xl font-bold tracking-tight drop-shadow-2xl">
-                {elapsedTime}
-              </div>
-              <div className="text-sm font-medium text-white/80 mt-1">
-                {status === "ON_BREAK" ? "break duration" : "time worked"}
-              </div>
+          {/* Elapsed Time - Always show */}
+          <div className="pt-2">
+            <div className="text-5xl font-bold tracking-tight drop-shadow-2xl">
+              {elapsedTime || "0h 0m"}
             </div>
-          )}
+            <div className="text-sm font-medium text-white/80 mt-1">
+              {status === "ON_BREAK"
+                ? "break duration"
+                : status === "CLOCKED_IN"
+                ? "time worked"
+                : "not working"}
+            </div>
+          </div>
         </div>
       </div>
 
