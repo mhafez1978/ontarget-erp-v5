@@ -619,12 +619,12 @@ POST   /api/workforce/bulk-upload     # Import workforce
 
 ```
 ╔════════════════════════════════════════════════════╗
-║  Need help? We've got your back!                  ║
+║  Need help? We've got your back!                   ║
 ║                                                    ║
-║  📧 Email: support@ontarget-erp.com               ║
-║  📚 Docs: https://docs.ontarget-erp.com           ║
-║  💬 Discord: https://discord.gg/ontarget          ║
-║  🐛 Issues: GitHub Issues                         ║
+║  📧 Email: support@ontargetbrands.com              ║
+║  📚 Docs: https://docs.ontargetbrands.com          ║
+║  💬 Discord: https://discord.gg/ontarget           ║
+║  🐛 Issues: GitHub Issues                          ║
 ╚════════════════════════════════════════════════════╝
 ```
 
