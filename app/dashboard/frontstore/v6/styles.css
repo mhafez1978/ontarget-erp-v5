@@ -92,3 +92,23 @@
   font-size: 12px;
   padding: 4px 8px;
 }
+
+/* Drag handle and dragging state */
+.drag-handle {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  cursor: grab;
+  color: var(--v6-muted);
+  user-select: none;
+}
+
+.variant-card.dragging {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  transform: scale(1.02);
+  opacity: 0.98;
+}
