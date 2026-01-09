@@ -1880,6 +1880,49 @@ model VideoProviderConfig {
   @@index([scope])
 }
 
+// Jobs table for video generation background processing
+model VideoGenerationJob {
+  id          String   @id @default(cuid())
+  companyId   String
+  sectionId   String
+  variantId   String
+  prompt      String   @db.Text
+  duration    Int?     @default(4)
+  resolution  String?  @default("1920x1080")
+
+  // Job status
+  status      String   @default("QUEUED") // QUEUED, PROCESSING, SUCCEEDED, FAILED
+  attempts    Int      @default(0)
+  provider    String?  // provider that processed (ltx/huggingface/sample)
+  resultUrl   String?  @db.Text
+  error       String?  @db.Text
+
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  logs        VideoGenerationLog[]
+
+  @@index([companyId])
+  @@index([status])
+}
+
+model VideoGenerationLog {
+  id        String   @id @default(cuid())
+  jobId     String
+  level     String   @default("info") // info, warn, error
+  message   String   @db.Text
+
+  createdAt DateTime @default(now())
+
+  job       VideoGenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+}
+
 // Chat-driven AI storefront MVP models
 model StorefrontConversation {
   id            String    @id @default(cuid())

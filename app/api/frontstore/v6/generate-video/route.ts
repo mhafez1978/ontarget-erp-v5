@@ -11,15 +11,23 @@ export async function POST(request: NextRequest) {
     const userId = validation.user.id;
 
     const body = await request.json();
-    const { companyId, sectionId, variantId, prompt, duration, resolution } = body;
+    const { companyId, sectionId, variantId, prompt, duration, resolution } =
+      body;
 
     if (!companyId || !sectionId || !variantId || !prompt) {
-      return NextResponse.json({ error: "companyId, sectionId, variantId and prompt are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "companyId, sectionId, variantId and prompt are required" },
+        { status: 400 }
+      );
     }
 
     // Authorization: must be super admin or owner
-    const user = await db.user.findUnique({ where: { id: userId }, select: { role: true, ownedCompanies: { select: { id: true } } } });
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { role: true, ownedCompanies: { select: { id: true } } },
+    });
+    if (!user)
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const isSuperAdmin = user.role === "SUPER_ADMIN";
     const ownsCompany = user.ownedCompanies.some((c) => c.id === companyId);
@@ -27,12 +35,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Kick off generation (blocking call for now)
-    const result = await generateAIVideo({ companyId, sectionId, variantId, prompt, duration, resolution });
+    // Create a queued job record so worker can process it asynchronously
+    const job = await db.videoGenerationJob.create({
+      data: {
+        companyId,
+        sectionId,
+        variantId,
+        prompt,
+        duration: duration ? Number(duration) : 4,
+        resolution: resolution || "1920x1080",
+        status: "QUEUED",
+      },
+    });
 
-    return NextResponse.json({ success: true, url: result.url, provider: result.provider });
+    // Log the enqueue activity
+    await db.videoGenerationLog.create({
+      data: { jobId: job.id, level: "info", message: "Job enqueued" },
+    });
+
+    return NextResponse.json({
+      success: true,
+      jobId: job.id,
+      status: job.status,
+    });
   } catch (error) {
     console.error("Generate video error:", error);
-    return NextResponse.json({ error: "Failed to generate video" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to generate video" },
+      { status: 500 }
+    );
   }
 }
