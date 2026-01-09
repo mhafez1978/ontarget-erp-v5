@@ -63,7 +63,7 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
           ? new Date(currentEntry.breakStart)
           : new Date(currentEntry.clockIn);
       const now = new Date();
-      const diff = now.getTime() - startTime.getTime();
+      const diff = Math.abs(now.getTime() - startTime.getTime());
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       setElapsedTime(`${hours}h ${minutes}m`);
