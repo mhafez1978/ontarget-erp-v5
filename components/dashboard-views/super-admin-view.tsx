@@ -82,7 +82,7 @@ export function SuperAdminView({ userName, companyId }: SuperAdminViewProps) {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
       <h1 className="text-3xl font-bold tracking-tight">
         You are a Super Admin, welcome {userName || "Guest"}!
       </h1>
@@ -90,31 +90,20 @@ export function SuperAdminView({ userName, companyId }: SuperAdminViewProps) {
         You have full access to all system features and administrative controls.
       </p>
 
-      {/* Email Settings Warning Banner */}
-      <EmailSettingsWarningBanner />
-
-      {/* Clock In/Out and Staff Stats Widgets */}
-      {companyId && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ClockInOutWidget companyId={companyId} />
-          <StaffStatsWidget companyId={companyId} />
-        </div>
-      )}
-
-      {/* Stats Cards */}
+      {/* System Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Active Logged-In Users
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-purple-500 dark:text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeUsers}</div>
-            <p className="text-xs text-muted-foreground">
-              Currently active sessions
-            </p>
+            <div className="text-2xl font-bold dark:text-green-500">
+              {activeUsers}
+            </div>
+            <p className="text-xs  md:text-md">Currently active sessions</p>
           </CardContent>
         </Card>
 
@@ -123,22 +112,27 @@ export function SuperAdminView({ userName, companyId }: SuperAdminViewProps) {
             <CardTitle className="text-sm font-medium">
               Total Visitors (All time)
             </CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Globe className="h-4 w-4 text-purple-500 dark:text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recentVisitors}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold dark:text-green-500">
+              {recentVisitors}
+            </div>
+            <p className="text-xs md:text-md">
               Guest visitors tracked (all time)
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Staff Status Widgets - one per company */}
+      <EmailSettingsWarningBanner />
+
       {!loadingCompanies && companies.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Staff Status by Company</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <ClockInOutWidget companyId={companyId || companies[0]?.id} />
+            <StaffStatsWidget companyId={companyId || companies[0]?.id} />
             {companies.map((company, index) => {
               const colors: Array<
                 "red" | "purple" | "indigo" | "teal" | "amber" | "pink"
