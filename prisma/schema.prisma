@@ -227,7 +227,7 @@ model Company {
   name          String
   slogan        String?
   description   String? @db.Text
-  industry      String? // Optional industry/vertical hint for AI storefront and theming
+  industry      CompanyIndustry? // Company industry/vertical classification
   logo          String? @db.LongText // Can store file path or base64 data URL
   logoLight     String? @db.LongText // Logo for light theme (path or base64)
   logoDark      String? @db.LongText // Logo for dark theme (path or base64)
@@ -345,6 +345,9 @@ model Company {
   // Multi-location support
   locations CompanyLocation[]
 
+  // Tax and legal entity information
+  taxInfo CompanyTaxInfo?
+
   // Back-relations for models referencing Company
   telemetryEvents TelemetryEvent[]
   leads           Lead[]
@@ -379,6 +382,289 @@ model Company {
   @@index([ownerId])
   @@index([name])
   @@index([isRoot])
+}
+
+// Legal Entity Type Enum - Global business structures
+enum CompanyLegalEntity {
+  // Individual/Self-Employed
+  SOLE_PROPRIETOR // Sole Proprietorship / Self-Employed / Individual Entrepreneur
+  
+  // United States
+  SINGLE_MEMBER_LLC // Single Member LLC (US)
+  LLC // Limited Liability Company (US)
+  S_CORP // S-Corporation (US)
+  C_CORP // C-Corporation (US)
+  GENERAL_PARTNERSHIP // General Partnership (US)
+  LIMITED_PARTNERSHIP // Limited Partnership (US)
+  LLP // Limited Liability Partnership (US)
+  NON_PROFIT // Non-Profit Organization (US)
+  
+  // United Kingdom & Ireland
+  LTD // Private Limited Company (UK, Ireland, Commonwealth)
+  PLC // Public Limited Company (UK, Ireland)
+  
+  // Germany & Austria
+  GMBH // Gesellschaft mit beschränkter Haftung (Germany, Austria, Switzerland)
+  AG // Aktiengesellschaft (Germany, Austria, Switzerland)
+  UG // Unternehmergesellschaft (Germany)
+  KG // Kommanditgesellschaft (Germany, Austria)
+  OHG // Offene Handelsgesellschaft (Germany, Austria)
+  
+  // France & Belgium
+  SARL // Société à Responsabilité Limitée (France, Belgium, Luxembourg)
+  SA // Société Anonyme (France, Belgium, Switzerland)
+  SAS // Société par Actions Simplifiée (France)
+  SASU // Société par Actions Simplifiée Unipersonnelle (France)
+  EURL // Entreprise Unipersonnelle à Responsabilité Limitée (France)
+  SNC // Société en Nom Collectif (France)
+  
+  // Spain & Portugal
+  SL // Sociedad Limitada (Spain)
+  SA_SPAIN // Sociedad Anónima (Spain)
+  LDA // Sociedade por Quotas (Portugal)
+  SA_PORTUGAL // Sociedade Anónima (Portugal)
+  
+  // Italy
+  SRL // Società a Responsabilità Limitata (Italy, Romania)
+  SPA // Società per Azioni (Italy)
+  SRLS // Società a Responsabilità Limitata Semplificata (Italy)
+  
+  // Netherlands
+  BV // Besloten Vennootschap (Netherlands, Belgium)
+  NV // Naamloze Vennootschap (Netherlands, Belgium)
+  VOF // Vennootschap onder Firma (Netherlands)
+  
+  // Nordic Countries
+  AB // Aktiebolag (Sweden)
+  AS // Aksjeselskap (Norway)
+  APS // Anpartsselskab (Denmark)
+  AS_DENMARK // Aktieselskab (Denmark)
+  OY // Osakeyhtiö (Finland)
+  
+  // Eastern Europe
+  SPZOO // Spółka z ograniczoną odpowiedzialnością (Poland)
+  SA_POLAND // Spółka Akcyjna (Poland)
+  SRO // Společnost s ručením omezeným (Czech Republic)
+  AS_CZECH // Akciová společnost (Czech Republic)
+  
+  // Asia-Pacific
+  PTY_LTD // Proprietary Limited (Australia, South Africa)
+  PVT_LTD // Private Limited (India, Pakistan, Bangladesh, Sri Lanka)
+  PUBLIC_LTD // Public Limited Company (India, Singapore, Hong Kong)
+  SDN_BHD // Sendirian Berhad (Malaysia, Brunei)
+  BHD // Berhad (Malaysia)
+  PTE_LTD // Private Limited (Singapore)
+  KK // Kabushiki Kaisha (Japan - 株式会社)
+  GK // Godo Kaisha (Japan - 合同会社)
+  
+  // Latin America
+  SA_LATIN // Sociedad Anónima (Latin America - General)
+  SRL_LATIN // Sociedad de Responsabilidad Limitada (Latin America - General)
+  LTDA // Limitada (Brazil, Latin America)
+  SA_BRAZIL // Sociedade Anônima (Brazil)
+  EIRELI // Empresa Individual de Responsabilidade Limitada (Brazil)
+  MEI // Microempreendedor Individual (Brazil)
+  
+  // Middle East & Africa
+  LLC_MENA // Limited Liability Company (Middle East & North Africa)
+  FZE // Free Zone Establishment (UAE)
+  FZCO // Free Zone Company (UAE)
+  WLL // With Limited Liability (Bahrain, Kuwait)
+  
+  // Other Common Structures
+  COOPERATIVE // Cooperative / Co-operative Society
+  TRUST // Trust
+  FOUNDATION // Foundation / Stiftung
+  ASSOCIATION // Association / Verein
+  JOINT_VENTURE // Joint Venture
+  BRANCH // Branch Office / Representative Office
+  OTHER // Other Entity Type
+}
+
+// Company Industry Enum
+enum CompanyIndustry {
+  // Technology & Software
+  SOFTWARE_DEVELOPMENT // Software Development & Engineering
+  SAAS // Software as a Service (SaaS)
+  IT_SERVICES // IT Services & Consulting
+  CYBERSECURITY // Cybersecurity & Information Security
+  AI_ML // Artificial Intelligence & Machine Learning
+  CLOUD_COMPUTING // Cloud Computing & Infrastructure
+  MOBILE_APPS // Mobile App Development
+  WEB_DEVELOPMENT // Web Development & Design
+  GAME_DEVELOPMENT // Game Development
+  BLOCKCHAIN // Blockchain & Cryptocurrency
+  
+  // Healthcare & Medical
+  HEALTHCARE // Healthcare Services
+  MEDICAL_DEVICES // Medical Devices & Equipment
+  PHARMACEUTICALS // Pharmaceuticals & Biotechnology
+  TELEHEALTH // Telemedicine & Digital Health
+  HEALTH_INSURANCE // Health Insurance
+  DENTAL // Dental Services
+  VETERINARY // Veterinary Services
+  FITNESS // Fitness & Wellness
+  
+  // Finance & Banking
+  BANKING // Banking & Financial Services
+  FINTECH // Financial Technology (FinTech)
+  INSURANCE // Insurance Services
+  ACCOUNTING // Accounting & Bookkeeping
+  INVESTMENT // Investment Management
+  CRYPTOCURRENCY // Cryptocurrency & Digital Assets
+  PAYMENT_PROCESSING // Payment Processing
+  
+  // Retail & E-commerce
+  ECOMMERCE // E-commerce & Online Retail
+  RETAIL // Retail Stores
+  FASHION // Fashion & Apparel
+  JEWELRY // Jewelry & Accessories
+  BEAUTY // Beauty & Cosmetics
+  GROCERY // Grocery & Food Retail
+  FURNITURE // Furniture & Home Goods
+  ELECTRONICS // Consumer Electronics
+  
+  // Manufacturing & Industrial
+  MANUFACTURING // General Manufacturing
+  AUTOMOTIVE // Automotive Manufacturing
+  AEROSPACE // Aerospace & Defense
+  CONSTRUCTION // Construction & Building Materials
+  INDUSTRIAL_EQUIPMENT // Industrial Equipment & Machinery
+  CHEMICALS // Chemicals & Materials
+  TEXTILES // Textiles & Fabrics
+  PACKAGING // Packaging & Containers
+  
+  // Food & Beverage
+  RESTAURANT // Restaurants & Food Service
+  CAFE // Cafes & Coffee Shops
+  CATERING // Catering Services
+  FOOD_PRODUCTION // Food Production & Processing
+  BREWERY // Brewery & Distillery
+  
+  // Real Estate & Property
+  REAL_ESTATE // Real Estate Services
+  PROPERTY_MANAGEMENT // Property Management
+  CONSTRUCTION_DEVELOPMENT // Construction & Development
+  ARCHITECTURE // Architecture & Design
+  INTERIOR_DESIGN // Interior Design
+  
+  // Professional Services
+  CONSULTING // Business Consulting
+  LEGAL // Legal Services
+  MARKETING // Marketing & Advertising
+  PR // Public Relations
+  HR // Human Resources Services
+  RECRUITMENT // Recruitment & Staffing
+  BUSINESS_SERVICES // General Business Services
+  
+  // Education & Training
+  EDUCATION // Education Services
+  ELEARNING // E-Learning & Online Courses
+  TRAINING // Training & Professional Development
+  TUTORING // Tutoring Services
+  CHILDCARE // Childcare & Early Education
+  
+  // Media & Entertainment
+  MEDIA // Media & Publishing
+  ENTERTAINMENT // Entertainment Services
+  FILM // Film & Video Production
+  MUSIC // Music Production & Distribution
+  GAMING // Gaming & Esports
+  PODCASTING // Podcasting & Audio Content
+  
+  // Transportation & Logistics
+  LOGISTICS // Logistics & Supply Chain
+  SHIPPING // Shipping & Freight
+  TRANSPORTATION // Transportation Services
+  DELIVERY // Delivery & Courier Services
+  WAREHOUSING // Warehousing & Distribution
+  
+  // Hospitality & Travel
+  HOTEL // Hotels & Accommodations
+  TRAVEL // Travel & Tourism
+  EVENT_PLANNING // Event Planning & Management
+  
+  // Energy & Utilities
+  ENERGY // Energy & Utilities
+  RENEWABLE_ENERGY // Renewable Energy
+  OIL_GAS // Oil & Gas
+  SOLAR // Solar Energy
+  
+  // Agriculture & Environment
+  AGRICULTURE // Agriculture & Farming
+  ENVIRONMENTAL // Environmental Services
+  SUSTAINABILITY // Sustainability Consulting
+  
+  // Telecommunications
+  TELECOM // Telecommunications
+  ISP // Internet Service Provider
+  
+  // Non-Profit & Social
+  NON_PROFIT // Non-Profit Organization
+  CHARITY // Charity & Philanthropy
+  SOCIAL_ENTERPRISE // Social Enterprise
+  
+  // Other
+  OTHER // Other Industry
+}
+
+// Tax ID Type Enum
+enum TaxIdType {
+  SSN // Social Security Number (US - Individual)
+  EIN // Employer Identification Number (US - Business)
+  ITIN // Individual Taxpayer Identification Number (US - Foreign Individual)
+  VAT // Value Added Tax Number (EU and many countries)
+  GST // Goods and Services Tax (Australia, India, Canada, etc.)
+  ABN // Australian Business Number
+  ACN // Australian Company Number
+  TFN // Tax File Number (Australia)
+  NINO // National Insurance Number (UK)
+  UTR // Unique Taxpayer Reference (UK)
+  CRN // Company Registration Number (UK and others)
+  TVA // Numéro de TVA (France)
+  NIF // Número de Identificación Fiscal (Spain, Portugal)
+  CIF // Código de Identificación Fiscal (Spain)
+  SIREN // Système d'Identification du Répertoire des Entreprises (France - 9 digits)
+  SIRET // Système d'Identification du Répertoire des Établissements (France - 14 digits)
+  CNPJ // Cadastro Nacional da Pessoa Jurídica (Brazil - Business)
+  CPF // Cadastro de Pessoas Físicas (Brazil - Individual)
+  RFC // Registro Federal de Contribuyentes (Mexico)
+  RUT // Rol Único Tributario (Chile, Colombia)
+  CUIT // Clave Única de Identificación Tributaria (Argentina)
+  PAN // Permanent Account Number (India)
+  GSTIN // GST Identification Number (India)
+  TIN // Tax Identification Number (Generic)
+  TRN // Tax Registration Number (UAE, Middle East)
+  OTHER // Other Tax ID Type
+}
+
+// Company Tax Information (Separate table for sensitive data)
+model CompanyTaxInfo {
+  id        String             @id @default(cuid())
+  companyId String             @unique
+  
+  // Legal entity classification
+  legalEntity CompanyLegalEntity
+  
+  // Tax identification
+  taxIdType   TaxIdType
+  taxId       String // Encrypted - store encrypted value for security
+  
+  // Additional tax info
+  taxCountry  String? // ISO country code where tax is registered
+  vatNumber   String? // Additional VAT number if applicable
+  
+  // Metadata
+  verifiedAt  DateTime? // When tax info was verified
+  verifiedBy  String? // User ID who verified
+  
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([companyId])
+  @@index([taxCountry])
 }
 
 // AI storefront generation usage tracking
@@ -1563,6 +1849,35 @@ model StorageProvider {
   @@index([isActive])
   @@index([scope])
   @@index([companyId])
+}
+
+// Video provider configuration for AI-generated videos
+model VideoProviderConfig {
+  id              String   @id @default(cuid())
+  scope           String   @default("GLOBAL") // GLOBAL only for now
+
+  // Lightricks LTX
+  ltxApiKey       String?  @db.Text
+  ltxSecret       String?  @db.Text
+  ltxEnabled      Boolean  @default(false)
+
+  // Hugging Face
+  hfApiToken      String?  @db.Text
+  hfEnabled       Boolean  @default(false)
+
+  // Provider priority: 'ltx' | 'huggingface'
+  primaryProvider String?  @default("ltx")
+
+  // Connection status
+  lastTestedAt    DateTime?
+  isConnected     Boolean  @default(false)
+  lastError       String?  @db.Text
+
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([scope])
 }
 
 // Chat-driven AI storefront MVP models
