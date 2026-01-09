@@ -38,7 +38,13 @@ modern workspace needing mainframe reliability.
 ┌─────────────────────────────────────────────────────────┐
 │ ▸ Unlimited company creation & management               │
 │ ▸ Root company system (SaaS provider)                   │
-│ ▸ Company-specific branding & white-labeling            │
+│ ▸ Root company plan management & pricing tiers          │
+│ ▸ Custom subscription plans for clients                 │
+│ ▸ White label branding & customization:                │
+│   • Custom logos & color schemes                        │
+│   • Company-specific domain names                       │
+│   • Branded emails & notifications                      │
+│   • Custom storefront themes                            │
 │ ▸ Hierarchical organization structure                   │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -179,8 +185,15 @@ modern workspace needing mainframe reliability.
 ┌──────────────────────────────────────────────────┐
 │ ▸ Trial plan system                              │
 │ ▸ ERP Customer subscriptions                     │
-│ ▸ Custom plan management                         │
+│ ▸ Root company plan creation & management        │
+│ ▸ Custom pricing tiers & features                │
+│ ▸ Plan activation & deactivation controls        │
+│ ▸ Subscription lifecycle management              │
 │ ▸ Payment gateway integration                    │
+│ ▸ Cold storage for payment providers:           │
+│   • Secure credential storage                    │
+│   • Encrypted payment provider API keys          │
+│   • Multi-provider support & management          │
 │ ▸ Invoice generation                             │
 └──────────────────────────────────────────────────┘
 ```
@@ -210,16 +223,48 @@ modern workspace needing mainframe reliability.
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 ```
 
-### 🏢 PROJECT MANAGEMENT
+### 🏢 PROJECT MANAGEMENT & TASK TRACKING
 
 ```
 ╭─────────────────────────────────────────────────╮
 │ ▸ Team creation & management                    │
 │ ▸ Project tracking & organization               │
+│ ▸ Multiple project views:                       │
+│   • Kanban board (drag & drop)                  │
+│   • List view                                   │
+│   • Grid view                                   │
+│   • Timeline view                               │
+│ ▸ Single project detail view                    │
+│ ▸ Drag & drop task management (Kanban style)    │
+│ ▸ Intuitive drag & drop file uploads            │
 │ ▸ Task assignment & progress monitoring         │
 │ ▸ Project financial tracking                    │
 │ ▸ Document management                           │
+│ ▸ Staff access to assigned projects             │
+│ ▸ Individual task assignments & deadlines       │
+│ ▸ Work item completion tracking                 │
+│ ▸ Project timeline & milestone management       │
+│ ▸ Collaborative workspace for team members      │
+│ ▸ Real-time project status updates              │
+│ ▸ Task comments & communication                 │
 ╰─────────────────────────────────────────────────╯
+```
+
+### 📚 KNOWLEDGE BASE & BLOG
+
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ▸ Knowledge base article management          ┃
+┃ ▸ Documentation & help center                ┃
+┃ ▸ Blog post creation & publishing            ┃
+┃ ▸ Blog roll with post categories             ┃
+┃ ▸ Rich text editor for content               ┃
+┃ ▸ SEO-friendly article structure             ┃
+┃ ▸ Search & filter functionality              ┃
+┃ ▸ Draft, publish, and archive workflows      ┃
+┃ ▸ Company-specific knowledge bases           ┃
+┃ ▸ Public & private article visibility        ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 ```
 
 ### 📱 DASHBOARD VIEWS
@@ -244,7 +289,16 @@ modern workspace needing mainframe reliability.
 ║ ▸ Account enable/disable controls             ║
 ║ ▸ User deletion (ERP Customers/Guests)        ║
 ║ ▸ Password management system                  ║
-║ ▸ Team & member assignment                    ║
+║ ▸ Team creation & management:                 ║
+║   • Create teams across companies             ║
+║   • Assign members & roles                    ║
+║   • Team permissions & access control         ║
+║ ▸ File sharing & document management:         ║
+║   • Company file explorer                     ║
+║   • Folder structure & organization           ║
+║   • Drag & drop file uploads                  ║
+║   • File permissions & access control         ║
+║   • Document versioning                       ║
 ║ ▸ Pricing management                          ║
 ║ ▸ Provider configuration (OAuth, Email, etc.) ║
 ╚════════════════════════════════════════════════╝
