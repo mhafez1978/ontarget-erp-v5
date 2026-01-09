@@ -7,8 +7,16 @@ import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, systemName, companyName, companySlogan } =
-      body;
+    const {
+      name,
+      email,
+      password,
+      systemName,
+      companyName,
+      companySlogan,
+      jobTitle,
+      payRate,
+    } = body;
 
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const normalizedEmail =
@@ -101,15 +109,26 @@ export async function POST(request: NextRequest) {
 
       // Add the super admin as a company staff member (employee)
       // Super admin is also an employee of the root company and needs to get paid
+      const sanitizedJobTitle =
+        typeof jobTitle === "string" && jobTitle.trim().length > 0
+          ? jobTitle.trim()
+          : "Chief Executive Officer";
+      const sanitizedPayRate =
+        typeof payRate === "string" && payRate.trim().length > 0
+          ? parseFloat(payRate)
+          : null;
+
       await tx.companyStaff.create({
         data: {
           userId: user.id,
           companyId: company.id,
           role: "ADMIN",
-          jobTitle: "MANAGER_ROLE",
+          jobTitle: sanitizedJobTitle,
           employmentType: "FULL_TIME",
           status: "ACTIVE",
           hireDate: new Date(),
+          payRate: sanitizedPayRate,
+          payFrequency: "HOURLY",
         },
       });
 

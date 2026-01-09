@@ -1,14 +1,10 @@
 "use client";
 
-
 import { UserPlus, Loader2, Trash2, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-
-
-;
 import { AddSubscriberSheet } from "@/components/add-subscriber-sheet";
 import { EditSubscriptionSheet } from "@/components/edit-subscription-sheet";
 import { BulkImportCustomers } from "@/components/bulk-import-customers";
@@ -94,10 +90,17 @@ export function SuperAdminCustomerView({
       const res = await fetch("/api/erp-customers");
       const data = await res.json();
 
+      console.log("[fetchErpCustomers] Response status:", res.status);
+      console.log("[fetchErpCustomers] Response data:", data);
+
       if (!res.ok) {
         throw new Error(data.error || "Failed to fetch ERP customers");
       }
 
+      console.log(
+        "[fetchErpCustomers] Setting erpCustomers to:",
+        data.customers || []
+      );
       setErpCustomers(data.customers || []);
     } catch (err) {
       setErpError(err instanceof Error ? err.message : "An error occurred");

@@ -24,7 +24,7 @@ export function CartIcon({
       const items = getCompanyItems(companyId);
       return items.reduce((sum, item) => sum + item.quantity, 0);
     },
-    () => 0 // Server-side snapshot: always return 0
+    () => 0 // Server snapshot
   );
 
   return (

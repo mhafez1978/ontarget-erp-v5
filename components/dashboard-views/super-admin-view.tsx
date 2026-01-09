@@ -3,8 +3,11 @@
 import { MapPin, Users, Globe, LogsIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { GeoTrackingDisplay } from "@/components/geo-tracking-display";
-import { AuditLog } from "@/components/audit-log";
+import { AuditLogClientStatic } from "@/components/audit-log-client-static";
 import { EmailSettingsWarningBanner } from "@/components/email-settings-warning-banner";
+import { StaffStatusWidget } from "@/components/staff-status-widget";
+import { ClockInOutWidget } from "@/components/clock-in-out-widget";
+import { StaffStatsWidget } from "@/components/staff-stats-widget";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -17,11 +20,35 @@ import {
 
 interface SuperAdminViewProps {
   userName?: string | null;
+  companyId?: string | null;
 }
 
-export function SuperAdminView({ userName }: SuperAdminViewProps) {
+export function SuperAdminView({ userName, companyId }: SuperAdminViewProps) {
   const [activeUsers, setActiveUsers] = useState(0);
   const [recentVisitors, setRecentVisitors] = useState(0);
+  const [companies, setCompanies] = useState<
+    Array<{ id: string; name: string; role: string }>
+  >([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
+
+  useEffect(() => {
+    const fetchUserCompanies = async () => {
+      try {
+        const response = await fetch("/api/companies/my-owned");
+        const data = await response.json();
+
+        if (data.success) {
+          setCompanies(data.companies);
+        }
+      } catch (error) {
+        console.error("Failed to fetch companies:", error);
+      } finally {
+        setLoadingCompanies(false);
+      }
+    };
+
+    fetchUserCompanies();
+  }, []);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -66,6 +93,14 @@ export function SuperAdminView({ userName }: SuperAdminViewProps) {
       {/* Email Settings Warning Banner */}
       <EmailSettingsWarningBanner />
 
+      {/* Clock In/Out and Staff Stats Widgets */}
+      {companyId && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ClockInOutWidget companyId={companyId} />
+          <StaffStatsWidget companyId={companyId} />
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
@@ -99,6 +134,30 @@ export function SuperAdminView({ userName }: SuperAdminViewProps) {
         </Card>
       </div>
 
+      {/* Staff Status Widgets - one per company */}
+      {!loadingCompanies && companies.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Staff Status by Company</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {companies.map((company, index) => {
+              const colors: Array<
+                "red" | "purple" | "indigo" | "teal" | "amber" | "pink"
+              > = ["red", "purple", "indigo", "teal", "amber", "pink"];
+              const colorVariant = colors[index % colors.length];
+
+              return (
+                <StaffStatusWidget
+                  key={index}
+                  companyId={company.id}
+                  companyName={company.name}
+                  colorVariant={colorVariant}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Geo-tracking Display in Accordion */}
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="geo-tracking">
@@ -121,7 +180,7 @@ export function SuperAdminView({ userName }: SuperAdminViewProps) {
             </div>
           </AccordionTrigger>
           <AccordionContent>
-            <AuditLog />
+            <AuditLogClientStatic showRefreshButton={true} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

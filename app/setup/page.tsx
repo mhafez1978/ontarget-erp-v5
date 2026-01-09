@@ -35,9 +35,11 @@ export default function SetupPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    systemName: "OnTarget ERP",
+    systemName: "",
     companyName: "",
     companySlogan: "",
+    jobTitle: "",
+    payRate: "",
   });
   const [error, setError] = useState("");
 
@@ -98,6 +100,8 @@ export default function SetupPage() {
           systemName: formData.systemName,
           companyName: formData.companyName,
           companySlogan: formData.companySlogan,
+          jobTitle: formData.jobTitle,
+          payRate: formData.payRate,
         }),
       });
 
@@ -217,6 +221,44 @@ export default function SetupPage() {
                     required
                     disabled={isLoading}
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="jobTitle">Job Title *</Label>
+                  <Input
+                    id="jobTitle"
+                    type="text"
+                    placeholder="Chief Executive Officer"
+                    value={formData.jobTitle}
+                    onChange={(e) => {
+                      setFormData({ ...formData, jobTitle: e.target.value });
+                      setIsDirty(true);
+                    }}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="payRate">Hourly Pay Rate *</Label>
+                  <Input
+                    id="payRate"
+                    type="number"
+                    step="0.01"
+                    placeholder="75.00"
+                    value={formData.payRate}
+                    onChange={(e) => {
+                      setFormData({ ...formData, payRate: e.target.value });
+                      setIsDirty(true);
+                    }}
+                    required
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Your hourly rate for payroll calculations
+                  </p>
                 </div>
               </div>
 

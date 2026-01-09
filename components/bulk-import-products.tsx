@@ -23,7 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -246,44 +245,51 @@ export function BulkImportProducts({
           <SheetTitle>Bulk Import Products</SheetTitle>
         </SheetHeader>
 
-        <div className="space-y-4 px-6 mt-4">
+        <div className="space-y-4 px-6 mt-4 dark:text-green-400">
           {/* Instructions Panel */}
-          <div className="p-3 rounded-md border bg-emerald-100/50">
-            <h3 className="text-sm font-semibold mb-1">Import Instructions</h3>
-            <p className="text-xs text-muted-foreground mb-2">
+          <div className="p-3 rounded-md border">
+            <h3 className="text-md mb-2">Import Instructions</h3>
+            <p className="text-sm text-white font-mono mb-2">
               Upload a CSV or XLSX file with a header row. Required columns are
               marked with <strong>*</strong>.
             </p>
-            <div className="text-xs text-muted-foreground mb-2">
-              <div>
+            <div className="text-sm mb-4">
+              <div className="mb-4">
                 <strong>Required:</strong>{" "}
                 <span className="font-medium">name*</span>,{" "}
                 <span className="font-medium">price*</span>
               </div>
-              <div className="mt-1">
-                <strong>Optional:</strong> sku, category, description, quantity,
-                isPublished, isFeatured, addressLine1, city, state, country
+              <div className="mt-4">
+                <strong>Optional:</strong>{" "}
+                <span className="text-black dark:text-white">
+                  sku, category, description, quantity, isPublished, isFeatured,
+                  addressLine1, city, state, country
+                </span>
               </div>
-              <div className="mt-2 text-xs">
-                <strong>Tip:</strong> Download the <em>XLSX (modern .xlsx)</em>{" "}
-                template and edit it in Excel or OpenOffice. You can upload it
-                directly as .xlsx or save as CSV — both formats are supported.
+
+              <div className="mt-2 text-sm">
+                <strong>Tip:</strong>
+                <span className="text-black dark:text-white">
+                  Download the <em>XLSX (modern .xlsx)</em> template and edit it
+                  in Excel or OpenOffice. You can upload it directly as .xlsx or
+                  save as CSV — both formats are supported.
+                </span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm">
               <span className="mr-2">Download a sample template:</span>
               <a
                 href="/samples/products-sample.csv"
                 download
-                className="underline mr-2 hover:text-primary"
+                className="underline mr-2 hover:text-primary dark:text-white"
               >
                 CSV
               </a>
               <a
                 href="/api/samples/products-xlsx"
-                className="underline hover:text-primary"
+                className="underline hover:text-primary dark:text-white"
               >
-                XLSX (Excel)
+                Excel
               </a>
             </p>
           </div>
@@ -335,7 +341,7 @@ export function BulkImportProducts({
                     </div>
                     <div>
                       <p className="text-sm font-medium">{file.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {(file.size / 1024).toFixed(1)} KB
                       </p>
                     </div>
@@ -363,7 +369,7 @@ export function BulkImportProducts({
                     <p className="text-sm font-medium">
                       Drop your file here or click to browse
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Supports CSV, XLSX, and XLS files
                     </p>
                   </div>
@@ -371,16 +377,16 @@ export function BulkImportProducts({
               )}
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Need a template? Download a sample file:
+            <p className="text-sm text-muted-foreground">
+              Need a template? Download a sample file:{" "}
               <a
                 href="/samples/products-sample.csv"
                 download
                 className="underline hover:text-primary"
               >
                 CSV
-              </a>
-              •
+              </a>{" "}
+              •{" "}
               <a
                 href="/api/samples/products-xlsx"
                 className="underline hover:text-primary"
@@ -403,7 +409,7 @@ export function BulkImportProducts({
               <div className="flex items-center gap-2 p-2 rounded bg-green-50 border border-green-200 text-sm text-green-800 mb-2">
                 <span className="flex flex-row gap-2 items-center border-r">
                   <CheckCircle2 className="h-4 w-4" />
-                  <span className="text-xs">
+                  <span className="text-sm">
                     File validated successfully ready to import
                   </span>
                 </span>
@@ -457,7 +463,7 @@ export function BulkImportProducts({
                     ))}
                   </tbody>
                 </table>
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Showing first 5 rows. Additional columns (description,
                   quantity, images, etc.) will be imported if provided.
                 </p>

@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import {
   EmploymentStatus,
   EmploymentType,
-  JobTitle,
   CompanyMemberRole,
 } from "@prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
@@ -69,7 +68,7 @@ const WorkforceRowSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   role: z.string().min(1),
-  jobtitle: z.string().min(1),
+  jobtitle: z.string().optional(),
   employmenttype: z.string().min(1),
   password: z.string().optional(),
   payrate: z.string().optional(),
@@ -135,17 +134,22 @@ export async function POST(request: NextRequest) {
       !headers.includes("name") ||
       !headers.includes("email") ||
       !headers.includes("role") ||
-      !headers.includes("jobtitle") ||
       !headers.includes("employmenttype")
     ) {
       return NextResponse.json(
         {
           error:
-            "CSV must include 'name','email','role','jobtitle','employmenttype' columns (headers are normalized to lowercase)",
+            "CSV must include 'name', 'email', 'role', 'employmenttype' columns (headers are normalized to lowercase). 'jobtitle' is optional.",
         },
         { status: 400 }
       );
     }
+
+    // DEBUG LOGS
+    console.log("[bulk-upload] headers:", headers);
+    console.log("[bulk-upload] rows count:", rows.length);
+    if (rows.length > 0)
+      console.log("[bulk-upload] first row sample:", rows[0]);
 
     // Check company access
     const company = await db.company.findUnique({
@@ -156,10 +160,58 @@ export async function POST(request: NextRequest) {
     if (!company)
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
 
-    const isOwner = company.ownerId === user.id;
-    const isMember = company.members.length > 0;
+    // PRECHECK: If any rows reference an email that already exists in the system, abort the import.
+    // The policy is strict: imports must not include emails that already exist in the DB.
+    const rowEmails = Array.from(
+      new Set(rows.map((r) => (r.email || "").trim()).filter(Boolean))
+    );
+    if (rowEmails.length > 0) {
+      const existingUsers = await db.user.findMany({
+        where: { email: { in: rowEmails } },
+        select: { email: true },
+      });
+      if (existingUsers.length > 0) {
+        const emails = existingUsers.map((u) => u.email).join(", ");
+        console.log(
+          `[bulk-upload] aborting import; existing emails: ${emails}`
+        );
+        return NextResponse.json(
+          {
+            error: "Import aborted - some emails already exist in the system",
+            existingEmails: existingUsers.map((u) => u.email),
+          },
+          { status: 400 }
+        );
+      }
+    }
 
-    if (!isOwner && !isMember && user.role !== "SUPER_ADMIN") {
+    const isOwner = company.ownerId === user.id;
+    const isAdminOrManager = company.members.some(
+      (m) => m.role === "ADMIN" || m.role === "MANAGER"
+    );
+
+    // DEBUG: log company access info
+    console.log(
+      "[bulk-upload] companyId:",
+      companyId,
+      "company.ownerId:",
+      company.ownerId,
+      "user.id:",
+      user.id,
+      "members.length:",
+      company.members.length
+    );
+    console.log(
+      "[bulk-upload] isOwner:",
+      isOwner,
+      "isAdminOrManager:",
+      isAdminOrManager,
+      "user.role:",
+      user.role
+    );
+
+    // User must be owner OR admin/manager member of the company
+    if (!isOwner && !isAdminOrManager) {
       return NextResponse.json(
         { error: "You don't have access to this company" },
         { status: 403 }
@@ -220,7 +272,7 @@ export async function POST(request: NextRequest) {
               email: row.email,
               password: hashed,
               role: "STAFF",
-              plan: "GUEST",
+              plan: "COMPANY_STAFF",
               emailVerified: new Date(),
               city: row.city || undefined,
               country: row.country || undefined,
@@ -250,12 +302,14 @@ export async function POST(request: NextRequest) {
           }
           const employmentTypeVal = employmentStr as EmploymentType;
 
-          // Validate jobTitle against Prisma enum values and normalize
-          let jobTitleVal: JobTitle | undefined = undefined;
+          // Normalize jobTitle (trim and format)
+          let jobTitleVal: string | undefined = undefined;
           if (row.jobtitle && row.jobtitle.trim() !== "") {
-            const jt = (Object.values(JobTitle) as string[]).find(
-              (j) => j.toLowerCase() === row.jobtitle.trim().toLowerCase()
-            ) as JobTitle | undefined;
+            // use helper to normalize common synonyms (Manager -> MANAGER, etc.)
+            const { normalizeJobTitle } = await import(
+              "@/lib/job-title-mapping"
+            );
+            const jt = normalizeJobTitle(row.jobtitle);
             if (!jt) {
               // cleanup created user to avoid orphan user record in this transaction
               try {
@@ -275,6 +329,14 @@ export async function POST(request: NextRequest) {
                 message: `Invalid jobtitle: ${row.jobtitle}`,
               });
               continue;
+            }
+            // log mapping when used
+            if (
+              (row.jobtitle || "").trim().toLowerCase() !== jt.toLowerCase()
+            ) {
+              console.log(
+                `[bulk-upload] jobTitle mapped: ${row.jobtitle} -> ${jt}`
+              );
             }
             jobTitleVal = jt;
           }
@@ -430,7 +492,7 @@ export async function POST(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error("/api/workforce/bulk-upload error:", error);
+    console.log(error);
     return NextResponse.json(
       { error: "Failed to process bulk upload" },
       { status: 500 }

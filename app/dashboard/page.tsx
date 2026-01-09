@@ -24,7 +24,7 @@ function getRoleView(
 ) {
   switch (role) {
     case "SUPER_ADMIN":
-      return <SuperAdminView userName={userName} />;
+      return <SuperAdminView userName={userName} companyId={companyId} />;
     case "ADMIN":
       return <AdminView userName={userName} companyId={companyId} />;
     case "MANAGER":

@@ -83,6 +83,9 @@ interface StaffMember {
   country: string | null;
   countryFlag: string | null;
   payRate?: number | null;
+  isFeatured?: boolean;
+  bio?: string | null;
+  displayOrder?: number;
 }
 
 const EMPLOYMENT_TYPE_LABELS = {
@@ -140,14 +143,17 @@ export function SuperAdminWorkforceView() {
   const [editProfileImagePreview, setEditProfileImagePreview] =
     useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] =
+    useState(false);
 
   // Initial form data for new staff member
   const initialFormData = {
     name: "",
     email: "",
     password: "",
+    passwordConfirmation: "",
     role: "STAFF" as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
-    jobTitle: "SALES_REP" as string,
+    jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     isFeatured: false,
     bio: "",
@@ -175,7 +181,7 @@ export function SuperAdminWorkforceView() {
     name: "",
     email: "",
     role: "STAFF" as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
-    jobTitle: "SALES_REP" as string,
+    jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     status: "ACTIVE" as string,
     canSetupPersonalEmail: false,
@@ -212,17 +218,14 @@ export function SuperAdminWorkforceView() {
       name: member.user.name || "",
       email: member.user.email || "",
       role: member.role as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
-      jobTitle: member.jobTitle || "SALES_REP",
+      jobTitle: member.jobTitle || "",
       employmentType: member.employmentType,
       status: member.status,
       canSetupPersonalEmail: member.user.canSetupPersonalEmail || false,
-      isFeatured: (member as any).isFeatured || false,
-      bio: (member as any).bio || "",
-      displayOrder: (member as any).displayOrder || 0,
-      payRate:
-        (member as any).payRate !== undefined
-          ? String((member as any).payRate)
-          : "",
+      isFeatured: member.isFeatured || false,
+      bio: member.bio || "",
+      displayOrder: member.displayOrder || 0,
+      payRate: member.payRate !== undefined ? String(member.payRate) : "",
     });
     setEditAddressData({
       addressLine1: member.user.addressLine1 || "",
@@ -921,6 +924,38 @@ export function SuperAdminWorkforceView() {
                   Minimum 8 characters
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="passwordConfirmation">Confirm Password *</Label>
+                <div className="relative">
+                  <Input
+                    id="passwordConfirmation"
+                    type={showPasswordConfirmation ? "text" : "password"}
+                    placeholder="Re-enter password"
+                    value={formData.passwordConfirmation}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        passwordConfirmation: e.target.value,
+                      })
+                    }
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPasswordConfirmation(!showPasswordConfirmation)
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPasswordConfirmation ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Employment Details */}
@@ -957,35 +992,19 @@ export function SuperAdminWorkforceView() {
 
                 <div className="space-y-2">
                   <Label htmlFor="jobTitle">Job Title *</Label>
-                  <Select
+                  <Input
+                    id="jobTitle"
+                    placeholder="e.g., Sales Representative, Manager, Developer"
                     value={formData.jobTitle}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, jobTitle: value })
+                    onChange={(e) =>
+                      setFormData({ ...formData, jobTitle: e.target.value })
                     }
-                  >
-                    <SelectTrigger id="jobTitle">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SALES_REP">
-                        Sales Representative
-                      </SelectItem>
-                      <SelectItem value="CUSTOMER_SERVICE">
-                        Customer Service
-                      </SelectItem>
-                      <SelectItem value="FIELD_TECH">
-                        Field Technician
-                      </SelectItem>
-                      <SelectItem value="BACK_OFFICE">Back Office</SelectItem>
-                      <SelectItem value="TECHNICIAN">Technician</SelectItem>
-                      <SelectItem value="MANAGER_ROLE">Manager</SelectItem>
-                      <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                      <SelectItem value="COORDINATOR">Coordinator</SelectItem>
-                      <SelectItem value="SPECIALIST">Specialist</SelectItem>
-                      <SelectItem value="ANALYST">Analyst</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter any job title - common examples: Sales Rep, Manager,
+                    Engineer, Customer Service
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -1008,6 +1027,23 @@ export function SuperAdminWorkforceView() {
                       <SelectItem value="SEASONAL">Seasonal</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="payRate">Pay Rate (hourly) *</Label>
+                  <Input
+                    id="payRate"
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g., 25.00"
+                    value={formData.payRate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, payRate: e.target.value })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the hourly pay rate for payroll calculations
+                  </p>
                 </div>
               </div>
 
@@ -1069,20 +1105,6 @@ export function SuperAdminWorkforceView() {
                   Lower numbers appear first in the team section
                 </p>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="payRate">Pay Rate (hourly)</Label>
-                <Input
-                  id="payRate"
-                  type="number"
-                  step="0.01"
-                  placeholder="e.g., 25.00"
-                  value={formData.payRate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, payRate: e.target.value })
-                  }
-                />
-              </div>
             </div>
 
             {/* Address Information */}
@@ -1125,6 +1147,11 @@ export function SuperAdminWorkforceView() {
 
                   if (formData.password.length < 8) {
                     toast.error("Password must be at least 8 characters");
+                    return;
+                  }
+
+                  if (formData.password !== formData.passwordConfirmation) {
+                    toast.error("Passwords do not match");
                     return;
                   }
 
@@ -1350,35 +1377,22 @@ export function SuperAdminWorkforceView() {
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-jobTitle">Job Title *</Label>
-                  <Select
+                  <Input
+                    id="edit-jobTitle"
+                    placeholder="e.g., Sales Representative, Manager, Developer"
                     value={editFormData.jobTitle}
-                    onValueChange={(value) =>
-                      setEditFormData({ ...editFormData, jobTitle: value })
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        jobTitle: e.target.value,
+                      })
                     }
-                  >
-                    <SelectTrigger id="edit-jobTitle">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SALES_REP">
-                        Sales Representative
-                      </SelectItem>
-                      <SelectItem value="CUSTOMER_SERVICE">
-                        Customer Service
-                      </SelectItem>
-                      <SelectItem value="FIELD_TECH">
-                        Field Technician
-                      </SelectItem>
-                      <SelectItem value="BACK_OFFICE">Back Office</SelectItem>
-                      <SelectItem value="TECHNICIAN">Technician</SelectItem>
-                      <SelectItem value="MANAGER_ROLE">Manager</SelectItem>
-                      <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                      <SelectItem value="COORDINATOR">Coordinator</SelectItem>
-                      <SelectItem value="SPECIALIST">Specialist</SelectItem>
-                      <SelectItem value="ANALYST">Analyst</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter any job title - common examples: Sales Rep, Manager,
+                    Engineer, Customer Service
+                  </p>
                 </div>
 
                 <div className="space-y-2">

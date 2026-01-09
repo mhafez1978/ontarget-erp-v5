@@ -1,7 +1,17 @@
 "use client";
 
-
-import { Loader2, Search, Pencil, UserPlus, Grid3x3, List, Send } from "lucide-react";
+import {
+  Loader2,
+  Search,
+  Pencil,
+  UserPlus,
+  Grid3x3,
+  List,
+  Send,
+  FileSpreadsheet,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,12 +32,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-
-
-
-
-
-;
 import {
   Table,
   TableBody,
@@ -45,34 +49,16 @@ import {
   AddressData,
 } from "@/components/address-autocomplete";
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
+import { BulkImportWorkforce } from "@/components/bulk-import-workforce";
+import type { CompanyStaff, User } from "@prisma/client";
 
-interface StaffMember {
-  id: string;
-  userId: string;
-  companyId: string;
-  user: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    image: string | null;
-    addressLine1?: string | null;
-    addressLine2?: string | null;
-    postalCode?: string | null;
-  };
-  role: string;
-  jobTitle?: string | null;
-  employmentType: string;
-  status: string;
-  hireDate: string;
-  isFeatured?: boolean;
-  bio?: string | null;
-  displayOrder?: number;
+type StaffMember = CompanyStaff & {
+  user: User;
   city: string | null;
   state: string | null;
   country: string | null;
   countryFlag: string | null;
-  payRate?: number | null;
-}
+};
 
 const EMPLOYMENT_TYPE_LABELS = {
   FULL_TIME: "Full Time",
@@ -129,19 +115,24 @@ export function ManagerWorkforceView() {
   const [editProfileImage, setEditProfileImage] = useState<File | null>(null);
   const [editProfileImagePreview, setEditProfileImagePreview] =
     useState<string>("");
+  const [isWorkforceImportOpen, setIsWorkforceImportOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] =
+    useState(false);
 
   // Initial form data for new staff member
   const initialFormData = {
     name: "",
     email: "",
     password: "",
+    passwordConfirmation: "",
     role: "STAFF" as
       | "SALES_REP"
       | "CUSTOMER_SERVICE"
       | "FIELD_TECH"
       | "BACK_OFFICE"
       | "STAFF",
-    jobTitle: "SALES_REP" as string,
+    jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     isFeatured: false,
     bio: "",
@@ -174,7 +165,7 @@ export function ManagerWorkforceView() {
       | "FIELD_TECH"
       | "BACK_OFFICE"
       | "STAFF",
-    jobTitle: "SALES_REP" as string,
+    jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     status: "ACTIVE" as string,
     isFeatured: false,
@@ -238,15 +229,15 @@ export function ManagerWorkforceView() {
         | "FIELD_TECH"
         | "BACK_OFFICE"
         | "STAFF",
-      jobTitle: member.jobTitle || "SALES_REP",
+      jobTitle: member.jobTitle || "",
       employmentType: member.employmentType,
       status: member.status,
       isFeatured: member.isFeatured || false,
       bio: member.bio || "",
       displayOrder: member.displayOrder || 0,
       payRate:
-        (member as any).payRate !== undefined
-          ? String((member as any).payRate)
+        member.payRate !== undefined && member.payRate !== null
+          ? String(member.payRate)
           : "",
     });
     setEditAddressData({
@@ -326,10 +317,19 @@ export function ManagerWorkforceView() {
             Manage staff members {companyName && `for ${companyName}`}
           </p>
         </div>
-        <Button onClick={() => setIsAddStaffOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Staff Member
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsAddStaffOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add Staff Member
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setIsWorkforceImportOpen(true)}
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Bulk Import
+          </Button>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -689,6 +689,18 @@ export function ManagerWorkforceView() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
+
+              // Validate password match
+              if (formData.password.length < 8) {
+                toast.error("Password must be at least 8 characters");
+                return;
+              }
+
+              if (formData.password !== formData.passwordConfirmation) {
+                toast.error("Passwords do not match");
+                return;
+              }
+
               setIsSaving(true);
 
               try {
@@ -861,16 +873,66 @@ export function ManagerWorkforceView() {
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter password"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    className="pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Minimum 8 characters
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="passwordConfirmation">Confirm Password *</Label>
+                <div className="relative">
+                  <Input
+                    id="passwordConfirmation"
+                    type={showPasswordConfirmation ? "text" : "password"}
+                    placeholder="Re-enter password"
+                    value={formData.passwordConfirmation}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        passwordConfirmation: e.target.value,
+                      })
+                    }
+                    className="pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPasswordConfirmation(!showPasswordConfirmation)
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPasswordConfirmation ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1441,6 +1503,16 @@ export function ManagerWorkforceView() {
           </form>
         </SheetContent>
       </Sheet>
+
+      {/* Bulk Import Workforce Sheet */}
+      <BulkImportWorkforce
+        open={isWorkforceImportOpen}
+        onOpenChange={setIsWorkforceImportOpen}
+        onSuccess={() => {
+          // Refresh staff list after successful import
+          fetchStaff();
+        }}
+      />
     </div>
   );
 }

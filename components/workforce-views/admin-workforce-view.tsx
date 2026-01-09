@@ -10,6 +10,9 @@ import {
   Pencil,
   Trash2,
   Send,
+  FileSpreadsheet,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -51,37 +54,16 @@ import {
 } from "@/components/address-autocomplete";
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import { PendingDocumentsReview } from "@/components/pending-documents-review";
+import { BulkImportWorkforce } from "@/components/bulk-import-workforce";
+import type { Company, CompanyStaff, User } from "@prisma/client";
 
-interface Company {
-  id: string;
-  name: string;
-}
-
-interface StaffMember {
-  id: string;
-  user: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    image: string | null;
-    addressLine1?: string | null;
-    addressLine2?: string | null;
-    postalCode?: string | null;
-  };
-  role: string;
-  jobTitle?: string | null;
-  employmentType: string;
-  status: string;
-  hireDate: string;
-  isFeatured?: boolean;
-  bio?: string | null;
-  displayOrder?: number;
+type StaffMember = CompanyStaff & {
+  user: User;
   city: string | null;
   state: string | null;
   country: string | null;
   countryFlag: string | null;
-  payRate?: number | null;
-}
+};
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
@@ -141,6 +123,10 @@ export function AdminWorkforceView() {
   const [editProfileImage, setEditProfileImage] = useState<File | null>(null);
   const [editProfileImagePreview, setEditProfileImagePreview] =
     useState<string>("");
+  const [isWorkforceImportOpen, setIsWorkforceImportOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] =
+    useState(false);
 
   // Employee selection state
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(
@@ -152,8 +138,9 @@ export function AdminWorkforceView() {
     name: "",
     email: "",
     password: "",
+    passwordConfirmation: "",
     role: "STAFF" as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
-    jobTitle: "SALES_REP" as string,
+    jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     isFeatured: false,
     bio: "",
@@ -182,7 +169,7 @@ export function AdminWorkforceView() {
     name: "",
     email: "",
     role: "STAFF" as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
-    jobTitle: "SALES_REP" as string,
+    jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     status: "ACTIVE" as string,
     isFeatured: false,
@@ -220,15 +207,15 @@ export function AdminWorkforceView() {
       name: member.user.name || "",
       email: member.user.email || "",
       role: member.role as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
-      jobTitle: member.jobTitle || "SALES_REP",
+      jobTitle: member.jobTitle || "",
       employmentType: member.employmentType,
       status: member.status,
       isFeatured: member.isFeatured || false,
       bio: member.bio || "",
       displayOrder: member.displayOrder || 0,
       payRate:
-        (member as any).payRate !== undefined
-          ? String((member as any).payRate)
+        member.payRate !== undefined && member.payRate !== null
+          ? String(member.payRate)
           : "",
     });
     setEditAddressData({
@@ -408,10 +395,19 @@ export function AdminWorkforceView() {
             Manage staff across all your companies
           </p>
         </div>
-        <Button onClick={() => setIsAddStaffOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Staff Member
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsAddStaffOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add Staff Member
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setIsWorkforceImportOpen(true)}
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Bulk Import
+          </Button>
+        </div>
       </div>{" "}
       {/* Company Tabs */}
       {companies.length > 0 ? (
@@ -991,18 +987,64 @@ export function AdminWorkforceView() {
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter password"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
                 <p className="text-sm text-muted-foreground">
                   Minimum 8 characters
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="passwordConfirmation">Confirm Password *</Label>
+                <div className="relative">
+                  <Input
+                    id="passwordConfirmation"
+                    type={showPasswordConfirmation ? "text" : "password"}
+                    placeholder="Re-enter password"
+                    value={formData.passwordConfirmation}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        passwordConfirmation: e.target.value,
+                      })
+                    }
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPasswordConfirmation(!showPasswordConfirmation)
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPasswordConfirmation ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1040,35 +1082,19 @@ export function AdminWorkforceView() {
 
                 <div className="space-y-2">
                   <Label htmlFor="jobTitle">Job Title *</Label>
-                  <Select
+                  <Input
+                    id="jobTitle"
+                    placeholder="e.g., Sales Representative, Manager, Developer"
                     value={formData.jobTitle}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, jobTitle: value })
+                    onChange={(e) =>
+                      setFormData({ ...formData, jobTitle: e.target.value })
                     }
-                  >
-                    <SelectTrigger id="jobTitle">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SALES_REP">
-                        Sales Representative
-                      </SelectItem>
-                      <SelectItem value="CUSTOMER_SERVICE">
-                        Customer Service
-                      </SelectItem>
-                      <SelectItem value="FIELD_TECH">
-                        Field Technician
-                      </SelectItem>
-                      <SelectItem value="BACK_OFFICE">Back Office</SelectItem>
-                      <SelectItem value="TECHNICIAN">Technician</SelectItem>
-                      <SelectItem value="MANAGER_ROLE">Manager</SelectItem>
-                      <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                      <SelectItem value="COORDINATOR">Coordinator</SelectItem>
-                      <SelectItem value="SPECIALIST">Specialist</SelectItem>
-                      <SelectItem value="ANALYST">Analyst</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter any job title - common examples: Sales Rep, Manager,
+                    Engineer, Customer Service
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -1188,8 +1214,9 @@ export function AdminWorkforceView() {
                     name: "",
                     email: "",
                     password: "",
+                    passwordConfirmation: "",
                     role: "STAFF",
-                    jobTitle: "SALES_REP",
+                    jobTitle: "",
                     employmentType: "FULL_TIME",
                     isFeatured: false,
                     bio: "",
@@ -1328,8 +1355,9 @@ export function AdminWorkforceView() {
                         name: "",
                         email: "",
                         password: "",
+                        passwordConfirmation: "",
                         role: "STAFF",
-                        jobTitle: "SALES_REP",
+                        jobTitle: "",
                         employmentType: "FULL_TIME",
                         isFeatured: false,
                         bio: "",
@@ -1507,35 +1535,22 @@ export function AdminWorkforceView() {
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-jobTitle">Job Title *</Label>
-                  <Select
+                  <Input
+                    id="edit-jobTitle"
+                    placeholder="e.g., Sales Representative, Manager, Developer"
                     value={editFormData.jobTitle}
-                    onValueChange={(value) =>
-                      setEditFormData({ ...editFormData, jobTitle: value })
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        jobTitle: e.target.value,
+                      })
                     }
-                  >
-                    <SelectTrigger id="edit-jobTitle">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SALES_REP">
-                        Sales Representative
-                      </SelectItem>
-                      <SelectItem value="CUSTOMER_SERVICE">
-                        Customer Service
-                      </SelectItem>
-                      <SelectItem value="FIELD_TECH">
-                        Field Technician
-                      </SelectItem>
-                      <SelectItem value="BACK_OFFICE">Back Office</SelectItem>
-                      <SelectItem value="TECHNICIAN">Technician</SelectItem>
-                      <SelectItem value="MANAGER_ROLE">Manager</SelectItem>
-                      <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
-                      <SelectItem value="COORDINATOR">Coordinator</SelectItem>
-                      <SelectItem value="SPECIALIST">Specialist</SelectItem>
-                      <SelectItem value="ANALYST">Analyst</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter any job title - common examples: Sales Rep, Manager,
+                    Engineer, Customer Service
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -1769,6 +1784,21 @@ export function AdminWorkforceView() {
           </div>
         </SheetContent>
       </Sheet>
+      {/* Bulk Import Workforce Sheet */}
+      <BulkImportWorkforce
+        open={isWorkforceImportOpen}
+        onOpenChange={setIsWorkforceImportOpen}
+        onSuccess={() => {
+          // Refresh staff list after successful import
+          setStaffByCompany((prev) => {
+            const updated = { ...prev };
+            if (activeTab) {
+              delete updated[activeTab];
+            }
+            return updated;
+          });
+        }}
+      />
     </div>
   );
 }

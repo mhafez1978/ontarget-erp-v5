@@ -1,7 +1,6 @@
 "use client";
 
-
-import { Users, Loader2, ShieldAlert, RefreshCcw } from "lucide-react";
+import { Users, Loader2, ShieldAlert, RefreshCcw, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Switch } from "@/components/ui/switch";
@@ -15,33 +14,41 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Prisma } from "@prisma/client";
 
+type User = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    email: true;
+    name: true;
+    role: true;
+    isActive: true;
+    plan: true;
+    image: true;
+    emailVerified: true;
+    createdAt: true;
+    lastLoginAt: true;
+    trialEndsAt: true;
+    ownedCompanies: {
+      select: {
+        id: true;
+        name: true;
+      };
+    };
+  };
+}>;
 
-
-;
-
-interface User {
-  id: string;
-  email: string | null;
-  name: string | null;
-  role: string;
-  isActive: boolean;
-  plan: string;
-  image: string | null;
-  emailVerified: Date | null;
-  createdAt: Date;
-  lastLoginAt: Date | null;
-  trialEndsAt: Date | null;
-  ownedCompanies: {
-    id: string;
-    name: string;
-  }[];
+interface UserManagementTableProps {
+  currentUserRole?: string;
 }
 
-export function UserManagementTable() {
+export function UserManagementTable({
+  currentUserRole,
+}: UserManagementTableProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingUsers, setUpdatingUsers] = useState<Set<string>>(new Set());
+  const [deletingUsers, setDeletingUsers] = useState<Set<string>>(new Set());
 
   const fetchUsers = async () => {
     try {
@@ -106,6 +113,60 @@ export function UserManagementTable() {
         return next;
       });
     }
+  };
+
+  const handleDeleteUser = async (userId: string, userName: string | null) => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete ${
+          userName || "this user"
+        }? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeletingUsers((prev) => new Set(prev).add(userId));
+
+    try {
+      const response = await fetch(`/api/settings/users/${userId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete user");
+      }
+
+      const data = await response.json();
+
+      // Remove user from local state
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+
+      toast.success(data.message || "User deleted successfully");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete user"
+      );
+    } finally {
+      setDeletingUsers((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+    }
+  };
+
+  const canDeleteUser = (user: User): boolean => {
+    // Only SUPER_ADMIN can delete users
+    if (currentUserRole !== "SUPER_ADMIN") return false;
+
+    // Can only delete ERP_CUSTOMER role with ERP_CUSTOMER or GUEST plan
+    return (
+      user.role === "ERP_CUSTOMER" &&
+      (user.plan === "ERP_CUSTOMER" || user.plan === "GUEST")
+    );
   };
 
   const getRoleBadge = (role: string) => {
@@ -208,7 +269,7 @@ export function UserManagementTable() {
                   Created
                 </th>
                 <th className="px-4 py-3 text-center text-sm font-medium">
-                  Status
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -285,16 +346,34 @@ export function UserManagementTable() {
                       {formatDate(user.createdAt)}
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <Switch
-                          checked={user.isActive}
-                          onCheckedChange={() =>
-                            handleToggleActive(user.id, user.isActive)
-                          }
-                          disabled={isUpdating}
-                        />
-                        {isUpdating && (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={user.isActive}
+                            onCheckedChange={() =>
+                              handleToggleActive(user.id, user.isActive)
+                            }
+                            disabled={isUpdating}
+                          />
+                          {isUpdating && (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          )}
+                        </div>
+                        {canDeleteUser(user) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteUser(user.id, user.name)}
+                            disabled={deletingUsers.has(user.id)}
+                            title="Delete user account"
+                          >
+                            {deletingUsers.has(user.id) ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
                         )}
                       </div>
                     </td>

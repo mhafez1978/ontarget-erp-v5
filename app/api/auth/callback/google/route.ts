@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
           selectedPlan &&
           ["ESSENTIAL", "GROWTH", "ENTERPRISE"].includes(selectedPlan)
             ? (selectedPlan as "ESSENTIAL" | "GROWTH" | "ENTERPRISE")
-            : "GUEST";
+            : "ERP_CUSTOMER";
 
         user = await db.user.create({
           data: {

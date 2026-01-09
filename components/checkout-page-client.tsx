@@ -6,6 +6,49 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Loader2, Lock } from "lucide-react";
+import { z } from "zod";
+import { parsePhoneNumber } from "libphonenumber-js";
+
+// Validation schema
+const checkoutSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .min(2, "Full name must be at least 2 characters")
+    .max(100, "Full name must be less than 100 characters"),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("Please enter a valid email address"),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Phone number is required")
+    .refine(
+      (val) => {
+        try {
+          const phoneNumber = parsePhoneNumber(val, { extract: false });
+          return phoneNumber && phoneNumber.isValid();
+        } catch {
+          return false;
+        }
+      },
+      {
+        message:
+          "Please enter a valid phone number (include country code, e.g., +1 555-123-4567)",
+      }
+    ),
+  address: z.string().trim().min(1, "Billing address is required"),
+  city: z.string().trim().min(1, "City is required"),
+  state: z.string().trim().min(1, "State is required"),
+  zipCode: z.string().trim().min(1, "ZIP code is required"),
+  country: z.string().min(1, "Country is required"),
+  paymentMethod: z.string(),
+  agreeToTerms: z.boolean().refine((val) => val === true, {
+    message: "Please agree to the terms and conditions",
+  }),
+});
 
 interface CheckoutPageClientProps {
   companyId: string;
@@ -29,7 +72,6 @@ export function CheckoutPageClient({
   const items = useCartStore((state) =>
     state.items.filter((item) => item.companyId === companyId)
   );
-
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     // Customer Info
@@ -72,38 +114,14 @@ export function CheckoutPageClient({
   };
 
   const validateForm = () => {
-    if (!formData.fullName.trim()) {
-      toast.error("Please enter your full name");
+    const result = checkoutSchema.safeParse(formData);
+
+    if (!result.success) {
+      const firstError = result.error.issues[0];
+      toast.error(firstError.message);
       return false;
     }
-    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
-      toast.error("Please enter a valid email address");
-      return false;
-    }
-    if (!formData.phone.trim()) {
-      toast.error("Please enter your phone number");
-      return false;
-    }
-    if (!formData.address.trim()) {
-      toast.error("Please enter your billing address");
-      return false;
-    }
-    if (!formData.city.trim()) {
-      toast.error("Please enter your city");
-      return false;
-    }
-    if (!formData.state.trim()) {
-      toast.error("Please enter your state");
-      return false;
-    }
-    if (!formData.zipCode.trim()) {
-      toast.error("Please enter your ZIP code");
-      return false;
-    }
-    if (!formData.agreeToTerms) {
-      toast.error("Please agree to the terms and conditions");
-      return false;
-    }
+
     return true;
   };
 

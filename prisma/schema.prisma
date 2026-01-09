@@ -731,7 +731,7 @@ model CompanyStaff {
 
   // Employment details
   role           CompanyMemberRole @default(STAFF)
-  jobTitle       JobTitle? // Sales Rep, Customer Service, etc.
+  jobTitle       String? // Job title (free text - e.g., Sales Rep, Manager, Developer)
   employmentType EmploymentType    @default(FULL_TIME)
   status         EmploymentStatus  @default(ACTIVE)
 
@@ -804,6 +804,7 @@ model CompanyStaff {
   @@index([status])
   @@index([hireDate])
   @@index([payrollJurisdictionId])
+  @@index([jobTitle]) // Index for grouping/filtering by job title
 }
 
 // Employment Type Enum
@@ -812,53 +813,6 @@ enum EmploymentType {
   PART_TIME // PT
   CONTRACTOR_1099 // 1099
   SEASONAL // Seasonal
-}
-
-// Job Title Enum
-enum JobTitle {
-  ADMINISTRATOR
-  SALES_MANAGER
-  SALES_DIRECTOR
-  DIRECTOR
-  VICE_PRESIDENT
-  PRESIDENT
-  CEO
-  CTO
-  CMO
-  CFO
-  COO
-  MARKETING_MANAGER
-  MARKETING_STAFF
-  HR_MANAGER
-  HR_STAFF
-  ACCOUNTING_MANAGER
-  ACCOUNTANT
-  FINANCE_MANAGER
-  RESEARCHER
-  DEVELOPER
-  ENGINEER
-  SYSTEME_ADMIN
-  JANITOR
-  MAINTENANCE_CREW
-  LABORER
-  LAB_TECHNICIAN
-  DATA_SCIENTIST
-  IT_SUPPORT
-  IT_MANAGER
-  CUSTOMER_SUPPORT
-  HELPDESK
-  SALES_REP
-  CUSTOMER_SERVICE
-  FIELD_TECH
-  BACK_OFFICE
-  TECHNICIAN
-  MANAGER_ROLE
-  SUPERVISOR
-  COORDINATOR
-  SPECIALIST
-  ANALYST
-  INTERN
-  OTHER
 }
 
 // Employment Status Enum
@@ -2996,10 +2950,13 @@ enum AccountType {
 enum SubscriptionPlan {
   SUPER_USER // Free unlimited plan for SUPER_ADMIN users only - manages the root company
   GUEST // Temporary plan - requires plan selection before creating companies (for ERP_CUSTOMER signups)
+  ERP_CUSTOMER // Paid plans for ERP subscribers
   COMPANY_CUSTOMER // Free plan for customers of subscriber companies (added by company staff or via e-commerce frontstore)
   ESSENTIAL // Paid: 1 company limit - for ERP subscribers
   GROWTH // Paid: 3 companies limit - for ERP subscribers
   ENTERPRISE // Paid: Unlimited companies - for ERP subscribers
+  COMPANY_STAFF // Free plan for company staff users - no company creation rights
+  TRIAL // Temporary trial plan for new ERP_CUSTOMER signups
 }
 
 // User Role Enum

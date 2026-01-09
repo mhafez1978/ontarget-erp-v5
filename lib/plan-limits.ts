@@ -6,10 +6,13 @@
 export type PlanType =
   | "SUPER_USER" // SUPER_ADMIN only - free unlimited
   | "GUEST" // Temporary - no company creation until plan selected
+  | "ERP_CUSTOMER" // ERP subscriber default plan
   | "COMPANY_CUSTOMER" // Customers of companies - no company creation
   | "ESSENTIAL" // Paid: 1 company
   | "GROWTH" // Paid: 3 companies
-  | "ENTERPRISE"; // Paid: Unlimited companies
+  | "ENTERPRISE" // Paid: Unlimited companies
+  | "COMPANY_STAFF" // Company staff internal plan
+  | "TRIAL"; // Temporary trial plan for new ERP_CUSTOMER signups
 
 export interface PlanLimits {
   companies: number;
@@ -52,6 +55,36 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     supplierAccounts: 0,
     customers: 0,
     storageGB: 0, // No personal storage
+  },
+  ERP_CUSTOMER: {
+    companies: 1,
+    adminAccounts: 2,
+    managerAccounts: 2,
+    staffAccounts: 2,
+    contractorAccounts: 2,
+    supplierAccounts: 2,
+    customers: 100,
+    storageGB: 50,
+  },
+  COMPANY_STAFF: {
+    companies: 0,
+    adminAccounts: 0,
+    managerAccounts: 0,
+    staffAccounts: 0,
+    contractorAccounts: 0,
+    supplierAccounts: 0,
+    customers: 0,
+    storageGB: 0,
+  },
+  TRIAL: {
+    companies: 1,
+    adminAccounts: 2,
+    managerAccounts: 2,
+    staffAccounts: 2,
+    contractorAccounts: 2,
+    supplierAccounts: 2,
+    customers: 100,
+    storageGB: 50,
   },
   ESSENTIAL: {
     companies: 1,
@@ -133,6 +166,33 @@ export const PLAN_PRICING: Record<PlanType, PlanPricing> = {
     baseStorageGB: 0,
     extraStoragePricePer100GB: 0,
     extraStoragePricePerGB: 0,
+  },
+  ERP_CUSTOMER: {
+    name: "ERP Customer",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+    baseStorageGB: 50,
+    extraStoragePricePer100GB: 10,
+    extraStoragePricePerGB: 0.45,
+  },
+  COMPANY_STAFF: {
+    name: "Company Staff",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+    baseStorageGB: 0,
+    extraStoragePricePer100GB: 0,
+    extraStoragePricePerGB: 0,
+  },
+  TRIAL: {
+    name: "Trial",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+    baseStorageGB: 50,
+    extraStoragePricePer100GB: 10,
+    extraStoragePricePerGB: 0.45,
   },
   ESSENTIAL: {
     name: "Essential",

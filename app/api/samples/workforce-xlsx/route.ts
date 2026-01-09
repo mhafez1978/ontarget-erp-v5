@@ -27,6 +27,27 @@ export async function GET() {
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
 </Relationships>`;
 
+  // Common job titles for suggestions (no longer enforced as enum)
+  const commonJobTitles = [
+    "Manager",
+    "Sales Rep",
+    "Engineer",
+    "Developer",
+    "Customer Service",
+    "Field Tech",
+    "Technician",
+    "Administrator",
+    "Director",
+    "CEO",
+    "CTO",
+    "CFO",
+    "COO",
+    "Analyst",
+    "Coordinator",
+    "Supervisor",
+    "Specialist",
+  ].join(",");
+
   const sheet = `<?xml version="1.0" encoding="UTF-8"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetData>
@@ -34,27 +55,30 @@ export async function GET() {
       <c r="A1" t="inlineStr"><is><t>name*</t></is></c>
       <c r="B1" t="inlineStr"><is><t>email*</t></is></c>
       <c r="C1" t="inlineStr"><is><t>role*</t></is></c>
-      <c r="D1" t="inlineStr"><is><t>jobTitle*</t></is></c>
+      <c r="D1" t="inlineStr"><is><t>jobTitle</t></is></c>
       <c r="E1" t="inlineStr"><is><t>employmentType*</t></is></c>
       <c r="F1" t="inlineStr"><is><t>password</t></is></c>
       <c r="G1" t="inlineStr"><is><t>payRate</t></is></c>
-      <c r="H1" t="inlineStr"><is><t>hireDate</t></is></c>
-      <c r="I1" t="inlineStr"><is><t>city</t></is></c>
-      <c r="J1" t="inlineStr"><is><t>country</t></is></c>
+      <c r="H1" t="inlineStr"><is><t>city</t></is></c>
+      <c r="I1" t="inlineStr"><is><t>country</t></is></c>
     </row>
     <row r="2">
       <c r="A2" t="inlineStr"><is><t>Jane Employee</t></is></c>
       <c r="B2" t="inlineStr"><is><t>jane.employee@example.com</t></is></c>
       <c r="C2" t="inlineStr"><is><t>STAFF</t></is></c>
-      <c r="D2" t="inlineStr"><is><t>ENGINEER</t></is></c>
+      <c r="D2" t="inlineStr"><is><t>Engineer</t></is></c>
       <c r="E2" t="inlineStr"><is><t>FULL_TIME</t></is></c>
       <c r="F2" t="inlineStr"><is><t>TempPass123!</t></is></c>
       <c r="G2" t="inlineStr"><is><t>45.00</t></is></c>
-      <c r="H2" t="inlineStr"><is><t>2024-01-01</t></is></c>
-      <c r="I2" t="inlineStr"><is><t>New York</t></is></c>
-      <c r="J2" t="inlineStr"><is><t>United States</t></is></c>
+      <c r="H2" t="inlineStr"><is><t>New York</t></is></c>
+      <c r="I2" t="inlineStr"><is><t>United States</t></is></c>
     </row>
   </sheetData>
+  <dataValidations count="1">
+    <dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="D2:D1048576">
+      <formula1>"${commonJobTitles}"</formula1>
+    </dataValidation>
+  </dataValidations>
 </worksheet>`;
 
   const archive = archiver("zip", { zlib: { level: 9 } });

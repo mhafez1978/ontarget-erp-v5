@@ -189,7 +189,7 @@ export async function DELETE(
       if (otherCompanies.length === 0) {
         await db.user.update({
           where: { id: userId },
-          data: { role: "ERP_CUSTOMER" },
+          data: { role: "ERP_CUSTOMER", plan: "ERP_CUSTOMER" },
         });
       }
     }
