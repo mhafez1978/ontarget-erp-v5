@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import VariantCard from "./variant-card";
+import ViewEditModal from "./view-edit-modal";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
