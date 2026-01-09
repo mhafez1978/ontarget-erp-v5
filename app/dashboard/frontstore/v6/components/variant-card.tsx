@@ -9,11 +9,17 @@ export default function VariantCard({
   title = "Variant",
   type = "image",
   onView = () => {},
+  selected = false,
+  onSelect = () => {},
+  toolbar,
 }: {
   id: string;
   title?: string;
   type?: "image" | "video";
   onView?: () => void;
+  selected?: boolean;
+  onSelect?: () => void;
+  toolbar?: React.ReactNode;
 }) {
   const {
     attributes,
@@ -32,8 +38,11 @@ export default function VariantCard({
   return (
     <div
       ref={setNodeRef}
-      className={`variant-card ${isDragging ? "dragging" : ""}`}
+      className={`variant-card ${isDragging ? "dragging" : ""} ${
+        selected ? "ring-2 ring-accent" : ""
+      }`}
       style={style}
+      onClick={onSelect}
     >
       <div
         style={{
@@ -53,7 +62,14 @@ export default function VariantCard({
         </div>
         <div style={{ fontWeight: 600 }}>{title}</div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="button small" onClick={onView}>
+          {toolbar}
+          <button
+            className="button small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView();
+            }}
+          >
             View & Edit
           </button>
         </div>
