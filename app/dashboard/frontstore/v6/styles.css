@@ -1,0 +1,94 @@
+:root {
+  --v6-bg: #0f172a;
+  --v6-surface: #0b1220;
+  --v6-muted: #94a3b8;
+  --v6-accent: #7c3aed;
+}
+
+.frontstore-v6-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 1) 0%,
+    rgba(11, 17, 32, 1) 100%
+  );
+  color: white;
+}
+
+.v6-header {
+  padding: 16px 24px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.v6-main {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+}
+
+/* three-column layout */
+.v6-left,
+.v6-center,
+.v6-right {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.v6-left {
+  width: 320px;
+}
+.v6-center {
+  flex: 1;
+  min-height: 540px;
+}
+.v6-right {
+  width: 280px;
+}
+
+.variant-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.variant-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.variant-thumb {
+  height: 120px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.01)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--v6-muted);
+  border-radius: 4px;
+}
+
+.button {
+  padding: 6px 10px;
+  background: var(--v6-accent);
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.small {
+  font-size: 12px;
+  padding: 4px 8px;
+}
