@@ -5,7 +5,8 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "noEmit": true,
-    "allowJs": true
+    "allowJs": true,
+    "types": ["node", "mocha", "chai", "@testing-library/jest-dom"]
   },
-  "include": ["tests/**/*.ts"]
+  "include": ["tests/**/*.ts", "tests/**/*.tsx"]
 }
