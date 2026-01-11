@@ -7,8 +7,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { validateSession } from "@/lib/validate-session";
+import { validateSessionForAPI } from "@/lib/validate-session";
 import { getCompanyContext } from "@/lib/frontstore/v6-data-service";
+import { SectionKind } from "@prisma/client";
 
 // ============================================================================
 // TYPES
@@ -198,31 +199,21 @@ function generateFallbackFAQs(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { sectionId: string } }
+  { params }: { params: Promise<{ sectionId: string }> }
 ) {
   try {
+    // Await params (Next.js 15+)
+    const { sectionId } = await params;
+
     // 1. Validate session
-    const session = await validateSession();
-    if (!session?.user?.id) {
+    const validation = await validateSessionForAPI(req);
+    if (!validation.valid || !validation.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 2. Get section to verify ownership
     const section = await db.generatedSection.findUnique({
-      where: { id: params.sectionId },
-      include: {
-        draft: {
-          include: {
-            company: {
-              include: {
-                members: {
-                  where: { userId: session.user.id },
-                },
-              },
-            },
-          },
-        },
-      },
+      where: { id: sectionId },
     });
 
     if (!section) {
@@ -230,13 +221,19 @@ export async function POST(
     }
 
     // 3. Verify user has access to company
-    const isMember = section.draft.company.members.length > 0;
+    const companyMember = await db.companyStaff.findFirst({
+      where: {
+        companyId: section.companyId,
+        userId: validation.user.id,
+      },
+    });
+    const isMember = !!companyMember;
     if (!isMember) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // 4. Get company context
-    const context = await getCompanyContext(section.draft.companyId);
+    const context = await getCompanyContext(section.companyId);
 
     // 5. Generate industry-specific FAQs
     const industry = context.company.industry?.toLowerCase() || "default";
@@ -460,24 +457,20 @@ export async function POST(
       },
     ];
 
-    // 7. Save variants to database
-    for (const variant of variants) {
-      await db.generatedVariant.create({
-        data: {
-          sectionId: section.id,
-          name: variant.name,
-          schema: variant.schema,
-          meta: variant.meta,
-        },
-      });
-    }
+    // 7. Prepare variants JSON for storage
+    const variantsJson = variants.map((v) => ({
+      name: v.name,
+      schema: v.schema,
+      meta: v.meta,
+    }));
 
     // 8. Update section status
     await db.generatedSection.update({
       where: { id: section.id },
       data: {
-        status: "READY",
-        kind: "FAQ",
+        status: "GENERATED",
+        kind: SectionKind.FAQ,
+        variants: variantsJson as any,
       },
     });
 

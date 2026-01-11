@@ -47,7 +47,7 @@ export interface V6CompanyContext {
     name: string;
     description: string | null;
     price: number | null;
-    duration: number | null;
+    duration: string | null;
     category: string | null;
   }>;
   testimonials: Array<{
@@ -66,16 +66,6 @@ export interface V6CompanyContext {
     bio: string | null;
     photo: string | null;
     email: string | null;
-  }>;
-  locations: Array<{
-    id: string;
-    name: string;
-    address: string;
-    city: string;
-    state: string | null;
-    country: string;
-    phone: string | null;
-    isPrimary: boolean;
   }>;
   stats: {
     totalProducts: number;
@@ -129,9 +119,13 @@ export async function getCompanyContext(
       name: true,
       description: true,
       price: true,
-      images: true,
+      images: {
+        select: {
+          url: true,
+        },
+      },
       category: true,
-      inventory: true,
+      quantity: true,
     },
     orderBy: { createdAt: "desc" },
     take: 20, // Limit for performance
@@ -142,11 +136,9 @@ export async function getCompanyContext(
     name: p.name,
     description: p.description,
     price: p.price ? parseFloat(p.price.toString()) : null,
-    images: Array.isArray(p.images) ? (p.images as string[]) : [],
+    images: p.images.map((img) => img.url),
     category: p.category,
-    inStock: (p.inventory as number | null)
-      ? (p.inventory as number) > 0
-      : true,
+    inStock: p.quantity > 0,
   }));
 
   // Fetch services (active only)
@@ -180,17 +172,16 @@ export async function getCompanyContext(
   const testimonialsRaw = await db.testimonial.findMany({
     where: {
       companyId,
-      isApproved: true,
+      status: "APPROVED",
       isFeatured: true,
     },
     select: {
       id: true,
       customerName: true,
-      content: true,
+      testimonial: true,
       rating: true,
-      position: true,
-      companyName: true,
-      photo: true,
+      customerTitle: true,
+      customerPhoto: true,
     },
     orderBy: { createdAt: "desc" },
     take: 10,
@@ -199,11 +190,11 @@ export async function getCompanyContext(
   const testimonials = testimonialsRaw.map((t) => ({
     id: t.id,
     customerName: t.customerName,
-    content: t.content,
+    content: t.testimonial,
     rating: t.rating,
-    position: t.position,
-    companyName: t.companyName,
-    photo: t.photo,
+    position: t.customerTitle,
+    companyName: null, // Not in schema
+    photo: t.customerPhoto,
   }));
 
   // Fetch team members (active only)
@@ -214,11 +205,16 @@ export async function getCompanyContext(
     },
     select: {
       id: true,
-      name: true,
+      jobTitle: true,
       role: true,
       bio: true,
-      photo: true,
-      email: true,
+      user: {
+        select: {
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
     },
     orderBy: { createdAt: "asc" },
     take: 15,
@@ -226,38 +222,11 @@ export async function getCompanyContext(
 
   const team = teamRaw.map((m) => ({
     id: m.id,
-    name: m.name,
-    role: m.role,
+    name: m.user.name || "Team Member",
+    role: m.jobTitle || m.role,
     bio: m.bio,
-    photo: m.photo,
-    email: m.email,
-  }));
-
-  // Fetch locations
-  const locationsRaw = await db.location.findMany({
-    where: { companyId },
-    select: {
-      id: true,
-      name: true,
-      address: true,
-      city: true,
-      state: true,
-      country: true,
-      phone: true,
-      isPrimary: true,
-    },
-    orderBy: { isPrimary: "desc" },
-  });
-
-  const locations = locationsRaw.map((l) => ({
-    id: l.id,
-    name: l.name || "Main Office",
-    address: l.address,
-    city: l.city,
-    state: l.state,
-    country: l.country,
-    phone: l.phone,
-    isPrimary: l.isPrimary,
+    photo: m.user.image,
+    email: m.user.email,
   }));
 
   // Calculate stats
@@ -266,18 +235,20 @@ export async function getCompanyContext(
     totalServices: services.length,
     totalTestimonials: testimonials.length,
     totalTeamMembers: team.length,
-    totalLocations: locations.length,
+    totalLocations: 0,
     hasEcommerce: products.length > 0,
     hasBooking: services.some((s) => s.duration !== null),
   };
 
   return {
-    company,
+    company: {
+      ...company,
+      slug: company.slug || company.id, // Use ID as fallback if slug is null
+    },
     products,
     services,
     testimonials,
     team,
-    locations,
     stats,
   };
 }

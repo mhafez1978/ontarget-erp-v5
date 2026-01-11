@@ -50,24 +50,19 @@ export async function POST(
 
     // Build team data from real CompanyStaff records or use fallbacks
     const teamData =
-      ctx.staff.length > 0
-        ? ctx.staff
-            .filter((s) => s.isActive && !s.isArchived)
-            .slice(0, 8)
-            .map((s) => ({
-              id: s.id,
-              name: s.name,
-              role: s.position || "Team Member",
-              bio:
-                s.bio ||
-                `${s.name} is a valued member of our ${s.position || "team"}`,
-              email: s.email,
-              phone: s.phone || undefined,
-              photo: s.profilePictureUrl || undefined,
-              department: s.department || undefined,
-              linkedin: undefined, // Would need to add this field to schema
-              twitter: undefined, // Would need to add this field to schema
-            }))
+      ctx.team.length > 0
+        ? ctx.team.slice(0, 8).map((s) => ({
+            id: s.id,
+            name: s.name,
+            role: s.role || "Team Member",
+            bio: s.bio || `${s.name} is a valued member of our team`,
+            email: s.email || undefined,
+            phone: undefined,
+            photo: s.photo || undefined,
+            department: undefined,
+            linkedin: undefined,
+            twitter: undefined,
+          }))
         : generateFallbackTeam(ctx);
 
     const now = Date.now();
@@ -85,8 +80,8 @@ export async function POST(
       schema: {
         headline: "Meet Our Team",
         subheadline: `${
-          ctx.stats.totalStaff > 0
-            ? `${ctx.stats.totalStaff} talented professionals`
+          ctx.stats.totalTeamMembers > 0
+            ? `${ctx.stats.totalTeamMembers} talented professionals`
             : "Talented professionals"
         } working together to serve you`,
         team: teamData,
@@ -241,8 +236,10 @@ export async function POST(
       layout: "dynamic",
       schema: {
         headline: `👥 Meet Our ${
-          ctx.stats.totalStaff > 0 ? ctx.stats.totalStaff : "Amazing"
-        } ${ctx.stats.totalStaff === 1 ? "Expert" : "Experts"}`,
+          ctx.stats.totalTeamMembers > 0
+            ? ctx.stats.totalTeamMembers
+            : "Amazing"
+        } ${ctx.stats.totalTeamMembers === 1 ? "Expert" : "Experts"}`,
         subheadline: `The passionate people behind ${ctx.company.name}`,
         team: teamData,
         columns: 3,

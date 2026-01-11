@@ -54,12 +54,12 @@ export async function POST(
         ? ctx.testimonials.slice(0, 6).map((t) => ({
             id: t.id,
             author: t.customerName,
-            role: t.customerTitle || "Customer",
+            role: t.position || "Customer",
             content: t.content,
-            rating: t.rating,
-            date: t.createdAt.toISOString(),
-            verified: t.isApproved,
-            company: t.customerCompany || undefined,
+            rating: t.rating || 5,
+            date: new Date().toISOString(),
+            verified: true,
+            company: t.companyName || undefined,
           }))
         : generateFallbackTestimonials(ctx);
 
