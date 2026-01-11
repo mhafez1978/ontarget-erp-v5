@@ -179,7 +179,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={companyRef}
         curvature={-20}
         duration={5}
-        delay={0}
+        delay={5}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#a855f7"
@@ -193,7 +193,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={orderRef}
         curvature={-20}
         duration={5}
-        delay={5}
+        delay={10}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#a855f7"
@@ -207,7 +207,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={invoiceRef}
         curvature={-20}
         duration={5}
-        delay={10}
+        delay={15}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#a855f7"
@@ -221,7 +221,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={paymentRef}
         curvature={-20}
         duration={5}
-        delay={15}
+        delay={20}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#a855f7"
@@ -235,7 +235,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={contractRef}
         curvature={-20}
         duration={5}
-        delay={20}
+        delay={25}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#a855f7"
@@ -249,7 +249,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={transactionRef}
         curvature={-20}
         duration={5}
-        delay={25}
+        delay={30}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#a855f7"
@@ -263,7 +263,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={ledgerRef}
         curvature={-20}
         duration={5}
-        delay={30}
+        delay={35}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#a855f7"
@@ -277,7 +277,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={nodeRef}
         curvature={-20}
         duration={5}
-        delay={35}
+        delay={40}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#a855f7"
@@ -293,7 +293,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={companyRef}
         curvature={20}
         duration={5}
-        delay={2.5}
+        delay={45}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#6366f1"
@@ -308,7 +308,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={orderRef}
         curvature={20}
         duration={5}
-        delay={7.5}
+        delay={50}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#6366f1"
@@ -323,7 +323,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={invoiceRef}
         curvature={20}
         duration={5}
-        delay={12.5}
+        delay={55}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#6366f1"
@@ -338,7 +338,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={paymentRef}
         curvature={20}
         duration={5}
-        delay={17.5}
+        delay={60}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#6366f1"
@@ -353,7 +353,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={contractRef}
         curvature={20}
         duration={5}
-        delay={22.5}
+        delay={65}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#6366f1"
@@ -368,7 +368,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={transactionRef}
         curvature={20}
         duration={5}
-        delay={27.5}
+        delay={70}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#6366f1"
@@ -383,7 +383,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={ledgerRef}
         curvature={20}
         duration={5}
-        delay={32.5}
+        delay={75}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#6366f1"
@@ -398,7 +398,7 @@ const BlockchainDiagram: React.FC = () => {
         toRef={nodeRef}
         curvature={20}
         duration={5}
-        delay={37.5}
+        delay={80}
         pathWidth={2}
         pathOpacity={1}
         gradientStartColor="#6366f1"

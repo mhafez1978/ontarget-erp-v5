@@ -1,6 +1,10 @@
 import type { NextRequest } from "next/server";
 import type { GeneratedSection } from "@prisma/client";
 
+import { validateSessionForAPI } from "@/lib/validate-session";
+import { db } from "@/lib/db";
+import { getCompanyContext } from "@/lib/frontstore/v6-data-service";
+
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ sectionId: string }> }
@@ -8,11 +12,7 @@ export async function POST(
   const params = await context.params;
   try {
     const { sectionId } = params;
-    const { pathToFileURL } = await import("url");
-    const vs = await import(
-      pathToFileURL(`${process.cwd()}/lib/validate-session.ts`).href
-    );
-    const validation = await vs.validateSessionForAPI(req);
+    const validation = await validateSessionForAPI(req);
     if (!validation.valid) return validation.response;
     const user = validation.user;
     const firstCompany = user.ownedCompanies?.[0];
@@ -22,11 +22,6 @@ export async function POST(
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
-
-    const dbModule = await import(
-      pathToFileURL(`${process.cwd()}/lib/db.ts`).href
-    );
-    const db = dbModule.db;
 
     const section = (await db.generatedSection.findUnique({
       where: { id: sectionId },
@@ -43,9 +38,6 @@ export async function POST(
       });
 
     // Load company context with real team data
-    const { getCompanyContext } = await import(
-      "@/lib/frontstore/v6-data-service"
-    );
     const ctx = await getCompanyContext(companyId);
 
     // Build team data from real CompanyStaff records or use fallbacks
@@ -291,7 +283,7 @@ export async function POST(
     // Update section with new variants
     await db.generatedSection.update({
       where: { id: sectionId },
-      data: { variants: newVariants },
+      data: { variants: newVariants as any },
     });
 
     return new Response(

@@ -143,6 +143,16 @@ export interface ValidateSessionResult {
     role: string;
     plan: string;
     image: string | null;
+    isActive?: boolean;
+    // Owned companies metadata - present when user is fetched with ownedCompanies include
+    ownedCompanies?: Array<{
+      id: string;
+      isActive?: boolean;
+      isRoot?: boolean;
+      ownerId?: string;
+    }>;
+    // Optional companyId (some flows may attach this to user)
+    companyId?: string | null;
   };
   reason?: string;
 }
