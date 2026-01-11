@@ -78,12 +78,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Install sudo for privilege escalation
 RUN apk add --no-cache sudo shadow
 
-# SECURITY: ROOT_PASSWORD should be set at runtime via environment variable
-# If you need to set it during build, use Docker BuildKit secrets instead
-# For now, we'll use a placeholder that should be overridden at runtime
-ARG ROOT_PASSWORD=change-me-in-production
-RUN echo "root:${ROOT_PASSWORD}" | chpasswd
-
 # Allow nextjs user to use sudo
 RUN echo "nextjs ALL=(ALL) NOPASSWD: /usr/local/bin/node" > /etc/sudoers.d/nextjs && \
     echo "nextjs ALL=(ALL) NOPASSWD: /usr/local/bin/npx" >> /etc/sudoers.d/nextjs && \
