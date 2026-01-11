@@ -88,7 +88,7 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
             }`}
           >
             Annual
-            <span className="absolute -top-2 -right-2 bg-slate-400 text-white dark:bg-green-600 dark:text-black text-xs px-2 py-1 rounded font-semibold">
+            <span className="absolute -top-2 -right-2 text-white bg-purple-500 dark:bg-green-600 dark:text-black text-xs px-2 py-1 rounded font-semibold">
               Save
             </span>
           </button>
@@ -183,7 +183,7 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
           {/* Growth Plan */}
           <div className="relative flex flex-col rounded-2xl border-2 border-purple-500 dark:border-primary bg-background p-8 shadow-lg hover:shadow-xl transition-shadow">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-              <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
+              <span className="bg-purple-500 text-white  px-4 py-1 rounded-full text-sm font-medium dark:bg-primary dark:text-black">
                 Most Popular
               </span>
             </div>
