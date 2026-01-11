@@ -221,13 +221,13 @@ export function ContactSection() {
     >
       <div className="container mx-auto max-w-7xl">
         <div className="text-center mb-16 flex flex-col items-center">
-          <h2 className="max-w-2xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-6 dark:text-gray-200 text-center">
-            You&apos;ve Asked,
-            <span className="text-purple-500 dark:text-primary ml-4">
-              We Listened.
+          <h2 className="max-w-3xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-6 dark:text-gray-200 text-center">
+            <span className="text-purple-500 dark:text-primary mr-4">
+              Stay in-touch
             </span>
+            We&apos;d Love to Hear From You
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-lg mx-auto">
             We would love to hear from you. Please reach out with any questions,
             comments, or feedback.
           </p>

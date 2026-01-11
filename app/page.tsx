@@ -9,12 +9,11 @@ import { ContactSection } from "@/components/contact-section";
 import { HomepagePricing } from "@/components/homepage-pricing";
 import Footer from "@/components/new-designs/v6-upgrade/Footer";
 import BlockchainDiagram from "@/components/new-designs/v6-upgrade/BlockchainDiagram";
-import CircleShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/CircleShapeBlockchainDiagram";
-import UShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/UShapeBlockchainDiagram";
-import MShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/MShapeBlockchainDiagram";
-import WShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/WShapeBlockchainDiagram";
-
-
+// import CircleShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/CircleShapeBlockchainDiagram";
+// import UShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/UShapeBlockchainDiagram";
+// import MShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/MShapeBlockchainDiagram";
+// import WShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/WShapeBlockchainDiagram";
+import WShapeBlockchainVerificationProcess from "@/components/new-designs/v6-upgrade/WShapeBlockchainVerificationProcess";
 
 // type TestimonialFormProps = {
 //   slug?: string;
@@ -59,10 +58,11 @@ export default function Homepage() {
         }}
       />
       <HomepagePricing pricingMap={pricingMap} />
-      <CircleShapeBlockchainDiagram />
+      {/* <CircleShapeBlockchainDiagram />
       <UShapeBlockchainDiagram />
       <MShapeBlockchainDiagram />
-      <WShapeBlockchainDiagram />
+      <WShapeBlockchainDiagram /> */}
+      <WShapeBlockchainVerificationProcess />
       <ContactSection />
       <Footer />
     </div>

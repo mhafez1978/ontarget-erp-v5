@@ -6,12 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface StaffStatusChangeEvent extends Event {
-  detail?: {
-    companyId?: string;
-  };
-}
-
 interface StaffMember {
   id: string;
   userId: string;
@@ -120,8 +114,8 @@ export function StaffStatusWidget({
 
   const getColorClasses = () => {
     const colors = {
-      red: "bg-gradient-to-br from-red-500 to-rose-600",
-      purple: "bg-gradient-to-br from-purple-500 to-purple-700",
+      red: "bg-gradient-to-br from-red-400 to-amber-400",
+      purple: "bg-gradient-to-br from-purple-100 to-purple-500",
       indigo: "bg-gradient-to-br from-indigo-500 to-indigo-700",
       teal: "bg-gradient-to-br from-teal-500 to-teal-700",
       amber: "bg-gradient-to-br from-amber-500 to-amber-700",
@@ -250,8 +244,8 @@ export function StaffStatusWidget({
             <div className="text-5xl font-bold tracking-tight drop-shadow-2xl">
               {staffMembers.length}
             </div>
-            <p className="text-sm font-medium opacity-90 tracking-wide mt-1">
-              Total Team Members
+            <p className="w-1/2 mx-auto text-sm font-medium opacity-90 tracking-wide mt-1">
+              Online Members
             </p>
           </div>
         </div>
