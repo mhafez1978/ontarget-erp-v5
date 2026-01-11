@@ -1,5 +1,11 @@
 # syntax=docker.io/docker/dockerfile:1
 
+# =============================================================================
+# SECURITY NOTE: Only NEXT_PUBLIC_* variables should be build-time ARGs
+# All secrets (DATABASE_URL, ENCRYPTION_KEY, NEXTAUTH_SECRET, etc.) 
+# should be set as RUNTIME environment variables in Coolify, not build args
+# =============================================================================
+
 # 1. Update to Node 22 (Alpine version recommended for small size)
 FROM node:22-alpine AS base
 
@@ -26,6 +32,20 @@ RUN \
 
 # Rebuild the source code only when needed
 FROM base AS builder
+
+# Only accept NEXT_PUBLIC_* ARGs that will be baked into the client bundle
+# These are safe to expose in logs since they're public anyway
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_PROJECT_FINANCE_FEATURE
+
+# Coolify metadata (safe to expose)
+ARG SOURCE_COMMIT
+ARG COOLIFY_URL
+ARG COOLIFY_FQDN
+ARG COOLIFY_BRANCH
+ARG COOLIFY_RESOURCE_UUID
+ARG COOLIFY_CONTAINER_NAME
+
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -36,6 +56,10 @@ ENV NODE_OPTIONS="--max-old-space-size=6144"
 # Disable telemetry during the build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+
+# Make NEXT_PUBLIC_* variables available to Next.js build
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+ENV NEXT_PUBLIC_PROJECT_FINANCE_FEATURE=${NEXT_PUBLIC_PROJECT_FINANCE_FEATURE}
 
 # Generate and Build the application (Your custom command)
 RUN npx prisma generate && npm run build && npm run build:workers && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
@@ -54,7 +78,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Install sudo for privilege escalation
 RUN apk add --no-cache sudo shadow
 
-# Set root password from build arg (can be overridden via environment variable)
+# SECURITY: ROOT_PASSWORD should be set at runtime via environment variable
+# If you need to set it during build, use Docker BuildKit secrets instead
+# For now, we'll use a placeholder that should be overridden at runtime
 ARG ROOT_PASSWORD=change-me-in-production
 RUN echo "root:${ROOT_PASSWORD}" | chpasswd
 
