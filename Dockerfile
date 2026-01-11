@@ -1,4 +1,4 @@
-# syntax=docker.io/docker/dockerfile:1
+# syntax=docker/dockerfile:1.4
 
 # =============================================================================
 # SECURITY NOTE: Only NEXT_PUBLIC_* variables should be build-time ARGs
