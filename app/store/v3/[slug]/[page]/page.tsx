@@ -178,7 +178,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
             {currentPage.pageName}
           </h1>
           {currentPage.seo.description && (
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto">
               {currentPage.seo.description}
             </p>
           )}
@@ -264,7 +264,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                           {section.heading}
                         </h2>
                         {section.subheading && (
-                          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                          <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
                             {section.subheading}
                           </p>
                         )}
@@ -599,7 +599,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                           {section.heading}
                         </h2>
                         {section.subheading && (
-                          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                          <p className="text-xl text-gray-600 max-w-4xl mx-auto">
                             {section.subheading}
                           </p>
                         )}
@@ -878,7 +878,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                           />
                         </div>
                       )}
-                      <div className="relative z-10 max-w-3xl mx-auto px-8 py-16 text-white">
+                      <div className="relative z-10 max-w-4xl mx-auto px-8 py-16 text-white">
                         <h2 className="text-4xl md:text-5xl font-black mb-6">
                           {section.heading}
                         </h2>
@@ -917,7 +917,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                           {section.heading}
                         </h2>
                         {section.subheading && (
-                          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                          <p className="text-xl text-gray-600 max-w-4xl mx-auto">
                             {section.subheading}
                           </p>
                         )}

@@ -20,10 +20,10 @@ export function StatsBanner() {
               key={index}
               className="text-center group hover:scale-105 transition-transform duration-300"
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl mb-4 group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-shadow">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-purple-500 to-indigo-600 rounded-2xl mb-4 group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-shadow">
                 <stat.icon className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+              <h3 className="text-4xl font-bold bg-linear-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
                 {stat.value}
               </h3>
               <p className="text-gray-600 dark:text-gray-400 font-medium">

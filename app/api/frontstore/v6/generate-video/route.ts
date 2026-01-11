@@ -11,14 +11,28 @@ export async function POST(request: NextRequest) {
     const userId = validation.user.id;
 
     const body = await request.json();
-    const { companyId, sectionId, variantId, prompt, duration, resolution } =
+    let { companyId, sectionId, variantId, prompt, duration, resolution } =
       body;
 
-    if (!companyId || !sectionId || !variantId || !prompt) {
+    if (!sectionId || !variantId || !prompt) {
       return NextResponse.json(
-        { error: "companyId, sectionId, variantId and prompt are required" },
+        { error: "sectionId, variantId and prompt are required" },
         { status: 400 }
       );
+    }
+
+    // If companyId not supplied, infer from sectionId
+    if (!companyId) {
+      const sec = await db.generatedSection.findUnique({
+        where: { id: sectionId },
+        select: { companyId: true },
+      });
+      if (!sec)
+        return NextResponse.json(
+          { error: "Section not found" },
+          { status: 404 }
+        );
+      companyId = sec.companyId;
     }
 
     // Authorization: must be super admin or owner

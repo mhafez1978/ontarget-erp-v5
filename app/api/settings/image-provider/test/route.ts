@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
 type ImageProviderRequestBody = {

@@ -1157,7 +1157,7 @@ export default function ProjectDetailPage() {
           open={isFinanceDialogOpen}
           onOpenChange={handleFinanceDialogOpenChange}
         >
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>
                 {isEditingFinancialEntry ? "Edit" : "Add"}{" "}

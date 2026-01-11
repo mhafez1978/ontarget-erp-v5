@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-dialog";
 
 export default function ViewEditModal({
@@ -23,6 +24,9 @@ export default function ViewEditModal({
     variant?.assets?.find((a: any) => a.type === "video")?.url || null
   );
   const [processingVideo, setProcessingVideo] = useState(false);
+  const [prompt, setPrompt] = useState<string | null>(
+    (variant as any)?.meta?.prompt || ""
+  );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -31,6 +35,7 @@ export default function ViewEditModal({
     setVideoUrl(
       variant?.assets?.find((a: any) => a.type === "video")?.url || null
     );
+    setPrompt((variant as any)?.meta?.prompt || "");
   }, [variant]);
 
   function handleRegenerateImage() {
@@ -201,7 +206,7 @@ export default function ViewEditModal({
                       <button
                         className="button small"
                         onClick={() => {
-                          const url = prompt("Image URL:");
+                          const url = window.prompt("Image URL:");
                           if (url) handleApplyCustomUrl(url);
                         }}
                       >
@@ -274,9 +279,71 @@ export default function ViewEditModal({
                         gap: 8,
                       }}
                     >
+                      <textarea
+                        placeholder="Generation prompt (optional)"
+                        value={prompt || ""}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        style={{ minHeight: 80, padding: 8, borderRadius: 6 }}
+                      />
                       <button
                         className="button small"
-                        onClick={handleGenerateVideo}
+                        onClick={async () => {
+                          // Save prompt to variant meta via PATCH
+                          if (!variant) return;
+                          try {
+                            const res = await fetch(
+                              `/api/frontstore/v6/sections/${
+                                (variant as any).__sectionId || ""
+                              }/variants/${variant.id}`,
+                              {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  meta: { ...(variant as any).meta, prompt },
+                                }),
+                              }
+                            );
+                            if (!res.ok)
+                              throw new Error("Failed to save prompt");
+                            toast.success("Prompt saved");
+                          } catch (err) {
+                            console.error(err);
+                            toast.error("Failed to save prompt");
+                          }
+                        }}
+                      >
+                        Save Prompt
+                      </button>
+                      <button
+                        className="button small"
+                        onClick={async () => {
+                          // Trigger generate video API (uses section inference server-side)
+                          if (!variant) return;
+                          setProcessingVideo(true);
+                          try {
+                            const res = await fetch(
+                              "/api/frontstore/v6/generate-video",
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  sectionId: (variant as any).__sectionId,
+                                  variantId: variant.id,
+                                  prompt,
+                                }),
+                              }
+                            );
+                            if (!res.ok)
+                              throw new Error("Failed to enqueue video");
+                            const j = await res.json();
+                            toast.success("Video job enqueued");
+                          } catch (err) {
+                            console.error(err);
+                            toast.error("Failed to enqueue video");
+                          } finally {
+                            setProcessingVideo(false);
+                          }
+                        }}
                         disabled={processingVideo}
                       >
                         {processingVideo ? "Processing…" : "Generate Video"}

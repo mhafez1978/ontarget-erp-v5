@@ -7,8 +7,8 @@ export default {
 };
 
 export const ImageVariant = () => (
-  <VariantCard title="Editorial" type="image" onView={() => {}} />
+  <VariantCard id="v-demo-1" title="Editorial" type="image" onView={() => {}} />
 );
 export const VideoVariant = () => (
-  <VariantCard title="Cinematic" type="video" onView={() => {}} />
+  <VariantCard id="v-demo-2" title="Cinematic" type="video" onView={() => {}} />
 );

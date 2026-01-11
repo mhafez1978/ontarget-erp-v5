@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { callStorefrontModel } from "@/lib/ai/model-client";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 import { z } from "zod";
 import { Decimal } from "@prisma/client/runtime/library";
 

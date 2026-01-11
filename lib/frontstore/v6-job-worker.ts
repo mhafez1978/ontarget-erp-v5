@@ -13,17 +13,27 @@
 
 import { db } from "@/lib/db";
 import { generateAIVideo } from "@/lib/frontstore/v6-video-service";
+import type { VideoGenerationJob } from "@prisma/client";
 
 async function log(jobId: string, level: string, message: string) {
   await db.videoGenerationLog.create({ data: { jobId, level, message } });
 }
 
+function normalizeError(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return String(e);
+  }
+}
+
 async function processOne() {
   // Find one queued job
-  const job = await db.videoGenerationJob.findFirst({
+  const job = (await db.videoGenerationJob.findFirst({
     where: { status: "QUEUED" },
     orderBy: { createdAt: "asc" },
-  });
+  })) as VideoGenerationJob | null;
   if (!job) return false;
 
   console.log(`[worker] picked job ${job.id}`);
@@ -57,15 +67,55 @@ async function processOne() {
         completedAt: new Date(),
       },
     });
+
+    // Try to attach the generated video to the corresponding section variant assets
+    try {
+      const section = await db.generatedSection.findUnique({
+        where: { id: job.sectionId },
+      });
+      if (section) {
+        const variants = Array.isArray(section.variants)
+          ? (section.variants as unknown as Record<string, unknown>[])
+          : [];
+        const updated = variants.map((v) => {
+          const rv = v as Record<string, unknown>;
+          const vid = String(rv.id || "");
+          if (vid === job.variantId) {
+            const assets = Array.isArray(rv.assets)
+              ? (rv.assets as Record<string, unknown>[])
+              : [];
+            return {
+              ...rv,
+              assets: [
+                ...assets,
+                { type: "video", url: result.url, provider: result.provider },
+              ],
+            };
+          }
+          return rv;
+        });
+        await db.generatedSection.update({
+          where: { id: section.id },
+          data: { variants: updated as any },
+        });
+      }
+    } catch (attachErr) {
+      console.warn(
+        "Failed to attach video asset to section variant:",
+        attachErr
+      );
+    }
+
     await log(job.id, "info", `Job succeeded with provider ${result.provider}`);
     console.log(`[worker] job ${job.id} succeeded`);
-  } catch (err: any) {
-    console.error(`[worker] job ${job.id} failed:`, err);
+  } catch (err: unknown) {
+    const msg = normalizeError(err);
+    console.error(`[worker] job ${job.id} failed:`, msg);
     await db.videoGenerationJob.update({
       where: { id: job.id },
-      data: { status: "FAILED", error: String(err), completedAt: new Date() },
+      data: { status: "FAILED", error: msg, completedAt: new Date() },
     });
-    await log(job.id, "error", String(err));
+    await log(job.id, "error", msg);
   }
 
   return true;

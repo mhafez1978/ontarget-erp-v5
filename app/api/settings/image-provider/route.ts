@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import type { ImageProviderType } from "@prisma/client";
-import { encrypt } from "@/lib/crypto";
+import { encrypt, decrypt } from "@/lib/encryption";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 

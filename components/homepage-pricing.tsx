@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Check } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -51,11 +50,14 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
   };
 
   return (
-    <section id="pricing" className="py-20 px-4">
+    <section id="pricing" className="pt-40 pb-20 px-4 bg-background">
       <div className="container mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-            Choose Your Plan
+        <div className="text-center mb-16 flex flex-col items-center">
+          <h2 className="max-w-4xl text-center text-5xl md:text-7xl font-display font-black tracking-tight dark:text-gray-200 mb-6">
+            <span className="text-purple-500 dark:text-primary mr-4">
+              Choose
+            </span>
+            Your Plan
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Select the perfect plan for your business needs. All plans include
@@ -70,7 +72,7 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
             onClick={() => setBillingCycle("monthly")}
             className={`px-6 py-2 rounded-lg transition-all ${
               billingCycle === "monthly"
-                ? "bg-primary text-white shadow-lg"
+                ? "bg-purple-500 text-white dark:bg-primary dark:text-black shadow-lg"
                 : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
@@ -81,12 +83,12 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
             onClick={() => setBillingCycle("annual")}
             className={`px-6 py-2 rounded-lg relative transition-all ${
               billingCycle === "annual"
-                ? "bg-primary text-white shadow-lg"
+                ? "bg-purple-500 text-white dark:bg-primary dark:text-black shadow-lg"
                 : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
             Annual
-            <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs px-2 py-1 rounded font-semibold">
+            <span className="absolute -top-2 -right-2 bg-slate-400 text-white dark:bg-green-600 dark:text-black text-xs px-2 py-1 rounded font-semibold">
               Save
             </span>
           </button>
@@ -166,14 +168,20 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
               href={`/register?plan=ESSENTIAL&billing=${billingCycle}`}
               className="block mt-6"
             >
-              <Button className="w-full" variant="outline">
-                Get Started
+              <Button
+                className="w-full py-5 dark:border hover:bg-purple-500/10 hover:border-purple-500 dark:border-primary  transition-all"
+                variant="outline"
+              >
+                <span className="text-black dark:text-primary">
+                  {" "}
+                  Get Started
+                </span>{" "}
               </Button>
             </Link>
           </div>
 
           {/* Growth Plan */}
-          <div className="relative flex flex-col rounded-2xl border-2 border-primary bg-background p-8 shadow-lg hover:shadow-xl transition-shadow">
+          <div className="relative flex flex-col rounded-2xl border-2 border-purple-500 dark:border-primary bg-background p-8 shadow-lg hover:shadow-xl transition-shadow">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
               <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
                 Most Popular
@@ -240,9 +248,9 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
 
             <Link
               href={`/register?plan=GROWTH&billing=${billingCycle}`}
-              className="block mt-6"
+              className="block mt-6 outline py-2 text-center rounded-lg border border-purple-500 hover:bg-purple-500/10 dark:border-primary transition-all"
             >
-              <Button className="w-full">Get Started</Button>
+              <span className="text-black dark:text-primary"> Get Started</span>{" "}
             </Link>
           </div>
 
@@ -318,8 +326,14 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
               href={`/register?plan=ENTERPRISE&billing=${billingCycle}`}
               className="block mt-6"
             >
-              <Button className="w-full" variant="outline">
-                Get Started
+              <Button
+                className="w-full py-5 dark:border hover:bg-purple-500/10 hover:border-purple-500 dark:border-primary dark:hover:border-primary transition-all"
+                variant="outline"
+              >
+                <span className="text-black dark:text-primary">
+                  {" "}
+                  Get Started
+                </span>{" "}
               </Button>
             </Link>
           </div>

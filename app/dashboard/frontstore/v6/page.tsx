@@ -15,6 +15,7 @@ export default function Page() {
     companyId: null,
   });
   const [loading, setLoading] = useState(true);
+  const [sectionId, setSectionId] = useState<string | null>(null);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -31,6 +32,19 @@ export default function Page() {
         role: data.user.role,
         companyId: data.user.companyId,
       });
+
+      // Fetch or create a working section for this company
+      try {
+        const sres = await fetch("/api/frontstore/v6/sections/current", {
+          cache: "no-store",
+        });
+        const sjson = await sres.json();
+        if (sjson?.success && sjson.section?.id) {
+          setSectionId(sjson.section.id);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch current section", err);
+      }
     } catch (err) {
       console.error("Failed to fetch user", err);
       router.push("/");
@@ -39,9 +53,15 @@ export default function Page() {
     }
   }, [router]);
 
+  const [refreshSignal, setRefreshSignal] = useState(0);
+
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
+
+  function handleRefresh() {
+    setRefreshSignal((s) => s + 1);
+  }
 
   if (loading) {
     return (
@@ -58,7 +78,11 @@ export default function Page() {
   return (
     <DashboardLayout user={user}>
       <div className="space-y-6 p-4">
-        <FrontstoreV6Client />
+        <FrontstoreV6Client
+          sectionId={sectionId}
+          onRefresh={handleRefresh}
+          refreshSignal={refreshSignal}
+        />
       </div>
     </DashboardLayout>
   );

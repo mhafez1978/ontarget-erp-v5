@@ -4,6 +4,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { PLAN_LIMITS } from "@/lib/plan-limits";
 import { transferUserInvoicesToCompany } from "@/lib/invoice-storage";
+import { encrypt } from "@/lib/encryption";
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,12 +61,14 @@ export async function POST(request: NextRequest) {
       name,
       slogan,
       description,
+      industry,
       phone,
       email,
       salesEmail,
       supportEmail,
       website,
       address,
+      taxInfo,
     } = body;
 
     if (!name || name.trim().length === 0) {
@@ -102,6 +105,7 @@ export async function POST(request: NextRequest) {
           name: name.trim(),
           slogan: slogan?.trim() || null,
           description: description?.trim() || null,
+          industry: industry || null,
           phone: phone?.trim() || null,
           email: email?.trim() || null,
           salesEmail: salesEmail?.trim() || null,
@@ -184,6 +188,25 @@ export async function POST(request: NextRequest) {
           trialEndsAt,
         },
       });
+
+      // Create tax info if provided
+      if (
+        taxInfo &&
+        taxInfo.legalEntity &&
+        taxInfo.taxIdType &&
+        taxInfo.taxId
+      ) {
+        await tx.companyTaxInfo.create({
+          data: {
+            companyId: company.id,
+            legalEntity: taxInfo.legalEntity,
+            taxIdType: taxInfo.taxIdType,
+            taxId: encrypt(taxInfo.taxId), // Encrypted with AES-256-GCM
+            taxCountry: taxInfo.taxCountry || address?.countryCode || null,
+            vatNumber: taxInfo.vatNumber ? encrypt(taxInfo.vatNumber) : null, // Encrypted with AES-256-GCM
+          },
+        });
+      }
 
       return { company };
     });

@@ -205,7 +205,7 @@ export function PowerfulFeaturesSection() {
             <br />
             for the Modern Enterprise
           </h2>
-          <p className="mt-8 text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto opacity-90">
+          <p className="mt-8 text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto opacity-90">
             AI-driven tools that scale with your ambition – secure, intuitive,
             and limitless.
           </p>

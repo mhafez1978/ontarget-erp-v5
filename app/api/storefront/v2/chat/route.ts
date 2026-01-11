@@ -5,7 +5,7 @@ import { aiFrontstoreSpecSchema } from "@/lib/ai/ai-storefront-types";
 import { canUseAiStorefront } from "@/lib/billing/plan-gating";
 import { generateAiStorefront } from "@/lib/ai/ai-storefront-service";
 import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 import type { ChatRequestBody, ChatResponse } from "@/lib/storefront/v2-types";
 import {
   extractColorsFromLogo,

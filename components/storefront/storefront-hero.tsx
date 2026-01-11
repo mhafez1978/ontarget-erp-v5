@@ -67,7 +67,7 @@ export function StorefrontHero({
           </div>
         )}
         <div className="relative container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center space-y-4">
+          <div className="max-w-4xl mx-auto text-center space-y-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">
               {companyName}
             </p>
@@ -123,7 +123,7 @@ export function StorefrontHero({
   // fallback simple hero
   return (
     <header className={`${fallbackClass ?? "border-b bg-background/95"}`}>
-      <div className="container mx-auto px-4 py-12 max-w-3xl">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="space-y-2 text-center">
           <p className="text-xs text-muted-foreground uppercase tracking-wide">
             {companyName}

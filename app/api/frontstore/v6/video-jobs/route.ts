@@ -27,7 +27,9 @@ export async function GET(request: NextRequest) {
       );
 
     // Only owners can fetch company jobs
-    const owns = user.ownedCompanies.some((c: any) => c.id === companyId);
+    const owns = (user as any).ownedCompanies?.some(
+      (c: any) => c.id === companyId
+    );
     if (!owns)
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 

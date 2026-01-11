@@ -1289,7 +1289,7 @@ export function BaseThemeRenderer({
                   </h2>
                 )}
                 {content.description && (
-                  <p className="text-lg md:text-xl opacity-80 max-w-3xl mx-auto">
+                  <p className="text-lg md:text-xl opacity-80 max-w-4xl mx-auto">
                     {renderContent(content.description)}
                   </p>
                 )}
@@ -1362,7 +1362,7 @@ export function BaseThemeRenderer({
                   </h2>
                 )}
                 {content.description && (
-                  <p className="text-lg md:text-xl opacity-80 max-w-3xl mx-auto">
+                  <p className="text-lg md:text-xl opacity-80 max-w-4xl mx-auto">
                     {renderContent(content.description)}
                   </p>
                 )}
@@ -1497,7 +1497,7 @@ export function BaseThemeRenderer({
                   </h2>
                 )}
                 {content.description && (
-                  <p className="text-lg md:text-xl opacity-80 max-w-3xl mx-auto">
+                  <p className="text-lg md:text-xl opacity-80 max-w-4xl mx-auto">
                     {renderContent(content.description)}
                   </p>
                 )}
@@ -2535,7 +2535,7 @@ export function BaseThemeRenderer({
             ];
         return (
           <section key={section.id} className={`py-16 ${bgClass} ${textClass}`}>
-            <div className="container mx-auto px-4 max-w-3xl">
+            <div className="container mx-auto px-4 max-w-4xl">
               <div className="text-center mb-12">
                 <h2 className="text-4xl font-bold mb-4">
                   {
@@ -2581,7 +2581,7 @@ export function BaseThemeRenderer({
             }}
           >
             <div className="container mx-auto px-4 text-center">
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-4xl mx-auto">
                 <h2 className="text-4xl md:text-5xl font-bold mb-4">
                   {renderContent(content.heading || "Ready to Get Started?")}
                 </h2>

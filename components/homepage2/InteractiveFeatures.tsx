@@ -145,9 +145,9 @@ export function InteractiveFeatures() {
           <h2 className="text-4xl sm:text-5xl font-bold mb-4 bg-linear-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
             Everything You Need to Run Your Business
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            From time tracking to AI-powered storefronts, we&apos;ve got you covered
-            with a complete business management suite
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
+            From time tracking to AI-powered storefronts, we&apos;ve got you
+            covered with a complete business management suite
           </p>
         </div>
 

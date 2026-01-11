@@ -203,11 +203,12 @@ export function StaffStatusWidget({
           <div className="flex flex-col items-center justify-center gap-1">
             <div className="flex items-center gap-2">
               <Users className="h-6 w-6 drop-shadow-lg" />
-              <h3 className="text-xl font-bold tracking-tight">Staff Status</h3>
+              {companyName && (
+                <h1 className="text-2xl font-black opacity-90">
+                  {companyName}
+                </h1>
+              )}
             </div>
-            {companyName && (
-              <p className="text-sm font-medium opacity-90">{companyName}</p>
-            )}
           </div>
 
           {/* Status Summary */}
@@ -270,7 +271,7 @@ export function StaffStatusWidget({
                   key={member.id}
                   className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors"
                 >
-                  <div className="relative flex-shrink-0">
+                  <div className="relative shrink-0">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
                         src={member.user.image || undefined}
@@ -301,7 +302,7 @@ export function StaffStatusWidget({
                     </p>
                   </div>
 
-                  <div className="flex-shrink-0 text-right">
+                  <div className="shrink-0 text-right">
                     <div
                       className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                         member.status === "CLOCKED_IN"

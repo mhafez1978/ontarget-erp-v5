@@ -959,7 +959,7 @@ Spacing should communicate:
 - Add extra space before headings: \`mt-8 mb-4\`
 
 **Max Content Width**:
-- Body text: \`max-w-2xl\` (672px) or \`max-w-3xl\` (768px) for readability
+- Body text: \`max-w-2xl\` (672px) or \`max-w-4xl\` (768px) for readability
 - Full layouts: \`max-w-7xl\` (1280px)
 - Text-heavy pages: \`max-w-4xl\` (896px)
 
@@ -1060,7 +1060,7 @@ Large:    px-8 py-4 (32px × 16px)
 ❌ **Too little space between sections** → Minimum 64px (py-16)
 ❌ **Headings too close to unrelated content** → Add mb-4 or mb-6
 ❌ **Inconsistent padding across components** → Standardize
-❌ **Text walls without breathing room** → Use max-w-3xl and leading-relaxed
+❌ **Text walls without breathing room** → Use max-w-4xl and leading-relaxed
 ❌ **Cluttered layouts** → Embrace white space
 
 ### Quick Reference Spacing Scale

@@ -1,13 +1,11 @@
 "use client";
 
-
 import { ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Marquee } from "@/components/ui/marquee";
 import { TestimonialForm } from "@/components/storefront/testimonial-form";
 import { Button } from "@/components/ui/button";
-;
 import { toast } from "sonner";
 import {
   AiFrontstoreSpec,
@@ -358,7 +356,7 @@ export function AiStorefrontRenderer({
               <div
                 className={
                   (isCentered
-                    ? "max-w-3xl mx-auto text-center space-y-4"
+                    ? "max-w-4xl mx-auto text-center space-y-4"
                     : "grid gap-8 md:grid-cols-2 items-center") +
                   (heroAnimationClass ? ` ${heroAnimationClass}` : "")
                 }
@@ -1084,7 +1082,7 @@ export function AiStorefrontRenderer({
             className="py-12 border-t bg-background"
             id="faq"
           >
-            <div className="container mx-auto px-4 max-w-3xl">
+            <div className="container mx-auto px-4 max-w-4xl">
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold">{heading}</h2>
                 {subheading && (

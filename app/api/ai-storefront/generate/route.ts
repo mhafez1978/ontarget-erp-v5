@@ -15,7 +15,7 @@ import type {
   ChatMessage,
 } from "@/lib/ai/model-client";
 import { Prisma } from "@prisma/client";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 import type {
   ProductSummary,
   ServiceSummary,

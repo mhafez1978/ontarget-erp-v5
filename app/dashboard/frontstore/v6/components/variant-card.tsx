@@ -16,6 +16,8 @@ export default function VariantCard({
   id: string;
   title?: string;
   type?: "image" | "video";
+  status?: string | null;
+  jobId?: string | null;
   onView?: () => void;
   selected?: boolean;
   onSelect?: () => void;
@@ -61,8 +63,16 @@ export default function VariantCard({
           ☰
         </div>
         <div style={{ fontWeight: 600 }}>{title}</div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {toolbar}
+          {status && (
+            <div
+              className={`job-badge job-${status.toLowerCase()}`}
+              style={{ padding: "4px 8px", borderRadius: 6, fontSize: 12 }}
+            >
+              {status}
+            </div>
+          )}
           <button
             className="button small"
             onClick={(e) => {

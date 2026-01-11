@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   Plus,
+  AlertCircle,
 } from "lucide-react";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import confetti from "canvas-confetti";
@@ -27,6 +36,16 @@ import {
   AddressData,
 } from "@/components/address-autocomplete";
 import LocationsManager from "@/components/locations-manager";
+import {
+  LEGAL_ENTITY_LABELS,
+  TAX_ID_TYPE_LABELS,
+  requiresBusinessTaxId,
+} from "@/lib/validations/company-tax";
+import {
+  COMPANY_INDUSTRY_LABELS,
+  getIndustriesByCategory,
+} from "@/lib/validations/company-industry";
+import { CompanyIndustry } from "@prisma/client";
 interface CreateCompanyModalProps {
   onSuccess: (company: unknown, user: unknown) => void;
   onClose: () => void;
@@ -45,6 +64,7 @@ export function CreateCompanyModal({
     name: "",
     slogan: "",
     description: "",
+    industry: "",
     email: "",
     salesEmail: "",
     supportEmail: "",
@@ -62,12 +82,20 @@ export function CreateCompanyModal({
     postalCode: "",
   };
 
+  const initialTaxData = {
+    legalEntity: "",
+    taxIdType: "",
+    taxId: "",
+    taxCountry: "",
+  };
+
   const [formData, setFormData] = useState(initialFormData);
   const [addressData, setAddressData] =
     useState<AddressData>(initialAddressData);
+  const [taxData, setTaxData] = useState(initialTaxData);
   const isFormDirty = useFormDirty(initialFormData, formData);
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const handleNext = () => {
     // Validate current step
@@ -104,6 +132,10 @@ export function CreateCompanyModal({
         body: JSON.stringify({
           ...formData,
           address: addressData,
+          taxInfo:
+            taxData.legalEntity && taxData.taxIdType && taxData.taxId
+              ? taxData
+              : undefined,
         }),
       });
 
@@ -203,6 +235,39 @@ export function CreateCompanyModal({
                 className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="industry">Industry (Optional)</Label>
+              <Select
+                value={formData.industry}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, industry: value })
+                }
+                disabled={isLoading}
+              >
+                <SelectTrigger id="industry">
+                  <SelectValue placeholder="Select your industry" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {Object.entries(getIndustriesByCategory()).map(
+                    ([category, industries]) => (
+                      <div key={category}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          {category}
+                        </div>
+                        {industries.map((industry) => (
+                          <SelectItem
+                            key={industry.value}
+                            value={industry.value}
+                          >
+                            {industry.label}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         );
 
@@ -281,6 +346,119 @@ export function CreateCompanyModal({
       case 4:
         return (
           <div className="space-y-4">
+            <div className="flex items-start gap-2 mb-4">
+              <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-sm">
+                  Tax Information (Optional)
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Required for invoicing, payroll, and IRS compliance. You can
+                  skip and add this later.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="legalEntity">Legal Entity Type</Label>
+              <Select
+                value={taxData.legalEntity}
+                onValueChange={(value) =>
+                  setTaxData({ ...taxData, legalEntity: value, taxIdType: "" })
+                }
+                disabled={isLoading}
+              >
+                <SelectTrigger id="legalEntity">
+                  <SelectValue placeholder="Select entity type..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {Object.entries(LEGAL_ENTITY_LABELS).map(
+                    ([key, { label, region }]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex flex-col">
+                          <span>{label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {region}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {taxData.legalEntity && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="taxIdType">Tax ID Type</Label>
+                  <Select
+                    value={taxData.taxIdType}
+                    onValueChange={(value) =>
+                      setTaxData({ ...taxData, taxIdType: value })
+                    }
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger id="taxIdType">
+                      <SelectValue placeholder="Select tax ID type..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {Object.entries(TAX_ID_TYPE_LABELS).map(
+                        ([key, label]) => (
+                          <SelectItem key={key} value={key}>
+                            {label}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {requiresBusinessTaxId(taxData.legalEntity) && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      Business entities require EIN/ITIN or equivalent tax ID
+                      (not SSN)
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="taxId">
+                    {taxData.legalEntity === "SOLE_PROPRIETOR"
+                      ? "SSN / Tax ID"
+                      : "EIN / Tax ID"}
+                  </Label>
+                  <Input
+                    id="taxId"
+                    type="text"
+                    placeholder={
+                      taxData.legalEntity === "SOLE_PROPRIETOR"
+                        ? "XXX-XX-XXXX"
+                        : "XX-XXXXXXX"
+                    }
+                    value={taxData.taxId}
+                    onChange={(e) =>
+                      setTaxData({
+                        ...taxData,
+                        taxId: e.target.value.toUpperCase(),
+                      })
+                    }
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Data is encrypted and stored securely for compliance
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="space-y-4">
             {/* Summary */}
             <div className="mt-4 p-4 bg-muted rounded-lg space-y-2 max-h-[300px] overflow-y-auto">
               <h4 className="font-semibold text-sm">Review Your Information</h4>
@@ -296,6 +474,14 @@ export function CreateCompanyModal({
                 {formData.description && (
                   <p>
                     <strong>Description:</strong> {formData.description}
+                  </p>
+                )}
+                {formData.industry && (
+                  <p>
+                    <strong>Industry:</strong>{" "}
+                    {COMPANY_INDUSTRY_LABELS[
+                      formData.industry as CompanyIndustry
+                    ]?.label || formData.industry}
                   </p>
                 )}
                 {formData.email && (
@@ -335,6 +521,28 @@ export function CreateCompanyModal({
                       {addressData.state && `, ${addressData.state}`}{" "}
                       {addressData.country}
                     </p>
+                  </>
+                )}
+                {taxData.legalEntity && (
+                  <>
+                    <p>
+                      <strong>Legal Entity:</strong>{" "}
+                      {LEGAL_ENTITY_LABELS[taxData.legalEntity]?.label ||
+                        taxData.legalEntity}
+                    </p>
+                    {taxData.taxIdType && (
+                      <p>
+                        <strong>Tax ID Type:</strong>{" "}
+                        {TAX_ID_TYPE_LABELS[taxData.taxIdType] ||
+                          taxData.taxIdType}
+                      </p>
+                    )}
+                    {taxData.taxId && (
+                      <p>
+                        <strong>Tax ID:</strong>{" "}
+                        {taxData.taxId.replace(/.(?=.{4})/g, "*")}
+                      </p>
+                    )}
                   </>
                 )}
               </div>

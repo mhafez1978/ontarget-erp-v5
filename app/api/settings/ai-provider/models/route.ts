@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAvailableModels, clearModelCache } from "@/lib/ai/model-fetcher";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
 export async function POST(request: NextRequest) {

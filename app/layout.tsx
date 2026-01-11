@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import "@/styles/theme-animations.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -8,15 +8,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { SWRProvider } from "@/lib/swr-provider";
 import { VisitorTracker } from "@/components/visitor-tracker";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
   display: "swap",
   preload: true,
@@ -88,9 +81,7 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1, maximum-scale=5"
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`bg-background ${montserrat.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

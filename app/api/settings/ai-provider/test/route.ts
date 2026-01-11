@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { callStorefrontModel } from "@/lib/ai/model-client";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 import { z } from "zod";
 
 const testSchema = z.object({

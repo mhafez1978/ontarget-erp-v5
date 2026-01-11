@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { z } from "zod";
-import { encrypt } from "@/lib/crypto";
+import { encrypt, decrypt } from "@/lib/encryption";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
 const emailProviderSchema = z.object({

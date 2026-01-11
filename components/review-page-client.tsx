@@ -131,7 +131,7 @@ export function ReviewPageClient({
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <h1

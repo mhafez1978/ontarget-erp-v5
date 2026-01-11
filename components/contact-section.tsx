@@ -1,18 +1,19 @@
 "use client";
 
-
-import { Mail, Github, Linkedin, Globe, MapPin, Send, Twitter, Building2 } from "lucide-react";
+import {
+  Mail,
+  Github,
+  Linkedin,
+  Globe,
+  MapPin,
+  Send,
+  Twitter,
+  Building2,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-
-
-
-
-
-
 
 import Link from "next/link";
 import { toast } from "sonner";
@@ -214,29 +215,29 @@ export function ContactSection() {
   };
 
   return (
-    <section id="contact" className="py-20 px-4 bg-background">
+    <section
+      id="contact"
+      className="py-12 md:py-20 px-4 bg-background dark:bg-zinc-900/30 backdrop-blur-md rounded-2xl"
+    >
       <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-            Get in Touch
+        <div className="text-center mb-16 flex flex-col items-center">
+          <h2 className="max-w-2xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-6 dark:text-gray-200 text-center">
+            You&apos;ve Asked,
+            <span className="text-purple-500 dark:text-primary ml-4">
+              We Listened.
+            </span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Have questions about OnTarget ERP? Want to discuss your business
-            needs? Let&apos;s connect!
+            We would love to hear from you. Please reach out with any questions,
+            comments, or feedback.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Left Column - Contact Information */}
-          <div className="space-y-8">
-            {/* Contact Cards */}
+          <div className="space-y-8 h-[68vh]">
             <div className="space-y-4">
-              <h3 className="text-2xl font-bold mb-6">
-                Connect With the Developer
-              </h3>
+              <h3 className="text-2xl font-bold mb-6">Follow us on social</h3>
 
-              {/* Company Info */}
               <div className="rounded-lg border bg-card p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start gap-4">
                   <div className="rounded-lg bg-primary/10 p-3">
@@ -252,7 +253,6 @@ export function ContactSection() {
                 </div>
               </div>
 
-              {/* Social Links */}
               <div className="space-y-3">
                 <Link
                   href="https://www.linkedin.com/in/mohamedhafez1978/"
@@ -323,8 +323,6 @@ export function ContactSection() {
                 </Link>
               </div>
             </div>
-
-            {/* Additional Info */}
             <div className="rounded-lg border bg-linear-to-br from-primary/5 to-primary/10 p-6">
               <h4 className="font-semibold mb-3 flex items-center gap-2">
                 <Mail className="h-5 w-5 text-primary" />
@@ -352,8 +350,7 @@ export function ContactSection() {
             </div>
           </div>
 
-          {/* Right Column - Contact Form */}
-          <div className="rounded-2xl border bg-card p-8 shadow-lg">
+          <div className="rounded-2xl border bg-card p-8 shadow-lg min-h-[60vh]">
             <h3 className="flex flex-row gap-2 items-center text-2xl font-bold mb-6">
               <Send className="ml-2 h-6 w-6 transition-transform group-hover:translate-x-1" />
               Send us a message
@@ -378,8 +375,8 @@ export function ContactSection() {
                 </div>
                 <div className="text-xl font-semibold">Message Sent</div>
                 <div className="text-sm text-muted-foreground max-w-md">
-                  Thank you for contacting us. We’ll get back to you within
-                  24–48 hours.
+                  Thank you for contacting us. We&apos;ll get back to you within
+                  24 - 48 hours.
                 </div>
                 <Button
                   variant="outline"
@@ -466,7 +463,7 @@ export function ContactSection() {
 
                 <Button
                   type="submit"
-                  className="w-full group"
+                  className="w-full group bg-purple-500 text-white dark:bg-primary dark:text-black hover:bg-purple-600 dark:hover:bg-green-300"
                   size="lg"
                   disabled={isSubmitting}
                 >
@@ -475,7 +472,7 @@ export function ContactSection() {
                   ) : (
                     <>
                       Send
-                      <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      <Send className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>

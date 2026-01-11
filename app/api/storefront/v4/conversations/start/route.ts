@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 import { buildV4Context } from "@/lib/ai/v4-context-builder";
 import { startConversation } from "@/lib/ai/v4-conversation-service";
 import type { AiProviderConfig } from "@/lib/ai/model-client";

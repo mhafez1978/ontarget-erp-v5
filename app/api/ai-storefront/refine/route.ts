@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { canUseAiStorefront } from "@/lib/billing/plan-gating";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 import {
   aiFrontstoreSpecSchema,
   type AiFrontstoreSpec,
