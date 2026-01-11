@@ -57,13 +57,9 @@ export async function POST(
               p.description ||
               `High-quality ${p.name.toLowerCase()} from ${ctx.company.name}`,
             price: p.price ? `$${p.price}` : undefined,
-            compareAtPrice: p.compareAtPrice
-              ? `$${p.compareAtPrice}`
-              : undefined,
             category: p.category,
-            sku: p.sku,
-            inStock: p.quantityInStock > 0,
-            badge: p.isFeatured ? "Featured" : p.isOnSale ? "Sale" : undefined,
+            inStock: p.inStock,
+            badge: p.inStock ? undefined : "Out of Stock",
           }))
         : generateFallbackProducts(ctx);
 
