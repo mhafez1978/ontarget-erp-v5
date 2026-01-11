@@ -12,7 +12,10 @@ export async function POST(request: NextRequest) {
     const { companyId, enable, historicalAnchoring } = body;
 
     if (!companyId) {
-      return NextResponse.json({ error: "companyId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "companyId is required" },
+        { status: 400 }
+      );
     }
 
     // Check Company Admin or SUPER_ADMIN
@@ -78,6 +81,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, update });
   } catch (error) {
     console.error("POST /api/company/hedera/enable error:", error);
-    return NextResponse.json({ error: "Failed to update company setting" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update company setting" },
+      { status: 500 }
+    );
   }
 }

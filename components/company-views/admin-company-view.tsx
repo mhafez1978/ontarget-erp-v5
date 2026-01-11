@@ -1,17 +1,13 @@
 "use client";
 
-
 import { Building2, Loader2, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { AddCompanySheet } from "@/components/add-company-sheet";
 import { EditCompanySheet } from "@/components/edit-company-sheet";
+import { CompanyEnableHederaModal } from "@/components/company-enable-hedra-modal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +41,7 @@ interface Company {
   postalCode: string | null;
   memberCount: number;
   createdAt: string;
+  companyHederaSetting?: { enabled?: boolean } | null;
 }
 
 interface UserPlan {
@@ -68,6 +65,12 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
   const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
+  const [hedraModalOpen, setHedraModalOpen] = useState(false);
+  const [selectedCompanyIdForHedra, setSelectedCompanyIdForHedra] = useState<
+    string | null
+  >(null);
+  const [selectedCompanyNameForHedra, setSelectedCompanyNameForHedra] =
+    useState<string | null>(null);
 
   const fetchCompanies = async () => {
     try {
@@ -293,6 +296,20 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
+
+                      {/* Hedera enable / manage button */}
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedCompanyIdForHedra(company.id);
+                          setSelectedCompanyNameForHedra(company.name);
+                          setHedraModalOpen(true);
+                        }}
+                      >
+                        {company.companyHederaSetting?.enabled
+                          ? "Manage Hedera"
+                          : "Enable Hedera"}
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -314,6 +331,15 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
         open={isEditingCompany}
         onOpenChange={setIsEditingCompany}
         company={selectedCompany}
+        onSuccess={fetchCompanies}
+      />
+
+      {/* Hedera Company Enable Modal */}
+      <CompanyEnableHederaModal
+        open={hedraModalOpen}
+        onOpenChange={(open) => setHedraModalOpen(open)}
+        companyId={selectedCompanyIdForHedra || ""}
+        companyName={selectedCompanyNameForHedra || ""}
         onSuccess={fetchCompanies}
       />
 
