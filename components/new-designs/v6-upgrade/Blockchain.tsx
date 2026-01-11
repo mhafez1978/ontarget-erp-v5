@@ -104,7 +104,7 @@ const Blockchain: React.FC = () => {
           <div className="lg:col-span-5 relative">
             <div className="w-full h-full flex just items-center">
               <Image
-                src="/images/Blockchain-records.png"
+                src="/images/Blockchain-Records.png"
                 alt="Blockchain Illustration"
                 width={900}
                 height={600}
