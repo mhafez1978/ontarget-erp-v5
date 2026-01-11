@@ -13,7 +13,7 @@ import {
   generateV3Website,
 } from "@/lib/ai/v3-generation-service";
 import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 
 export async function POST(request: NextRequest) {
   try {

@@ -1365,7 +1365,7 @@ IMPORTANT: Create a comprehensive blog post detail page with:
 8. Call-to-action at the end (e.g., "Contact us to learn more")
 9. Clean, readable typography optimized for reading
 10. Proper heading hierarchy (H1 for title, H2 for sections)
-11. Generous line spacing and comfortable reading width (max-w-3xl for content)
+11. Generous line spacing and comfortable reading width (max-w-4xl for content)
 
 Design Tips:
 - Use a clean, minimal design focused on readability

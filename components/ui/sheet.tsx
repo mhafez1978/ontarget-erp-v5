@@ -1,15 +1,52 @@
 "use client";
 
-
 import { XIcon } from "lucide-react";
 import * as React from "react";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 
-
 import { cn } from "@/lib/utils";
 
-function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />;
+function Sheet({
+  open,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Root> & { open?: boolean }) {
+  // Lock the body scroll when a sheet is open and restore on close.
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (open) {
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      // store scroll position and lock body
+      document.documentElement.style.setProperty(
+        "--sheet-scroll-y",
+        `${scrollY}`
+      );
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+      // Prevent overscroll/pan on mobile
+      document.documentElement.style.overscrollBehavior = "none";
+      document.documentElement.style.overflowX = "hidden";
+
+      return () => {
+        const stored =
+          document.documentElement.style.getPropertyValue("--sheet-scroll-y");
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.documentElement.style.overscrollBehavior = "";
+        document.documentElement.style.overflowX = "";
+        if (stored) {
+          window.scrollTo(0, parseInt(stored));
+          document.documentElement.style.removeProperty("--sheet-scroll-y");
+        }
+      };
+    }
+
+    return;
+  }, [open]);
+
+  return <SheetPrimitive.Root data-slot="sheet" {...props} open={open} />;
 }
 
 function SheetTrigger({
@@ -60,7 +97,7 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:px-10",
           side === "right" &&
             "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
           side === "left" &&

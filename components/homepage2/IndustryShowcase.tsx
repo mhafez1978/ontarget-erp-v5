@@ -51,7 +51,7 @@ export function IndustryShowcase() {
           <h2 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
             Built for Your Industry
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
             Industry-specific AI personas that understand your business needs
           </p>
         </div>

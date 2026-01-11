@@ -1,7 +1,6 @@
 "use client";
 
-
-import { Star, MessageSquare, Loader2 } from "lucide-react";
+import { Star, Loader2 } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -16,9 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
-
-
 import { toast } from "sonner";
 
 interface TestimonialFormProps {
@@ -110,16 +106,11 @@ export function TestimonialForm({ slug, apiPath }: TestimonialFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="lg"
-          className="gap-3 px-8 py-6 text-lg font-bold shadow-2xl hover:shadow-primary/50 hover:scale-105 transition-all duration-300 bg-linear-to-r from-primary via-primary/90 to-primary hover:from-primary/90 hover:via-primary hover:to-primary/90 border-2 border-primary/20"
-        >
-          <MessageSquare className="h-6 w-6" />
-          <span>Share Your Experience</span>
-          <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+        <Button className="w-80 h-15 text-lg bg-purple-500 text-white dark:bg-primary dark:text-black hover:bg-green-300 py-4 px-10">
+          Want to share your experience?{" "}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg bg-background">
         <DialogHeader>
           <DialogTitle>Share Your Experience</DialogTitle>
           <DialogDescription>

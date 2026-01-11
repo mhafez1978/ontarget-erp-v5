@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { PLAN_LIMITS } from "@/lib/plan-limits";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { Prisma } from "@prisma/client";
 
 // Single consolidated GET handler for /api/companies/my-owned
 // Returns companies the current user can manage/see and some optional plan info
@@ -12,33 +13,44 @@ export async function GET(request: NextRequest) {
 
     const { user } = validation;
 
-    let companies: Array<{
-      id: string;
-      name: string;
-      slug?: string | null;
-      slogan?: string | null;
-      description?: string | null;
-      logo?: string | null;
-      email?: string | null;
-      salesEmail?: string | null;
-      supportEmail?: string | null;
-      phone?: string | null;
-      website?: string | null;
-      addressLine1?: string | null;
-      addressLine2?: string | null;
-      city?: string | null;
-      state?: string | null;
-      country?: string | null;
-      countryCode?: string | null;
-      postalCode?: string | null;
-      isRoot: boolean;
-      createdAt: Date;
-      memberCount?: number;
-      _count?: {
-        members: number;
-        staff: number;
-      };
-    }> = [];
+    // Reusable select object for company data
+    const companySelect = {
+      id: true,
+      name: true,
+      slug: true,
+      slogan: true,
+      description: true,
+      industry: true,
+      logo: true,
+      email: true,
+      salesEmail: true,
+      supportEmail: true,
+      phone: true,
+      website: true,
+      addressLine1: true,
+      addressLine2: true,
+      city: true,
+      state: true,
+      country: true,
+      countryCode: true,
+      postalCode: true,
+      isRoot: true,
+      createdAt: true,
+      _count: {
+        select: {
+          members: true,
+          staff: true,
+        },
+      },
+    } satisfies Prisma.CompanySelect;
+
+    type CompanyWithCount = Prisma.CompanyGetPayload<{
+      select: typeof companySelect;
+    }>;
+
+    type CompanyWithMemberCount = CompanyWithCount & { memberCount: number };
+
+    let companies: CompanyWithMemberCount[] = [];
 
     // SUPER_ADMIN / ADMIN: aggregate owned, memberships, and staff companies
     if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
@@ -46,101 +58,20 @@ export async function GET(request: NextRequest) {
         where: { id: user.id },
         include: {
           ownedCompanies: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              slogan: true,
-              description: true,
-              logo: true,
-              email: true,
-              salesEmail: true,
-              supportEmail: true,
-              phone: true,
-              website: true,
-              addressLine1: true,
-              addressLine2: true,
-              city: true,
-              state: true,
-              country: true,
-              countryCode: true,
-              postalCode: true,
-              isRoot: true,
-              createdAt: true,
-              _count: {
-                select: {
-                  members: true,
-                  staff: true,
-                },
-              },
-            },
+            select: companySelect,
             orderBy: { createdAt: "asc" },
           },
           companyMemberships: {
             include: {
               company: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  slogan: true,
-                  description: true,
-                  logo: true,
-                  email: true,
-                  salesEmail: true,
-                  supportEmail: true,
-                  phone: true,
-                  website: true,
-                  addressLine1: true,
-                  addressLine2: true,
-                  city: true,
-                  state: true,
-                  country: true,
-                  countryCode: true,
-                  postalCode: true,
-                  isRoot: true,
-                  createdAt: true,
-                  _count: {
-                    select: {
-                      members: true,
-                      staff: true,
-                    },
-                  },
-                },
+                select: companySelect,
               },
             },
           },
           companyStaff: {
             include: {
               company: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  slogan: true,
-                  description: true,
-                  logo: true,
-                  email: true,
-                  salesEmail: true,
-                  supportEmail: true,
-                  phone: true,
-                  website: true,
-                  addressLine1: true,
-                  addressLine2: true,
-                  city: true,
-                  state: true,
-                  country: true,
-                  countryCode: true,
-                  postalCode: true,
-                  isRoot: true,
-                  createdAt: true,
-                  _count: {
-                    select: {
-                      members: true,
-                      staff: true,
-                    },
-                  },
-                },
+                select: companySelect,
               },
             },
           },
@@ -148,10 +79,7 @@ export async function GET(request: NextRequest) {
       });
 
       if (userWithCompanies) {
-        const map = new Map<
-          string,
-          (typeof userWithCompanies.ownedCompanies)[0] & { memberCount: number }
-        >();
+        const map = new Map<string, CompanyWithMemberCount>();
         userWithCompanies.ownedCompanies.forEach((c) => {
           // For owned companies, memberCount includes owner (1) + members + staff
           const memberCount =
@@ -178,34 +106,7 @@ export async function GET(request: NextRequest) {
         if (user.role === "SUPER_ADMIN") {
           const root = await db.company.findFirst({
             where: { isRoot: true },
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              slogan: true,
-              description: true,
-              logo: true,
-              email: true,
-              salesEmail: true,
-              supportEmail: true,
-              phone: true,
-              website: true,
-              addressLine1: true,
-              addressLine2: true,
-              city: true,
-              state: true,
-              country: true,
-              countryCode: true,
-              postalCode: true,
-              isRoot: true,
-              createdAt: true,
-              _count: {
-                select: {
-                  members: true,
-                  staff: true,
-                },
-              },
-            },
+            select: companySelect,
           });
           if (root && !companies.some((c) => c.id === root.id)) {
             // For root company (owned by super admin), memberCount = 1 (owner) + members + staff
@@ -231,20 +132,28 @@ export async function GET(request: NextRequest) {
         where: { userId: user.id },
         include: {
           company: {
-            select: { id: true, name: true, isRoot: true, createdAt: true },
+            select: companySelect,
           },
         },
         orderBy: { createdAt: "asc" },
       });
-      companies = staff.map((s) => s.company);
+      companies = staff.map((s) => ({
+        ...s.company,
+        memberCount:
+          1 + (s.company._count?.members || 0) + (s.company._count?.staff || 0),
+      }));
 
       // Default: companies owned by the user
     } else {
-      companies = await db.company.findMany({
+      const ownedCompanies = await db.company.findMany({
         where: { ownerId: user.id },
-        select: { id: true, name: true, isRoot: true, createdAt: true },
+        select: companySelect,
         orderBy: { createdAt: "asc" },
       });
+      companies = ownedCompanies.map((c) => ({
+        ...c,
+        memberCount: 1 + (c._count?.members || 0) + (c._count?.staff || 0),
+      }));
 
       // If none found above, also include companies where user is a member (companyMember)
       if (companies.length === 0) {
@@ -253,12 +162,18 @@ export async function GET(request: NextRequest) {
             where: { userId: user.id },
             include: {
               company: {
-                select: { id: true, name: true, isRoot: true, createdAt: true },
+                select: companySelect,
               },
             },
           });
           if (memberships && memberships.length > 0) {
-            companies = memberships.map((m) => m.company);
+            companies = memberships.map((m) => ({
+              ...m.company,
+              memberCount:
+                1 +
+                (m.company._count?.members || 0) +
+                (m.company._count?.staff || 0),
+            }));
           }
         } catch (e) {
           // Be resilient to missing companyMember table in some environments
@@ -279,31 +194,7 @@ export async function GET(request: NextRequest) {
       try {
         const byEmail = await db.company.findMany({
           where: { owner: { email: user.email } },
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            slogan: true,
-            description: true,
-            logo: true,
-            email: true,
-            salesEmail: true,
-            supportEmail: true,
-            phone: true,
-            website: true,
-            addressLine1: true,
-            addressLine2: true,
-            city: true,
-            state: true,
-            country: true,
-            countryCode: true,
-            postalCode: true,
-            isRoot: true,
-            createdAt: true,
-            _count: {
-              select: { members: true, staff: true },
-            },
-          },
+          select: companySelect,
         });
         if (byEmail && byEmail.length > 0) {
           console.log(
@@ -327,29 +218,7 @@ export async function GET(request: NextRequest) {
             where: { user: { email: user.email } },
             include: {
               company: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  slogan: true,
-                  description: true,
-                  logo: true,
-                  email: true,
-                  salesEmail: true,
-                  supportEmail: true,
-                  phone: true,
-                  website: true,
-                  addressLine1: true,
-                  addressLine2: true,
-                  city: true,
-                  state: true,
-                  country: true,
-                  countryCode: true,
-                  postalCode: true,
-                  isRoot: true,
-                  createdAt: true,
-                  _count: { select: { members: true, staff: true } },
-                },
+                select: companySelect,
               },
             },
           });
@@ -360,11 +229,11 @@ export async function GET(request: NextRequest) {
               mems.length
             );
             companies = mems.map((m) => ({
-              ...(m.company as any),
+              ...m.company,
               memberCount:
                 1 +
-                ((m.company as any)._count?.members || 0) +
-                ((m.company as any)._count?.staff || 0),
+                (m.company._count?.members || 0) +
+                (m.company._count?.staff || 0),
             }));
           }
         } catch (e) {
@@ -379,29 +248,7 @@ export async function GET(request: NextRequest) {
             where: { user: { email: user.email } },
             include: {
               company: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  slogan: true,
-                  description: true,
-                  logo: true,
-                  email: true,
-                  salesEmail: true,
-                  supportEmail: true,
-                  phone: true,
-                  website: true,
-                  addressLine1: true,
-                  addressLine2: true,
-                  city: true,
-                  state: true,
-                  country: true,
-                  countryCode: true,
-                  postalCode: true,
-                  isRoot: true,
-                  createdAt: true,
-                  _count: { select: { members: true, staff: true } },
-                },
+                select: companySelect,
               },
             },
           });
@@ -412,11 +259,11 @@ export async function GET(request: NextRequest) {
               staffRows.length
             );
             companies = staffRows.map((s) => ({
-              ...(s.company as any),
+              ...s.company,
               memberCount:
                 1 +
-                ((s.company as any)._count?.members || 0) +
-                ((s.company as any)._count?.staff || 0),
+                (s.company._count?.members || 0) +
+                (s.company._count?.staff || 0),
             }));
           }
         } catch (e) {

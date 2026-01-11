@@ -1,6 +1,5 @@
 "use client";
 
-
 import { ShoppingCart, Check, Star, ArrowRight, Play } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
@@ -15,10 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Marquee } from "@/components/ui/marquee";
 
-
-
-
-;
 import { toast } from "sonner";
 import type {
   AiFrontstoreSpec,
@@ -587,7 +582,7 @@ function HeroSectionV2({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className={`${typography.bodySize} ${typography.lineHeight} max-w-3xl mx-auto`}
+              className={`${typography.bodySize} ${typography.lineHeight} max-w-4xl mx-auto`}
               style={{
                 fontFamily: typography.bodyFont,
                 color: textColor,
@@ -1428,7 +1423,7 @@ function FAQSectionV2({
         </motion.h2>
       </div>
 
-      <div className="max-w-3xl mx-auto space-y-4">
+      <div className="max-w-4xl mx-auto space-y-4">
         {faqs.map((faq, index) => (
           <motion.div
             key={faq.id}

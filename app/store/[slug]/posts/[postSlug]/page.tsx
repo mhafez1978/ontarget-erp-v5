@@ -122,7 +122,7 @@ export default async function StorePostDetailPage({ params }: PageProps) {
       )}
 
       {/* Content */}
-      <main className="container mx-auto px-4 py-12 max-w-3xl">
+      <main className="container mx-auto px-4 py-12 max-w-4xl">
         <article className="space-y-6">
           {post.heroImage && (
             // eslint-disable-next-line @next/next/no-img-element

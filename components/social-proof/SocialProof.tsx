@@ -10,7 +10,7 @@
 //           <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
 //             Why Brands Are Choosing OnTarget ERP
 //           </h2>
-//           <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+//           <p className="text-xl text-slate-600 max-w-4xl mx-auto">
 //             We&apos;re a new team in Boston, but we&apos;re already delivering
 //             more value than bloated legacy systems — faster, smarter, and at a
 //             fraction of the cost.
@@ -169,7 +169,7 @@ export const SocialProof: React.FC = () => {
           <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
             Why Growing Brands Trust OnTarget ERP
           </h2>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+          <p className="text-xl text-slate-600 max-w-4xl mx-auto">
             We&apos;re a passionate new team based in Boston, building the
             next-generation ERP that&apos;s faster, smarter, and more secure
             than legacy tools.

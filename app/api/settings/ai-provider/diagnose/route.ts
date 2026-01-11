@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { decrypt, isEncrypted } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
+
+// Helper to check if data is encrypted (GCM format: iv:authTag:data)
+function isEncrypted(text: string): boolean {
+  if (!text) return false;
+  const parts = text.split(":");
+  // GCM format has 3 parts (iv:authTag:encryptedData) or legacy CBC has 2 parts
+  return parts.length >= 2;
+}
 
 export async function GET(req: NextRequest) {
   try {

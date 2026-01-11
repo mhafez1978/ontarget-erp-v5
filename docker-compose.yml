@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  web:
+    image: ${DOCKER_REGISTRY:-}ontarget-erp-v5:latest
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: always
+
+  worker:
+    image: ${DOCKER_REGISTRY:-}ontarget-erp-v5:latest
+    build: .
+    command: ["node", "./dist/lib/frontstore/v6-job-worker.js"]
+    environment:
+      - NODE_ENV=production
+    restart: always
+    depends_on:
+      - web

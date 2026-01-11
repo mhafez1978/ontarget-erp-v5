@@ -4,7 +4,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { generateAiStorefront } from "@/lib/ai/ai-storefront-service";
 import { streamStorefrontModel } from "@/lib/ai/model-client";
 import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/encryption";
 import { canUseAiStorefrontV2 } from "@/lib/billing/plan-gating";
 import { SubscriptionPlan } from "@prisma/client";
 

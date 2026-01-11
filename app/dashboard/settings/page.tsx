@@ -19,6 +19,7 @@ import {
   Webhook,
   AlertTriangle,
   Image,
+  Video,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -395,6 +396,116 @@ export default function SettingsPage() {
 
     loadAiProvider();
   }, [user.role]);
+
+  // Video Provider (LTX/Hugging Face) settings - Super Admin only
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [videoSaving, setVideoSaving] = useState(false);
+  const [videoTesting, setVideoTesting] = useState(false);
+  const [videoPrimary, setVideoPrimary] = useState("ltx");
+
+  const [ltxKey, setLtxKey] = useState("");
+  const [ltxSecret, setLtxSecret] = useState("");
+  const [ltxEnabled, setLtxEnabled] = useState(false);
+  const [hfToken, setHfToken] = useState("");
+  const [hfEnabled, setHfEnabled] = useState(false);
+
+  const [hasLtxKey, setHasLtxKey] = useState(false);
+  const [hasLtxSecret, setHasLtxSecret] = useState(false);
+  const [hasHfToken, setHasHfToken] = useState(false);
+
+  const [testResult, setTestResult] = useState<null | {
+    ok: boolean;
+    error?: string;
+  }>(null);
+
+  useEffect(() => {
+    if (user.role !== "SUPER_ADMIN") return;
+
+    const loadVideoProvider = async () => {
+      try {
+        setVideoLoading(true);
+        const resp = await fetch("/api/settings/video-provider");
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (data.config) {
+          setLtxEnabled(!!data.config.ltxEnabled);
+          setHfEnabled(!!data.config.hfEnabled);
+          setVideoPrimary(data.config.primaryProvider || "ltx");
+          setHasLtxKey(!!data.config.hasLtxApiKey);
+          setHasLtxSecret(!!data.config.hasLtxSecret);
+          setHasHfToken(!!data.config.hasHfApiToken);
+        }
+      } catch (err) {
+        console.error("Failed to load video provider settings:", err);
+      } finally {
+        setVideoLoading(false);
+      }
+    };
+
+    loadVideoProvider();
+  }, [user.role]);
+
+  const saveVideoProvider = async () => {
+    if (user.role !== "SUPER_ADMIN") return;
+    try {
+      setVideoSaving(true);
+      const resp = await fetch("/api/settings/video-provider", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ltxApiKey: ltxKey,
+          ltxSecret,
+          hfApiToken: hfToken,
+          ltxEnabled,
+          hfEnabled,
+          primaryProvider: videoPrimary,
+        }),
+      });
+      if (!resp.ok) throw new Error("Failed to save");
+      const data = await resp.json();
+      if (data.success) {
+        setHasLtxKey(!!ltxKey || hasLtxKey);
+        setHasLtxSecret(!!ltxSecret || hasLtxSecret);
+        setHasHfToken(!!hfToken || hasHfToken);
+        toast.success("Video provider settings saved");
+      }
+    } catch (err) {
+      console.error("Save video provider failed:", err);
+      toast.error("Failed to save video provider settings");
+    } finally {
+      setVideoSaving(false);
+    }
+  };
+
+  const testVideoProvider = async () => {
+    if (user.role !== "SUPER_ADMIN") return;
+    try {
+      setVideoTesting(true);
+      const resp = await fetch("/api/settings/video-provider/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: videoPrimary }),
+      });
+      const data = await resp.json();
+
+      if (resp.ok && data.ok) {
+        setTestResult({ ok: true });
+        toast.success("Video provider test succeeded");
+      } else {
+        setTestResult({
+          ok: false,
+          error: data.error || data.statusText || "Unknown",
+        });
+        toast.error("Video provider test failed");
+      }
+    } catch (err) {
+      console.error("Test video provider failed:", err);
+      setTestResult({ ok: false, error: String(err) });
+      toast.error("Video provider test failed");
+    } finally {
+      setVideoTesting(false);
+    }
+  };
 
   // Auto-update model when provider changes and fetch dynamic models
   useEffect(() => {
@@ -2433,6 +2544,156 @@ export default function SettingsPage() {
               </AccordionTrigger>
               <AccordionContent className="space-y-6 pt-4">
                 <PricingManagement />
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* AI Storefront & LLM Provider - SUPER_ADMIN only */}
+          {user.role === "SUPER_ADMIN" && (
+            <AccordionItem value="ai-video-provider">
+              <AccordionTrigger className="text-xl font-semibold">
+                <div className="flex items-center gap-2">
+                  <Video className="h-5 w-5" />
+                  AI Video Provider (Global)
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="space-y-6 pt-4">
+                <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <Video className="h-5 w-5 text-primary mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">
+                        Global AI Video Engine
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Configure Lightricks LTX or Hugging Face as the global
+                        provider for AI-generated videos used in Hero sections
+                        (V6). Keys are stored encrypted and only visible as
+                        "configured" flags after saving.
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    The API keys are encrypted using AES-256-GCM and are never
+                    displayed in plaintext after saving.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="rounded-lg border p-4">
+                    <p className="text-sm font-medium">Primary Provider</p>
+                    <div className="mt-2 flex gap-2">
+                      <select
+                        value={videoPrimary}
+                        onChange={(e) => setVideoPrimary(e.target.value)}
+                        className="border rounded px-2 py-1 bg-background"
+                      >
+                        <option value="ltx">Lightricks (LTX)</option>
+                        <option value="huggingface">Hugging Face</option>
+                      </select>
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Lightricks LTX API Key
+                        </p>
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            type="password"
+                            value={ltxKey}
+                            onChange={(e) => setLtxKey(e.target.value)}
+                            placeholder={
+                              hasLtxKey
+                                ? "Configured — save to replace"
+                                : "ltx_xxx"
+                            }
+                          />
+                          <Switch
+                            checked={ltxEnabled}
+                            onCheckedChange={setLtxEnabled}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {hasLtxKey
+                            ? "Key is configured"
+                            : "No key configured"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Lightricks LTX Secret (optional)
+                        </p>
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            type="password"
+                            value={ltxSecret}
+                            onChange={(e) => setLtxSecret(e.target.value)}
+                            placeholder={
+                              hasLtxSecret
+                                ? "Configured — save to replace"
+                                : "secret_xxx"
+                            }
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {hasLtxSecret
+                            ? "Secret is configured"
+                            : "No secret configured"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Hugging Face API Token
+                        </p>
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            type="password"
+                            value={hfToken}
+                            onChange={(e) => setHfToken(e.target.value)}
+                            placeholder={
+                              hasHfToken
+                                ? "Configured — save to replace"
+                                : "hf_xxx"
+                            }
+                          />
+                          <Switch
+                            checked={hfEnabled}
+                            onCheckedChange={setHfEnabled}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {hasHfToken
+                            ? "Token is configured"
+                            : "No token configured"}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-3 mt-2">
+                        <Button onClick={testVideoProvider} variant="outline">
+                          Test Connection
+                        </Button>
+                        <Button onClick={saveVideoProvider}>
+                          Save Configuration
+                        </Button>
+                      </div>
+
+                      {testResult && (
+                        <div className="mt-2">
+                          <p className="text-sm">
+                            Test Result: {testResult.ok ? "Success" : "Failed"}
+                          </p>
+                          {testResult.error && (
+                            <p className="text-xs text-muted-foreground">
+                              {testResult.error}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </AccordionContent>
             </AccordionItem>
           )}

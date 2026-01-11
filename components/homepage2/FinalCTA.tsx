@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export function FinalCTA() {
   return (
-    <section className="py-24 bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 relative overflow-hidden">
+    <section className="py-24 bg-linear-to-br from-purple-600 via-indigo-600 to-purple-700 relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute top-0 left-0 w-96 h-96 bg-pink-500 rounded-full filter blur-3xl" />
@@ -26,7 +26,7 @@ export function FinalCTA() {
           Your Business?
         </h2>
 
-        <p className="text-xl sm:text-2xl mb-12 opacity-90 leading-relaxed max-w-3xl mx-auto">
+        <p className="text-xl sm:text-2xl mb-12 opacity-90 leading-relaxed max-w-4xl mx-auto">
           Join thousands of businesses already using OnTarget ERP to streamline
           operations, boost productivity, and grow faster.
         </p>
@@ -35,7 +35,7 @@ export function FinalCTA() {
           <Button
             asChild
             size="lg"
-            className="bg-white text-purple-600 hover:bg-gray-100 shadow-2xl text-lg px-10 py-6 rounded-xl group"
+            className="border-2 border-white text-purple-500 hover:bg-white hover:text-green-600 text-lg px-10 py-6 rounded-xl"
           >
             <Link href="/register?trial=true">
               Start Your Free Trial
@@ -46,7 +46,7 @@ export function FinalCTA() {
             asChild
             size="lg"
             variant="outline"
-            className="border-2 border-white text-white hover:bg-white hover:text-purple-600 text-lg px-10 py-6 rounded-xl"
+            className="border-2 border-white text-purple-500 hover:bg-white hover:text-green-600 text-lg px-10 py-6 rounded-xl"
           >
             <Link href="#contact">Talk to Sales</Link>
           </Button>

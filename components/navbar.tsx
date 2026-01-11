@@ -1,11 +1,9 @@
 "use client";
 
-
 import { Menu } from "lucide-react";
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-;
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
@@ -19,18 +17,20 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
-  { href: "/#home", label: "Home" },
-  { href: "/#features", label: "Features" },
-  { href: "/#pricing", label: "Pricing" },
-  { href: "/about", label: "About" },
-  { href: "/#contact", label: "Contact" },
+  { href: "/#home", label: "VISION" },
+  { href: "/#features", label: "CAPABILITIES" },
+  { href: "/#ai-integration", label: "AI" },
+  { href: "/#security", label: "ADVANTAGE" },
+  { href: "/#pricing", label: "PRICING" },
+  { href: "/about", label: "ABOUT" },
+  { href: "/#contact", label: "CONTACT" },
 ];
 
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [branding, setBranding] = React.useState({
     name: "OnTarget ERP",
-    slogan: "People Driven & AI Insight",
+    slogan: "AI-Powered Business Management",
     logo: null as string | null,
     logoLight: null as string | null,
     logoDark: null as string | null,
@@ -108,20 +108,20 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <header className="fixed top-0 z-50 w-full backdrop-blur-md bg-background dark:bg-background">
+      <div className="container mx-auto flex pt-4 pb-6 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
           {currentLogo ? (
             hasThemeLogo ? (
               /* Theme-specific logo only - maintain aspect ratio */
-              <div className="relative h-10">
+              <div className="relative h-12 w-55">
                 <Image
                   src={currentLogo}
                   alt={branding.name}
-                  width={110}
-                  height={30}
-                  className="object-contain h-10 w-auto"
+                  width={300}
+                  height={40}
+                  className="object-cover"
                   style={{ aspectRatio: "auto" }}
                   unoptimized
                   priority
@@ -143,7 +143,7 @@ export function Navbar() {
                   />
                 </div>
                 <div className="hidden sm:flex flex-col">
-                  <span className="font-bold text-xl leading-tight">
+                  <span className="font-bold text-xl leading-tight text-text">
                     {branding.name}
                   </span>
                   <span className="text-xs text-muted-foreground">
@@ -177,7 +177,7 @@ export function Navbar() {
               key={item.href}
               href={item.href}
               onClick={(e) => handleNavClick(e, item.href)}
-              className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
+              className="text-text text-sm font-medium transition-colors hover:text-primary cursor-pointer"
             >
               {item.label}
             </a>
@@ -195,15 +195,23 @@ export function Navbar() {
           >
             <Link href="/login">Login</Link>
           </Button>
-          <Button className="hidden md:inline-flex" size="sm" asChild>
+          <Button
+            className="hidden md:inline-flex bg-purple-500 text-white hover:bg-purple-600 dark:bg-background-dark/50 dark:text-text"
+            size="sm"
+            asChild
+          >
             <Link href="/register">Get Started</Link>
           </Button>
 
           {/* Mobile Menu */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="inline-flex md:hidden px-2"
+              >
+                <Menu className="h-5 w-5 text-text" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
@@ -244,7 +252,7 @@ export function Navbar() {
                             />
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-bold text-xl leading-tight">
+                            <span className="font-bold text-xl leading-tight text-text">
                               {branding.name}
                             </span>
                             <span className="text-xs text-muted-foreground font-normal">
@@ -260,7 +268,7 @@ export function Navbar() {
                           {branding.name.charAt(0)}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-xl leading-tight">
+                          <span className="font-bold text-xl leading-tight text-text">
                             {branding.name}
                           </span>
                           <span className="text-xs text-muted-foreground font-normal">
@@ -278,7 +286,7 @@ export function Navbar() {
                     key={item.href}
                     href={item.href}
                     onClick={(e) => handleNavClick(e, item.href)}
-                    className="text-lg font-medium transition-colors hover:text-primary py-2 cursor-pointer"
+                    className="text-text text-lg font-medium transition-colors hover:text-primary py-2 cursor-pointer"
                   >
                     {item.label}
                   </a>
@@ -288,10 +296,15 @@ export function Navbar() {
                     variant="outline"
                     onClick={() => setIsOpen(false)}
                     asChild
+                    className="text-text"
                   >
                     <Link href="/login">Login</Link>
                   </Button>
-                  <Button onClick={() => setIsOpen(false)} asChild>
+                  <Button
+                    onClick={() => setIsOpen(false)}
+                    asChild
+                    className="bg-purple-500 text-white hover:bg-purple-600 dark:bg-primary dark:text-black"
+                  >
                     <Link href="/register">Get Started</Link>
                   </Button>
                 </div>
