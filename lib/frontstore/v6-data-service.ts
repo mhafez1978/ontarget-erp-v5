@@ -12,7 +12,6 @@ import type {
   Service,
   Testimonial,
   CompanyStaff,
-  Location,
 } from "@prisma/client";
 
 // ============================================================================

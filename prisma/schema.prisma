@@ -3420,6 +3420,19 @@ enum SectionKind {
   SERVICES
   FEEDBACK
   CUSTOM
+  
+  // V6 Enhanced Sections
+  PRODUCTS          // Product showcase/grid
+  TEAM              // Team/staff members
+  PRICING           // Pricing plans/tiers
+  FAQ               // Frequently asked questions
+  CONTACT           // Contact form/details
+  VALUE_PROP        // Value proposition
+  CTA_PRIMARY       // Primary call-to-action
+  LEAD_CAPTURE      // Lead generation form
+  COMPARISON        // Feature comparison table
+  CASE_STUDIES      // Case studies/success stories
+  CLIENT_LOGOS      // Client/partner logos
 }
 
 enum SectionStatus {
