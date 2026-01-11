@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import fs from "fs";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { validateSessionForAPI } from "@/lib/validate-session";
@@ -104,7 +105,6 @@ export async function POST(request: NextRequest) {
     const filePath = join(uploadDir, filename);
 
     // Ensure directory exists
-    const fs = await import("fs");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -200,7 +200,6 @@ export async function DELETE(request: NextRequest) {
 
     // Delete the file from filesystem
     try {
-      const fs = await import("fs");
       const filePath = join(process.cwd(), "public", company.storeBanner);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);

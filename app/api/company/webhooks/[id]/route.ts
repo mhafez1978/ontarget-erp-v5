@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
+import crypto from "crypto";
 import { z } from "zod";
 import type { PrismaClient } from "@prisma/client";
 
@@ -57,7 +58,9 @@ export async function PATCH(
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 
-  const wh = await (db as PrismaClient).webhookConfig.findUnique({ where: { id } });
+  const wh = await (db as PrismaClient).webhookConfig.findUnique({
+    where: { id },
+  });
   if (!wh) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Authorization
@@ -92,7 +95,9 @@ export async function DELETE(
   if (!session.valid) return session.response;
 
   const { id } = await params;
-  const wh = await (db as PrismaClient).webhookConfig.findUnique({ where: { id } });
+  const wh = await (db as PrismaClient).webhookConfig.findUnique({
+    where: { id },
+  });
   if (!wh) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const user = session.user;
@@ -124,7 +129,9 @@ export async function POST(
   if (!session.valid) return session.response;
 
   const { id } = await params;
-  const wh = await (db as PrismaClient).webhookConfig.findUnique({ where: { id } });
+  const wh = await (db as PrismaClient).webhookConfig.findUnique({
+    where: { id },
+  });
   if (!wh) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const user = session.user;
@@ -151,7 +158,6 @@ export async function POST(
       "Content-Type": "application/json",
     };
     if (wh.secret) {
-      const crypto = await import("crypto");
       const sig = crypto
         .createHmac("sha256", wh.secret)
         .update(body)

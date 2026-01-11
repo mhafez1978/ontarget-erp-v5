@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
+import crypto from "crypto";
 import type {
   WebhookConfig,
   WebhookDelivery,
@@ -65,7 +66,6 @@ export async function POST(
     "Content-Type": "application/json",
   };
   if (wh.secret) {
-    const crypto = await import("crypto");
     const sig = crypto
       .createHmac("sha256", wh.secret)
       .update(body)

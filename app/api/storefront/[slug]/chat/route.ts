@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import crypto from "crypto";
 import { callStorefrontModel } from "@/lib/ai/model-client";
 import { decrypt } from "@/lib/encryption";
 import { z } from "zod";

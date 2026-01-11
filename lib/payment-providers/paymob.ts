@@ -19,6 +19,7 @@ import {
 } from "./constants";
 import { fetchWithTimeout } from "@/lib/payments/fetch-with-timeout";
 import { logger } from "@/lib/payments/logger";
+import crypto from "crypto";
 
 interface PaymobAuthResponse {
   token: string;
@@ -318,7 +319,6 @@ export class PaymobProvider extends PaymentProvider {
 
       // Verify HMAC signature
       // Paymob sends HMAC in query parameter or header
-      const crypto = await import("crypto");
       const hmac = crypto.createHmac("sha512", this.config.webhookSecret);
 
       // Paymob HMAC calculation: concatenate specific fields in order

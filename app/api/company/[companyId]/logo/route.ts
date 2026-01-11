@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import fs from "fs";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { createAuditLog } from "@/lib/audit-log";
@@ -79,7 +80,6 @@ export async function POST(
     const filePath = join(uploadDir, filename);
 
     // Ensure directory exists
-    const fs = await import("fs");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
