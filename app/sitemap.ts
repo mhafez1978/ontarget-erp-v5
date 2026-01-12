@@ -42,7 +42,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const companies = await db.company.findMany({
       where: {
-        status: "ACTIVE",
+        isActive: true,
+        isStoreEnabled: true,
         slug: {
           not: null,
         },
