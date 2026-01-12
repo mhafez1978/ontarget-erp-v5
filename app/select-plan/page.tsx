@@ -872,7 +872,7 @@ export default function SelectPlanPage() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Welcome! Choose Your Plan</h1>
+          <h3 className="text-4xl font-bold mb-4"> Choose Your Plan</h3>
           <p className="text-lg dark:text-gray-200">
             Select a plan to get started with OnTarget ERP
           </p>

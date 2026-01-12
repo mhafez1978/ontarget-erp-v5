@@ -103,6 +103,14 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
+  alternates: {
+    canonical: "/",
+    types: {
+      "application/rss+xml": `${
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      }/rss.xml`,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -110,6 +118,36 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "OnTarget ERP v5",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    description:
+      "Streamline operations, boost productivity, and drive growth with our comprehensive enterprise resource planning platform.",
+    url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    provider: {
+      "@type": "Organization",
+      name: "OnTarget ERP",
+      url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    },
+    featureList: [
+      "Enterprise Resource Planning",
+      "Business Management",
+      "Inventory Management",
+      "Financial Management",
+      "Customer Relationship Management",
+      "Project Management",
+      "Blockchain Integration",
+    ],
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -125,11 +163,15 @@ export default function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5"
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body className={`bg-background ${montserrat.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

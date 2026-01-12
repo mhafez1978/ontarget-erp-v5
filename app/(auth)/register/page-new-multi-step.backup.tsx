@@ -482,7 +482,7 @@ function RegisterForm() {
   const renderPlanSelection = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Choose Your Plan</h2>
+        <h3 className="text-2xl font-bold mb-2">Choose Your Plan</h3>
         <p className="dark:text-gray-200 text-sm">
           Start with a 30-day free trial • Cancel anytime
         </p>
@@ -646,7 +646,7 @@ function RegisterForm() {
   const renderPaymentStep = () => (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold mb-2">Payment Information</h2>
+        <h3 className="text-2xl font-bold mb-2">Payment Information</h3>
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
           <CheckCircle2 className="h-5 w-5 text-green-600" />
         </div>
@@ -790,7 +790,7 @@ function RegisterForm() {
   const renderAccountStep = () => (
     <div className="space-y-6 max-w-md mx-auto">
       <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold mb-2">Account Details</h2>
+        <h3 className="text-2xl font-bold mb-2">Account Details</h3>
         <p className="text-sm dark:text-gray-200">
           Create your login credentials
         </p>
