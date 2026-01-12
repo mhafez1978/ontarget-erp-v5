@@ -508,7 +508,7 @@ export default function ServicesPage() {
                   ? "text-gray-300"
                   : isDigitalCampus
                   ? "text-slate-600"
-                  : "text-muted-foreground"
+                  : "dark:text-gray-200"
               }
             >
               Browse our collection of {services.length} services
@@ -519,7 +519,7 @@ export default function ServicesPage() {
           <div className="flex flex-col md:flex-row gap-4 mb-8">
             {/* Search */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 dark:text-gray-200" />
               <Input
                 placeholder="Search services..."
                 value={searchQuery}
@@ -573,7 +573,7 @@ export default function ServicesPage() {
                     ? "text-gray-400 text-lg"
                     : isDigitalCampus
                     ? "text-slate-500 text-lg"
-                    : "text-muted-foreground text-lg"
+                    : "dark:text-gray-200 text-lg"
                 }
               >
                 No services found
@@ -703,7 +703,7 @@ export default function ServicesPage() {
                         ? "text-gray-300"
                         : isDigitalCampus
                         ? "text-slate-600"
-                        : "text-muted-foreground"
+                        : "dark:text-gray-200"
                     }
                   >
                     Showing{" "}
@@ -730,7 +730,7 @@ export default function ServicesPage() {
                     </Button>
                     <span
                       className={
-                        isBlackFriday ? "text-gray-200" : "text-foreground"
+                        isBlackFriday ? "dark:text-gray-200" : "text-foreground"
                       }
                     >
                       Page <span className="font-semibold">{currentPage}</span>{" "}

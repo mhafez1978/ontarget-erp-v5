@@ -256,6 +256,10 @@ model Company {
   aiStorefrontEnabled Boolean @default(false) // If true, render storefront from AI spec
   aiStorefrontSpec    Json? // Full AI storefront specification (AiFrontstoreSpec)
 
+  // Hedera company opt-in setting (one-to-one)
+  companyHederaSetting CompanyHederaSetting?
+
+
   // Address fields
   addressLine1 String?
   addressLine2 String?
@@ -2260,6 +2264,67 @@ model AiProviderSetting {
   updatedAt DateTime @updatedAt
 
   @@index([scope, provider])
+}
+
+// Hedera global settings (accessible to SUPER_ADMIN only)
+model HederaSetting {
+  id             String   @id @default(cuid())
+  scope          String   @default("GLOBAL")
+  hederaAccount  String?  @db.Text // Encrypted account id
+  hederaKey      String?  @db.Text // Encrypted private key
+  topicId        String?  // Hedera Topic ID
+  hashSalt       String?  @db.Text // Encrypted salt or KMS reference
+  isActive       Boolean  @default(false)
+  useTestnet     Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([scope])
+}
+
+// Per-company opt-in and historical anchoring settings
+model CompanyHederaSetting {
+  id                   String   @id @default(cuid())
+  companyId            String   @unique
+  enabled              Boolean  @default(false)
+  historicalAnchored   Boolean  @default(false) // have past records been anchored
+  historicalJobId      String?  // optional job id for the historical anchoring batch
+  enabledById          String?  // user who enabled
+  enabledAt            DateTime?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+// Audit log for enable/disable/historical actions
+model HederaCompanyAudit {
+  id         String   @id @default(cuid())
+  companyId  String?
+  actorId    String   // who performed the action
+  action     String   // ENABLE | DISABLE | HISTORICAL_REQUEST | HISTORICAL_COMPLETE
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([companyId])
+}
+
+// Outbox job table for async background processing (e.g., historical anchoring)
+model OutboxJob {
+  id        String   @id @default(cuid())
+  type      String
+  payload   Json
+  status    String   @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | FAILED
+  attempts  Int      @default(0)
+  lastError String?  @db.Text
+  runAt     DateTime? // scheduled time to run
+  lockedAt  DateTime?
+  lockId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([runAt])
 }
 
 model EmailTemplate {

@@ -1,7 +1,13 @@
 "use client";
 
-
-import { Shield, AlertTriangle, Ban, Loader2, Clock, Monitor } from "lucide-react";
+import {
+  Shield,
+  AlertTriangle,
+  Ban,
+  Loader2,
+  Clock,
+  Monitor,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,11 +20,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-
-
-
-
-;
 import { SessionManager } from "@/components/session-manager";
 import { Button } from "@/components/ui/button";
 
@@ -138,7 +139,7 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
         <h1 className="text-3xl font-bold tracking-tight mb-2">
           Security Monitor
         </h1>
-        <p className="text-muted-foreground">
+        <p className="dark:text-gray-200">
           Welcome {userName || "Admin"}! View security alerts and failed login
           attempts.
         </p>
@@ -159,7 +160,7 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
                 <div className="text-2xl font-bold">
                   {stats?.failedAttempts.lastHour || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">Failed attempts</p>
+                <p className="text-xs dark:text-gray-200">Failed attempts</p>
               </>
             )}
           </CardContent>
@@ -178,7 +179,7 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
                 <div className="text-2xl font-bold">
                   {stats?.failedAttempts.last24Hours || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">Failed attempts</p>
+                <p className="text-xs dark:text-gray-200">Failed attempts</p>
               </>
             )}
           </CardContent>
@@ -197,7 +198,7 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
                 <div className="text-2xl font-bold">
                   {stats?.failedAttempts.last7Days || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">Failed attempts</p>
+                <p className="text-xs dark:text-gray-200">Failed attempts</p>
               </>
             )}
           </CardContent>
@@ -216,9 +217,7 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
                 <div className="text-2xl font-bold">
                   {stats?.blockedIps.active || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Currently blocked
-                </p>
+                <p className="text-xs dark:text-gray-200">Currently blocked</p>
               </>
             )}
           </CardContent>
@@ -233,12 +232,12 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
         <CardContent>
           {isLoadingAttempts ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
             </div>
           ) : failedAttempts.length === 0 ? (
             <div className="text-center py-12">
-              <Shield className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
+              <Shield className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+              <p className="dark:text-gray-200">
                 No failed login attempts. All systems secure! 🎉
               </p>
             </div>
@@ -277,7 +276,7 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm dark:text-gray-200">
                         {timeAgo(attempt.attemptedAt)}
                       </TableCell>
                       <TableCell>
@@ -310,10 +309,10 @@ export function AdminSecurityView({ userName }: AdminSecurityViewProps) {
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-start gap-4">
-            <Shield className="h-8 w-8 text-muted-foreground shrink-0 mt-1" />
+            <Shield className="h-8 w-8 dark:text-gray-200 shrink-0 mt-1" />
             <div>
               <h3 className="font-semibold mb-2">Admin Security Access</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 As an admin, you can view security statistics and failed login
                 attempts for your system. For advanced features like IP
                 blacklist management and detailed analytics, contact your Super

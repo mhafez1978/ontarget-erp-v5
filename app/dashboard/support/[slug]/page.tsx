@@ -146,7 +146,7 @@
 // //     return (
 // //       <DashboardLayout user={user || undefined}>
 // //         <div className="flex items-center justify-center h-96">
-// //           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+// //           <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
 // //         </div>
 // //       </DashboardLayout>
 // //     );
@@ -156,7 +156,7 @@
 // //     return (
 // //       <DashboardLayout user={user || undefined}>
 // //         <div className="flex items-center justify-center h-96">
-// //           <p className="text-muted-foreground">Article not found.</p>
+// //           <p className="dark:text-gray-200">Article not found.</p>
 // //         </div>
 // //       </DashboardLayout>
 // //     );
@@ -477,7 +477,7 @@
 // //     return (
 // //       <DashboardLayout user={user || undefined}>
 // //         <div className="flex items-center justify-center h-96">
-// //           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+// //           <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
 // //         </div>
 // //       </DashboardLayout>
 // //     );
@@ -487,7 +487,7 @@
 // //     return (
 // //       <DashboardLayout user={user || undefined}>
 // //         <div className="flex items-center justify-center h-96">
-// //           <p className="text-muted-foreground">Article not found.</p>
+// //           <p className="dark:text-gray-200">Article not found.</p>
 // //         </div>
 // //       </DashboardLayout>
 // //     );
@@ -1065,7 +1065,7 @@
 //     return (
 //       <DashboardLayout user={user || undefined}>
 //         <div className="flex items-center justify-center h-96">
-//           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+//           <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
 //         </div>
 //       </DashboardLayout>
 //     );
@@ -1075,7 +1075,7 @@
 //     return (
 //       <DashboardLayout user={user || undefined}>
 //         <div className="flex items-center justify-center h-96">
-//           <p className="text-muted-foreground">Article not found.</p>
+//           <p className="dark:text-gray-200">Article not found.</p>
 //         </div>
 //       </DashboardLayout>
 //     );
@@ -1520,7 +1520,7 @@
 //     return (
 //       <DashboardLayout user={user || undefined}>
 //         <div className="flex items-center justify-center h-96">
-//           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+//           <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
 //         </div>
 //       </DashboardLayout>
 //     );
@@ -1530,7 +1530,7 @@
 //     return (
 //       <DashboardLayout user={user || undefined}>
 //         <div className="flex items-center justify-center h-96">
-//           <p className="text-muted-foreground">Article not found.</p>
+//           <p className="dark:text-gray-200">Article not found.</p>
 //         </div>
 //       </DashboardLayout>
 //     );
@@ -2182,7 +2182,7 @@
 //     return (
 //       <DashboardLayout user={user || undefined}>
 //         <div className="flex items-center justify-center h-96">
-//           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+//           <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
 //         </div>
 //       </DashboardLayout>
 //     );
@@ -2192,7 +2192,7 @@
 //     return (
 //       <DashboardLayout user={user || undefined}>
 //         <div className="flex items-center justify-center h-96">
-//           <p className="text-muted-foreground">Article not found.</p>
+//           <p className="dark:text-gray-200">Article not found.</p>
 //         </div>
 //       </DashboardLayout>
 //     );
@@ -3139,7 +3139,7 @@
 //     return (
 //       <DashboardLayout user={user || undefined}>
 //         <div className="flex items-center justify-center h-96">
-//           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+//           <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
 //         </div>
 //       </DashboardLayout>
 //     );
@@ -3149,7 +3149,7 @@
 //     return (
 //       <DashboardLayout user={user || undefined}>
 //         <div className="flex items-center justify-center h-96">
-//           <p className="text-muted-foreground">Article not found.</p>
+//           <p className="dark:text-gray-200">Article not found.</p>
 //         </div>
 //       </DashboardLayout>
 //     );
@@ -3375,13 +3375,13 @@
 //                         onClick={() => featuredInputRef.current?.click()}
 //                         className="h-32 w-48 rounded-md border border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
 //                       >
-//                         <Upload className="h-6 w-6 text-muted-foreground" />
-//                         <span className="text-xs text-muted-foreground">
+//                         <Upload className="h-6 w-6 dark:text-gray-200" />
+//                         <span className="text-xs dark:text-gray-200">
 //                           Upload Image
 //                         </span>
 //                       </div>
 //                     )}
-//                     <div className="flex-1 text-sm text-muted-foreground">
+//                     <div className="flex-1 text-sm dark:text-gray-200">
 //                       <p>
 //                         This image will be used as the thumbnail and header for
 //                         the article.
@@ -4194,7 +4194,7 @@ export default function SupportArticlePage() {
     return (
       <DashboardLayout user={user || undefined}>
         <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
         </div>
       </DashboardLayout>
     );
@@ -4204,7 +4204,7 @@ export default function SupportArticlePage() {
     return (
       <DashboardLayout user={user || undefined}>
         <div className="flex items-center justify-center h-96">
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             We couldn&apos;t find any articles.
           </p>
         </div>
@@ -4434,13 +4434,13 @@ export default function SupportArticlePage() {
                         onClick={() => featuredInputRef.current?.click()}
                         className="h-32 w-48 rounded-md border border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
                       >
-                        <Upload className="h-6 w-6 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">
+                        <Upload className="h-6 w-6 dark:text-gray-200" />
+                        <span className="text-xs dark:text-gray-200">
                           Upload Image
                         </span>
                       </div>
                     )}
-                    <div className="flex-1 text-sm text-muted-foreground">
+                    <div className="flex-1 text-sm dark:text-gray-200">
                       <p>
                         This image will be used as the thumbnail and header for
                         the article.

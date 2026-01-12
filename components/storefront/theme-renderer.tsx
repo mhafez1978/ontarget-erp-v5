@@ -274,7 +274,7 @@ export function BaseThemeRenderer({
                   )}
 
                   {content.subtitle && (
-                    <span className="max-w-2xl text-xl leading-relaxed text-gray-200">
+                    <span className="max-w-2xl text-xl leading-relaxed dark:text-gray-200">
                       {renderContent(content.subtitle)}
                     </span>
                   )}
@@ -383,7 +383,7 @@ export function BaseThemeRenderer({
                         A portion of every purchase supports veteran-focused
                         organizations and community initiatives.
                       </p>
-                      <div className="flex gap-2 text-xs text-gray-200/90 flex-wrap justify-center">
+                      <div className="flex gap-2 text-xs dark:text-gray-200/90 flex-wrap justify-center">
                         <span className="px-2 py-1 rounded-full bg-white/10 border border-white/20">
                           Military discount
                         </span>
@@ -449,7 +449,7 @@ export function BaseThemeRenderer({
                       {renderContent(content.title)}
                     </h1>
                     {content.subtitle && (
-                      <p className="text-lg text-gray-200">
+                      <p className="text-lg dark:text-gray-200">
                         {renderContent(content.subtitle)}
                       </p>
                     )}
@@ -870,13 +870,13 @@ export function BaseThemeRenderer({
                 )}
 
                 {content.subtitle && (
-                  <p className="text-lg md:text-xl text-muted-foreground animate-fade-in-delay-1">
+                  <p className="text-lg md:text-xl dark:text-gray-200 animate-fade-in-delay-1">
                     {renderContent(content.subtitle)}
                   </p>
                 )}
 
                 {content.description && (
-                  <p className="text-base md:text-lg leading-relaxed text-muted-foreground/90 animate-fade-in-delay-2 max-w-2xl mx-auto md:mx-0">
+                  <p className="text-base md:text-lg leading-relaxed dark:text-gray-200/90 animate-fade-in-delay-2 max-w-2xl mx-auto md:mx-0">
                     {renderContent(content.description)}
                   </p>
                 )}
@@ -960,7 +960,7 @@ export function BaseThemeRenderer({
               <div className="mb-6 text-center">
                 <h2 className="text-3xl font-bold">{renderContent(heading)}</h2>
                 {subheading && (
-                  <p className="mt-2 text-muted-foreground">
+                  <p className="mt-2 dark:text-gray-200">
                     {renderContent(subheading)}
                   </p>
                 )}
@@ -968,7 +968,7 @@ export function BaseThemeRenderer({
 
               {postList.length === 0 ? (
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     No published posts yet. Please check back soon.
                   </p>
                 </div>
@@ -1004,12 +1004,12 @@ export function BaseThemeRenderer({
                             {renderContent(p.title)}
                           </h3>
                           {p.excerpt && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm dark:text-gray-200">
                               {renderContent(p.excerpt)}
                             </p>
                           )}
                           {p.publishedAt && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs dark:text-gray-200">
                               {new Date(p.publishedAt).toLocaleDateString()}
                             </p>
                           )}
@@ -1037,7 +1037,7 @@ export function BaseThemeRenderer({
                     {renderContent(content.heading || content.title)}
                   </h2>
                   {content.description && (
-                    <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+                    <p className="mt-3 dark:text-gray-200 max-w-2xl mx-auto">
                       {renderContent(content.description)}
                     </p>
                   )}
@@ -1701,7 +1701,7 @@ export function BaseThemeRenderer({
 
               <div className="mt-12 text-center">
                 <TestimonialForm slug={slug} />
-                <p className="text-xs text-muted-foreground mt-3">
+                <p className="text-xs dark:text-gray-200 mt-3">
                   Your testimonial will be reviewed before publishing
                 </p>
               </div>

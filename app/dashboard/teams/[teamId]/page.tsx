@@ -1,7 +1,16 @@
 "use client";
 
-
-import { ArrowLeft, Edit, Trash2, Loader2, Users, Briefcase, UserPlus, Activity, MoreVertical } from "lucide-react";
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Loader2,
+  Users,
+  Briefcase,
+  UserPlus,
+  Activity,
+  MoreVertical,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,14 +25,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-
-
-
-
-
-
-
-;
 import { toast } from "sonner";
 import { AddTeamMemberDialog } from "@/components/add-team-member-dialog";
 import { RemoveTeamMemberDialog } from "@/components/remove-team-member-dialog";
@@ -155,7 +156,7 @@ export default function TeamDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
       </div>
     );
   }
@@ -164,7 +165,7 @@ export default function TeamDetailPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-2">Team Not Found</h2>
-        <p className="text-muted-foreground mb-4">
+        <p className="dark:text-gray-200 mb-4">
           The team you&apos;re looking for doesn&apos;t exist or you don&apos;t
           have access to it.
         </p>
@@ -187,7 +188,7 @@ export default function TeamDetailPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{team.name}</h1>
-            <p className="text-muted-foreground">{team.company.name}</p>
+            <p className="dark:text-gray-200">{team.company.name}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -204,10 +205,10 @@ export default function TeamDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium dark:text-gray-200">
               Total Members
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 dark:text-gray-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{team._count.members}</div>
@@ -215,10 +216,10 @@ export default function TeamDetailPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium dark:text-gray-200">
               Active Projects
             </CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <Briefcase className="h-4 w-4 dark:text-gray-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{team._count.projects}</div>
@@ -226,10 +227,10 @@ export default function TeamDetailPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium dark:text-gray-200">
               Total Tasks
             </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 dark:text-gray-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -246,7 +247,7 @@ export default function TeamDetailPage() {
             <CardTitle>About</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{team.description}</p>
+            <p className="dark:text-gray-200">{team.description}</p>
           </CardContent>
         </Card>
       )}
@@ -294,7 +295,7 @@ export default function TeamDetailPage() {
                         {member.staff.user.name || member.staff.user.email}
                       </p>
                       {member.staff.jobTitle && (
-                        <p className="text-sm text-muted-foreground truncate">
+                        <p className="text-sm dark:text-gray-200 truncate">
                           {member.staff.jobTitle}
                         </p>
                       )}
@@ -343,9 +344,9 @@ export default function TeamDetailPage() {
 
           {team.members.length === 0 && (
             <div className="text-center py-12 border-2 border-dashed rounded-lg">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <Users className="h-12 w-12 dark:text-gray-200 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Members Yet</h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="dark:text-gray-200 mb-4">
                 Add members to this team to get started
               </p>
               <Button>
@@ -373,7 +374,7 @@ export default function TeamDetailPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <h4 className="font-semibold">{project.name}</h4>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm dark:text-gray-200">
                         {project._count.tasks} task
                         {project._count.tasks !== 1 ? "s" : ""}
                       </p>
@@ -392,9 +393,9 @@ export default function TeamDetailPage() {
 
           {team.projects.length === 0 && (
             <div className="text-center py-12 border-2 border-dashed rounded-lg">
-              <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <Briefcase className="h-12 w-12 dark:text-gray-200 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Projects Yet</h3>
-              <p className="text-muted-foreground">
+              <p className="dark:text-gray-200">
                 This team doesn&apos;t have any projects assigned yet
               </p>
             </div>

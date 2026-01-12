@@ -276,18 +276,18 @@ export default function CheckoutPage() {
                 <h2 className="text-3xl font-bold mb-2 text-green-600">
                   Thank You! 🎉
                 </h2>
-                <p className="text-muted-foreground mb-4">
+                <p className="dark:text-gray-200 mb-4">
                   Your order has been placed successfully
                 </p>
                 {orderNumber && (
                   <div className="bg-muted p-4 rounded-lg inline-block mb-4">
-                    <p className="text-sm text-muted-foreground mb-1">
+                    <p className="text-sm dark:text-gray-200 mb-1">
                       Order Number
                     </p>
                     <p className="text-2xl font-bold">{orderNumber}</p>
                   </div>
                 )}
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   Redirecting to your orders...
                 </p>
               </div>
@@ -323,7 +323,7 @@ export default function CheckoutPage() {
       <div className="space-y-6 max-w-6xl">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Checkout</h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Complete your order by providing shipping and payment information
           </p>
         </div>
@@ -492,7 +492,7 @@ export default function CheckoutPage() {
               <CardContent className="space-y-4">
                 {loadingStripe ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
                   </div>
                 ) : stripePromise ? (
                   <div className="grid lg:grid-cols-1 gap-6">
@@ -558,7 +558,7 @@ export default function CheckoutPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm dark:text-gray-200">
                     {itemCount} {itemCount === 1 ? "item" : "items"}
                   </div>
                   {items.slice(0, 3).map((item) => (
@@ -575,7 +575,7 @@ export default function CheckoutPage() {
                     </div>
                   ))}
                   {items.length > 3 && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm dark:text-gray-200">
                       + {items.length - 3} more items
                     </div>
                   )}
@@ -585,11 +585,11 @@ export default function CheckoutPage() {
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="dark:text-gray-200">Subtotal</span>
                     <span className="font-medium">${subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tax (8%)</span>
+                    <span className="dark:text-gray-200">Tax (8%)</span>
                     <span className="font-medium">${tax.toFixed(2)}</span>
                   </div>
                   <Separator />

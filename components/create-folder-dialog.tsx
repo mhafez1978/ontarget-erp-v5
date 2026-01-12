@@ -1,9 +1,7 @@
 "use client";
 
-
 import { FolderPlus } from "lucide-react";
 import { useState } from "react";
-;
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -151,7 +149,7 @@ export function CreateFolderDialog({
                   ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               Select a parent folder or leave empty to create in the root
             </p>
           </div>

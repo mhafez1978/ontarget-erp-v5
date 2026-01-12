@@ -236,7 +236,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Verifying onboarding link...</p>
+          <p className="dark:text-gray-200">Verifying onboarding link...</p>
         </div>
       </div>
     );
@@ -274,7 +274,7 @@ export default function OnboardingPage() {
               <h1 className="text-2xl font-bold">
                 Welcome to {onboardingData.company.name}!
               </h1>
-              <p className="text-muted-foreground">
+              <p className="dark:text-gray-200">
                 Complete your onboarding to get started
               </p>
             </div>
@@ -297,7 +297,7 @@ export default function OnboardingPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Onboarding Progress</span>
-              <span className="text-muted-foreground">
+              <span className="dark:text-gray-200">
                 {Math.round(progress)}% Complete
               </span>
             </div>
@@ -315,19 +315,17 @@ export default function OnboardingPage() {
           <CardContent>
             <dl className="grid grid-cols-2 gap-4">
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">
-                  Name
-                </dt>
+                <dt className="text-sm font-medium dark:text-gray-200">Name</dt>
                 <dd className="text-sm">{onboardingData.staff.name}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">
+                <dt className="text-sm font-medium dark:text-gray-200">
                   Email
                 </dt>
                 <dd className="text-sm">{onboardingData.staff.email}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">
+                <dt className="text-sm font-medium dark:text-gray-200">
                   Job Title
                 </dt>
                 <dd className="text-sm">
@@ -335,7 +333,7 @@ export default function OnboardingPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">
+                <dt className="text-sm font-medium dark:text-gray-200">
                   Company
                 </dt>
                 <dd className="text-sm">{onboardingData.company.name}</dd>
@@ -387,7 +385,7 @@ export default function OnboardingPage() {
                     {isUploaded ? (
                       <CheckCircle2 className="h-5 w-5 text-green-600" />
                     ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground" />
+                      <Circle className="h-5 w-5 dark:text-gray-200" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -413,7 +411,7 @@ export default function OnboardingPage() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mb-2">
+                    <p className="text-xs dark:text-gray-200 mb-2">
                       {doc.description}
                     </p>
 

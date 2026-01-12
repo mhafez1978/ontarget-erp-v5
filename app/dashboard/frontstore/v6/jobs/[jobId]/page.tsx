@@ -59,7 +59,7 @@ export default function JobDetailPage() {
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-muted-foreground">No logs yet</div>
+                <div className="text-sm dark:text-gray-200">No logs yet</div>
               )}
             </div>
           </div>

@@ -277,7 +277,7 @@ export function WebhookManager({ companyId }: { companyId: string }) {
             {/* Info panel: How webhooks work */}
             <div className="rounded-md border bg-blue-50 p-4 mb-4">
               <h4 className="font-semibold">How Webhooks Work</h4>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Webhooks send HTTP POST requests to your endpoint when events
                 occur (for example, when a lead is created from the chat
                 widget). Configure the URL, choose events to subscribe to (e.g.{" "}
@@ -328,7 +328,7 @@ export function WebhookManager({ companyId }: { companyId: string }) {
                   >
                     <div>
                       <div className="font-medium">{w.url}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm dark:text-gray-200">
                         Events: {(w.events || []).join(", ")}
                       </div>
                     </div>

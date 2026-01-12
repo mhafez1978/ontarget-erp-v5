@@ -24,7 +24,7 @@ export default function OnboardingUnavailablePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="mb-4 text-sm text-muted-foreground">
+          <p className="mb-4 text-sm dark:text-gray-200">
             It looks like your onboarding is incomplete and we don&apos;t have
             an active onboarding link for you. Please contact your company
             administrator to reactivate onboarding — they can generate a fresh

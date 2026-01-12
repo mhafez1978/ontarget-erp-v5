@@ -1,7 +1,14 @@
 "use client";
 
-
-import { Loader2, Mail, AlertCircle, Crown, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  AlertCircle,
+  Crown,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,12 +25,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 
-
-
-
-
-
-;
 import { toast } from "sonner";
 import EmailProviderWizard from "@/components/email-provider-wizard";
 
@@ -558,7 +559,7 @@ export default function EmailProviderSettings({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
       </div>
     );
   }
@@ -573,7 +574,7 @@ export default function EmailProviderSettings({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3 text-sm text-muted-foreground">
+          <div className="space-y-3 text-sm dark:text-gray-200">
             <p>
               Recommended: use Microsoft Graph (app-only / client_credentials)
               for server-sent email. It avoids per-user refresh tokens and is
@@ -729,7 +730,7 @@ export default function EmailProviderSettings({
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label>Enable This Provider</Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Activate this email configuration for sending emails
               </p>
             </div>
@@ -785,9 +786,9 @@ export default function EmailProviderSettings({
                     onClick={() => setShowSmtpPassword(!showSmtpPassword)}
                   >
                     {showSmtpPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
@@ -800,7 +801,7 @@ export default function EmailProviderSettings({
                   />
                   <Label>Use SSL (Port 465)</Label>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Leave unchecked for STARTTLS (Port 587 - Recommended). Check
                   for direct SSL/TLS (Port 465).
                 </p>
@@ -843,13 +844,13 @@ export default function EmailProviderSettings({
                     onClick={() => setShowSmtpPassword(!showSmtpPassword)}
                   >
                     {showSmtpPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   16-character app password from Google Account settings
                 </p>
               </div>
@@ -864,7 +865,7 @@ export default function EmailProviderSettings({
                     Google OAuth uses Gmail API with OAuth 2.0 authentication.
                     Follow these steps:
                   </p>
-                  <ol className="text-xs text-muted-foreground list-decimal ml-5 space-y-1">
+                  <ol className="text-xs dark:text-gray-200 list-decimal ml-5 space-y-1">
                     <li>
                       Go to Google Cloud Console and create a new project (or
                       select existing).
@@ -917,9 +918,9 @@ export default function EmailProviderSettings({
                     onClick={() => setShowGoogleSecret(!showGoogleSecret)}
                   >
                     {showGoogleSecret ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
@@ -952,13 +953,13 @@ export default function EmailProviderSettings({
                     }
                   >
                     {showGoogleRefreshToken ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   OAuth refresh token obtained from Google OAuth flow
                 </p>
               </div>
@@ -973,7 +974,7 @@ export default function EmailProviderSettings({
                     Office 365 uses Microsoft Graph API (OAuth 2.0). To
                     configure the app correctly, follow these steps:
                   </p>
-                  <ol className="text-xs text-muted-foreground list-decimal ml-5 space-y-1">
+                  <ol className="text-xs dark:text-gray-200 list-decimal ml-5 space-y-1">
                     <li>
                       Register a new app in the Azure Portal (Azure Active
                       Directory → App registrations).
@@ -995,7 +996,7 @@ export default function EmailProviderSettings({
                     </li>
                   </ol>
 
-                  <div className="mt-2 text-xs text-muted-foreground">
+                  <div className="mt-2 text-xs dark:text-gray-200">
                     <strong>Example URIs</strong>
                     <div className="mt-1 ml-4">
                       <div>
@@ -1010,7 +1011,7 @@ export default function EmailProviderSettings({
                           <div className="mt-1 font-mono">
                             https://your-app.example.com/api/auth/microsoft/callback
                           </div>
-                          <div className="mt-1 text-xs text-muted-foreground">
+                          <div className="mt-1 text-xs dark:text-gray-200">
                             (This app uses <code>NEXT_PUBLIC_APP_URL</code> when
                             building the redirect URI on the server — set it to
                             your app URL.)
@@ -1027,7 +1028,7 @@ export default function EmailProviderSettings({
                           <div className="mt-1 ml-3 font-mono">
                             https://your-app.example.com/
                           </div>
-                          <div className="mt-1 text-xs text-muted-foreground">
+                          <div className="mt-1 text-xs dark:text-gray-200">
                             (Azure expects a GET-accessible redirect after
                             sign-out — use &apos;/&apos; or a dedicated
                             &apos;/logout&apos; page.)
@@ -1058,7 +1059,7 @@ export default function EmailProviderSettings({
                   }}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Azure AD Directory (tenant) ID
                 </p>
               </div>
@@ -1075,7 +1076,7 @@ export default function EmailProviderSettings({
                   }}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Application (client) ID from Azure app registration
                 </p>
               </div>
@@ -1105,13 +1106,13 @@ export default function EmailProviderSettings({
                     onClick={() => setShowOffice365Secret(!showOffice365Secret)}
                   >
                     {showOffice365Secret ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Paste the client secret <strong>value</strong> from Azure (the
                   long value shown immediately after creation). Do not paste the
                   secret <em>ID</em>. Avoid leading/trailing spaces.
@@ -1124,13 +1125,13 @@ export default function EmailProviderSettings({
                   onChange={(e) => setOffice365FromEmail(e.target.value)}
                   placeholder="noreply@company.com"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Email address that will send emails (must have a mailbox)
                 </p>
               </div>
               {/* Office365 tips (inline) */}
               {provider === "OFFICE365" && (
-                <div className="rounded-lg border px-4 py-3 text-sm text-muted-foreground mt-3 bg-muted/5">
+                <div className="rounded-lg border px-4 py-3 text-sm dark:text-gray-200 mt-3 bg-muted/5">
                   We recommend using Microsoft Graph (application permissions)
                   for server-sent mail. Make sure your AAD app has{" "}
                   <strong>Mail.Send (Application)</strong> and admin consent.
@@ -1159,9 +1160,9 @@ export default function EmailProviderSettings({
                     onClick={() => setShowSendgridKey(!showSendgridKey)}
                   >
                     {showSendgridKey ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
@@ -1188,9 +1189,9 @@ export default function EmailProviderSettings({
                     onClick={() => setShowMailgunKey(!showMailgunKey)}
                   >
                     {showMailgunKey ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
@@ -1233,9 +1234,9 @@ export default function EmailProviderSettings({
                     onClick={() => setShowAwsKeys(!showAwsKeys)}
                   >
                     {showAwsKeys ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
@@ -1258,9 +1259,9 @@ export default function EmailProviderSettings({
                     onClick={() => setShowAwsKeys(!showAwsKeys)}
                   >
                     {showAwsKeys ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
@@ -1396,7 +1397,7 @@ export default function EmailProviderSettings({
                   String(originalConfig.office365ClientId || "")) &&
                 String(office365ClientSecret || "").trim() === "") ||
                 (office365SecretDirty && !testSuccess)) && (
-                <div className="text-xs text-muted-foreground ml-2">
+                <div className="text-xs dark:text-gray-200 ml-2">
                   Please provide a valid client secret and run{" "}
                   <strong>Test Connection</strong> successfully before saving.
                 </div>
@@ -1437,7 +1438,7 @@ export default function EmailProviderSettings({
                   </div>
 
                   {/* Quick verify — token + send examples for admins */}
-                  <div className="mt-4 rounded border bg-background p-3 text-xs text-muted-foreground">
+                  <div className="mt-4 rounded border bg-background p-3 text-xs dark:text-gray-200">
                     <div className="font-semibold mb-2">
                       Quick verification (advanced)
                     </div>
@@ -1447,7 +1448,7 @@ export default function EmailProviderSettings({
                     </div>
                     <pre className="text-xs bg-muted/5 p-2 rounded overflow-auto">{`curl -s -X POST "https://login.microsoftonline.com/<TENANT_ID>/oauth2/v2.0/token" -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=<CLIENT_ID>&client_secret=<CLIENT_SECRET>&scope=https://graph.microsoft.com/.default&grant_type=client_credentials"`}</pre>
                     <pre className="text-xs bg-muted/5 p-2 rounded overflow-auto mt-2">{`curl -s -X POST "https://graph.microsoft.com/v1.0/users/<FROM_EMAIL>/sendMail" -H "Authorization: Bearer <ACCESS_TOKEN>" -H "Content-Type: application/json" -d '{"message":{"subject":"Test Email","body":{"contentType":"HTML","content":"Test message"},"toRecipients":[{"emailAddress":{"address":"<RECIPIENT>"}}]}}'`}</pre>
-                    <div className="text-[11px] text-muted-foreground mt-2">
+                    <div className="text-[11px] dark:text-gray-200 mt-2">
                       If token command returns error JSON (AADSTS...), share it
                       here and I’ll decode it. If send returns AccessDenied,
                       make sure Mail.Send (Application) permission has admin
@@ -1457,7 +1458,7 @@ export default function EmailProviderSettings({
                 </div>
 
                 {!isDiagnosticsOpen ? (
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs dark:text-gray-200">
                     {testDiagnostics.success
                       ? `Last test: success — ${testDiagnostics.message ?? ""}`
                       : `Last test: failed — ${

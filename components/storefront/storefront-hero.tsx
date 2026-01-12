@@ -68,7 +68,7 @@ export function StorefrontHero({
         )}
         <div className="relative container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center space-y-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+            <p className="text-xs dark:text-gray-200 uppercase tracking-wide">
               {companyName}
             </p>
             {title && (
@@ -80,12 +80,12 @@ export function StorefrontHero({
               </h1>
             )}
             {subtitle && (
-              <p className="text-lg font-semibold text-muted-foreground">
+              <p className="text-lg font-semibold dark:text-gray-200">
                 {subtitle}
               </p>
             )}
             {publishedAt && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 {new Date(publishedAt).toLocaleDateString()}
               </p>
             )}
@@ -125,12 +125,12 @@ export function StorefrontHero({
     <header className={`${fallbackClass ?? "border-b bg-background/95"}`}>
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="space-y-2 text-center">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">
+          <p className="text-xs dark:text-gray-200 uppercase tracking-wide">
             {companyName}
           </p>
           {title && <h1 className="text-3xl font-bold">{title}</h1>}
           {publishedAt && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               {new Date(publishedAt).toLocaleDateString()}
             </p>
           )}

@@ -391,7 +391,7 @@ export function AdminWorkforceView() {
           <h1 className="text-3xl font-bold tracking-tight">
             Workforce Management
           </h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Manage staff across all your companies
           </p>
         </div>
@@ -473,7 +473,7 @@ export function AdminWorkforceView() {
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 dark:text-gray-200" />
                         <Input
                           placeholder="Search by name or email..."
                           value={searchTerm}
@@ -545,16 +545,16 @@ export function AdminWorkforceView() {
               {/* Staff Display */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
                 </div>
               ) : filteredStaff.length === 0 ? (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
-                    <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                    <Users className="h-12 w-12 dark:text-gray-200 mb-4" />
                     <p className="text-lg font-medium">
                       No staff members found
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       {searchTerm || roleFilter !== "ALL"
                         ? "Try adjusting your filters"
                         : "Add your first staff member to get started"}
@@ -601,7 +601,7 @@ export function AdminWorkforceView() {
                               <h3 className="font-semibold truncate">
                                 {member.user.name || "Unnamed"}
                               </h3>
-                              <p className="text-sm text-muted-foreground truncate">
+                              <p className="text-sm dark:text-gray-200 truncate">
                                 {member.user.email}
                               </p>
                               <div className="flex flex-wrap gap-2 mt-2">
@@ -630,7 +630,7 @@ export function AdminWorkforceView() {
                               {(member.city ||
                                 member.state ||
                                 member.country) && (
-                                <p className="text-xs text-muted-foreground mt-2">
+                                <p className="text-xs dark:text-gray-200 mt-2">
                                   {[member.city, member.state, member.country]
                                     .filter(Boolean)
                                     .join(", ")}
@@ -767,7 +767,7 @@ export function AdminWorkforceView() {
                                   <p className="font-medium">
                                     {member.user.name || "Unnamed"}
                                   </p>
-                                  <p className="text-sm text-muted-foreground">
+                                  <p className="text-sm dark:text-gray-200">
                                     {member.user.email}
                                   </p>
                                 </div>
@@ -873,9 +873,9 @@ export function AdminWorkforceView() {
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <Users className="h-12 w-12 dark:text-gray-200 mb-4" />
             <p className="text-lg font-medium">No companies found</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm dark:text-gray-200">
               Create a company to start managing staff
             </p>
           </CardContent>
@@ -978,7 +978,7 @@ export function AdminWorkforceView() {
                         }
                       }}
                     />
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       Maximum 5MB. JPG, PNG, GIF, WebP
                     </p>
                   </div>
@@ -1001,7 +1001,7 @@ export function AdminWorkforceView() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -1010,7 +1010,7 @@ export function AdminWorkforceView() {
                     )}
                   </button>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   Minimum 8 characters
                 </p>
               </div>
@@ -1036,7 +1036,7 @@ export function AdminWorkforceView() {
                     onClick={() =>
                       setShowPasswordConfirmation(!showPasswordConfirmation)
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground"
                   >
                     {showPasswordConfirmation ? (
                       <EyeOff className="h-4 w-4" />
@@ -1091,7 +1091,7 @@ export function AdminWorkforceView() {
                     }
                     required
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Enter any job title - common examples: Sales Rep, Manager,
                     Engineer, Customer Service
                   </p>
@@ -1134,7 +1134,7 @@ export function AdminWorkforceView() {
                 </div>
               </div>
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Admin and Manager have elevated permissions
               </p>
             </div>
@@ -1168,7 +1168,7 @@ export function AdminWorkforceView() {
                     setFormData({ ...formData, bio: e.target.value })
                   }
                   placeholder="Brief bio to display on storefront..."
-                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   rows={4}
                 />
               </div>
@@ -1188,7 +1188,7 @@ export function AdminWorkforceView() {
                   placeholder="0"
                   min="0"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Lower numbers appear first in the team section
                 </p>
               </div>
@@ -1493,7 +1493,7 @@ export function AdminWorkforceView() {
                         }
                       }}
                     />
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       Maximum 5MB. JPG, PNG, GIF, WebP
                     </p>
                   </div>
@@ -1547,7 +1547,7 @@ export function AdminWorkforceView() {
                     }
                     required
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Enter any job title - common examples: Sales Rep, Manager,
                     Engineer, Customer Service
                   </p>
@@ -1632,7 +1632,7 @@ export function AdminWorkforceView() {
                     setEditFormData({ ...editFormData, bio: e.target.value })
                   }
                   placeholder="Brief bio to display on storefront..."
-                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   rows={4}
                 />
               </div>
@@ -1652,7 +1652,7 @@ export function AdminWorkforceView() {
                   placeholder="0"
                   min="0"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Lower numbers appear first in the team section
                 </p>
               </div>

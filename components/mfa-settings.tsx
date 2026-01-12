@@ -1,11 +1,8 @@
 "use client";
 
-
 import { Shield, AlertTriangle, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -157,7 +154,7 @@ export function MfaSettings({
 
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm">How it works:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <ul className="text-sm dark:text-gray-200 space-y-1 list-disc list-inside">
                   <li>
                     You&apos;ll need your authenticator app when logging in
                   </li>
@@ -193,7 +190,7 @@ export function MfaSettings({
 
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm">Benefits:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <ul className="text-sm dark:text-gray-200 space-y-1 list-disc list-inside">
                   <li>Protect against password theft</li>
                   <li>Required for sensitive operations</li>
                   <li>Industry-standard security practice</li>

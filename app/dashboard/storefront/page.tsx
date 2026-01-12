@@ -349,7 +349,7 @@ export default function StorefrontPage() {
       setActivePageId: (id: string | null) => void;
     }) => (
       <div className="flex items-center justify-end gap-2">
-        <span className="text-sm text-muted-foreground">Page</span>
+        <span className="text-sm dark:text-gray-200">Page</span>
         <select
           className="block w-full max-w-xs rounded border border-slate-200 px-3 py-2 text-sm"
           value={activePageId ?? ""}
@@ -1040,7 +1040,7 @@ export default function StorefrontPage() {
     return (
       <DashboardLayout user={user}>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
         </div>
       </DashboardLayout>
     );
@@ -1061,7 +1061,7 @@ export default function StorefrontPage() {
         <div className="h-screen flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">Checking access...</p>
+            <p className="dark:text-gray-200">Checking access...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -1077,7 +1077,7 @@ export default function StorefrontPage() {
             <div className="text-center">
               <AlertCircle className="h-12 w-12 mx-auto mb-4 text-destructive" />
               <h2 className="text-xl font-bold mb-2">Access Restricted</h2>
-              <p className="text-muted-foreground mb-4">{authError}</p>
+              <p className="dark:text-gray-200 mb-4">{authError}</p>
               <Button onClick={() => (window.location.href = "/dashboard")}>
                 Go to Dashboard
               </Button>
@@ -1098,7 +1098,7 @@ export default function StorefrontPage() {
               <Store className="h-8 w-8" />
               Storefront Settings
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="dark:text-gray-200 mt-1">
               Configure your public-facing online store
             </p>
           </div>
@@ -1148,7 +1148,7 @@ export default function StorefrontPage() {
                 </SelectContent>
               </Select>
               {selectedCompany && (
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm dark:text-gray-200 mt-2">
                   Currently configuring: <strong>{selectedCompany.name}</strong>
                 </p>
               )}
@@ -1171,7 +1171,7 @@ export default function StorefrontPage() {
                   />
                 )}
                 <div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     Configuring storefront for
                   </p>
                   <p className="font-semibold text-lg">
@@ -1189,7 +1189,7 @@ export default function StorefrontPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold">Store Status</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   {settings.isStoreEnabled
                     ? "Your store is live and accepting orders"
                     : "Your store is currently disabled"}
@@ -1384,7 +1384,7 @@ export default function StorefrontPage() {
                     />
                   </div>
                   {settings.slug && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       Your store will be accessible at:{" "}
                       <code className="bg-muted px-1 py-0.5 rounded">
                         {window.location.origin}/store/{settings.slug}
@@ -1409,12 +1409,12 @@ export default function StorefrontPage() {
                         }))
                       }
                     />
-                    <span className="text-muted-foreground whitespace-nowrap">
+                    <span className="dark:text-gray-200 whitespace-nowrap">
                       .ontarget-erp.com
                     </span>
                   </div>
                   {settings.subdomain && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       Your store will be accessible at:{" "}
                       <code className="bg-muted px-1 py-0.5 rounded">
                         https://{settings.subdomain}.ontarget-erp.com
@@ -1436,7 +1436,7 @@ export default function StorefrontPage() {
                       }))
                     }
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     You&apos;ll need to configure DNS settings to point your
                     domain to our servers
                   </p>
@@ -1455,7 +1455,7 @@ export default function StorefrontPage() {
               <CardContent className="flex items-center justify-between">
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Enable Blogroll</p>
-                  <p className="text-xs text-muted-foreground max-w-md">
+                  <p className="text-xs dark:text-gray-200 max-w-md">
                     When enabled, your storefront navigation can link to a posts
                     page and you can create posts from the Posts tab.
                   </p>
@@ -1542,7 +1542,7 @@ export default function StorefrontPage() {
                       </>
                     )}
                   </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs dark:text-gray-200 mt-2">
                     Recommended size: 1920x640px, max 5MB
                   </p>
                 </div>
@@ -1851,10 +1851,10 @@ export default function StorefrontPage() {
                     </div>
                     {postsLoading ? (
                       <div className="flex items-center justify-center h-32">
-                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
                       </div>
                     ) : posts.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm dark:text-gray-200">
                         No posts yet. Create your first post above.
                       </p>
                     ) : (
@@ -1867,11 +1867,11 @@ export default function StorefrontPage() {
                             <div>
                               <p className="font-medium">
                                 {post.title}{" "}
-                                <span className="ml-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                <span className="ml-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide dark:text-gray-200">
                                   {post.status}
                                 </span>
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs dark:text-gray-200">
                                 /posts/{post.slug}
                               </p>
                             </div>
@@ -2118,7 +2118,7 @@ export default function StorefrontPage() {
               <CardContent className="space-y-4">
                 {/* Plan gating in UI */}
                 {!planAllowsAiStorefront && (
-                  <div className="rounded-md border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground">
+                  <div className="rounded-md border border-dashed bg-muted/40 p-4 text-sm dark:text-gray-200">
                     <p className="font-medium mb-1">
                       AI Storefront is available on Growth and Enterprise plans.
                     </p>
@@ -2130,14 +2130,14 @@ export default function StorefrontPage() {
                 )}
 
                 {!selectedCompany && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     Select a company above to configure its AI storefront.
                   </p>
                 )}
 
                 {selectedCompany && planAllowsAiStorefront && (
                   <>
-                    <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground space-y-2">
+                    <div className="rounded-md border bg-muted/40 p-3 text-xs dark:text-gray-200 space-y-2">
                       <p>
                         Company:{" "}
                         <span className="font-medium">
@@ -2174,7 +2174,7 @@ export default function StorefrontPage() {
                       <div className="space-y-3">
                         {/* Step 1: Brand & Colors */}
                         <div className="space-y-2">
-                          <h3 className="text-lg font-semibold uppercase tracking-wide text-muted-foreground">
+                          <h3 className="text-lg font-semibold uppercase tracking-wide dark:text-gray-200">
                             Step 1 · Brand & Colors
                           </h3>
                           <div className="grid grid-cols-3 gap-3">
@@ -2218,7 +2218,7 @@ export default function StorefrontPage() {
                               />
                             </div>
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             Leave blank to use defaults. Colors help AI keep the
                             homepage aligned with your brand.
                           </p>
@@ -2226,7 +2226,7 @@ export default function StorefrontPage() {
 
                         {/* Step 2: Layout & Data Toggles */}
                         <div className="space-y-2">
-                          <h3 className="text-lg font-semibold uppercase tracking-wide text-muted-foreground">
+                          <h3 className="text-lg font-semibold uppercase tracking-wide dark:text-gray-200">
                             Step 2 · Sections & Data
                           </h3>
                           <div className="grid grid-cols-3 gap-3 text-xs">
@@ -2252,7 +2252,7 @@ export default function StorefrontPage() {
                               />
                             </div>
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             These control how the AI copy talks about your
                             location, team, and social proof. Actual content
                             still comes from your existing data.
@@ -2261,7 +2261,7 @@ export default function StorefrontPage() {
 
                         {/* Step 3: Prompt & Goal */}
                         <div className="space-y-4">
-                          <h3 className="text-lg font-semibold uppercase tracking-wide text-muted-foreground">
+                          <h3 className="text-lg font-semibold uppercase tracking-wide dark:text-gray-200">
                             Step 3 · Voice & Goal
                           </h3>
                           <div className="grid grid-cols-3 gap-3 text-xs mb-2">
@@ -2296,7 +2296,7 @@ export default function StorefrontPage() {
                             value={aiPrompt}
                             onChange={(e) => setAiPrompt(e.target.value)}
                           />
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             The AI will combine this with your company data to
                             shape headings, CTAs, and section copy.
                           </p>
@@ -2314,7 +2314,7 @@ export default function StorefrontPage() {
                               value={aiRefineNotes}
                               onChange={(e) => setAiRefineNotes(e.target.value)}
                             />
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs dark:text-gray-200">
                               Use this after previewing a design to nudge the AI
                               (e.g., “Make the hero darker”, “Use more playful
                               language”, “Highlight testimonials more”).
@@ -2724,11 +2724,11 @@ export default function StorefrontPage() {
                         <div className="rounded-lg border bg-muted/30 p-3 min-h-[300px]">
                           {(aiConfigLoading || aiPreviewLoading) && (
                             <div className="flex items-center justify-center h-40">
-                              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                              <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
                             </div>
                           )}
                           {!aiConfigLoading && !aiPreviewLoading && !aiSpec && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm dark:text-gray-200">
                               No AI storefront generated yet. Enter a prompt and
                               click{" "}
                               <span className="font-medium">
@@ -3064,11 +3064,11 @@ export default function StorefrontPage() {
 
                   {/* Coming Soon Notice */}
                   <div className="bg-muted border rounded-lg p-8 text-center">
-                    <Globe className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <Globe className="h-12 w-12 mx-auto mb-4 dark:text-gray-200" />
                     <h3 className="text-lg font-semibold mb-2">
                       V3 Full Interface Available
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+                    <p className="text-sm dark:text-gray-200 mb-4 max-w-md mx-auto">
                       The complete V3 generation interface with version
                       management, quality scoring, and preview is now embedded
                       below.
@@ -3282,19 +3282,19 @@ export default function StorefrontPage() {
                                 <h3 className="font-semibold text-lg">
                                   Generating your website...
                                 </h3>
-                                <p className="text-sm text-muted-foreground mt-2">
+                                <p className="text-sm dark:text-gray-200 mt-2">
                                   The AI is creating unique components for your
                                   site.
                                 </p>
-                                <p className="text-xs text-muted-foreground mt-4">
+                                <p className="text-xs dark:text-gray-200 mt-4">
                                   ⏱️ This typically takes 2-3 minutes
                                 </p>
-                                <p className="text-xs text-muted-foreground mt-2">
+                                <p className="text-xs dark:text-gray-200 mt-2">
                                   Please keep this page open. You&apos;ll see a
                                   success message when complete.
                                 </p>
                               </div>
-                              <div className="text-xs text-muted-foreground space-y-1 mt-6 text-left bg-muted/50 p-4 rounded-lg">
+                              <div className="text-xs dark:text-gray-200 space-y-1 mt-6 text-left bg-muted/50 p-4 rounded-lg">
                                 <div>✓ Generating design system...</div>
                                 <div>✓ Creating hero section...</div>
                                 <div>✓ Building product/service pages...</div>
@@ -3308,12 +3308,12 @@ export default function StorefrontPage() {
                         {!v4Website && !v4Generating && (
                           <div className="flex items-center justify-center py-12 h-full">
                             <div className="text-center space-y-4 max-w-md">
-                              <Globe className="h-16 w-16 mx-auto text-muted-foreground/50" />
+                              <Globe className="h-16 w-16 mx-auto dark:text-gray-200/50" />
                               <div>
                                 <h3 className="font-semibold text-lg">
                                   Start Building Your Website
                                 </h3>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm dark:text-gray-200">
                                   Chat with the AI assistant to design your
                                   perfect website. Your preview will appear here
                                   in real-time.
@@ -3550,7 +3550,7 @@ export default function StorefrontPage() {
                   </div>
                   <div className="w-1/2 flex flex-col">
                     {v5PageSelector || (
-                      <div className="text-sm text-muted-foreground text-right">
+                      <div className="text-sm dark:text-gray-200 text-right">
                         Loading pages…
                       </div>
                     )}
@@ -3560,7 +3560,7 @@ export default function StorefrontPage() {
               <CardContent>
                 <div className="space-y-4">
                   {!selectedCompanyId && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       Select a company above to use the V5 generator.
                     </p>
                   )}
@@ -3569,7 +3569,7 @@ export default function StorefrontPage() {
                     <div>
                       {/* Client component mounts when a companyId is selected. If detailed company data isn't loaded yet, we still mount using the id. */}
                       {!selectedCompany ? (
-                        <div className="mb-3 text-sm text-muted-foreground">
+                        <div className="mb-3 text-sm dark:text-gray-200">
                           Loading company details…
                         </div>
                       ) : null}
@@ -3600,7 +3600,7 @@ export default function StorefrontPage() {
                 {selectedCompanyId ? (
                   <WebhookManager companyId={selectedCompanyId} />
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     Select a company to manage webhooks.
                   </p>
                 )}

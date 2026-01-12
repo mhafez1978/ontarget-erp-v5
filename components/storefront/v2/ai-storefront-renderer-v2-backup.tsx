@@ -765,7 +765,7 @@ function FeaturesSectionV2({
                 {item.title}
               </h3>
               <p
-                className={`${typography.bodySize} ${typography.lineHeight} text-muted-foreground`}
+                className={`${typography.bodySize} ${typography.lineHeight} dark:text-gray-200`}
                 style={{ fontFamily: typography.bodyFont }}
               >
                 {item.description}
@@ -920,7 +920,7 @@ function ProductsSectionV2({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className={`${typography.bodySize} text-muted-foreground max-w-2xl mx-auto`}
+            className={`${typography.bodySize} dark:text-gray-200 max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
             {readContentString(section.content, "subtitle")}
@@ -973,7 +973,7 @@ function ProductsSectionV2({
                 </h3>
                 {product.description && (
                   <p
-                    className={`${typography.bodySize} text-muted-foreground mb-4 line-clamp-2`}
+                    className={`${typography.bodySize} dark:text-gray-200 mb-4 line-clamp-2`}
                     style={{ fontFamily: typography.bodyFont }}
                   >
                     {product.description}
@@ -997,7 +997,7 @@ function ProductsSectionV2({
             </motion.div>
           ))
         ) : (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
+          <div className="col-span-full text-center py-12 dark:text-gray-200">
             No products available
           </div>
         )}
@@ -1048,7 +1048,7 @@ function ServicesSectionV2({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className={`${typography.bodySize} text-muted-foreground max-w-2xl mx-auto`}
+            className={`${typography.bodySize} dark:text-gray-200 max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
             {readContentString(section.content, "subtitle")}
@@ -1085,7 +1085,7 @@ function ServicesSectionV2({
               </h3>
               {service.description && (
                 <p
-                  className={`${typography.bodySize} text-muted-foreground mb-4`}
+                  className={`${typography.bodySize} dark:text-gray-200 mb-4`}
                   style={{ fontFamily: typography.bodyFont }}
                 >
                   {service.description}
@@ -1099,7 +1099,7 @@ function ServicesSectionV2({
                     <div key={i} className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-primary shrink-0" />
                       <span
-                        className={`${typography.bodySize} text-sm text-muted-foreground`}
+                        className={`${typography.bodySize} text-sm dark:text-gray-200`}
                       >
                         {feature}
                       </span>
@@ -1126,7 +1126,7 @@ function ServicesSectionV2({
             </motion.div>
           ))
         ) : (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
+          <div className="col-span-full text-center py-12 dark:text-gray-200">
             No services available
           </div>
         )}
@@ -1202,7 +1202,7 @@ function StatsSectionV2({
               {stat.value.toLocaleString()}+
             </motion.div>
             <p
-              className={`${typography.bodySize} text-muted-foreground`}
+              className={`${typography.bodySize} dark:text-gray-200`}
               style={{ fontFamily: typography.bodyFont }}
             >
               {stat.label}
@@ -1295,7 +1295,7 @@ function PortfolioSectionV2({
                       />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-muted to-muted-foreground/20">
-                        <span className="text-4xl font-bold text-muted-foreground/30">
+                        <span className="text-4xl font-bold dark:text-gray-200/30">
                           {project.title.charAt(0)}
                         </span>
                       </div>
@@ -1325,13 +1325,13 @@ function PortfolioSectionV2({
                       </h3>
 
                       {project.client && (
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <p className="mt-1 text-sm dark:text-gray-200">
                           {project.client}
                         </p>
                       )}
 
                       {project.description && (
-                        <p className="mt-4 max-h-0 overflow-hidden text-sm text-muted-foreground/80 transition-all duration-500 group-hover:max-h-24 line-clamp-3">
+                        <p className="mt-4 max-h-0 overflow-hidden text-sm dark:text-gray-200/80 transition-all duration-500 group-hover:max-h-24 line-clamp-3">
                           {project.description}
                         </p>
                       )}
@@ -1349,7 +1349,7 @@ function PortfolioSectionV2({
               </Link>
             ))
           ) : (
-            <div className="col-span-full text-center py-12 text-muted-foreground">
+            <div className="col-span-full text-center py-12 dark:text-gray-200">
               No projects available
             </div>
           )}
@@ -1466,7 +1466,7 @@ function FAQSectionV2({
               className="overflow-hidden"
             >
               <p
-                className={`${typography.bodySize} text-muted-foreground px-6 pb-4`}
+                className={`${typography.bodySize} dark:text-gray-200 px-6 pb-4`}
                 style={{ fontFamily: typography.bodyFont }}
               >
                 {faq.summary}
@@ -1539,7 +1539,7 @@ function ContactSectionV2({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className={`${typography.bodySize} text-muted-foreground max-w-2xl mx-auto`}
+            className={`${typography.bodySize} dark:text-gray-200 max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
             {readContentString(section.content, "subtitle")}
@@ -1703,7 +1703,7 @@ function CTABandV2({
         </h2>
         {readContentString(section.content, "subtitle") && (
           <p
-            className={`${typography.bodySize} text-muted-foreground mb-8 max-w-2xl mx-auto`}
+            className={`${typography.bodySize} dark:text-gray-200 mb-8 max-w-2xl mx-auto`}
             style={{ fontFamily: typography.bodyFont }}
           >
             {readContentString(section.content, "subtitle")}
@@ -1802,7 +1802,7 @@ function PostsSectionV2({
                 </h3>
                 {post.excerpt && (
                   <p
-                    className={`${typography.bodySize} text-muted-foreground mb-4 line-clamp-3`}
+                    className={`${typography.bodySize} dark:text-gray-200 mb-4 line-clamp-3`}
                     style={{ fontFamily: typography.bodyFont }}
                   >
                     {post.excerpt}
@@ -1819,7 +1819,7 @@ function PostsSectionV2({
             </motion.article>
           ))
         ) : (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
+          <div className="col-span-full text-center py-12 dark:text-gray-200">
             No posts available
           </div>
         )}

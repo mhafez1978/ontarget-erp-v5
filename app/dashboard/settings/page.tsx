@@ -910,7 +910,7 @@ export default function SettingsPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Manage your application settings and preferences
           </p>
         </div>
@@ -960,7 +960,7 @@ export default function SettingsPage() {
 
                 {user.role === "SUPER_ADMIN" ? (
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       <strong>Global Settings (Root Platform):</strong> These
                       OAuth providers are configured globally and will be used
                       on the main platform login page (/login) for ERP
@@ -992,7 +992,7 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       <strong>Storefront OAuth Settings:</strong> Configure
                       OAuth providers for your company&apos;s storefront
                       customers. These settings will be used on your storefront
@@ -1064,7 +1064,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold">Google OAuth</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Allow users to sign in with Google
                         </p>
                       </div>
@@ -1206,7 +1206,7 @@ export default function SettingsPage() {
                                 google: !showSecrets.google,
                               })
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                           >
                             {showSecrets.google ? (
                               <EyeOff className="h-4 w-4" />
@@ -1244,7 +1244,7 @@ export default function SettingsPage() {
                         <h3 className="font-semibold">
                           Microsoft OAuth (Office 365)
                         </h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Allow users to sign in with Microsoft/Office 365
                         </p>
                       </div>
@@ -1388,7 +1388,7 @@ export default function SettingsPage() {
                                 microsoft: !showSecrets.microsoft,
                               })
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                           >
                             {showSecrets.microsoft ? (
                               <EyeOff className="h-4 w-4" />
@@ -1424,7 +1424,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold">GitHub OAuth</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Allow users to sign in with GitHub
                         </p>
                       </div>
@@ -1568,7 +1568,7 @@ export default function SettingsPage() {
                                 github: !showSecrets.github,
                               })
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                           >
                             {showSecrets.github ? (
                               <EyeOff className="h-4 w-4" />
@@ -1604,7 +1604,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold">LinkedIn OAuth</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Allow users to sign in with LinkedIn
                         </p>
                       </div>
@@ -1750,7 +1750,7 @@ export default function SettingsPage() {
                                 linkedin: !showSecrets.linkedin,
                               })
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                           >
                             {showSecrets.linkedin ? (
                               <EyeOff className="h-4 w-4" />
@@ -1780,7 +1780,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold">Yahoo OAuth</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Allow users to sign in with Yahoo
                         </p>
                       </div>
@@ -1935,7 +1935,7 @@ export default function SettingsPage() {
                                 yahoo: !showSecrets.yahoo,
                               })
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                           >
                             {showSecrets.yahoo ? (
                               <EyeOff className="h-4 w-4" />
@@ -1967,7 +1967,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold">LINE OAuth</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Allow users to sign in with LINE
                         </p>
                       </div>
@@ -2120,7 +2120,7 @@ export default function SettingsPage() {
                                 line: !showSecrets.line,
                               })
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                           >
                             {showSecrets.line ? (
                               <EyeOff className="h-4 w-4" />
@@ -2150,7 +2150,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold">Yandex OAuth</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Allow users to sign in with Yandex
                         </p>
                       </div>
@@ -2307,7 +2307,7 @@ export default function SettingsPage() {
                                 yandex: !showSecrets.yandex,
                               })
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                           >
                             {showSecrets.yandex ? (
                               <EyeOff className="h-4 w-4" />
@@ -2343,7 +2343,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold">WeChat OAuth</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Allow users to sign in with WeChat
                         </p>
                       </div>
@@ -2509,7 +2509,7 @@ export default function SettingsPage() {
                                 wechat: !showSecrets.wechat,
                               })
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                           >
                             {showSecrets.wechat ? (
                               <EyeOff className="h-4 w-4" />
@@ -2565,7 +2565,7 @@ export default function SettingsPage() {
                       <p className="text-sm font-medium">
                         Global AI Video Engine
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm dark:text-gray-200">
                         Configure Lightricks LTX or Hugging Face as the global
                         provider for AI-generated videos used in Hero sections
                         (V6). Keys are stored encrypted and only visible as
@@ -2573,7 +2573,7 @@ export default function SettingsPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     The API keys are encrypted using AES-256-GCM and are never
                     displayed in plaintext after saving.
                   </p>
@@ -2594,7 +2594,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="mt-4 grid gap-3">
                       <div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           Lightricks LTX API Key
                         </p>
                         <div className="flex gap-2 mt-2">
@@ -2613,7 +2613,7 @@ export default function SettingsPage() {
                             onCheckedChange={setLtxEnabled}
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs dark:text-gray-200 mt-1">
                           {hasLtxKey
                             ? "Key is configured"
                             : "No key configured"}
@@ -2621,7 +2621,7 @@ export default function SettingsPage() {
                       </div>
 
                       <div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           Lightricks LTX Secret (optional)
                         </p>
                         <div className="flex gap-2 mt-2">
@@ -2636,7 +2636,7 @@ export default function SettingsPage() {
                             }
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs dark:text-gray-200 mt-1">
                           {hasLtxSecret
                             ? "Secret is configured"
                             : "No secret configured"}
@@ -2644,7 +2644,7 @@ export default function SettingsPage() {
                       </div>
 
                       <div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           Hugging Face API Token
                         </p>
                         <div className="flex gap-2 mt-2">
@@ -2663,7 +2663,7 @@ export default function SettingsPage() {
                             onCheckedChange={setHfEnabled}
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs dark:text-gray-200 mt-1">
                           {hasHfToken
                             ? "Token is configured"
                             : "No token configured"}
@@ -2685,7 +2685,7 @@ export default function SettingsPage() {
                             Test Result: {testResult.ok ? "Success" : "Failed"}
                           </p>
                           {testResult.error && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs dark:text-gray-200">
                               {testResult.error}
                             </p>
                           )}
@@ -2716,7 +2716,7 @@ export default function SettingsPage() {
                         <p className="text-sm font-medium">
                           Global AI Engine for Storefront Generation
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Configure a global LLM provider (OpenAI-compatible)
                           that will power{" "}
                           <span className="font-semibold">
@@ -2731,7 +2731,7 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs dark:text-gray-200">
                       The API key is stored encrypted in the database. We never
                       show the raw key again after you save it.
                     </p>
@@ -2857,7 +2857,7 @@ export default function SettingsPage() {
                           <p className="text-sm font-medium">
                             Enable AI Storefront Engine
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             When enabled and credentials are valid, Growth /
                             Enterprise companies can generate AI storefront
                             specs.
@@ -2889,7 +2889,7 @@ export default function SettingsPage() {
                           onChange={(e) => setAiApiKey(e.target.value)}
                           disabled={aiProviderLoading}
                         />
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           Leave blank to keep the existing key. Enter a new key
                           to replace it.
                         </p>
@@ -2931,7 +2931,7 @@ export default function SettingsPage() {
                             DeepSeek (Chat, Coder) - Most affordable option
                           </option>
                         </select>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           {aiProviderType === "anthropic"
                             ? "Anthropic offers $5 in free credits for new accounts, making it ideal for testing."
                             : aiProviderType === "deepseek"
@@ -2980,7 +2980,7 @@ export default function SettingsPage() {
                             ))
                           )}
                         </select>
-                        <div className="text-xs text-muted-foreground space-y-1">
+                        <div className="text-xs dark:text-gray-200 space-y-1">
                           {(() => {
                             const models =
                               dynamicModels.length > 0
@@ -3030,7 +3030,7 @@ export default function SettingsPage() {
                           onChange={(e) => setAiApiBase(e.target.value)}
                           disabled={aiProviderLoading}
                         />
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           Leave empty to use the default OpenAI API base. Set
                           this for Azure OpenAI or other compatible providers.
                         </p>
@@ -3040,7 +3040,7 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                       <div className="rounded-lg border bg-muted/20 p-4 space-y-2">
                         <p className="text-sm font-medium">How this is used</p>
-                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                        <ul className="list-disc list-inside text-sm dark:text-gray-200 space-y-1">
                           <li>
                             The key/model are used by the resident AI to{" "}
                             <span className="font-medium">
@@ -3087,7 +3087,7 @@ export default function SettingsPage() {
                               : "Test Connection"}
                           </Button>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           Save settings first, then run a connection test to
                           confirm the LLM provider is reachable and responding
                           with valid JSON.
@@ -3152,7 +3152,7 @@ export default function SettingsPage() {
                     <PaymentProviderCards userRole={user.role} />
                   </div>
                 ) : (
-                  <div className="p-4 rounded-md bg-muted text-muted-foreground">
+                  <div className="p-4 rounded-md bg-muted dark:text-gray-200">
                     <div className="font-semibold">
                       Payment Provider Configuration
                     </div>
@@ -3288,7 +3288,7 @@ export default function SettingsPage() {
                             execute client-side and the request succeed.
                           </li>
                         </ol>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           Note: When captcha is inactive, submissions are still
                           rate-limited server-side and will skip captcha
                           verification.
@@ -3342,7 +3342,7 @@ export default function SettingsPage() {
                             }
                           />
                           {globalCaptchaSiteKey && !globalCaptchaSecretKey && (
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs dark:text-gray-200 mt-1">
                               Leave blank to keep existing secret key
                             </p>
                           )}
@@ -3356,7 +3356,7 @@ export default function SettingsPage() {
                           Save Global Captcha
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs dark:text-gray-200">
                         Homepage guest contact uses <strong>Global</strong>{" "}
                         captcha when enabled. Secrets are stored encrypted and
                         never shown back.
@@ -3406,13 +3406,13 @@ export default function SettingsPage() {
                           Save Company Captcha
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs dark:text-gray-200">
                         Company storefront forms use the{" "}
                         <strong>Company</strong> captcha when enabled; otherwise
                         fallback to Global if available.
                       </p>
                       {companyCaptchaFallback.active && (
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs dark:text-gray-200">
                           Global fallback is active.
                         </div>
                       )}
@@ -3442,7 +3442,7 @@ export default function SettingsPage() {
                         className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
                           activeUserManagementTab === "users"
                             ? "border-primary text-primary"
-                            : "border-transparent text-muted-foreground hover:text-foreground"
+                            : "border-transparent dark:text-gray-200 hover:text-foreground"
                         }`}
                       >
                         <Users className="h-4 w-4 inline mr-2" />
@@ -3453,7 +3453,7 @@ export default function SettingsPage() {
                         className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
                           activeUserManagementTab === "teams"
                             ? "border-primary text-primary"
-                            : "border-transparent text-muted-foreground hover:text-foreground"
+                            : "border-transparent dark:text-gray-200 hover:text-foreground"
                         }`}
                       >
                         <UsersRound className="h-4 w-4 inline mr-2" />
@@ -3468,7 +3468,7 @@ export default function SettingsPage() {
                           className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
                             activeUserManagementTab === "passwords"
                               ? "border-primary text-primary"
-                              : "border-transparent text-muted-foreground hover:text-foreground"
+                              : "border-transparent dark:text-gray-200 hover:text-foreground"
                           }`}
                         >
                           <Lock className="h-4 w-4 inline mr-2" />
@@ -3508,7 +3508,7 @@ export default function SettingsPage() {
                                 </option>
                               ))}
                             </select>
-                            <p className="text-xs text-muted-foreground mt-2">
+                            <p className="text-xs dark:text-gray-200 mt-2">
                               {user.role === "SUPER_ADMIN"
                                 ? "Manage teams for the selected company"
                                 : "Select one of your companies to manage teams"}

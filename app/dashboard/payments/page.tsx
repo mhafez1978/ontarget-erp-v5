@@ -343,7 +343,7 @@ export default function PaymentsPage() {
           <h1 className="text-3xl font-bold tracking-tight">
             Payment Management
           </h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Manage bank accounts, transactions, and invoices. For payment
             gateway configuration, go to Settings → Payment Provider
             Configuration.
@@ -441,10 +441,10 @@ export default function PaymentsPage() {
                             <h4 className="font-medium">
                               {account.institutionName}
                             </h4>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm dark:text-gray-200">
                               {account.accountName} •••• {account.accountMask}
                             </p>
-                            <p className="text-xs text-muted-foreground capitalize">
+                            <p className="text-xs dark:text-gray-200 capitalize">
                               {account.accountType}
                             </p>
                           </div>
@@ -471,7 +471,7 @@ export default function PaymentsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     Transaction history coming soon...
                   </p>
                 </CardContent>
@@ -488,7 +488,7 @@ export default function PaymentsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     Invoice management coming soon...
                   </p>
                 </CardContent>

@@ -1,13 +1,9 @@
 "use client";
 
-
 import { Shield, Copy, CheckCircle, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -144,7 +140,7 @@ export function MfaSetupComponent({ onComplete }: MfaSetupComponentProps = {}) {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <h4 className="font-semibold text-sm">Why enable 2FA?</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+            <ul className="text-sm dark:text-gray-200 space-y-1 list-disc list-inside">
               <li>Protect your account from unauthorized access</li>
               <li>Required for sensitive operations</li>
               <li>Secure even if your password is compromised</li>
@@ -155,7 +151,7 @@ export function MfaSetupComponent({ onComplete }: MfaSetupComponentProps = {}) {
             <h4 className="font-semibold text-sm mb-2">
               What you&apos;ll need:
             </h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm dark:text-gray-200">
               An authenticator app like <strong>Google Authenticator</strong>,{" "}
               <strong>Authy</strong>, or{" "}
               <strong>Microsoft Authenticator</strong>
@@ -332,7 +328,7 @@ export function MfaSetupComponent({ onComplete }: MfaSetupComponentProps = {}) {
         <CardContent className="space-y-4">
           <div className="bg-muted p-4 rounded-lg space-y-2">
             <h4 className="font-semibold text-sm">What&apos;s next?</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <ul className="text-sm dark:text-gray-200 space-y-1">
               <li>• You&apos;ll be asked for a code when you log in</li>
               <li>• Keep your backup codes in a safe place</li>
               <li>• You can disable 2FA anytime from settings</li>

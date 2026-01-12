@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, DollarSign, Save, Database } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -15,9 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-
-
-;
 import { Switch } from "@/components/ui/switch";
 
 interface PlanPricing {
@@ -167,7 +163,7 @@ export function PricingManagement() {
                 </>
               )}
             </Button>
-            <p className="text-sm text-muted-foreground mt-4">
+            <p className="text-sm dark:text-gray-200 mt-4">
               This will create default pricing for all three plans. You can
               customize the prices after initialization.
             </p>

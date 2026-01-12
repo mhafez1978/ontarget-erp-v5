@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Plus, Users, Briefcase, Edit, Trash2, UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -16,17 +15,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-
-
-
-
-;
 import { toast } from "sonner";
 
 interface TeamMember {
   id: string;
   role: string;
-   staffId: string;
+  staffId: string;
   user: {
     id: string;
     name: string | null;
@@ -162,9 +156,9 @@ export function TeamsManagement({
   if (!companyId) {
     return (
       <div className="text-center py-12">
-        <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <Users className="h-12 w-12 dark:text-gray-200 mx-auto mb-4" />
         <h3 className="text-lg font-semibold mb-2">No Company Selected</h3>
-        <span className="text-muted-foreground block">
+        <span className="dark:text-gray-200 block">
           Please select a company to manage teams
         </span>
       </div>
@@ -213,9 +207,9 @@ export function TeamsManagement({
   if (teams.length === 0) {
     return (
       <div className="text-center py-12 border-2 border-dashed rounded-lg">
-        <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <Users className="h-12 w-12 dark:text-gray-200 mx-auto mb-4" />
         <h3 className="text-lg font-semibold mb-2">No Teams Yet</h3>
-        <span className="text-muted-foreground mb-4 block">
+        <span className="dark:text-gray-200 mb-4 block">
           Get started by creating your first team
         </span>
         <Button onClick={onCreateTeam}>
@@ -232,7 +226,7 @@ export function TeamsManagement({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">All Teams ({teams.length})</h3>
-          <span className="text-sm text-muted-foreground block">
+          <span className="text-sm dark:text-gray-200 block">
             Manage your organization&apos;s teams and members
           </span>
         </div>
@@ -267,24 +261,24 @@ export function TeamsManagement({
                 <TableRow key={team.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <Users className="h-4 w-4 dark:text-gray-200" />
                       {team.name}
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <span className="text-sm text-muted-foreground truncate block">
+                    <span className="text-sm dark:text-gray-200 truncate block">
                       {team.description || "No description"}
                     </span>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3 text-muted-foreground" />
+                      <Users className="h-3 w-3 dark:text-gray-200" />
                       <span className="text-sm">{team.memberCount}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Briefcase className="h-3 w-3 text-muted-foreground" />
+                      <Briefcase className="h-3 w-3 dark:text-gray-200" />
                       <span className="text-sm">{team.projectCount}</span>
                     </div>
                   </TableCell>
@@ -326,13 +320,13 @@ export function TeamsManagement({
                           );
                         })}
                         {leads.length > 2 && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs dark:text-gray-200">
                             +{leads.length - 2}
                           </span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
+                      <span className="text-sm dark:text-gray-200">-</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">

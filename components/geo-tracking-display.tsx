@@ -243,7 +243,7 @@ export function GeoTrackingDisplay() {
         </CardHeader>
         <CardContent>
           {activeSessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
+            <p className="text-sm dark:text-gray-200 text-center py-8">
               No active logged-in users at the moment
             </p>
           ) : (
@@ -263,11 +263,11 @@ export function GeoTrackingDisplay() {
                       </span>
                     </div>
                     {session.companyName && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs dark:text-gray-200">
                         {session.companyName}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                    <div className="flex items-center gap-2 text-xs dark:text-gray-200 flex-wrap">
                       <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
                         <span>
@@ -287,7 +287,7 @@ export function GeoTrackingDisplay() {
                       )}
                     </div>
                     {(session.sessionIpv4 || session.sessionIpv6) && (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs dark:text-gray-200">
                         {session.sessionIpv4 && (
                           <span className="mr-3">
                             IPv4: {session.sessionIpv4}
@@ -299,7 +299,7 @@ export function GeoTrackingDisplay() {
                       </div>
                     )}
                     {session.createdAt && (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs dark:text-gray-200">
                         <span>
                           Logged in:{" "}
                           {new Date(session.createdAt).toLocaleString()}
@@ -338,7 +338,7 @@ export function GeoTrackingDisplay() {
         </CardHeader>
         <CardContent>
           {visitors.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
+            <p className="text-sm dark:text-gray-200 text-center py-8">
               No recent visitors tracked
             </p>
           ) : (
@@ -349,10 +349,10 @@ export function GeoTrackingDisplay() {
                   className="flex items-center justify-between p-3 rounded-lg border bg-card text-sm"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Globe className="h-4 w-4 dark:text-gray-200 shrink-0" />
                     <div className="space-y-1 flex-1 min-w-0">
                       <p className="font-medium text-sm">Guest Visitor</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                      <div className="flex items-center gap-2 text-xs dark:text-gray-200 flex-wrap">
                         <span className="truncate">
                           {[visitor.city, visitor.state, visitor.country]
                             .filter(Boolean)
@@ -365,7 +365,7 @@ export function GeoTrackingDisplay() {
                         )}
                       </div>
                       {(visitor.ipv4 || visitor.ipv6 || visitor.ipAddress) && (
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs dark:text-gray-200">
                           {visitor.ipv4 && (
                             <span className="mr-3">IPv4: {visitor.ipv4}</span>
                           )}
@@ -384,7 +384,7 @@ export function GeoTrackingDisplay() {
                       )}
                     </div>
                   </div>
-                  <div className="text-right text-xs text-muted-foreground shrink-0 ml-2">
+                  <div className="text-right text-xs dark:text-gray-200 shrink-0 ml-2">
                     <p>{new Date(visitor.visitedAt).toLocaleTimeString()}</p>
                     <p>{new Date(visitor.visitedAt).toLocaleDateString()}</p>
                   </div>
@@ -394,11 +394,11 @@ export function GeoTrackingDisplay() {
               {hasMoreVisitors && (
                 <div id="visitors-sentinel" className="py-4 text-center">
                   {loadingMoreVisitors ? (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       Loading more visitors...
                     </p>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs dark:text-gray-200">
                       Scroll for more
                     </p>
                   )}

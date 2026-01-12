@@ -202,7 +202,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
           {/* Customer Section */}
           <div className="border-t pt-4">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-medium text-muted-foreground">
+              <h4 className="text-sm font-medium dark:text-gray-200">
                 Customer
               </h4>
               {/* Allow editing only for company customer (not ERP subscriber company) */}
@@ -255,11 +255,11 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
 
             {isEditingCustomer && !localProject.subscriberCompany ? (
               customersLoading ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   Loading customers...
                 </p>
               ) : customers.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">
+                <p className="text-sm dark:text-gray-200 italic">
                   No company customers available.
                 </p>
               ) : (
@@ -351,7 +351,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground italic">
+              <p className="text-sm dark:text-gray-200 italic">
                 No customer assigned (internal project)
               </p>
             )}
@@ -359,26 +359,26 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
 
           <div className="grid gap-4 md:grid-cols-2 border-t pt-4">
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">
+              <h4 className="text-sm font-medium dark:text-gray-200 mb-1">
                 Company
               </h4>
               <p className="text-sm font-medium">{localProject.company.name}</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs dark:text-gray-200 mt-1">
                 ⚠️ Company cannot be changed after project creation
               </p>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">
+              <h4 className="text-sm font-medium dark:text-gray-200 mb-1">
                 Team
               </h4>
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <Users className="h-4 w-4 dark:text-gray-200" />
                 <p className="text-sm font-medium">{localProject.team.name}</p>
                 <Badge variant="secondary" className="text-xs">
                   {localProject.team.members.length} members
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs dark:text-gray-200 mt-1">
                 Team can be changed via project settings
               </p>
             </div>
@@ -397,7 +397,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Overall Progress</span>
+              <span className="dark:text-gray-200">Overall Progress</span>
               <span className="font-bold">{progressPercentage}%</span>
             </div>
             <Progress value={progressPercentage} className="h-2" />
@@ -492,7 +492,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
             />
             {daysRemaining !== null && (
               <div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <div className="flex items-center gap-2 text-sm dark:text-gray-200 mb-1">
                   <Clock className="h-4 w-4" />
                   <span>Time Remaining</span>
                 </div>
@@ -547,7 +547,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                 <p className="text-sm font-medium">
                   {localProject.projectManager.user.name || "Unnamed User"}
                 </p>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-xs dark:text-gray-200">
                   <Mail className="h-3 w-3" />
                   <span>{localProject.projectManager.user.email}</span>
                 </div>
@@ -581,7 +581,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
                 <p className="text-sm font-medium">
                   {localProject.teamLead.user.name || "Unnamed User"}
                 </p>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-xs dark:text-gray-200">
                   <Mail className="h-3 w-3" />
                   <span>{localProject.teamLead.user.email}</span>
                 </div>
@@ -599,7 +599,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">
+              <h4 className="text-sm font-medium dark:text-gray-200 mb-1">
                 Created
               </h4>
               <p className="text-sm">
@@ -613,7 +613,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
               </p>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-1">
+              <h4 className="text-sm font-medium dark:text-gray-200 mb-1">
                 Last Updated
               </h4>
               <p className="text-sm">

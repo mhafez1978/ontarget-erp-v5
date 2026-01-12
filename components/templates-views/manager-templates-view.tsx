@@ -1,8 +1,6 @@
 "use client";
 
-
 import { Mail } from "lucide-react";
-;
 import {
   Card,
   CardContent,
@@ -19,7 +17,7 @@ export default function ManagerTemplatesView() {
           <Mail className="h-8 w-8" />
           Email Templates
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="dark:text-gray-200 mt-2">
           View email templates used by your company
         </p>
       </div>
@@ -32,7 +30,7 @@ export default function ManagerTemplatesView() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Email template management is available to Administrators only.
             Contact your admin if you need changes to email templates.
           </p>

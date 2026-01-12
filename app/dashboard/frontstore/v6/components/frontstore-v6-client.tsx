@@ -50,7 +50,7 @@ export default function FrontstoreV6Client({
               <h2 className="text-2xl font-bold tracking-tight">
                 Live Preview
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Inspect candidate variants and preview changes.
               </p>
             </div>
@@ -73,7 +73,7 @@ export default function FrontstoreV6Client({
           </div>
 
           <div className="mt-6 h-[420px] rounded-xl bg-black/30 flex items-center justify-center border border-white/3">
-            <div className="text-muted-foreground text-center">
+            <div className="dark:text-gray-200 text-center">
               Live preview placeholder — cinematic, dramatic visuals
             </div>
           </div>
@@ -83,7 +83,7 @@ export default function FrontstoreV6Client({
       <aside className="col-span-3">
         <div className="rounded-xl p-4 bg-muted/30 border">
           <h3 className="text-lg font-semibold">Inspector</h3>
-          <div className="mt-3 text-sm text-muted-foreground">
+          <div className="mt-3 text-sm dark:text-gray-200">
             Properties, SEO, visibility, and quick actions.
           </div>
         </div>

@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Users, Loader2, Building2, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -20,10 +19,6 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import { EditCustomerSheet } from "./edit-customer-sheet";
 import { BulkImportCustomers } from "./bulk-import-customers";
@@ -131,7 +126,7 @@ export function CompanyCustomers() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -190,7 +185,7 @@ export function CompanyCustomers() {
       </CardHeader>
       <CardContent>
         {totalCustomers === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 dark:text-gray-200">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="font-medium">No customers yet</p>
             <p className="text-sm mt-2">
@@ -234,7 +229,7 @@ export function CompanyCustomers() {
                           <TableCell className="font-medium capitalize">
                             {customer.name}
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
+                          <TableCell className="text-sm dark:text-gray-200">
                             {customer.email}
                           </TableCell>
                           <TableCell>
@@ -242,7 +237,7 @@ export function CompanyCustomers() {
                               {customer.role}
                             </span>
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
+                          <TableCell className="text-sm dark:text-gray-200">
                             {new Date(customer.joinedAt).toLocaleDateString()}
                           </TableCell>
                           <TableCell className="text-right">

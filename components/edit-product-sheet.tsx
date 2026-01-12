@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Pencil, Upload, Star, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -23,10 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-
-
-;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import { z } from "zod";
 import { Switch } from "@/components/ui/switch";
@@ -528,7 +523,7 @@ export function EditProductSheet({
                       })
                     }
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Get notified when stock falls below this number
                   </p>
                 </div>
@@ -549,7 +544,7 @@ export function EditProductSheet({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Product Images</Label>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm dark:text-gray-200">
                 {images.length} image{images.length !== 1 ? "s" : ""}
               </span>
             </div>
@@ -719,7 +714,7 @@ export function EditProductSheet({
                 )}
               </div>
 
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Images will be automatically optimized with Sharp after upload.
                 Select multiple files to upload in batch. Click the star icon in
                 the table to set the featured image.

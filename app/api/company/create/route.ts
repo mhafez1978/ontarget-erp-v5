@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       website,
       address,
       taxInfo,
+      hedraEnabled, // optional boolean: request to enable Hedera for this company
     } = body;
 
     if (!name || name.trim().length === 0) {
@@ -204,6 +205,31 @@ export async function POST(request: NextRequest) {
             taxId: encrypt(taxInfo.taxId), // Encrypted with AES-256-GCM
             taxCountry: taxInfo.taxCountry || address?.countryCode || null,
             vatNumber: taxInfo.vatNumber ? encrypt(taxInfo.vatNumber) : null, // Encrypted with AES-256-GCM
+          },
+        });
+      }
+
+      // If the request asked to enable Hedera for this company and global Hedera is active, create the CompanyHederaSetting
+      const hederaSetting = await tx.hederaSetting.findFirst();
+
+      if (hedraEnabled && hederaSetting?.isActive) {
+        await tx.companyHederaSetting.create({
+          data: {
+            companyId: company.id,
+            enabled: true,
+            enabledAt: new Date(),
+            enabledById: user.id,
+            historicalAnchored: false,
+          },
+        });
+
+        // Audit the enable action
+        await tx.hederaCompanyAudit.create({
+          data: {
+            companyId: company.id,
+            actorId: user.id,
+            action: "ENABLE",
+            details: { createdDuringOnboarding: true },
           },
         });
       }

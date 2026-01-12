@@ -1,7 +1,17 @@
 "use client";
 
-
-import { Shield, AlertTriangle, Ban, Loader2, Clock, Unlock, TrendingUp, BarChart3, PieChart, Monitor } from "lucide-react";
+import {
+  Shield,
+  AlertTriangle,
+  Ban,
+  Loader2,
+  Clock,
+  Unlock,
+  TrendingUp,
+  BarChart3,
+  PieChart,
+  Monitor,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,15 +25,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-
-
-
-
-
-
-
-
-;
 import {
   LineChart,
   Line,
@@ -290,7 +291,7 @@ export function SuperAdminSecurityView({
         <h1 className="text-3xl font-bold tracking-tight mb-2">
           Security Monitor
         </h1>
-        <p className="text-muted-foreground">
+        <p className="dark:text-gray-200">
           Welcome {userName || "Admin"}! Monitor failed login attempts and
           manage IP blacklist.
         </p>
@@ -311,7 +312,7 @@ export function SuperAdminSecurityView({
                 <div className="text-2xl font-bold">
                   {stats?.failedAttempts.lastHour || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">Failed attempts</p>
+                <p className="text-xs dark:text-gray-200">Failed attempts</p>
               </>
             )}
           </CardContent>
@@ -330,7 +331,7 @@ export function SuperAdminSecurityView({
                 <div className="text-2xl font-bold">
                   {stats?.failedAttempts.last24Hours || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">Failed attempts</p>
+                <p className="text-xs dark:text-gray-200">Failed attempts</p>
               </>
             )}
           </CardContent>
@@ -349,9 +350,7 @@ export function SuperAdminSecurityView({
                 <div className="text-2xl font-bold">
                   {stats?.blockedIps.active || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Currently blocked
-                </p>
+                <p className="text-xs dark:text-gray-200">Currently blocked</p>
               </>
             )}
           </CardContent>
@@ -371,7 +370,7 @@ export function SuperAdminSecurityView({
                   {stats?.topCountries[0]?.flag || "🌍"}{" "}
                   {stats?.topCountries[0]?.attempts || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   {stats?.topCountries[0]?.country || "No data"}
                 </p>
               </>
@@ -425,12 +424,12 @@ export function SuperAdminSecurityView({
           <CardContent>
             {isLoadingAttempts ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
               </div>
             ) : failedAttempts.length === 0 ? (
               <div className="text-center py-12">
-                <Shield className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
+                <Shield className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                <p className="dark:text-gray-200">
                   No failed login attempts. All systems secure! 🎉
                 </p>
               </div>
@@ -469,7 +468,7 @@ export function SuperAdminSecurityView({
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-sm dark:text-gray-200">
                           {timeAgo(attempt.attemptedAt)}
                         </TableCell>
                         <TableCell>
@@ -508,12 +507,12 @@ export function SuperAdminSecurityView({
           <CardContent>
             {isLoadingBlacklist ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
               </div>
             ) : blacklist.length === 0 ? (
               <div className="text-center py-12">
-                <Shield className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
+                <Shield className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                <p className="dark:text-gray-200">
                   No IPs are currently blocked. System is clean! ✨
                 </p>
               </div>
@@ -565,14 +564,14 @@ export function SuperAdminSecurityView({
                             {entry.failedAttempts}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-sm dark:text-gray-200">
                           {timeAgo(entry.blockedAt)}
                         </TableCell>
                         <TableCell className="text-sm">
                           {entry.isPermanent ? (
                             <Badge variant="destructive">Permanent</Badge>
                           ) : (
-                            <span className="text-muted-foreground">
+                            <span className="dark:text-gray-200">
                               {timeAgo(entry.blockedUntil)}
                             </span>
                           )}
@@ -630,7 +629,7 @@ export function SuperAdminSecurityView({
             <CardContent>
               {isLoadingStats ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
                 </div>
               ) : stats?.attackTimeline && stats.attackTimeline.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
@@ -671,7 +670,7 @@ export function SuperAdminSecurityView({
                 </ResponsiveContainer>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">No data available</p>
+                  <p className="dark:text-gray-200">No data available</p>
                 </div>
               )}
             </CardContent>
@@ -688,7 +687,7 @@ export function SuperAdminSecurityView({
             <CardContent>
               {isLoadingOrigins ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
                 </div>
               ) : attackOrigins.length > 0 ? (
                 <div className="flex flex-col items-center gap-4">
@@ -728,7 +727,7 @@ export function SuperAdminSecurityView({
                           <span className="font-mono text-xs">
                             {origin.ipAddress}
                           </span>
-                          <span className="text-muted-foreground">
+                          <span className="dark:text-gray-200">
                             {[origin.city, origin.country]
                               .filter(Boolean)
                               .join(", ")}
@@ -743,8 +742,8 @@ export function SuperAdminSecurityView({
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <Shield className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
+                  <Shield className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                  <p className="dark:text-gray-200">
                     No attack origins to display
                   </p>
                 </div>
@@ -764,7 +763,7 @@ export function SuperAdminSecurityView({
               <CardContent>
                 {isLoadingStats ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
                   </div>
                 ) : stats?.topCountries && stats.topCountries.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
@@ -804,7 +803,7 @@ export function SuperAdminSecurityView({
                   </ResponsiveContainer>
                 ) : (
                   <div className="text-center py-12">
-                    <p className="text-muted-foreground">No data available</p>
+                    <p className="dark:text-gray-200">No data available</p>
                   </div>
                 )}
               </CardContent>
@@ -821,7 +820,7 @@ export function SuperAdminSecurityView({
               <CardContent>
                 {isLoadingStats ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
                   </div>
                 ) : stats?.topTargetedEmails &&
                   stats.topTargetedEmails.length > 0 ? (
@@ -849,7 +848,7 @@ export function SuperAdminSecurityView({
                   </ResponsiveContainer>
                 ) : (
                   <div className="text-center py-12">
-                    <p className="text-muted-foreground">No data available</p>
+                    <p className="dark:text-gray-200">No data available</p>
                   </div>
                 )}
               </CardContent>

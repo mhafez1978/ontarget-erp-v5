@@ -30,7 +30,7 @@ function getRoleCustomerView(role: string, userName?: string | null) {
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-            <p className="text-muted-foreground">
+            <p className="dark:text-gray-200">
               You don&apos;t have permission to view customers.
             </p>
           </div>

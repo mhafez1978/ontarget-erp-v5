@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Edit, Check, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,8 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-
-;
 import { toast } from "sonner";
 
 interface InlineEditSectionProps {
@@ -160,7 +157,7 @@ export function InlineEditSection({
           </div>
         </div>
       ) : (
-        <div className="text-sm text-muted-foreground whitespace-pre-wrap">
+        <div className="text-sm dark:text-gray-200 whitespace-pre-wrap">
           {displayValue || <span className="italic">{placeholder}</span>}
         </div>
       )}

@@ -1,17 +1,18 @@
 "use client";
 
-
-import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  ShoppingCart,
+  Trash2,
+  Plus,
+  Minus,
+  ArrowLeft,
+  ArrowRight,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
-
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -224,7 +225,7 @@ export default function CartPage() {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Shopping Cart</h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             {isEmpty
               ? "Your cart is empty"
               : `${cart.items.length} item${
@@ -236,9 +237,9 @@ export default function CartPage() {
         {isEmpty ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
+              <ShoppingCart className="h-16 w-16 dark:text-gray-200 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Your cart is empty</h3>
-              <p className="text-muted-foreground mb-6 text-center">
+              <p className="dark:text-gray-200 mb-6 text-center">
                 Start shopping to add items to your cart
               </p>
               <div className="flex gap-4">
@@ -284,13 +285,13 @@ export default function CartPage() {
                           <h3 className="font-semibold text-lg mb-1">
                             {itemName}
                           </h3>
-                          <p className="text-sm text-muted-foreground mb-2">
+                          <p className="text-sm dark:text-gray-200 mb-2">
                             {item.itemType === "PRODUCT"
                               ? "Product"
                               : "Service"}
                           </p>
                           {item.service?.duration && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm dark:text-gray-200">
                               Duration: {item.service.duration} mins
                             </p>
                           )}
@@ -362,13 +363,13 @@ export default function CartPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="dark:text-gray-200">Subtotal</span>
                     <span className="font-medium">
                       ${calculateSubtotal().toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tax (10%)</span>
+                    <span className="dark:text-gray-200">Tax (10%)</span>
                     <span className="font-medium">
                       ${calculateTax().toFixed(2)}
                     </span>

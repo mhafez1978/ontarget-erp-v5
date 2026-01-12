@@ -683,7 +683,7 @@ export default function SelectPlanPage() {
                       )}
                       <span
                         className={
-                          req.met ? "text-green-600" : "text-muted-foreground"
+                          req.met ? "text-green-600" : "dark:text-gray-200"
                         }
                       >
                         {req.text}
@@ -729,10 +729,10 @@ export default function SelectPlanPage() {
 
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Add Payment Method</h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg dark:text-gray-200">
               Selected Plan: <strong>{selectedPlanData?.name}</strong>
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm dark:text-gray-200 mt-2">
               {billingCycle === "monthly"
                 ? selectedPlanData?.monthlyPromoPrice
                   ? `$${selectedPlanData.monthlyPromoPrice}/month`
@@ -784,7 +784,7 @@ export default function SelectPlanPage() {
                       expiryDate={cardData.expiryDate}
                       cvv={cardData.cvv}
                     />
-                    <p className="text-xs text-muted-foreground mt-3">
+                    <p className="text-xs dark:text-gray-200 mt-3">
                       For your security we only show masked numbers. The card
                       ending is shown after saving.
                     </p>
@@ -873,7 +873,7 @@ export default function SelectPlanPage() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">Welcome! Choose Your Plan</h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg dark:text-gray-200">
             Select a plan to get started with OnTarget ERP
           </p>
         </div>
@@ -1032,7 +1032,7 @@ export default function SelectPlanPage() {
                           <CheckCircle2 className="h-3 w-3" />
                           Promo applied!
                         </p>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-sm dark:text-gray-200 mt-1">
                           Billed monthly
                         </p>
                       </div>
@@ -1049,7 +1049,7 @@ export default function SelectPlanPage() {
                         <p className="text-xs text-primary font-medium mt-1">
                           Limited time offer!
                         </p>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-sm dark:text-gray-200 mt-1">
                           Billed monthly
                         </p>
                       </div>
@@ -1058,7 +1058,7 @@ export default function SelectPlanPage() {
                         <div className="text-3xl font-bold mt-4">
                           ${plan.monthlyPrice}/month
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-sm dark:text-gray-200 mt-1">
                           Billed monthly
                         </p>
                       </div>
@@ -1082,7 +1082,7 @@ export default function SelectPlanPage() {
                           <CheckCircle2 className="h-3 w-3" />
                           Promo applied!
                         </p>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-sm dark:text-gray-200 mt-1">
                           ${appliedPromo.flatFeeAmount}/month, billed annually
                         </p>
                       </div>
@@ -1094,14 +1094,14 @@ export default function SelectPlanPage() {
                         <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
                           ${plan.annualPrice}/year
                         </p>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-sm dark:text-gray-200 mt-1">
                           Billed annually
                         </p>
                       </div>
                     )}
                   </>
                 )}
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs dark:text-gray-200 mt-2">
                   Transaction fee: {plan.transactionFeePercent}% + $
                   {plan.transactionFeeFixed}
                 </p>

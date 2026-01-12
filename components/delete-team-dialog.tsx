@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -13,7 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-;
 import { toast } from "sonner";
 
 interface Team {
@@ -89,21 +87,21 @@ export function DeleteTeamDialog({
                 undone.
               </div>
               {team.memberCount > 0 && (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm dark:text-gray-200">
                   This team has {team.memberCount} member
                   {team.memberCount !== 1 ? "s" : ""}. They will be removed from
                   the team but their user accounts will remain active.
                 </div>
               )}
               {team.projectCount > 0 && (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm dark:text-gray-200">
                   This team has {team.projectCount} project
                   {team.projectCount !== 1 ? "s" : ""}. These projects will
                   become unassigned and will need to be reassigned to another
                   team.
                 </div>
               )}
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm dark:text-gray-200">
                 The team and all its assignments will be permanently removed.
               </div>
             </div>

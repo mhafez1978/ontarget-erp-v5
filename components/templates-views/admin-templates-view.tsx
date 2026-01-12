@@ -1,15 +1,8 @@
 "use client";
 
-
 import { Mail, Plus, Edit, Eye, Send, Trash2, Building2 } from "lucide-react";
 import { useState, useEffect } from "react";
 
-
-
-
-
-
-;
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -216,7 +209,7 @@ export default function AdminTemplatesView() {
             <Mail className="h-8 w-8" />
             Email Templates
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="dark:text-gray-200 mt-2">
             Manage email templates for your companies
           </p>
         </div>
@@ -260,13 +253,13 @@ export default function AdminTemplatesView() {
               <CardTitle className="text-sm font-medium">
                 Company Templates
               </CardTitle>
-              <Mail className="h-4 w-4 text-muted-foreground" />
+              <Mail className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {companyTemplates.length}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Custom overrides for this company
               </p>
             </CardContent>
@@ -276,13 +269,13 @@ export default function AdminTemplatesView() {
               <CardTitle className="text-sm font-medium">
                 Using Global
               </CardTitle>
-              <Mail className="h-4 w-4 text-muted-foreground" />
+              <Mail className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {globalTemplates.length - companyTemplates.length}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Templates using system defaults
               </p>
             </CardContent>
@@ -292,13 +285,13 @@ export default function AdminTemplatesView() {
               <CardTitle className="text-sm font-medium">
                 Active Templates
               </CardTitle>
-              <Mail className="h-4 w-4 text-muted-foreground" />
+              <Mail className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {templates.filter((t) => t.isActive).length}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Currently enabled templates
               </p>
             </CardContent>

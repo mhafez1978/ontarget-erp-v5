@@ -1,12 +1,8 @@
 "use client";
 
-
 import { Lock, Unlock, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-
-
-;
 import {
   Dialog,
   DialogContent,
@@ -198,7 +194,7 @@ export function FolderPasswordDialog({
             )}
 
             {mode === "set" && (
-              <div className="text-xs text-muted-foreground space-y-1">
+              <div className="text-xs dark:text-gray-200 space-y-1">
                 <p>• Password must be at least 8 characters</p>
                 <p>• This password will protect all files and subfolders</p>
                 <p>• Only admins and managers can set/remove passwords</p>

@@ -44,29 +44,32 @@ const Blockchain: React.FC = () => {
       <div className="section-content">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 flex flex-col gap-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-200 text-purple-500 dark:bg-primary/10 dark:text-primary text-xs font-bold mb-4 w-fit">
-              CHAPTER V: FUTURE-PROOF INTEGRITY
+            <div className="w-[265px] px-4 py-2 rounded-full border border-purple-500 text-purple-500 dark:text-[#2bee79] dark:border-[#2bee79] text-xs font-semibold mb-4">
+              CHAPTER IV: FUTURE-PROOF INTEGRITY
             </div>
-            <h2 className="max-w-4xl mx-auto text-4xl md:text-6xl font-display font-black tracking-tight mb-8 dark:text-gray-200">
-              Immutable{" "}
-              <span className="text-purple-500 dark:text-primary">
-                Company Records
+            <h2 className="max-w-4xl mx-auto text-4xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
+              Verifiable Immutable{" "}
+              <span className="text-purple-500 dark:text-[#2bee79]">
+                Business Records
               </span>
             </h2>
-            <p className="w-full px-4 mx-auto text-lg md:text-2xl text-black dark:text-gray-50 mb-12 leading-relaxed font-body md:max-w-4xl ">
-              The definitive evolution of corporate transparency. Every critical
-              transaction is hashed and tracked on a decentralized ledger,
-              creating an unbreakable chain of trust.
+            <p className="w-full px-4 mx-auto text-base md:text-lg text-black dark:text-gray-50 text-left leading-relaxed font-body md:max-w-4xl mb-6">
+              Hedera Consensus Service acts like a decentralized notary,
+              providing verifiable and immutable timestamps for events without
+              storing the data itself. This ensures no single party controls the
+              process, no PII leaks, or sensitive information is exposed,
+              eliminating front-running and guaranteeing that everyone sees the
+              same transaction order, exactly as it happened.
             </p>
             <div className="flex flex-col gap-6 mt-4 px-4">
               <div className="flex items-start gap-4">
                 <div className="size-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-purple-500 dark:text-primary">
+                  <span className="material-symbols-outlined text-purple-500 dark:text-[#2bee79]">
                     <FileKey />
                   </span>
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold font-display dark:text-gray-200">
+                  <h4 className="text-lg font-bold font-display dark:dark:text-gray-200">
                     Public Verification Protocol
                   </h4>
                   <p className="text-text text-md font-body">
@@ -77,12 +80,12 @@ const Blockchain: React.FC = () => {
               </div>
               <div className="flex items-start gap-4">
                 <div className="size-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-purple-500 dark:text-primary">
+                  <span className="material-symbols-outlined text-purple-500 dark:text-[#2bee79]">
                     <ShieldCheck />
                   </span>
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold font-display dark:text-gray-200">
+                  <h4 className="text-lg font-bold font-display dark:dark:text-gray-200">
                     Zero-Knowledge Auditing
                   </h4>
                   <p className="text-text text-md font-body">
@@ -93,10 +96,10 @@ const Blockchain: React.FC = () => {
               </div>
             </div>
             <div className="mt-8 flex items-center gap-4">
-              <span className="px-4 py-1.5 bg-purple-500 text-white dark:bg-primary dark:text-black text-xs font-black uppercase tracking-widest rounded-full">
+              <span className="px-4 py-2 bg-purple-500 text-white dark:bg-[#2bee79] dark:text-black text-xs font-black uppercase tracking-widest rounded-full">
                 Coming Soon
               </span>
-              <p className="dark:text-primary text-sm font-bold font-display italic">
+              <p className="dark:text-[#2bee79] text-sm font-bold font-display italic">
                 Arriving in v6 Q4 2026
               </p>
             </div>

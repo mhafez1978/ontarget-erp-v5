@@ -81,7 +81,7 @@ export default function CartPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Shopping Cart</h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Review your items and proceed to checkout
           </p>
         </div>
@@ -89,9 +89,9 @@ export default function CartPage() {
         {items.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
+              <ShoppingCart className="h-16 w-16 dark:text-gray-200 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Your cart is empty</h3>
-              <p className="text-muted-foreground mb-6">
+              <p className="dark:text-gray-200 mb-6">
                 Add some products or services to get started
               </p>
               <Button onClick={() => router.push("/dashboard/catalog")}>
@@ -133,7 +133,7 @@ export default function CartPage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingCart className="h-8 w-8 text-muted-foreground" />
+                            <ShoppingCart className="h-8 w-8 dark:text-gray-200" />
                           </div>
                         )}
                       </div>
@@ -142,11 +142,11 @@ export default function CartPage() {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold mb-1">{item.name}</h4>
                         {item.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                          <p className="text-sm dark:text-gray-200 line-clamp-2 mb-2">
                             {item.description}
                           </p>
                         )}
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Type: <span className="capitalize">{item.type}</span>
                         </p>
                         <p className="text-lg font-bold text-primary mt-2">
@@ -222,13 +222,13 @@ export default function CartPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="dark:text-gray-200">Subtotal</span>
                       <span className="font-medium">
                         ${subtotal.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Tax (8%)</span>
+                      <span className="dark:text-gray-200">Tax (8%)</span>
                       <span className="font-medium">${tax.toFixed(2)}</span>
                     </div>
                     <Separator />

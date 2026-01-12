@@ -225,7 +225,7 @@ export default function OAuthSetupPage() {
                 disabled
                 className="bg-slate-50"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 This email was verified through your OAuth provider
               </p>
             </div>
@@ -246,7 +246,7 @@ export default function OAuthSetupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -274,7 +274,7 @@ export default function OAuthSetupPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showConfirmPassword ? (
@@ -295,7 +295,7 @@ export default function OAuthSetupPage() {
                 {passwordRequirements.map((req, index) => (
                   <div
                     key={index}
-                    className="flex items-center text-sm text-muted-foreground"
+                    className="flex items-center text-sm dark:text-gray-200"
                   >
                     {req.met ? (
                       <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
@@ -330,7 +330,7 @@ export default function OAuthSetupPage() {
             </Button>
 
             {/* Help Text */}
-            <p className="text-xs text-center text-muted-foreground mt-4">
+            <p className="text-xs text-center dark:text-gray-200 mt-4">
               You can use this password to sign in as an alternative to using
               your OAuth provider.
             </p>

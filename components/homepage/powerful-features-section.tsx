@@ -17,7 +17,7 @@
 //           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
 //             Powerful Features for Your Business
 //           </h2>
-//           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+//           <p className="text-lg dark:text-gray-200 max-w-2xl mx-auto">
 //             Everything you need to manage and grow your enterprise efficiently
 //           </p>
 //         </div>
@@ -324,7 +324,7 @@ export function PowerfulFeaturesSection() {
               <h3 className="text-4xl md:text-5xl font-bold mb-4">
                 Ready to Launch?
               </h3>
-              <p className="text-xl text-gray-200">
+              <p className="text-xl dark:text-gray-200">
                 Start your 14-day free trial – no credit card required!
               </p>
             </div>

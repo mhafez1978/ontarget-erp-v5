@@ -406,7 +406,7 @@ export function SuperAdminWorkforceView() {
           <h1 className="text-3xl font-bold tracking-tight">
             Workforce Management
           </h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Manage staff across your companies
           </p>
         </div>
@@ -459,7 +459,7 @@ export function SuperAdminWorkforceView() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 dark:text-gray-200 h-4 w-4" />
                   <Input
                     placeholder="Search by name or email..."
                     value={searchTerm}
@@ -542,12 +542,12 @@ export function SuperAdminWorkforceView() {
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
             </div>
           ) : error ? (
             <div className="text-center py-8 text-red-500">{error}</div>
           ) : filteredStaff.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 dark:text-gray-200">
               No staff members found
             </div>
           ) : viewMode === "grid" ? (
@@ -577,7 +577,7 @@ export function SuperAdminWorkforceView() {
                           <h3 className="font-semibold truncate">
                             {member.user.name || "Unnamed"}
                           </h3>
-                          <p className="text-sm text-muted-foreground truncate">
+                          <p className="text-sm dark:text-gray-200 truncate">
                             {member.user.email}
                           </p>
                           <div className="flex flex-wrap gap-2 mt-2">
@@ -610,7 +610,7 @@ export function SuperAdminWorkforceView() {
                             </Badge>
                           </div>
                           {(member.city || member.state || member.country) && (
-                            <p className="text-xs text-muted-foreground mt-2">
+                            <p className="text-xs dark:text-gray-200 mt-2">
                               {[member.city, member.state, member.country]
                                 .filter(Boolean)
                                 .join(", ")}
@@ -700,7 +700,7 @@ export function SuperAdminWorkforceView() {
                           <span className="font-medium">
                             {member.user.name || "No name"}
                           </span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-sm dark:text-gray-200">
                             {member.user.email}
                           </span>
                         </div>
@@ -740,7 +740,7 @@ export function SuperAdminWorkforceView() {
                           <div className="flex flex-col text-sm">
                             {member.city && <span>{member.city}</span>}
                             {member.state && member.country && (
-                              <span className="text-muted-foreground">
+                              <span className="dark:text-gray-200">
                                 {member.state}, {member.country}
                               </span>
                             )}
@@ -888,7 +888,7 @@ export function SuperAdminWorkforceView() {
                         }
                       }}
                     />
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       Maximum 5MB. JPG, PNG, GIF, WebP
                     </p>
                   </div>
@@ -911,7 +911,7 @@ export function SuperAdminWorkforceView() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -920,7 +920,7 @@ export function SuperAdminWorkforceView() {
                     )}
                   </button>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   Minimum 8 characters
                 </p>
               </div>
@@ -946,7 +946,7 @@ export function SuperAdminWorkforceView() {
                     onClick={() =>
                       setShowPasswordConfirmation(!showPasswordConfirmation)
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground"
                   >
                     {showPasswordConfirmation ? (
                       <EyeOff className="h-4 w-4" />
@@ -1001,7 +1001,7 @@ export function SuperAdminWorkforceView() {
                     }
                     required
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Enter any job title - common examples: Sales Rep, Manager,
                     Engineer, Customer Service
                   </p>
@@ -1041,13 +1041,13 @@ export function SuperAdminWorkforceView() {
                       setFormData({ ...formData, payRate: e.target.value })
                     }
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Enter the hourly pay rate for payroll calculations
                   </p>
                 </div>
               </div>
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Admin and Manager have elevated permissions
               </p>
             </div>
@@ -1081,7 +1081,7 @@ export function SuperAdminWorkforceView() {
                     setFormData({ ...formData, bio: e.target.value })
                   }
                   placeholder="Brief bio to display on storefront..."
-                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   rows={4}
                 />
               </div>
@@ -1101,7 +1101,7 @@ export function SuperAdminWorkforceView() {
                   placeholder="0"
                   min="0"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Lower numbers appear first in the team section
                 </p>
               </div>
@@ -1335,7 +1335,7 @@ export function SuperAdminWorkforceView() {
                         }
                       }}
                     />
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       Maximum 5MB. JPG, PNG, GIF, WebP
                     </p>
                   </div>
@@ -1389,7 +1389,7 @@ export function SuperAdminWorkforceView() {
                     }
                     required
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Enter any job title - common examples: Sales Rep, Manager,
                     Engineer, Customer Service
                   </p>
@@ -1448,7 +1448,7 @@ export function SuperAdminWorkforceView() {
                     <Label htmlFor="edit-canSetupPersonalEmail">
                       Allow Personal Email Setup
                     </Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       Enable this staff member to connect their Office365 or
                       Gmail account for sending emails
                     </p>
@@ -1499,7 +1499,7 @@ export function SuperAdminWorkforceView() {
                     setEditFormData({ ...editFormData, bio: e.target.value })
                   }
                   placeholder="Brief bio to display on storefront..."
-                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   rows={4}
                 />
               </div>
@@ -1519,7 +1519,7 @@ export function SuperAdminWorkforceView() {
                   placeholder="0"
                   min="0"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Lower numbers appear first in the team section
                 </p>
               </div>

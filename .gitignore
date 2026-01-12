@@ -11,6 +11,7 @@
 !.yarn/versions
 
 /.backups/*
+/backup
 /coverage
 /documentation
 /admin-scripts

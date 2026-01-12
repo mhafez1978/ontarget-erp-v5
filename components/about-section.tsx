@@ -1,14 +1,13 @@
 "use client";
 
-
-
-
-
-
-
-import { Code2, Cloud, Award, Heart, Briefcase, GraduationCap } from "lucide-react";
-;
-
+import {
+  Code2,
+  Cloud,
+  Award,
+  Heart,
+  Briefcase,
+  GraduationCap,
+} from "lucide-react";
 export function AboutSection() {
   return (
     <section id="about" className="py-20 px-4 bg-muted/30">
@@ -18,7 +17,7 @@ export function AboutSection() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
             About the Founder
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg dark:text-gray-200 max-w-2xl mx-auto">
             Built by a passionate technologist with decades of experience in
             enterprise solutions
           </p>
@@ -30,12 +29,12 @@ export function AboutSection() {
           <div className="space-y-6">
             <div className="prose prose-slate dark:prose-invert max-w-none">
               {/* <h3 className="text-2xl font-bold mb-4">Mohamed Hafez</h3> */}
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="dark:text-gray-200 leading-relaxed">
                 Mohamed Hafez a Full Stack Web Developer, Amazon Certified Cloud
                 Practitioner, and Microsoft Certified Systems Engineer. When
                 I&apos;m NOT coding, I&apos;m with Family.
               </p>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="dark:text-gray-200 leading-relaxed">
                 With a unique blend of development expertise and enterprise
                 architecture experience, I&apos;ve dedicated my career to
                 building solutions that help businesses operate more
@@ -43,7 +42,7 @@ export function AboutSection() {
                 of years of experience working with diverse organizations and
                 understanding their real-world challenges.
               </p>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="dark:text-gray-200 leading-relaxed">
                 Based in Lowell, MA. I run Nodes Unlimited LLC, a next
                 generation cloud web hosting service focusing on creating
                 scalable, cloud-native applications that drive business
@@ -59,7 +58,7 @@ export function AboutSection() {
                 <Briefcase className="h-5 w-5 text-primary" />
                 <span className="font-semibold">Geeks On Demand LLC</span>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Charlotte, North Carolina
               </p>
             </div>
@@ -68,7 +67,7 @@ export function AboutSection() {
                 <Briefcase className="h-5 w-5 text-primary" />
                 <span className="font-semibold">Nodes Unlimited LLC</span>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Lowell, Massachusetts
               </p>
             </div>
@@ -78,7 +77,7 @@ export function AboutSection() {
                 <span className="font-semibold">Blooming Brands Inc</span>{" "}
                 &quot;OnTarget ERP&quot;
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Lowell, Massachusetts
               </p>
             </div>
@@ -94,7 +93,7 @@ export function AboutSection() {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold mb-2">Full Stack Development</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     Expert in modern web technologies including React, Next.js,
                     Node.js, TypeScript, and cloud-native architectures. Over 75
                     public repositories showcasing continuous learning and
@@ -112,7 +111,7 @@ export function AboutSection() {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold mb-2">Cloud & Infrastructure</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     Amazon Certified Cloud Practitioner with deep expertise in
                     AWS services, serverless architectures, and scalable cloud
                     solutions.
@@ -131,7 +130,7 @@ export function AboutSection() {
                   <h4 className="font-semibold mb-2">
                     Certifications & Credentials
                   </h4>
-                  <ul className="space-y-1 text-sm text-muted-foreground">
+                  <ul className="space-y-1 text-sm dark:text-gray-200">
                     <li className="flex items-center gap-2">
                       <Award className="h-4 w-4 text-primary" />
                       Amazon Certified Cloud Practitioner
@@ -153,7 +152,7 @@ export function AboutSection() {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold mb-2">Development Philosophy</h4>
-                  <p className="text-sm text-muted-foreground italic">
+                  <p className="text-sm dark:text-gray-200 italic">
                     &quot;Technology should empower businesses, not complicate
                     them. Every feature in OnTarget ERP is designed with
                     real-world business needs in mind, backed by years of
@@ -169,25 +168,21 @@ export function AboutSection() {
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="text-center p-6 rounded-lg bg-card border">
             <div className="text-3xl font-bold text-primary mb-2">75+</div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm dark:text-gray-200">
               Open Source Projects
             </div>
           </div>
           <div className="text-center p-6 rounded-lg bg-card border">
             <div className="text-3xl font-bold text-primary mb-2">38</div>
-            <div className="text-sm text-muted-foreground">
-              GitHub Followers
-            </div>
+            <div className="text-sm dark:text-gray-200">GitHub Followers</div>
           </div>
           <div className="text-center p-6 rounded-lg bg-card border">
             <div className="text-3xl font-bold text-primary mb-2">20+</div>
-            <div className="text-sm text-muted-foreground">
-              Years Experience
-            </div>
+            <div className="text-sm dark:text-gray-200">Years Experience</div>
           </div>
           <div className="text-center p-6 rounded-lg bg-card border">
             <div className="text-3xl font-bold text-primary mb-2">100%</div>
-            <div className="text-sm text-muted-foreground">Passion Driven</div>
+            <div className="text-sm dark:text-gray-200">Passion Driven</div>
           </div>
         </div>
       </div>

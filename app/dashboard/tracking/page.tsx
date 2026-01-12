@@ -47,7 +47,7 @@ export default function TrackingPage() {
           <h1 className="text-3xl font-bold tracking-tight">
             Visitor & User Tracking
           </h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Monitor visitors and logged-in users with real-time location data
           </p>
         </div>

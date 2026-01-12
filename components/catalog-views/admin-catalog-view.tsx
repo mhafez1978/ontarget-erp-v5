@@ -504,7 +504,7 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-4">Catalog</h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Welcome back, {userName || "Admin"}! Manage your products and
             services here.
           </p>
@@ -589,7 +589,7 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
             </Select>
 
             <div className="relative flex-1 max-w-md ml-auto">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 dark:text-gray-200" />
               <Input
                 type="text"
                 placeholder="Search products or services..."
@@ -630,7 +630,7 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
               <CardContent>
                 {isLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
                   </div>
                 ) : error ? (
                   <div className="text-center py-12">
@@ -638,15 +638,15 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
                   </div>
                 ) : products.length === 0 ? (
                   <div className="text-center py-12">
-                    <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                    <Package className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                    <p className="dark:text-gray-200">
                       No products yet. Add your first product to get started.
                     </p>
                   </div>
                 ) : filteredProducts.length === 0 ? (
                   <div className="text-center py-12">
-                    <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                    <Package className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                    <p className="dark:text-gray-200">
                       No products match your search.
                     </p>
                   </div>
@@ -727,7 +727,7 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
               <CardContent>
                 {isLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
                   </div>
                 ) : error ? (
                   <div className="text-center py-12">
@@ -735,15 +735,15 @@ export function AdminCatalogView({ userName }: AdminCatalogViewProps) {
                   </div>
                 ) : services.length === 0 ? (
                   <div className="text-center py-12">
-                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                    <Briefcase className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                    <p className="dark:text-gray-200">
                       No services yet. Add your first service to get started.
                     </p>
                   </div>
                 ) : filteredServices.length === 0 ? (
                   <div className="text-center py-12">
-                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                    <Briefcase className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                    <p className="dark:text-gray-200">
                       No services match your search.
                     </p>
                   </div>

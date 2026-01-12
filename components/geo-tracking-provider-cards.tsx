@@ -207,7 +207,7 @@ export function GeoTrackingProviderCards() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
       </div>
     );
   }
@@ -218,7 +218,7 @@ export function GeoTrackingProviderCards() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Geo Tracking</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm dark:text-gray-200">
             Track user locations for security and analytics
           </p>
         </div>
@@ -289,10 +289,10 @@ export function GeoTrackingProviderCards() {
 
                   <div className="flex-1 space-y-1">
                     <h4 className="font-semibold">{provider.name}</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       {provider.description}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs dark:text-gray-200">
                       {provider.limits}
                     </p>
                   </div>
@@ -322,7 +322,7 @@ export function GeoTrackingProviderCards() {
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="Enter your API key"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Get your free API key from{" "}
                   {selectedProvider.type === "IPINFO" && (
                     <a

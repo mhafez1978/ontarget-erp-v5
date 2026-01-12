@@ -283,7 +283,7 @@ export function DashboardLayout({
                     <span className="font-bold text-sm leading-tight">
                       {branding.name}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[10px] dark:text-gray-200">
                       {branding.slogan}
                     </span>
                   </div>
@@ -328,7 +328,7 @@ export function DashboardLayout({
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:text-accent-foreground",
                       isActive
                         ? "bg-accent text-accent-foreground font-medium"
-                        : "text-muted-foreground",
+                        : "dark:text-gray-200",
                       isCollapsed && "justify-center"
                     )}
                     title={isCollapsed ? item.label : undefined}
@@ -352,7 +352,7 @@ export function DashboardLayout({
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+              "w-full justify-start dark:text-gray-200 hover:text-destructive hover:bg-destructive/10",
               isCollapsed && "justify-center px-2"
             )}
             onClick={handleSignOut}
@@ -384,7 +384,7 @@ export function DashboardLayout({
                   {displayName}
                 </span>
                 {user?.role && (
-                  <span className="text-xs text-muted-foreground truncate">
+                  <span className="text-xs dark:text-gray-200 truncate">
                     {user.role.replace("_", " ")}
                   </span>
                 )}

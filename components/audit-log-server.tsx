@@ -291,7 +291,7 @@ export async function AuditLogServer() {
   if (!sessionToken) {
     return (
       <div className="rounded-xl border bg-card shadow-sm p-4">
-        <div className="text-center text-muted-foreground text-sm">
+        <div className="text-center dark:text-gray-200 text-sm">
           Please log in to view activity logs
         </div>
       </div>
@@ -303,7 +303,7 @@ export async function AuditLogServer() {
   if (!user?.id) {
     return (
       <div className="rounded-xl border bg-card shadow-sm p-4">
-        <div className="text-center text-muted-foreground text-sm">
+        <div className="text-center dark:text-gray-200 text-sm">
           Please log in to view activity logs
         </div>
       </div>
@@ -328,7 +328,7 @@ export async function AuditLogServer() {
   if (!userWithMemberships) {
     return (
       <div className="rounded-xl border bg-card shadow-sm p-4">
-        <div className="text-center text-muted-foreground text-sm">
+        <div className="text-center dark:text-gray-200 text-sm">
           User not found
         </div>
       </div>
@@ -415,7 +415,7 @@ export async function AuditLogServer() {
   if (auditLogs.length === 0) {
     return (
       <div className="rounded-xl border bg-card shadow-sm p-4">
-        <div className="text-center text-muted-foreground text-sm">
+        <div className="text-center dark:text-gray-200 text-sm">
           No activities yet
         </div>
       </div>
@@ -453,19 +453,19 @@ export async function AuditLogServer() {
                   >
                     {meta.label}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs dark:text-gray-200">
                     {formatDateTime(evt.createdAt)}
                   </span>
                 </div>
 
                 {evt.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">
+                  <p className="text-xs dark:text-gray-200 line-clamp-2">
                     {evt.description}
                   </p>
                 )}
 
                 {/* Compact metadata */}
-                <div className="flex items-center gap-3 text-[11px] text-muted-foreground/80">
+                <div className="flex items-center gap-3 text-[11px] dark:text-gray-200/80">
                   <span className="truncate">
                     {evt.user?.name || evt.user?.email || "Unknown"}
                   </span>

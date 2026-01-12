@@ -137,7 +137,7 @@ export function CompanyCustomerProjectsView() {
             <CardTitle className="text-center">No Company Access</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-center text-muted-foreground">
+            <p className="text-center dark:text-gray-200">
               You are not currently linked to any company. Please contact your
               administrator.
             </p>
@@ -155,14 +155,14 @@ export function CompanyCustomerProjectsView() {
           <FolderKanban className="h-8 w-8" />
           My Projects
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="dark:text-gray-200 mt-1">
           View projects from {company.name}
         </p>
       </div>
 
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 dark:text-gray-200" />
         <Input
           type="text"
           placeholder="Search projects..."
@@ -178,9 +178,9 @@ export function CompanyCustomerProjectsView() {
       ) : filteredProjects.length === 0 ? (
         <Card className="col-span-full">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <FolderKanban className="h-12 w-12 text-muted-foreground mb-4" />
+            <FolderKanban className="h-12 w-12 dark:text-gray-200 mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Projects Found</h3>
-            <p className="text-muted-foreground text-center">
+            <p className="dark:text-gray-200 text-center">
               {searchQuery
                 ? "No projects match your search criteria"
                 : "You don't have any projects assigned yet"}

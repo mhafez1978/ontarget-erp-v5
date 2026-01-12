@@ -1,4 +1,14 @@
-import { MoreHorizontal, ArrowUpDown, ChevronLeft, ChevronRight, Eye, Edit, Trash2, Users, ListTodo } from "lucide-react";
+import {
+  MoreHorizontal,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Edit,
+  Trash2,
+  Users,
+  ListTodo,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,14 +20,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-
-
-
-
-
-
-
-;
 import { useState } from "react";
 import {
   Select,
@@ -261,7 +263,7 @@ export function ListView({ projects, onProjectsChange }: ListViewProps) {
               <TableRow>
                 <TableCell
                   colSpan={8}
-                  className="text-center text-muted-foreground"
+                  className="text-center dark:text-gray-200"
                 >
                   No projects found
                 </TableCell>
@@ -276,7 +278,7 @@ export function ListView({ projects, onProjectsChange }: ListViewProps) {
                     <div className="space-y-1">
                       <div className="font-medium">{project.name}</div>
                       {project.description && (
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm dark:text-gray-200">
                           {project.description.length > 30
                             ? `${project.description.substring(0, 30)}...`
                             : project.description}
@@ -378,7 +380,7 @@ export function ListView({ projects, onProjectsChange }: ListViewProps) {
       {projects.length > 0 && (
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm dark:text-gray-200">
               Showing {startIndex + 1} to {Math.min(endIndex, projects.length)}{" "}
               of {projects.length} projects
             </p>
@@ -387,7 +389,7 @@ export function ListView({ projects, onProjectsChange }: ListViewProps) {
           <div className="flex items-center gap-6">
             {/* Items per page selector */}
             <div className="flex items-center gap-2">
-              <p className="text-sm text-muted-foreground">Rows per page</p>
+              <p className="text-sm dark:text-gray-200">Rows per page</p>
               <Select
                 value={itemsPerPage.toString()}
                 onValueChange={(value) => {
@@ -410,7 +412,7 @@ export function ListView({ projects, onProjectsChange }: ListViewProps) {
 
             {/* Page navigation */}
             <div className="flex items-center gap-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Page {currentPage} of {totalPages}
               </p>
               <div className="flex items-center gap-1">

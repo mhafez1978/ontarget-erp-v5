@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, UserPlus, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import {
@@ -233,7 +232,7 @@ export function AddCustomerSheet({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-3 dark:text-gray-200 hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -242,9 +241,7 @@ export function AddCustomerSheet({
                 )}
               </button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Minimum 8 characters
-            </p>
+            <p className="text-xs dark:text-gray-200">Minimum 8 characters</p>
           </div>
 
           <div className="space-y-2">
@@ -265,7 +262,7 @@ export function AddCustomerSheet({
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-3 dark:text-gray-200 hover:text-foreground"
               >
                 {showConfirmPassword ? (
                   <EyeOff className="h-4 w-4" />

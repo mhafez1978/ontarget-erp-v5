@@ -1,10 +1,8 @@
 "use client";
 
-
 import { Mail, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-;
 import SuperAdminTemplatesView from "@/components/templates-views/super-admin-templates-view";
 import EmailCustomersTab from "@/components/hub-views/email-customers-tab";
 
@@ -25,7 +23,7 @@ export default function BusinessHubView({
           <Mail className="h-8 w-8" />
           Business Hub
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="dark:text-gray-200 mt-2">
           Manage templates and send emails to your team
         </p>
       </div>

@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Users, Loader2, Building2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -19,8 +18,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-
-;
 import { Button } from "@/components/ui/button";
 
 interface CustomerData {
@@ -86,7 +83,7 @@ export function CompanyCustomersList() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -139,7 +136,7 @@ export function CompanyCustomersList() {
       </CardHeader>
       <CardContent>
         {customers.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 dark:text-gray-200">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <h3 className="text-lg font-semibold mb-2">No customers yet</h3>
             <p className="text-sm">
@@ -177,10 +174,10 @@ export function CompanyCustomersList() {
                         {customer.companyName}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm dark:text-gray-200">
                       {new Date(customer.joinedAt).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm dark:text-gray-200">
                       {new Date(customer.createdAt).toLocaleDateString()}
                     </TableCell>
                   </TableRow>

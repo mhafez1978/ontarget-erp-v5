@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Upload, Loader2, Save, User, Eye, EyeOff, Lock } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -23,12 +22,6 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 
-
-
-
-
-
-;
 import { getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 
 interface UserProfile {
@@ -466,7 +459,7 @@ export default function ProfilePage() {
         user={user || { name: null, email: null, image: null, role: "GUEST" }}
       >
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <Loader2 className="w-8 h-8 animate-spin dark:text-gray-200" />
         </div>
       </DashboardLayout>
     );
@@ -478,7 +471,7 @@ export default function ProfilePage() {
 
   return (
     <DashboardLayout user={user}>
-      <div className="p-6 max-w-6xl">
+      <div className="p-6 max-w-6xl text-black">
         <Tabs defaultValue="profile">
           <TabsList>
             <TabsTrigger value="profile">Profile information</TabsTrigger>
@@ -489,7 +482,7 @@ export default function ProfilePage() {
           <TabsContent value="profile">
             <div className="mb-6">
               <h1 className="text-3xl font-bold mb-2">My Profile</h1>
-              <p className="text-muted-foreground">
+              <p className="dark:text-gray-200">
                 Manage your personal information and preferences
               </p>
             </div>
@@ -579,7 +572,7 @@ export default function ProfilePage() {
                         </Button>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs dark:text-gray-200">
                       JPG, PNG or GIF. Max 5MB.
                     </p>
                   </div>
@@ -644,7 +637,7 @@ export default function ProfilePage() {
                             disabled
                             className="bg-muted"
                           />
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs dark:text-gray-200 mt-1">
                             Email cannot be changed
                           </p>
                         </>
@@ -698,7 +691,7 @@ export default function ProfilePage() {
                     }}
                     onChange={handleAddressChange}
                   />
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-xs dark:text-gray-200 mt-2">
                     Start typing to search for your address. The selected
                     address will be saved automatically.
                   </p>
@@ -788,7 +781,7 @@ export default function ProfilePage() {
           <TabsContent value="password">
             <div className="mb-6">
               <h1 className="text-3xl font-bold mb-2">Reset Password</h1>
-              <p className="text-muted-foreground">
+              <p className="dark:text-gray-200">
                 Update your password to keep your account secure
               </p>
             </div>
@@ -836,13 +829,13 @@ export default function ProfilePage() {
                           }
                         >
                           {showCurrentPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            <EyeOff className="h-4 w-4 dark:text-gray-200" />
                           ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
+                            <Eye className="h-4 w-4 dark:text-gray-200" />
                           )}
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs dark:text-gray-200">
                         Enter your current password to change it
                       </p>
                     </div>
@@ -888,9 +881,9 @@ export default function ProfilePage() {
                         onClick={() => setShowNewPassword(!showNewPassword)}
                       >
                         {showNewPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          <EyeOff className="h-4 w-4 dark:text-gray-200" />
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          <Eye className="h-4 w-4 dark:text-gray-200" />
                         )}
                       </Button>
                     </div>
@@ -899,7 +892,7 @@ export default function ProfilePage() {
                         className={
                           passwordData.newPassword.length >= 8
                             ? "text-green-600"
-                            : "text-muted-foreground"
+                            : "dark:text-gray-200"
                         }
                       >
                         ✓ At least 8 characters
@@ -908,7 +901,7 @@ export default function ProfilePage() {
                         className={
                           /[A-Z]/.test(passwordData.newPassword)
                             ? "text-green-600"
-                            : "text-muted-foreground"
+                            : "dark:text-gray-200"
                         }
                       >
                         ✓ One uppercase letter
@@ -917,7 +910,7 @@ export default function ProfilePage() {
                         className={
                           /[a-z]/.test(passwordData.newPassword)
                             ? "text-green-600"
-                            : "text-muted-foreground"
+                            : "dark:text-gray-200"
                         }
                       >
                         ✓ One lowercase letter
@@ -926,7 +919,7 @@ export default function ProfilePage() {
                         className={
                           /[0-9]/.test(passwordData.newPassword)
                             ? "text-green-600"
-                            : "text-muted-foreground"
+                            : "dark:text-gray-200"
                         }
                       >
                         ✓ One number
@@ -965,9 +958,9 @@ export default function ProfilePage() {
                         }
                       >
                         {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          <EyeOff className="h-4 w-4 dark:text-gray-200" />
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          <Eye className="h-4 w-4 dark:text-gray-200" />
                         )}
                       </Button>
                     </div>

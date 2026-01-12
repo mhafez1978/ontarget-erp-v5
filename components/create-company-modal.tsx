@@ -232,7 +232,7 @@ export function CreateCompanyModal({
                   setFormData({ ...formData, description: e.target.value })
                 }
                 disabled={isLoading}
-                className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="space-y-2">
@@ -251,7 +251,7 @@ export function CreateCompanyModal({
                   {Object.entries(getIndustriesByCategory()).map(
                     ([category, industries]) => (
                       <div key={category}>
-                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                        <div className="px-2 py-1.5 text-xs font-semibold dark:text-gray-200">
                           {category}
                         </div>
                         {industries.map((industry) => (
@@ -347,12 +347,12 @@ export function CreateCompanyModal({
         return (
           <div className="space-y-4">
             <div className="flex items-start gap-2 mb-4">
-              <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <AlertCircle className="h-5 w-5 dark:text-gray-200 mt-0.5" />
               <div>
                 <h3 className="font-semibold text-sm">
                   Tax Information (Optional)
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs dark:text-gray-200 mt-1">
                   Required for invoicing, payroll, and IRS compliance. You can
                   skip and add this later.
                 </p>
@@ -377,7 +377,7 @@ export function CreateCompanyModal({
                       <SelectItem key={key} value={key}>
                         <div className="flex flex-col">
                           <span>{label}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs dark:text-gray-200">
                             {region}
                           </span>
                         </div>
@@ -447,7 +447,7 @@ export function CreateCompanyModal({
                     }
                     disabled={isLoading}
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Data is encrypted and stored securely for compliance
                   </p>
                 </div>

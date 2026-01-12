@@ -119,7 +119,7 @@ export function StripeConnectSettings({
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -194,7 +194,7 @@ export function StripeConnectSettings({
                   <span className="font-medium">Direct Payments</span>
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   Money goes directly to your Stripe account
                 </p>
               </div>
@@ -204,7 +204,7 @@ export function StripeConnectSettings({
                   <span className="font-medium">Automatic Payouts</span>
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   Stripe deposits to your bank in 2-7 business days
                 </p>
               </div>
@@ -214,7 +214,7 @@ export function StripeConnectSettings({
                   <span className="font-medium">No Platform Fees</span>
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   Save {feeInfo?.feePercent}% on every transaction
                 </p>
               </div>
@@ -239,7 +239,7 @@ export function StripeConnectSettings({
               )}
             </Button>
 
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-xs dark:text-gray-200 text-center">
               You&apos;ll be redirected to Stripe to create or link your account
             </p>
           </>
@@ -294,7 +294,7 @@ export function StripeConnectSettings({
               <span className="text-sm font-medium">Current Platform Fee</span>
               <Badge variant="secondary">{feeInfo.feePercent}%</Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               Applied to storefront transactions when using global gateway (
               {feeInfo.planName} plan)
             </p>

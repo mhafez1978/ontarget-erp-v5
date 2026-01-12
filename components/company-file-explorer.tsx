@@ -1,7 +1,16 @@
 "use client";
 
-
-import { Folder, File, FileText, Image, FileArchive, Download, Eye, Trash2, RefreshCw } from "lucide-react";
+import {
+  Folder,
+  File,
+  FileText,
+  Image,
+  FileArchive,
+  Download,
+  Eye,
+  Trash2,
+  RefreshCw,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -28,14 +37,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-
-
-
-
-
-
-;
 import { toast } from "sonner";
 
 interface FileItem {
@@ -179,11 +180,11 @@ export function CompanyFileExplorer({
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 dark:text-gray-200">
             Loading files...
           </div>
         ) : files.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 dark:text-gray-200">
             <Folder className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>No files found in this category</p>
           </div>
@@ -208,7 +209,7 @@ export function CompanyFileExplorer({
                   return (
                     <TableRow key={file.id}>
                       <TableCell>
-                        <FileIcon className="h-4 w-4 text-muted-foreground" />
+                        <FileIcon className="h-4 w-4 dark:text-gray-200" />
                       </TableCell>
                       <TableCell className="font-medium">{file.name}</TableCell>
                       <TableCell>
@@ -217,14 +218,14 @@ export function CompanyFileExplorer({
                       <TableCell>
                         <div className="text-sm">
                           <div>{file.employeeName}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs dark:text-gray-200">
                             {file.employeeEmail}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>{formatFileSize(file.size)}</TableCell>
                       <TableCell>{getStatusBadge(file.status)}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm dark:text-gray-200">
                         {formatDate(file.uploadedAt)}
                       </TableCell>
                       <TableCell className="text-right">

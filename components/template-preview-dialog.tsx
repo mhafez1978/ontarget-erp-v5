@@ -106,7 +106,7 @@ export function TemplatePreviewDialog({
               <div className="border rounded-md p-6 bg-white dark:bg-gray-900 min-h-[300px]">
                 <div dangerouslySetInnerHTML={{ __html: renderedHtml }} />
               </div>
-              <details className="text-xs text-muted-foreground">
+              <details className="text-xs dark:text-gray-200">
                 <summary className="cursor-pointer hover:text-foreground">
                   View HTML Source
                 </summary>
@@ -125,7 +125,7 @@ export function TemplatePreviewDialog({
 
           {/* Sample Data Used */}
           <details className="text-xs">
-            <summary className="cursor-pointer font-semibold text-muted-foreground hover:text-foreground">
+            <summary className="cursor-pointer font-semibold dark:text-gray-200 hover:text-foreground">
               Sample Data Used in Preview
             </summary>
             <div className="mt-2 p-4 bg-muted rounded-md space-y-1">
@@ -134,7 +134,7 @@ export function TemplatePreviewDialog({
                   <span className="font-mono font-semibold">
                     {`{{${varName}}}`}:
                   </span>
-                  <span className="text-muted-foreground">
+                  <span className="dark:text-gray-200">
                     {sampleData[varName] || "(no sample data)"}
                   </span>
                 </div>

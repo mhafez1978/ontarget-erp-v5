@@ -106,7 +106,7 @@ export function TestimonialForm({ slug, apiPath }: TestimonialFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-80 h-15 text-lg bg-purple-500 text-white dark:bg-primary dark:text-black hover:bg-green-300 py-4 px-10">
+        <Button className="w-80 h-15 text-lg bg-purple-500 text-white dark:bg-[#2bee79] dark:text-black hover:bg-green-300 py-4 px-10">
           Want to share your experience?{" "}
         </Button>
       </DialogTrigger>
@@ -142,7 +142,7 @@ export function TestimonialForm({ slug, apiPath }: TestimonialFormProps) {
                   />
                 </button>
               ))}
-              <span className="ml-2 text-sm text-muted-foreground self-center">
+              <span className="ml-2 text-sm dark:text-gray-200 self-center">
                 {rating} / 5
               </span>
             </div>
@@ -236,14 +236,14 @@ export function TestimonialForm({ slug, apiPath }: TestimonialFormProps) {
                 />
                 <button
                   type="button"
-                  className="text-xs underline text-muted-foreground"
+                  className="text-xs underline dark:text-gray-200"
                   onClick={() => setCustomerPhoto(null)}
                 >
                   Remove
                 </button>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Optional: upload a small profile photo for your testimonial (max
                 2MB).
               </p>
@@ -264,7 +264,7 @@ export function TestimonialForm({ slug, apiPath }: TestimonialFormProps) {
               rows={5}
               className="resize-none"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               Your testimonial will be reviewed before being published.
             </p>
           </div>

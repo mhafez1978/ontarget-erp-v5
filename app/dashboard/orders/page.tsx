@@ -430,7 +430,7 @@ export default function OrdersPage() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold">Orders</h1>
-            <p className="text-muted-foreground">
+            <p className="dark:text-gray-200">
               Manage and track customer orders
             </p>
           </div>
@@ -449,7 +449,7 @@ export default function OrdersPage() {
               <CardTitle className="text-sm font-medium">
                 Total Orders
               </CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              <ShoppingCart className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total}</div>
@@ -459,7 +459,7 @@ export default function OrdersPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.pending}</div>
@@ -469,7 +469,7 @@ export default function OrdersPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Processing</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
+              <Package className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.processing}</div>
@@ -479,7 +479,7 @@ export default function OrdersPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.completed}</div>
@@ -491,7 +491,7 @@ export default function OrdersPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <DollarSign className="h-4 w-4 dark:text-gray-200" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -513,7 +513,7 @@ export default function OrdersPage() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
                 <Input
                   placeholder="Search by order #, name, or email..."
                   value={searchQuery}
@@ -566,13 +566,13 @@ export default function OrdersPage() {
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
               </div>
             ) : filteredOrders.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                <Package className="h-12 w-12 dark:text-gray-200 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No orders found</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   {searchQuery ||
                   statusFilter !== "all" ||
                   paymentFilter !== "all"
@@ -630,7 +630,7 @@ export default function OrdersPage() {
                             <div className="font-medium">
                               {order.customerName}
                             </div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-sm dark:text-gray-200">
                               {order.customerEmail}
                             </div>
                           </div>
@@ -707,16 +707,16 @@ export default function OrdersPage() {
                   <h3 className="font-semibold mb-3">Customer Information</h3>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Name:</span>{" "}
+                      <span className="dark:text-gray-200">Name:</span>{" "}
                       {selectedOrder.customerName}
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Email:</span>{" "}
+                      <span className="dark:text-gray-200">Email:</span>{" "}
                       {selectedOrder.customerEmail}
                     </div>
                     {selectedOrder.customerPhone && (
                       <div>
-                        <span className="text-muted-foreground">Phone:</span>{" "}
+                        <span className="dark:text-gray-200">Phone:</span>{" "}
                         {selectedOrder.customerPhone}
                       </div>
                     )}
@@ -749,14 +749,14 @@ export default function OrdersPage() {
                             />
                           ) : (
                             <div className="w-[60px] h-[60px] bg-muted rounded flex items-center justify-center">
-                              <Package className="h-6 w-6 text-muted-foreground" />
+                              <Package className="h-6 w-6 dark:text-gray-200" />
                             </div>
                           )}
                           <div className="flex-1">
                             <div className="font-medium">
                               {itemData?.name || "Unknown Item"}
                             </div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-sm dark:text-gray-200">
                               Qty: {item.quantity} × $
                               {Number(item.unitPrice).toFixed(2)}
                             </div>
@@ -775,15 +775,15 @@ export default function OrdersPage() {
                   <h3 className="font-semibold mb-3">Order Summary</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal:</span>
+                      <span className="dark:text-gray-200">Subtotal:</span>
                       <span>${Number(selectedOrder.subtotal).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Tax:</span>
+                      <span className="dark:text-gray-200">Tax:</span>
                       <span>${Number(selectedOrder.tax).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Shipping:</span>
+                      <span className="dark:text-gray-200">Shipping:</span>
                       <span>${Number(selectedOrder.shipping).toFixed(2)}</span>
                     </div>
                     {Number(selectedOrder.discount) > 0 && (
@@ -805,7 +805,7 @@ export default function OrdersPage() {
                 {selectedOrder.customerNotes && (
                   <div>
                     <h3 className="font-semibold mb-2">Customer Notes</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       {selectedOrder.customerNotes}
                     </p>
                   </div>
@@ -837,7 +837,7 @@ export default function OrdersPage() {
                         <span className="text-sm font-medium">
                           Payment Method:
                         </span>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm dark:text-gray-200">
                           {selectedOrder.paymentMethod}
                         </span>
                       </div>

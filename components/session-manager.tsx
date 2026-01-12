@@ -1,7 +1,15 @@
 "use client";
 
-
-import { Monitor, Smartphone, Tablet, MapPin, Clock, Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import {
+  Monitor,
+  Smartphone,
+  Tablet,
+  MapPin,
+  Clock,
+  Trash2,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import {
   Card,
@@ -31,13 +39,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-
-
-
-
-
-
-;
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -253,7 +254,7 @@ export function SessionManager({ userRole }: SessionManagerProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -302,7 +303,7 @@ export function SessionManager({ userRole }: SessionManagerProps) {
         </CardHeader>
         <CardContent>
           {sessions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 dark:text-gray-200">
               <Monitor className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No active sessions</p>
             </div>
@@ -326,15 +327,15 @@ export function SessionManager({ userRole }: SessionManagerProps) {
                               <Badge variant="default" className="text-xs">
                                 This Device
                               </Badge>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs dark:text-gray-200">
                                 {getDeviceInfo(currentSession.userAgent)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2 text-sm dark:text-gray-200">
                               <MapPin className="h-3 w-3" />
                               {getLocationDisplay(currentSession)}
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2 text-xs dark:text-gray-200">
                               <Clock className="h-3 w-3" />
                               Expires{" "}
                               {formatDistanceToNow(
@@ -344,7 +345,7 @@ export function SessionManager({ userRole }: SessionManagerProps) {
                                 }
                               )}
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-xs dark:text-gray-200">
                               IP: {currentSession.ipAddress}
                             </div>
                           </div>
@@ -384,7 +385,7 @@ export function SessionManager({ userRole }: SessionManagerProps) {
                                   <div className="font-medium text-sm">
                                     {session.userName || "Unknown User"}
                                   </div>
-                                  <div className="text-xs text-muted-foreground">
+                                  <div className="text-xs dark:text-gray-200">
                                     {session.userEmail}
                                   </div>
                                 </div>
@@ -409,7 +410,7 @@ export function SessionManager({ userRole }: SessionManagerProps) {
                               </span>
                             </TableCell>
                             <TableCell>
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-sm dark:text-gray-200">
                                 {formatDistanceToNow(
                                   new Date(session.expiresAt),
                                   {

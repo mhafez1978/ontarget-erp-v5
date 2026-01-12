@@ -76,7 +76,7 @@ export default async function StorePostsPage({ params }: PageProps) {
     >
       <main className="container mx-auto px-4 py-12">
         {posts.length === 0 ? (
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             No published posts yet. Please check back soon.
           </p>
         ) : (
@@ -99,12 +99,10 @@ export default async function StorePostsPage({ params }: PageProps) {
                 )}
                 <h2 className="text-lg font-semibold">{post.title}</h2>
                 {post.excerpt && (
-                  <p className="text-sm text-muted-foreground">
-                    {post.excerpt}
-                  </p>
+                  <p className="text-sm dark:text-gray-200">{post.excerpt}</p>
                 )}
                 {post.publishedAt && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     {new Date(post.publishedAt).toLocaleDateString()}
                   </p>
                 )}

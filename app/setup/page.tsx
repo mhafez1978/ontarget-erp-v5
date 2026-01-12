@@ -126,9 +126,7 @@ export default function SetupPage() {
       <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background to-muted">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">
-            Checking setup status...
-          </p>
+          <p className="text-sm dark:text-gray-200">Checking setup status...</p>
         </div>
       </div>
     );
@@ -177,7 +175,7 @@ export default function SetupPage() {
                   }}
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   The name of your ERP system (can be changed later)
                 </p>
               </div>
@@ -256,7 +254,7 @@ export default function SetupPage() {
                     required
                     disabled={isLoading}
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Your hourly rate for payroll calculations
                   </p>
                 </div>
@@ -283,7 +281,7 @@ export default function SetupPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                       disabled={isLoading}
                     >
                       {showPassword ? (
@@ -293,7 +291,7 @@ export default function SetupPage() {
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Minimum 8 characters
                   </p>
                 </div>
@@ -323,7 +321,7 @@ export default function SetupPage() {
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-gray-200 hover:text-foreground transition-colors"
                       disabled={isLoading}
                     >
                       {showConfirmPassword ? (
@@ -373,7 +371,7 @@ export default function SetupPage() {
                   }}
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   A tagline or mission statement for your company
                 </p>
               </div>
@@ -403,7 +401,7 @@ export default function SetupPage() {
               )}
             </Button>
 
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-xs text-center dark:text-gray-200">
               By creating this account, you will have full administrative access
               to the system. You can create additional users and companies after
               setup.

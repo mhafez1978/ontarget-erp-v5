@@ -86,7 +86,7 @@ export function SuperAdminView({ userName, companyId }: SuperAdminViewProps) {
       <h1 className="text-3xl font-bold tracking-tight">
         You are a Super Admin, welcome {userName || "Guest"}!
       </h1>
-      <p className="text-muted-foreground">
+      <p className="dark:text-gray-200">
         You have full access to all system features and administrative controls.
       </p>
 

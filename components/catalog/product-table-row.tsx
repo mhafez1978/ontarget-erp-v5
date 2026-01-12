@@ -86,7 +86,7 @@ export function ProductTableRow({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              <ImageIcon className="h-6 w-6 dark:text-gray-200" />
             </div>
           )}
         </div>
@@ -95,7 +95,7 @@ export function ProductTableRow({
         <div>
           <div className="font-medium truncate">{product.name}</div>
           {product.description && (
-            <div className="text-sm text-muted-foreground line-clamp-1">
+            <div className="text-sm dark:text-gray-200 line-clamp-1">
               {product.description}
             </div>
           )}

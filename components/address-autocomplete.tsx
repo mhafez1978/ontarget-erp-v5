@@ -190,7 +190,7 @@ export function AddressAutocomplete({
         </Label>
 
         <div className="relative">
-          <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <MapPin className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
 
           <Input
             id="address-search"
@@ -203,7 +203,7 @@ export function AddressAutocomplete({
           />
 
           {isSearching && (
-            <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
+            <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin dark:text-gray-200" />
           )}
 
           {/* Suggestions */}
@@ -251,7 +251,7 @@ export function AddressAutocomplete({
                           </div>
 
                           {/* Subline */}
-                          <span className="text-xs text-muted-foreground ml-7">
+                          <span className="text-xs dark:text-gray-200 ml-7">
                             {line2}
                           </span>
                         </div>

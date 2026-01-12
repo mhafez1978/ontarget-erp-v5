@@ -67,7 +67,7 @@ export default function Page() {
     return (
       <DashboardLayout user={user}>
         <div className="flex items-center justify-center h-64">
-          <div className="text-center text-muted-foreground">
+          <div className="text-center dark:text-gray-200">
             Loading Frontstore v6…
           </div>
         </div>

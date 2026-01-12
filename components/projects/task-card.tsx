@@ -270,7 +270,7 @@ export function TaskCard({
           {/* Description */}
           {!compact && task.description && (
             <div
-              className="text-xs text-muted-foreground line-clamp-3 prose prose-sm max-w-none overflow-hidden"
+              className="text-xs dark:text-gray-200 line-clamp-3 prose prose-sm max-w-none overflow-hidden"
               dangerouslySetInnerHTML={{ __html: task.description }}
             />
           )}
@@ -280,7 +280,7 @@ export function TaskCard({
         <div className="mt-3 space-y-2">
           {/* Assigned To */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-medium min-w-[70px]">
+            <span className="text-xs dark:text-gray-200 font-medium min-w-[70px]">
               Assigned To:
             </span>
             {task.assignedTo ? (
@@ -295,13 +295,13 @@ export function TaskCard({
                   </AvatarFallback>
                 </Avatar>
                 {!compact && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs dark:text-gray-200">
                     {task.assignedTo.user.name || task.assignedTo.user.email}
                   </span>
                 )}
               </div>
             ) : (
-              <span className="text-xs text-muted-foreground italic">
+              <span className="text-xs dark:text-gray-200 italic">
                 Unassigned
               </span>
             )}
@@ -311,7 +311,7 @@ export function TaskCard({
           <div className="flex items-center justify-between gap-2">
             {/* Time Tracking */}
             {task.timeEntry > 0 && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1 text-xs dark:text-gray-200">
                 <Clock className="h-3 w-3" />
                 <span>
                   {task.timeEntry < 60
@@ -331,7 +331,7 @@ export function TaskCard({
                     ? "text-red-600 font-medium"
                     : isDueSoon
                     ? "text-orange-600 font-medium"
-                    : "text-muted-foreground"
+                    : "dark:text-gray-200"
                 }`}
               >
                 {isOverdue && <AlertCircle className="h-3 w-3" />}

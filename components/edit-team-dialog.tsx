@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -20,7 +19,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-;
 import { toast } from "sonner";
 
 interface StaffMember {
@@ -221,7 +219,7 @@ export function EditTeamDialog({
                     ? "bg-primary text-primary-foreground"
                     : s < step
                     ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
+                    : "bg-muted dark:text-gray-200"
                 }`}
               >
                 {s}
@@ -287,14 +285,14 @@ export function EditTeamDialog({
                 <ScrollArea className="h-[150px]">
                   {staffLoading ? (
                     <div className="flex items-center justify-center h-full">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm dark:text-gray-200">
                         Loading staff...
                       </span>
                     </div>
                   ) : staffMembers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                      <Users className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">
+                      <Users className="h-8 w-8 dark:text-gray-200 mb-2" />
+                      <span className="text-sm dark:text-gray-200">
                         No staff members available
                       </span>
                     </div>
@@ -341,7 +339,7 @@ export function EditTeamDialog({
                               <p className="text-sm font-medium">
                                 {staff.user.name}
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs dark:text-gray-200">
                                 {staff.jobTitle || staff.role}
                               </p>
                             </div>
@@ -355,7 +353,7 @@ export function EditTeamDialog({
                   )}
                 </ScrollArea>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Selected: {managerIds.length} manager
                 {managerIds.length !== 1 ? "s" : ""}
               </p>
@@ -370,14 +368,14 @@ export function EditTeamDialog({
                 <ScrollArea className="h-[150px]">
                   {staffLoading ? (
                     <div className="flex items-center justify-center h-full">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm dark:text-gray-200">
                         Loading staff...
                       </span>
                     </div>
                   ) : staffMembers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                      <Users className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">
+                      <Users className="h-8 w-8 dark:text-gray-200 mb-2" />
+                      <span className="text-sm dark:text-gray-200">
                         No staff members available
                       </span>
                     </div>
@@ -424,7 +422,7 @@ export function EditTeamDialog({
                               <p className="text-sm font-medium">
                                 {staff.user.name}
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs dark:text-gray-200">
                                 {staff.jobTitle || staff.role}
                               </p>
                             </div>
@@ -438,7 +436,7 @@ export function EditTeamDialog({
                   )}
                 </ScrollArea>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Selected: {teamLeadIds.length} lead
                 {teamLeadIds.length !== 1 ? "s" : ""}
               </p>
@@ -453,14 +451,14 @@ export function EditTeamDialog({
                 <ScrollArea className="h-[200px]">
                   {staffLoading ? (
                     <div className="flex items-center justify-center h-full">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm dark:text-gray-200">
                         Loading staff...
                       </span>
                     </div>
                   ) : staffMembers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                      <Users className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">
+                      <Users className="h-8 w-8 dark:text-gray-200 mb-2" />
+                      <span className="text-sm dark:text-gray-200">
                         No staff members available
                       </span>
                     </div>
@@ -507,7 +505,7 @@ export function EditTeamDialog({
                               <p className="text-sm font-medium">
                                 {staff.user.name}
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs dark:text-gray-200">
                                 {staff.jobTitle || staff.role}
                               </p>
                             </div>
@@ -521,7 +519,7 @@ export function EditTeamDialog({
                   )}
                 </ScrollArea>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Selected: {selectedMembers.length} member
                 {selectedMembers.length !== 1 ? "s" : ""}
               </p>

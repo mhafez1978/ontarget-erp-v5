@@ -165,7 +165,7 @@ export function LoginMethodsCard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm dark:text-gray-200">Loading...</p>
         </CardContent>
       </Card>
     );
@@ -187,21 +187,21 @@ export function LoginMethodsCard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-2xl font-bold">{stats.totalLogins}</p>
-                <p className="text-xs text-muted-foreground">Total Logins</p>
+                <p className="text-xs dark:text-gray-200">Total Logins</p>
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.activeProviders}</p>
-                <p className="text-xs text-muted-foreground">Active Methods</p>
+                <p className="text-xs dark:text-gray-200">Active Methods</p>
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalProviders}</p>
-                <p className="text-xs text-muted-foreground">Linked Accounts</p>
+                <p className="text-xs dark:text-gray-200">Linked Accounts</p>
               </div>
               <div>
                 <p className="text-2xl font-bold">
                   {getProviderIcon(stats.mostUsedProvider || "")}
                 </p>
-                <p className="text-xs text-muted-foreground">Most Used</p>
+                <p className="text-xs dark:text-gray-200">Most Used</p>
               </div>
             </div>
           </CardContent>
@@ -247,17 +247,17 @@ export function LoginMethodsCard() {
                       )}
                     </div>
                     {method.email && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm dark:text-gray-200">
                         {method.email}
                       </p>
                     )}
                     <div className="flex items-center gap-4 mt-1">
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <p className="text-xs dark:text-gray-200 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         Used {method.timesUsed} times
                       </p>
                       {method.lastUsedAt && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           Last:{" "}
                           {new Date(method.lastUsedAt).toLocaleDateString()}
                         </p>
@@ -305,8 +305,8 @@ export function LoginMethodsCard() {
 
             {loginMethods.length === 0 && (
               <div className="text-center py-8">
-                <Link className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-sm text-muted-foreground">
+                <Link className="h-12 w-12 mx-auto dark:text-gray-200 mb-4" />
+                <p className="text-sm dark:text-gray-200">
                   No login methods found. This should not happen.
                 </p>
               </div>

@@ -1,10 +1,8 @@
 "use client";
 
-
 import { Shield, Key } from "lucide-react";
 import { useState } from "react";
 
-;
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -130,7 +128,7 @@ export function MfaLoginDialog({
                 maxLength={6}
                 autoFocus
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Enter the code from your authenticator app
               </p>
             </div>
@@ -149,7 +147,7 @@ export function MfaLoginDialog({
                 className="text-center text-xl tracking-wider font-mono"
                 autoFocus
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 <Key className="h-3 w-3 inline mr-1" />
                 Use one of your saved backup codes
               </p>

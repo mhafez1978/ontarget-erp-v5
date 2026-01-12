@@ -439,7 +439,7 @@ function RegisterForm() {
             className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${
               currentStep >= step
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-muted-foreground text-muted-foreground"
+                : "border-muted-foreground dark:text-gray-200"
             }`}
           >
             {currentStep > step ? (
@@ -465,7 +465,7 @@ function RegisterForm() {
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Choose Your Plan</h2>
-        <p className="text-muted-foreground text-sm">
+        <p className="dark:text-gray-200 text-sm">
           Start with a 30-day free trial • Cancel anytime
         </p>
       </div>
@@ -475,7 +475,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="name-step1">Full Name</Label>
           <div className="relative">
-            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <User className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="name-step1"
               type="text"
@@ -496,7 +496,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="email-step1">Email</Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Mail className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="email-step1"
               type="email"
@@ -513,7 +513,7 @@ function RegisterForm() {
             />
           </div>
           {isCheckingEmail && (
-            <p className="text-xs text-muted-foreground">Checking email…</p>
+            <p className="text-xs dark:text-gray-200">Checking email…</p>
           )}
           {emailExists && (
             <p className="text-xs text-destructive">
@@ -577,7 +577,7 @@ function RegisterForm() {
                   {billingCycle === "monthly"
                     ? planDetails[plan].monthlyPrice
                     : planDetails[plan].annualPrice}
-                  <span className="text-xs font-normal text-muted-foreground">
+                  <span className="text-xs font-normal dark:text-gray-200">
                     /mo
                   </span>
                 </div>
@@ -609,7 +609,7 @@ function RegisterForm() {
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold mb-2">Payment Details</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm dark:text-gray-200">
           Secure payment processing via Stripe
         </p>
       </div>
@@ -686,8 +686,8 @@ function RegisterForm() {
         ) : (
           <div className="flex items-center justify-center p-8 bg-muted/50 rounded-lg min-h-[200px]">
             <div className="text-center space-y-2">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
-              <span className="text-sm text-muted-foreground block">
+              <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200 mx-auto" />
+              <span className="text-sm dark:text-gray-200 block">
                 {isLoadingPublishableKey
                   ? "Loading secure payment..."
                   : isCreatingSetupIntent
@@ -743,7 +743,7 @@ function RegisterForm() {
           </Button>
           {/* Diagnostic Message for Disabled Button */}
           {currentStep === 2 && (
-            <div className="text-[10px] text-center text-muted-foreground h-4">
+            <div className="text-[10px] text-center dark:text-gray-200 h-4">
               {!clientSecret
                 ? "Initializing payment..."
                 : !isPaymentValid
@@ -765,7 +765,7 @@ function RegisterForm() {
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold mb-2">Secure Your Account</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm dark:text-gray-200">
           Set a strong password to protect your data
         </p>
       </div>
@@ -774,7 +774,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="name">Full Name</Label>
           <div className="relative">
-            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <User className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="name"
               type="text"
@@ -789,7 +789,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Mail className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="email"
               type="email"
@@ -804,7 +804,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Lock className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -820,7 +820,7 @@ function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-3 dark:text-gray-200 hover:text-foreground"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -834,7 +834,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Lock className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
@@ -853,7 +853,7 @@ function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-3 dark:text-gray-200 hover:text-foreground"
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -951,7 +951,7 @@ function RegisterForm() {
             {currentStep === 3 && renderAccountStep()}
           </form>
 
-          <p className="text-xs text-center text-muted-foreground">
+          <p className="text-xs text-center dark:text-gray-200">
             By continuing, you agree to our{" "}
             <Link href="/terms" className="underline hover:text-primary">
               Terms

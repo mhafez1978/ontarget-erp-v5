@@ -127,7 +127,7 @@ export function ProjectTeamTab({
       case "MANAGER":
         return <Shield className="h-4 w-4 text-blue-600" />;
       default:
-        return <User2 className="h-4 w-4 text-muted-foreground" />;
+        return <User2 className="h-4 w-4 dark:text-gray-200" />;
     }
   };
 
@@ -150,7 +150,7 @@ export function ProjectTeamTab({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>{project.team.name}</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm dark:text-gray-200 mt-1">
                 {project.team.members.length} team member
                 {project.team.members.length !== 1 ? "s" : ""}
               </p>
@@ -215,7 +215,7 @@ export function ProjectTeamTab({
                           {displayRole}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 text-xs dark:text-gray-200">
                         <Mail className="h-3 w-3" />
                         <span>{member.staff.user.email}</span>
                       </div>
@@ -232,7 +232,7 @@ export function ProjectTeamTab({
                         )
                       }
                       disabled={removingMemberId === member.id}
-                      className="text-muted-foreground hover:text-destructive"
+                      className="dark:text-gray-200 hover:text-destructive"
                     >
                       <UserMinus className="h-4 w-4" />
                     </Button>
@@ -248,9 +248,9 @@ export function ProjectTeamTab({
       {project.team.members.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <User2 className="h-12 w-12 text-muted-foreground mb-4" />
+            <User2 className="h-12 w-12 dark:text-gray-200 mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Team Members</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm dark:text-gray-200 mb-4">
               Add team members to collaborate on this project
             </p>
             {onAddMember && (

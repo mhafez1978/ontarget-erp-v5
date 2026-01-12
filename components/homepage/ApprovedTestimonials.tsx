@@ -8,7 +8,7 @@ const Marquee = dynamic(
   {
     loading: () => (
       <div className="w-full h-[200px] flex items-center justify-center bg-muted/20 rounded-lg">
-        <div className="animate-pulse text-muted-foreground">
+        <div className="animate-pulse dark:text-gray-200">
           Loading testimonials...
         </div>
       </div>
@@ -133,7 +133,7 @@ export function ApprovedTestimonials({
                                       )}
 
                                       <div className="flex-1 min-w-0">
-                                        <p className="italic text-sm text-muted-foreground line-clamp-3">
+                                        <p className="italic text-sm dark:text-gray-200 line-clamp-3">
                                           “{t.testimonial}”
                                         </p>
                                         <p className="mt-2 text-sm font-semibold truncate">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import crypto from "crypto";
 import type { WebhookDelivery, WebhookConfig } from "@prisma/client";
 
 // Lightweight processing endpoint to be called by a cron (or invoked manually) to process pending deliveries
@@ -57,7 +58,6 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       };
       if (wh.secret) {
-        const crypto = await import("crypto");
         const sig = crypto
           .createHmac("sha256", wh.secret)
           .update(body)

@@ -50,7 +50,7 @@ export default function ContactForm({ slug }: ContactFormProps) {
         <h3 className="text-lg font-semibold">
           Thanks — we received your message!
         </h3>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm dark:text-gray-200">
           We&apos;ll get back to you soon.
         </p>
       </div>

@@ -99,7 +99,7 @@ export function ApprovedTestimonials({
         id="testimonials"
         className="py-20 min-h-screen flex justify-center items-center bg-background/30 dark:bg-zinc-900/30 backdrop-blur-md border border-border rounded-2xl"
       >
-        <div className="text-lime-500 text-6xl">Loading …</div>
+        <div className="text-lime-500 text-lg md:text-3xl">Loading …</div>
       </section>
     );
   }
@@ -112,9 +112,9 @@ export function ApprovedTestimonials({
         id="testimonials"
         className="flex flex-col items-center justify-center pt-24 bg-background skew-3"
       >
-        <h2 className="max-w-2xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:text-gray-200 -skew-3 text-center pl-6 pb-20">
+        <h2 className="max-w-2xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200 -skew-3 text-center pl-6 pb-20">
           You&apos;ve Asked,
-          <span className="text-purple-500 dark:text-primary ml-4">
+          <span className="text-purple-500 dark:text-[#2bee79] ml-4">
             We Listened.
           </span>
         </h2>

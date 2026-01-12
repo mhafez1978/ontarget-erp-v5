@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 //   {
 //     loading: () => (
 //       <div className="w-full h-[600px] flex items-center justify-center bg-muted/20 rounded-lg">
-//         <div className="animate-pulse text-muted-foreground">
+//         <div className="animate-pulse dark:text-gray-200">
 //           Loading globe...
 //         </div>
 //       </div>
@@ -46,7 +46,7 @@ export function HeroSection() {
           </span>
         </h1>
 
-        <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-4 sm:text-xl">
+        <p className="mx-auto max-w-2xl text-lg dark:text-gray-200 mb-4 sm:text-xl">
           Streamline operations, boost business, and drive growth with our
           comprehensive Ai driven enterprise resource planning platform
         </p>
@@ -74,25 +74,25 @@ export function HeroSection() {
             <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">
               10K+
             </div>
-            <div className="text-sm text-muted-foreground">Active Users</div>
+            <div className="text-sm dark:text-gray-200">Active Users</div>
           </div>
           <div className="text-center">
             <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">
               99.9%
             </div>
-            <div className="text-sm text-muted-foreground">Uptime</div>
+            <div className="text-sm dark:text-gray-200">Uptime</div>
           </div>
           <div className="text-center">
             <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">
               50+
             </div>
-            <div className="text-sm text-muted-foreground">Countries</div>
+            <div className="text-sm dark:text-gray-200">Countries</div>
           </div>
           <div className="text-center">
             <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">
               24/7
             </div>
-            <div className="text-sm text-muted-foreground">Support</div>
+            <div className="text-sm dark:text-gray-200">Support</div>
           </div>
         </div>
       </div>

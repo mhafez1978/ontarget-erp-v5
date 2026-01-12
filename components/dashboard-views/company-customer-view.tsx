@@ -27,7 +27,7 @@ export function CompanyCustomerView({ userName }: CompanyCustomerViewProps) {
         <h1 className="text-3xl font-bold tracking-tight">
           Welcome back, {userName || "Guest"}! 👋
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="dark:text-gray-200 text-lg">
           Browse our catalog, manage your orders, and track your purchases all
           in one place.
         </p>

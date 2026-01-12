@@ -1,9 +1,7 @@
 "use client";
 
-
 import { Send } from "lucide-react";
 import { useState } from "react";
-;
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,7 +86,7 @@ export function TestSendDialog({
               placeholder="recipient@example.com"
               required
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               The email will be sent with sample/test data for all variables
             </p>
           </div>

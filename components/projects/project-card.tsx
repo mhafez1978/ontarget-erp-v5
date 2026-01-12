@@ -176,7 +176,7 @@ export function ProjectCard({
               {project.status.replace("_", " ")}
             </Badge>
           </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between text-xs dark:text-gray-200">
             <span className="flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
               {completedTasks}/{totalTasks}
@@ -253,7 +253,7 @@ export function ProjectCard({
           </Badge>
 
           {project.description && variant === "detailed" && (
-            <p className="text-xs text-muted-foreground line-clamp-2 wrap-break-word">
+            <p className="text-xs dark:text-gray-200 line-clamp-2 wrap-break-word">
               {project.description}
             </p>
           )}
@@ -274,7 +274,7 @@ export function ProjectCard({
         {/* Progress Bar */}
         {totalTasks > 0 && (
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center justify-between text-xs dark:text-gray-200">
               <span className="flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3 shrink-0" />
                 <span className="truncate">
@@ -296,7 +296,7 @@ export function ProjectCard({
 
         {/* Dates - Stack vertically on small cards */}
         {(project.startDate || project.endDate) && (
-          <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+          <div className="flex flex-col gap-1 text-xs dark:text-gray-200">
             {project.startDate && (
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3 shrink-0" />
@@ -331,10 +331,10 @@ export function ProjectCard({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-medium text-muted-foreground">
+                  <span className="text-xs font-medium dark:text-gray-200">
                     Manager
                   </span>
-                  <span className="text-xs text-muted-foreground truncate">
+                  <span className="text-xs dark:text-gray-200 truncate">
                     {project.projectManager.user?.name || "Manager"}
                   </span>
                 </div>
@@ -352,10 +352,10 @@ export function ProjectCard({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-medium text-muted-foreground">
+                  <span className="text-xs font-medium dark:text-gray-200">
                     Team Lead
                   </span>
-                  <span className="text-xs text-muted-foreground truncate">
+                  <span className="text-xs dark:text-gray-200 truncate">
                     {project.teamLead.user?.name || "Lead"}
                   </span>
                 </div>

@@ -704,7 +704,7 @@ Apple pioneered translucent, blurred backgrounds:
 // Excellent contrast
 <p className="text-white bg-gray-900">          {/* 16.1:1 - Perfect */}
 <p className="text-gray-100 bg-gray-800">       {/* 12.3:1 - Excellent */}
-<p className="text-gray-200 bg-gray-900">       {/* 11.5:1 - Great */}
+<p className="dark:text-gray-200 bg-gray-900">       {/* 11.5:1 - Great */}
 
 // ⚠️ AVOID - Insufficient contrast
 <p className="text-gray-400 bg-gray-900">       {/* 2.8:1 - FAILS WCAG */}

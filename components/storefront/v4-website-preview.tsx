@@ -208,7 +208,7 @@ export function V4WebsitePreview({
             <div className="flex items-center gap-4">
               <div className="text-sm space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Quality:</span>
+                  <span className="dark:text-gray-200">Quality:</span>
                   <Badge
                     variant="outline"
                     className={getScoreColor(qualityScore)}
@@ -217,7 +217,7 @@ export function V4WebsitePreview({
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Creativity:</span>
+                  <span className="dark:text-gray-200">Creativity:</span>
                   <Badge
                     variant="outline"
                     className={getScoreColor(creativityScore)}
@@ -421,7 +421,7 @@ export function V4WebsitePreview({
                                 </Badge>
                               </div>
                               {page.seo?.description && (
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm dark:text-gray-200">
                                   {page.seo.description}
                                 </p>
                               )}

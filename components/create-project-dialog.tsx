@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Calendar, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -25,8 +24,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-
-;
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -357,7 +354,7 @@ export function CreateProjectDialog({
             </Label>
             {teamsLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
               </div>
             ) : teams.length === 0 ? (
               <Alert>
@@ -391,7 +388,7 @@ export function CreateProjectDialog({
               </Select>
             )}
             {selectedTeam && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Project will be assigned to:{" "}
                 <strong>{selectedTeam.name}</strong>
               </p>
@@ -452,13 +449,13 @@ export function CreateProjectDialog({
           <div className="space-y-2">
             <Label htmlFor="projectManager">
               Project Manager{" "}
-              <span className="text-muted-foreground text-xs font-normal">
+              <span className="dark:text-gray-200 text-xs font-normal">
                 (auto-filled from team, can override)
               </span>
             </Label>
             {staffLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
               </div>
             ) : (
               <Select
@@ -475,7 +472,7 @@ export function CreateProjectDialog({
                       <div className="flex items-center gap-2">
                         <span>{member.user.name || member.user.email}</span>
                         {member.jobTitle && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs dark:text-gray-200">
                             - {member.jobTitle}
                           </span>
                         )}
@@ -508,13 +505,13 @@ export function CreateProjectDialog({
           <div className="space-y-2">
             <Label htmlFor="customer">
               Customer{" "}
-              <span className="text-muted-foreground text-xs font-normal">
+              <span className="dark:text-gray-200 text-xs font-normal">
                 (Company customer, optional)
               </span>
             </Label>
             {customersLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
               </div>
             ) : (
               <Select value={customerId} onValueChange={setCustomerId}>
@@ -526,7 +523,9 @@ export function CreateProjectDialog({
                   {customers.map((customer) => (
                     <SelectItem key={customer.id} value={customer.id}>
                       <div className="flex items-center gap-2">
-                        <span>{customer.name || customer.email || "Customer"}</span>
+                        <span>
+                          {customer.name || customer.email || "Customer"}
+                        </span>
                       </div>
                     </SelectItem>
                   ))}
@@ -539,13 +538,13 @@ export function CreateProjectDialog({
           <div className="space-y-2">
             <Label htmlFor="teamLead">
               Team Lead{" "}
-              <span className="text-muted-foreground text-xs font-normal">
+              <span className="dark:text-gray-200 text-xs font-normal">
                 (auto-filled from team, can override)
               </span>
             </Label>
             {staffLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
               </div>
             ) : (
               <Select value={teamLeadId} onValueChange={setTeamLeadId}>
@@ -559,7 +558,7 @@ export function CreateProjectDialog({
                       <div className="flex items-center gap-2">
                         <span>{member.user.name || member.user.email}</span>
                         {member.jobTitle && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs dark:text-gray-200">
                             - {member.jobTitle}
                           </span>
                         )}

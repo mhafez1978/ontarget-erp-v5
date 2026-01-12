@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Lock, Eye, EyeOff, Search, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,12 +23,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-
-
-
-
-
-;
 
 interface UserProfile {
   id: string;
@@ -236,7 +229,7 @@ export function PasswordManagementTab({
       </div>
 
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 dark:text-gray-200" />
         <Input
           placeholder="Search by name, email, or role..."
           value={searchQuery}
@@ -246,7 +239,7 @@ export function PasswordManagementTab({
       </div>
 
       {filteredUsers.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground border rounded-lg">
+        <div className="text-center py-12 dark:text-gray-200 border rounded-lg">
           {searchQuery
             ? "No users found matching your search"
             : "No users available"}
@@ -356,9 +349,9 @@ export function PasswordManagementTab({
                   onClick={() => setShowNewPassword(!showNewPassword)}
                 >
                   {showNewPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    <EyeOff className="h-4 w-4 dark:text-gray-200" />
                   ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Eye className="h-4 w-4 dark:text-gray-200" />
                   )}
                 </Button>
               </div>
@@ -367,7 +360,7 @@ export function PasswordManagementTab({
                   className={
                     newPassword.length >= 8
                       ? "text-green-600"
-                      : "text-muted-foreground"
+                      : "dark:text-gray-200"
                   }
                 >
                   ✓ At least 8 characters
@@ -376,7 +369,7 @@ export function PasswordManagementTab({
                   className={
                     /[A-Z]/.test(newPassword)
                       ? "text-green-600"
-                      : "text-muted-foreground"
+                      : "dark:text-gray-200"
                   }
                 >
                   ✓ One uppercase letter
@@ -385,7 +378,7 @@ export function PasswordManagementTab({
                   className={
                     /[a-z]/.test(newPassword)
                       ? "text-green-600"
-                      : "text-muted-foreground"
+                      : "dark:text-gray-200"
                   }
                 >
                   ✓ One lowercase letter
@@ -394,7 +387,7 @@ export function PasswordManagementTab({
                   className={
                     /[0-9]/.test(newPassword)
                       ? "text-green-600"
-                      : "text-muted-foreground"
+                      : "dark:text-gray-200"
                   }
                 >
                   ✓ One number
@@ -424,9 +417,9 @@ export function PasswordManagementTab({
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    <EyeOff className="h-4 w-4 dark:text-gray-200" />
                   ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Eye className="h-4 w-4 dark:text-gray-200" />
                   )}
                 </Button>
               </div>

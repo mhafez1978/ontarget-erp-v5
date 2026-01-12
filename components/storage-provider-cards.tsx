@@ -414,7 +414,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setLocalPath(e.target.value)}
                   placeholder="../var/storage/cold"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Absolute path to the directory on your server
                 </p>
               </div>
@@ -473,7 +473,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setAwsAccessKeyId(e.target.value)}
                   placeholder="AKIA••••••••"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   IAM user access key ID from AWS credentials
                 </p>
               </div>
@@ -485,7 +485,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setAwsSecretAccessKey(e.target.value)}
                   placeholder="••••••••"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   IAM user secret access key from AWS credentials
                 </p>
               </div>
@@ -496,7 +496,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setAwsBucket(e.target.value)}
                   placeholder="my-cold-storage"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Your S3 bucket name (must be globally unique)
                 </p>
               </div>
@@ -507,7 +507,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setAwsRegion(e.target.value)}
                   placeholder="us-east-1"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   AWS region where your bucket is located
                 </p>
               </div>
@@ -559,7 +559,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setGoogleClientId(e.target.value)}
                   placeholder="xxxxxxxxx.apps.googleusercontent.com"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   OAuth 2.0 Client ID from Google Cloud Console
                 </p>
               </div>
@@ -571,7 +571,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setGoogleClientSecret(e.target.value)}
                   placeholder="GOCSPX-••••••••••••••••"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   OAuth 2.0 Client Secret from Google Cloud Console
                 </p>
               </div>
@@ -583,7 +583,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setGoogleApiKey(e.target.value)}
                   placeholder="AIza••••••••"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Google Drive API key for additional operations
                 </p>
               </div>
@@ -594,7 +594,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setGoogleFolderId(e.target.value)}
                   placeholder="1a2b3c4d5e6f7g8h9i0j"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Specific folder ID to store files (leave empty for root)
                 </p>
               </div>
@@ -653,7 +653,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setOnedriveClientId(e.target.value)}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Application (client) ID from Azure app registration
                 </p>
               </div>
@@ -665,7 +665,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setOnedriveClientSecret(e.target.value)}
                   placeholder="••••••••••••••••"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Client secret value from Azure app registration
                 </p>
               </div>
@@ -676,7 +676,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setOnedriveTenantId(e.target.value)}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Azure AD Directory (tenant) ID
                 </p>
               </div>
@@ -729,7 +729,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setDoAccessKey(e.target.value)}
                   placeholder="DO00••••••••"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   DigitalOcean Spaces access key
                 </p>
               </div>
@@ -741,7 +741,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setDoSecretKey(e.target.value)}
                   placeholder="••••••••"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   DigitalOcean Spaces secret key
                 </p>
               </div>
@@ -752,7 +752,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setDoSpace(e.target.value)}
                   placeholder="my-space"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Your DigitalOcean Space name
                 </p>
               </div>
@@ -763,7 +763,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   onChange={(e) => setDoEndpoint(e.target.value)}
                   placeholder="nyc3.digitaloceanspaces.com"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Space endpoint (e.g., nyc3, sfo3, ams3, sgp1)
                 </p>
               </div>
@@ -812,7 +812,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Select &quot;Global Default&quot; to use the system-wide storage
                 configuration, or choose a company to override with custom
                 settings.
@@ -903,7 +903,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
                         </span>
                       )}
                     </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       {provider.description}
                     </p>
                   </div>
@@ -1005,7 +1005,7 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
             </div>
 
             {!testSuccess && (
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-xs dark:text-gray-200 text-center">
                 Test connection successfully before saving
               </p>
             )}

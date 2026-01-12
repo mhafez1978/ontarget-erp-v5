@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { resolve } from "path";
+import { access, constants } from "fs/promises";
 
 /**
  * Check if cold storage is configured and return config
@@ -32,8 +34,6 @@ export async function getStorageConfig(): Promise<{
       try {
         // Prefer resolving relative to the current project when running locally.
         // Try two candidates: the original parent-relative path and a repo-local path
-        const { resolve } = await import("path");
-        const { access, constants } = await import("fs/promises");
         const candidate1 = resolve(process.cwd(), basePath); // ../var/storage/cold -> parent/var/storage/cold
         const candidate2 = resolve(
           process.cwd(),

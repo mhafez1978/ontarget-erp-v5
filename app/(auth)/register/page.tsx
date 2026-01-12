@@ -386,7 +386,7 @@ function RegisterForm() {
             className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
               currentStep >= step
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-muted-foreground text-muted-foreground"
+                : "border-muted-foreground dark:text-gray-200"
             }`}
           >
             {currentStep > step ? (
@@ -414,7 +414,7 @@ function RegisterForm() {
         <h2 className="text-2xl font-bold mb-2">
           {isTrial ? "Start Your Free Trial" : "Choose Your Plan"}
         </h2>
-        <p className="text-muted-foreground text-sm">
+        <p className="dark:text-gray-200 text-sm">
           {isTrial
             ? "Start with a 14-day free trial • No credit card required"
             : "Start with a 30-day free trial • Cancel anytime"}
@@ -426,7 +426,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="name-step1">Full Name</Label>
           <div className="relative">
-            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <User className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="name-step1"
               type="text"
@@ -447,7 +447,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="email-step1">Email</Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Mail className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="email-step1"
               type="email"
@@ -460,7 +460,7 @@ function RegisterForm() {
               required
             />
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs dark:text-gray-200">
             We&apos;ll use this to create your account and initialize billing.
           </p>
         </div>
@@ -517,7 +517,7 @@ function RegisterForm() {
             {billingCycle === "monthly" ? (
               <div className="text-2xl font-bold text-primary mb-2">
                 {planDetails[plan].monthlyPrice}
-                <span className="text-sm font-normal text-muted-foreground">
+                <span className="text-sm font-normal dark:text-gray-200">
                   /mo
                 </span>
               </div>
@@ -525,16 +525,16 @@ function RegisterForm() {
               <div className="mb-2">
                 <div className="text-2xl font-bold text-primary">
                   {planDetails[plan].annualPrice}
-                  <span className="text-sm font-normal text-muted-foreground">
+                  <span className="text-sm font-normal dark:text-gray-200">
                     /mo
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   {planDetails[plan].annualTotal} billed annually
                 </p>
               </div>
             )}
-            <ul className="space-y-1 text-xs text-muted-foreground">
+            <ul className="space-y-1 text-xs dark:text-gray-200">
               {planDetails[plan].features.map((feature, idx) => (
                 <li key={idx} className="flex items-start gap-2">
                   <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 shrink-0" />
@@ -611,7 +611,7 @@ function RegisterForm() {
             expiryDate={cardData.expiryDate}
             cvv={cardData.cvv}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs dark:text-gray-200">
             For your security we only show masked numbers. The card ending is
             shown after saving.
           </p>
@@ -647,8 +647,8 @@ function RegisterForm() {
           ) : (
             <div className="flex items-center justify-center p-8 bg-muted/50 rounded-lg min-h-[300px]">
               <div className="text-center space-y-1">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
-                <span className="text-sm text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200 mx-auto" />
+                <span className="text-sm dark:text-gray-200">
                   {isLoadingPublishableKey
                     ? "Loading payment provider..."
                     : isCreatingSetupIntent
@@ -717,7 +717,7 @@ function RegisterForm() {
     <div className="space-y-6 max-w-md mx-auto">
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold mb-2">Account Details</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm dark:text-gray-200">
           Create your login credentials
         </p>
       </div>
@@ -726,7 +726,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="name">Full Name</Label>
           <div className="relative">
-            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <User className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="name"
               type="text"
@@ -748,7 +748,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Mail className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="email"
               type="email"
@@ -767,7 +767,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Lock className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -783,7 +783,7 @@ function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-3 dark:text-gray-200 hover:text-foreground"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -792,7 +792,7 @@ function RegisterForm() {
               )}
             </button>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs dark:text-gray-200">
             Use 8+ chars with upper, lower, and a number
           </p>
         </div>
@@ -800,7 +800,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm Password</Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Lock className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
             <Input
               id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
@@ -819,7 +819,7 @@ function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-3 dark:text-gray-200 hover:text-foreground"
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -834,7 +834,7 @@ function RegisterForm() {
       {/* Summary */}
       <div className="p-4 bg-muted/50 rounded-lg space-y-2">
         <h3 className="font-semibold text-sm">Registration Summary</h3>
-        <div className="text-sm text-muted-foreground space-y-1">
+        <div className="text-sm dark:text-gray-200 space-y-1">
           <p>
             <span className="font-medium">Plan:</span>{" "}
             {planDetails[selectedPlan].name} (
@@ -885,7 +885,7 @@ function RegisterForm() {
         </Button>
       </div>
 
-      <p className="text-xs text-center text-muted-foreground mt-4">
+      <p className="text-xs text-center dark:text-gray-200 mt-4">
         By creating an account, you agree to our{" "}
         <Link href="/terms" className="underline hover:text-primary">
           Terms of Service

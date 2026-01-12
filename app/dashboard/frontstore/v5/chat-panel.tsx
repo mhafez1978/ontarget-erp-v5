@@ -92,7 +92,7 @@ export default function ChatPanel({
           placeholder="e.g. Home"
           className="mt-1 block w-full p-2 border rounded"
         />
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs dark:text-gray-200">
           Used for title; slug will be auto-generated.
         </p>
       </div>
@@ -110,7 +110,7 @@ export default function ChatPanel({
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs dark:text-gray-200">
           Choose a section or leave on Auto to let the conductor pick based on
           the company persona.
         </p>
@@ -124,7 +124,7 @@ export default function ChatPanel({
           className="mt-1 block w-full p-2 border rounded"
           rows={4}
         />
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs dark:text-gray-200">
           Tip: For restaurants, simply chat in natural language — describe your
           menu items, ingredients, prices, and photos — and the AI will generate
           a fully-functional online ordering storefront (payments, analytics,

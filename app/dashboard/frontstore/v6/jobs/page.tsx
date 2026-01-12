@@ -31,7 +31,7 @@ export default function JobsPage() {
     <DashboardLayout user={user || {}}>
       <div className="p-4">
         <h1 className="text-2xl font-bold">Video Generation Jobs</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm dark:text-gray-200">
           Monitor queued and processed video jobs.
         </p>
 

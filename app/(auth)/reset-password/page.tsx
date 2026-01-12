@@ -93,7 +93,7 @@ function ResetPasswordForm() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm dark:text-gray-200">
               You can now login with your new password. Redirecting to login
               page...
             </p>
@@ -139,7 +139,7 @@ function ResetPasswordForm() {
                 disabled={isLoading || !token}
                 minLength={8}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Must be at least 8 characters with uppercase, lowercase, and
                 number
               </p>
@@ -167,7 +167,7 @@ function ResetPasswordForm() {
             >
               {isLoading ? "Resetting..." : "Reset Password"}
             </Button>
-            <div className="text-sm text-center text-muted-foreground">
+            <div className="text-sm text-center dark:text-gray-200">
               Remember your password?{" "}
               <Link href="/login" className="text-primary hover:underline">
                 Login

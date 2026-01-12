@@ -97,7 +97,7 @@ export function ServiceGridCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ImageIcon className="h-12 w-12 text-muted-foreground" />
+            <ImageIcon className="h-12 w-12 dark:text-gray-200" />
           </div>
         )}
 
@@ -158,7 +158,7 @@ export function ServiceGridCard({
         <div>
           <h3 className="font-semibold mb-1">{service.name}</h3>
           {service.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-sm dark:text-gray-200 line-clamp-2">
               {service.description}
             </p>
           )}
@@ -169,7 +169,7 @@ export function ServiceGridCard({
             ${parseFloat(service.price.toString()).toFixed(2)}
           </span>
           {service.duration && (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-xs dark:text-gray-200 flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {service.duration}
             </span>
@@ -185,7 +185,7 @@ export function ServiceGridCard({
         )}
 
         {(service.city || service.state) && (
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs dark:text-gray-200">
             {[service.city, service.state].filter(Boolean).join(", ")}
           </div>
         )}

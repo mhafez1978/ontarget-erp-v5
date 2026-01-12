@@ -82,7 +82,7 @@ export default function LivePreviewPanel({
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold">Live Preview</h3>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm dark:text-gray-200">
             {activePage
               ? `Editing page: ${activePage.title}`
               : "Select or create a page to start editing"}
@@ -112,19 +112,19 @@ export default function LivePreviewPanel({
 
       <div className="relative flex-1 overflow-auto p-2 bg-slate-50 rounded">
         {!activePageId && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-white/70 rounded">
+          <div className="absolute inset-0 flex items-center justify-center text-sm dark:text-gray-200 bg-white/70 rounded">
             Select or create a page to start assembling sections.
           </div>
         )}
 
         <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
           {activePage ? (
-            <div className="mb-2 text-sm text-muted-foreground">
+            <div className="mb-2 text-sm dark:text-gray-200">
               Page: <span className="font-semibold">{activePage.title}</span>
             </div>
           ) : null}
           {queue.length === 0 ? (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm dark:text-gray-200">
               No sections queued yet. Accept variants from the left panel.
             </div>
           ) : (
@@ -151,7 +151,7 @@ export default function LivePreviewPanel({
                     >
                       {String(s.schema?.title)}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm dark:text-gray-200">
                       <div
                         contentEditable
                         suppressContentEditableWarning
@@ -220,7 +220,7 @@ export default function LivePreviewPanel({
               <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => onDropAtIndex(e, queue.length)}
-                className="p-4 border border-dashed rounded text-center text-sm text-muted-foreground"
+                className="p-4 border border-dashed rounded text-center text-sm dark:text-gray-200"
               >
                 Drop here to append
               </div>

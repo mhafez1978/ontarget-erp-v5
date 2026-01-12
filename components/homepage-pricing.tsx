@@ -53,13 +53,13 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
     <section id="pricing" className="pt-40 pb-20 px-4 bg-background">
       <div className="container mx-auto">
         <div className="text-center mb-16 flex flex-col items-center">
-          <h2 className="max-w-4xl text-center text-5xl md:text-7xl font-display font-black tracking-tight dark:text-gray-200 mb-6">
-            <span className="text-purple-500 dark:text-primary mr-4">
+          <h2 className="max-w-4xl text-center text-5xl md:text-7xl font-display font-black tracking-tight dark:dark:text-gray-200 mb-6">
+            <span className="text-purple-500 dark:text-[#2bee79] mr-4">
               Choose
             </span>
             Your Plan
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="w-full px-4 mx-auto text-base md:text-lg text-black dark:text-gray-50 text-center leading-relaxed font-body md:max-w-4xl mb-6">
             Select the perfect plan for your business needs. All plans include
             our core features.
           </p>
@@ -72,7 +72,7 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
             onClick={() => setBillingCycle("monthly")}
             className={`px-6 py-2 rounded-lg transition-all ${
               billingCycle === "monthly"
-                ? "bg-purple-500 text-white dark:bg-primary dark:text-black shadow-lg"
+                ? "bg-purple-500 text-white dark:bg-[#2bee79] dark:text-black shadow-lg"
                 : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
@@ -83,7 +83,7 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
             onClick={() => setBillingCycle("annual")}
             className={`px-6 py-2 rounded-lg relative transition-all ${
               billingCycle === "annual"
-                ? "bg-purple-500 text-white dark:bg-primary dark:text-black shadow-lg"
+                ? "bg-purple-500 text-white dark:bg-[#2bee79] dark:text-black shadow-lg"
                 : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
@@ -96,7 +96,7 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
 
         <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {/* Essential Plan */}
-          <div className="relative flex flex-col rounded-2xl border bg-background p-8 shadow-sm hover:shadow-lg transition-shadow">
+          <div className="relative flex flex-col rounded-2xl border border-purple-500 dark:border-[#2bee79] p-8 shadow-sm hover:shadow-lg transition-shadow">
             <div className="mb-6">
               <h3 className="text-2xl font-bold mb-2">Essential</h3>
               <div className="flex items-baseline gap-2">
@@ -108,7 +108,7 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
                 <span className="text-4xl font-bold">
                   ${getPrice("ESSENTIAL").display}
                 </span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="dark:text-gray-200">/month</span>
               </div>
               {billingCycle === "monthly" &&
                 pricingMap.ESSENTIAL?.monthlyPromoPrice && (
@@ -147,15 +147,15 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
             </ul>
 
             <div className="border-t pt-6 space-y-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 {pricingMap.ESSENTIAL?.transactionFeePercent || 3.9}% + $
                 {(pricingMap.ESSENTIAL?.transactionFeeFixed || 0.99).toFixed(2)}{" "}
-                per CC transaction
+                Per CC transaction
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Plus any other Stripe fees
               </p>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-sm dark:text-gray-200 mt-2">
                 Extra storage: $
                 {(pricingMap.ESSENTIAL?.extraStoragePricePerGB || 0.45).toFixed(
                   2
@@ -169,10 +169,10 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
               className="block mt-6"
             >
               <Button
-                className="w-full py-5 dark:border hover:bg-purple-500/10 hover:border-purple-500 dark:border-primary  transition-all"
+                className="w-full py-5 dark:border hover:bg-purple-500/10 hover:border-purple-500 dark:border-[#2bee79] transition-all"
                 variant="outline"
               >
-                <span className="text-black dark:text-primary">
+                <span className="text-black dark:text-[#2bee79]">
                   {" "}
                   Get Started
                 </span>{" "}
@@ -181,9 +181,9 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
           </div>
 
           {/* Growth Plan */}
-          <div className="relative flex flex-col rounded-2xl border-2 border-purple-500 dark:border-primary bg-background p-8 shadow-lg hover:shadow-xl transition-shadow">
+          <div className="relative flex flex-col rounded-2xl border-2 border-purple-500 dark:border-[#2bee79] p-8 shadow-lg hover:shadow-xl transition-shadow">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-              <span className="bg-purple-500 text-white  px-4 py-1 rounded-full text-sm font-medium dark:bg-primary dark:text-black">
+              <span className="bg-purple-500 text-white  px-4 py-1 rounded-full text-sm font-medium dark:bg-[#2bee79] dark:text-black">
                 Most Popular
               </span>
             </div>
@@ -194,7 +194,7 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
                 <span className="text-4xl font-bold">
                   ${getPrice("GROWTH").display}
                 </span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="dark:text-gray-200">/month</span>
               </div>
               {billingCycle === "annual" && (
                 <p className="text-sm text-green-600 font-medium mt-2">
@@ -231,15 +231,15 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
             </ul>
 
             <div className="border-t pt-6 space-y-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 {pricingMap.GROWTH?.transactionFeePercent || 3.2}% + $
                 {(pricingMap.GROWTH?.transactionFeeFixed || 0.49).toFixed(2)}{" "}
-                per CC transaction
+                Per CC transaction
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Plus any other Stripe fees
               </p>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-sm dark:text-gray-200 mt-2">
                 Extra storage: $
                 {(pricingMap.GROWTH?.extraStoragePricePerGB || 0.32).toFixed(2)}
                 /GB/month
@@ -248,21 +248,23 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
 
             <Link
               href={`/register?plan=GROWTH&billing=${billingCycle}`}
-              className="block mt-6 outline py-2 text-center rounded-lg border border-purple-500 hover:bg-purple-500/10 dark:border-primary transition-all"
+              className="block mt-6 outline py-2 text-center rounded-lg border border-purple-500 hover:bg-purple-300/10 dark:border-[#2bee79] transition-all"
             >
-              <span className="text-black dark:text-primary"> Get Started</span>{" "}
+              <span className="text-black dark:text-[#2bee79]">
+                Get Started
+              </span>{" "}
             </Link>
           </div>
 
           {/* Enterprise Plan */}
-          <div className="relative flex flex-col rounded-2xl border bg-background p-8 shadow-sm hover:shadow-lg transition-shadow">
+          <div className="relative flex flex-col rounded-2xl border border-purple-500 dark:border-[#2bee79] p-8 shadow-sm hover:shadow-lg transition-shadow">
             <div className="mb-6">
               <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-bold">
                   ${getPrice("ENTERPRISE").display}
                 </span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="dark:text-gray-200">/month</span>
               </div>
               {billingCycle === "annual" && (
                 <p className="text-sm text-green-600 font-medium mt-2">
@@ -305,15 +307,15 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
             </ul>
 
             <div className="border-t pt-6 space-y-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 {pricingMap.ENTERPRISE?.transactionFeePercent || 2.9}% + $
                 {(pricingMap.ENTERPRISE?.transactionFeeFixed || 0.2).toFixed(2)}{" "}
-                per CC transaction
+                Per CC transaction
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Plus any other Stripe fees
               </p>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-sm dark:text-gray-200 mt-2">
                 Extra storage: $
                 {(
                   pricingMap.ENTERPRISE?.extraStoragePricePerGB || 0.21
@@ -327,11 +329,10 @@ export function HomepagePricing({ pricingMap }: HomepagePricingProps) {
               className="block mt-6"
             >
               <Button
-                className="w-full py-5 dark:border hover:bg-purple-500/10 hover:border-purple-500 dark:border-primary dark:hover:border-primary transition-all"
+                className="w-full py-5 dark:border hover:bg-purple-500/10 hover:border-purple-500 dark:border-[#2bee79] dark:hover:border-[#2bee79] transition-all"
                 variant="outline"
               >
-                <span className="text-black dark:text-primary">
-                  {" "}
+                <span className="text-black dark:text-[#2bee79]">
                   Get Started
                 </span>{" "}
               </Button>

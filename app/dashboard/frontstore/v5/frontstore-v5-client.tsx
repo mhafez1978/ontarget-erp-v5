@@ -98,7 +98,7 @@ export default function FrontstoreV5Client({
 
     return (
       <div className="flex w-full items-center gap-2 justify-end">
-        <span className="text-sm text-muted-foreground">Page</span>
+        <span className="text-sm dark:text-gray-200">Page</span>
         <select
           className="block w-full max-w-xs rounded border border-slate-200 px-3 py-2 text-sm"
           value={activePageId ?? ""}

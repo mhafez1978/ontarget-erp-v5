@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Users, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -186,12 +185,12 @@ export function AddTeamMemberDialog({
             </Label>
             {staffLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
               </div>
             ) : staffMembers.length === 0 ? (
               <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">
+                <Users className="h-8 w-8 dark:text-gray-200 mx-auto mb-2" />
+                <p className="text-sm dark:text-gray-200">
                   No available staff members to add
                 </p>
               </div>
@@ -226,7 +225,7 @@ export function AddTeamMemberDialog({
                           {member.user.name || member.user.email}
                         </p>
                         {member.jobTitle && (
-                          <p className="text-sm text-muted-foreground truncate">
+                          <p className="text-sm dark:text-gray-200 truncate">
                             {member.jobTitle}
                           </p>
                         )}
@@ -241,7 +240,7 @@ export function AddTeamMemberDialog({
           {/* Selected Staff Preview */}
           {selectedStaff && (
             <div className="p-4 border rounded-lg bg-muted/50">
-              <p className="text-sm font-medium text-muted-foreground mb-2">
+              <p className="text-sm font-medium dark:text-gray-200 mb-2">
                 Selected Member:
               </p>
               <div className="flex items-center gap-3">
@@ -260,7 +259,7 @@ export function AddTeamMemberDialog({
                     {selectedStaff.user.name || selectedStaff.user.email}
                   </p>
                   {selectedStaff.jobTitle && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm dark:text-gray-200">
                       {selectedStaff.jobTitle}
                     </p>
                   )}
@@ -290,7 +289,7 @@ export function AddTeamMemberDialog({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               {selectedRole === "ADMIN" && "Full team management access"}
               {selectedRole === "MANAGER" &&
                 "Can manage projects and assign tasks"}

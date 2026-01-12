@@ -1,14 +1,9 @@
 "use client";
 
-
 import { FileText, CheckCircle2, XCircle, Clock, Download } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -188,7 +183,7 @@ export function PendingDocumentsReview({ companyId }: PendingDocumentsProps) {
           <CardTitle>Pending Document Reviews</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 dark:text-gray-200">
             Loading pending documents...
           </div>
         </CardContent>
@@ -204,7 +199,7 @@ export function PendingDocumentsReview({ companyId }: PendingDocumentsProps) {
           <CardDescription>No pending documents to review</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 dark:text-gray-200">
             <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>All documents have been reviewed!</p>
           </div>
@@ -245,24 +240,24 @@ export function PendingDocumentsReview({ companyId }: PendingDocumentsProps) {
                   <TableCell>
                     <div>
                       <div className="font-medium">{doc.employeeName}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs dark:text-gray-200">
                         {doc.employeeEmail}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <FileText className="h-4 w-4 dark:text-gray-200" />
                       {formatDocType(doc.docType)}
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-xs">
                     {doc.fileName}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="dark:text-gray-200">
                     {formatFileSize(doc.fileSize)}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="dark:text-gray-200">
                     {new Date(doc.uploadedAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
@@ -320,7 +315,7 @@ export function PendingDocumentsReview({ companyId }: PendingDocumentsProps) {
                 <div className="text-sm font-medium mb-1">
                   {selectedDoc.employeeName}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs dark:text-gray-200">
                   {formatDocType(selectedDoc.docType)} - {selectedDoc.fileName}
                 </div>
               </div>

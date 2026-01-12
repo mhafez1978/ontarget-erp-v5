@@ -1,6 +1,5 @@
 "use client";
 
-
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useMemo, useState } from "react";
-
-;
 
 interface Project {
   id: string;
@@ -277,8 +274,8 @@ export function TimelineView({ projects }: TimelineViewProps) {
       <Card>
         <CardContent className="py-12">
           <div className="text-center space-y-2">
-            <p className="text-muted-foreground">No projects found</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="dark:text-gray-200">No projects found</p>
+            <p className="text-sm dark:text-gray-200">
               Create a project to see it in the timeline
             </p>
           </div>
@@ -314,7 +311,7 @@ export function TimelineView({ projects }: TimelineViewProps) {
                         {project.team.name}
                       </Badge>
                       <span className="font-medium">{project.name}</span>
-                      <span className="text-muted-foreground">
+                      <span className="dark:text-gray-200">
                         -{" "}
                         {!project.startDate && !project.endDate
                           ? "No dates set"
@@ -339,10 +336,10 @@ export function TimelineView({ projects }: TimelineViewProps) {
         <Card>
           <CardContent className="py-12">
             <div className="text-center space-y-2">
-              <p className="text-muted-foreground">
+              <p className="dark:text-gray-200">
                 No projects with scheduled dates yet
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 Add start and end dates to your projects to see them in the
                 timeline
               </p>
@@ -357,7 +354,7 @@ export function TimelineView({ projects }: TimelineViewProps) {
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 {/* Date Range Selector */}
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Range:</span>
+                  <span className="text-sm dark:text-gray-200">Range:</span>
                   <Select
                     value={dateRange}
                     onValueChange={(value) => setDateRange(value as DateRange)}
@@ -378,7 +375,7 @@ export function TimelineView({ projects }: TimelineViewProps) {
 
                 {/* Zoom Controls */}
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Zoom:</span>
+                  <span className="text-sm dark:text-gray-200">Zoom:</span>
                   <Button
                     variant="outline"
                     size="sm"
@@ -390,7 +387,7 @@ export function TimelineView({ projects }: TimelineViewProps) {
                   >
                     <ZoomIn className="h-4 w-4" />
                   </Button>
-                  <span className="text-xs text-muted-foreground min-w-[60px] text-center">
+                  <span className="text-xs dark:text-gray-200 min-w-[60px] text-center">
                     {zoomLevel === "day" && "Daily"}
                     {zoomLevel === "week" && "Weekly"}
                     {zoomLevel === "month" && "Monthly"}
@@ -409,7 +406,7 @@ export function TimelineView({ projects }: TimelineViewProps) {
                 </div>
 
                 {/* Date Range Display */}
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm dark:text-gray-200">
                   {minDate.toLocaleDateString()} -{" "}
                   {maxDate.toLocaleDateString()}
                 </div>
@@ -440,7 +437,7 @@ export function TimelineView({ projects }: TimelineViewProps) {
                       style={{ left: `${position}%` }}
                     >
                       <div className="h-full w-px bg-border" />
-                      <div className="absolute top-0 left-0 -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap">
+                      <div className="absolute top-0 left-0 -translate-x-1/2 text-xs dark:text-gray-200 whitespace-nowrap">
                         {marker.label}
                       </div>
                     </div>
@@ -494,7 +491,7 @@ export function TimelineView({ projects }: TimelineViewProps) {
                             >
                               {project.team.name}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs dark:text-gray-200">
                               {project._count.tasks} tasks
                             </span>
                           </div>
@@ -523,7 +520,7 @@ export function TimelineView({ projects }: TimelineViewProps) {
                                 <div className="font-medium mb-1">
                                   {project.name}
                                 </div>
-                                <div className="space-y-1 text-muted-foreground">
+                                <div className="space-y-1 dark:text-gray-200">
                                   <div>
                                     Start:{" "}
                                     {new Date(
@@ -557,7 +554,7 @@ export function TimelineView({ projects }: TimelineViewProps) {
           <Card>
             <CardContent className="py-3">
               <div className="flex items-center gap-6 flex-wrap">
-                <span className="text-sm text-muted-foreground">Status:</span>
+                <span className="text-sm dark:text-gray-200">Status:</span>
                 {(
                   Object.keys(STATUS_CONFIG) as Array<
                     keyof typeof STATUS_CONFIG
