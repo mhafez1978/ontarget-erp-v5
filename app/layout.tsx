@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import "@/styles/theme-animations.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -8,11 +8,56 @@ import { Toaster } from "@/components/ui/sonner";
 import { SWRProvider } from "@/lib/swr-provider";
 import { VisitorTracker } from "@/components/visitor-tracker";
 
-const montserrat = Montserrat({
+const montserrat = localFont({
+  src: [
+    {
+      path: "../public/fonts/montserrat-100.ttf",
+      weight: "100",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/montserrat-200.ttf",
+      weight: "200",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/montserrat-300.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/montserrat-400.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/montserrat-500.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/montserrat-600.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/montserrat-700.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/montserrat-800.ttf",
+      weight: "800",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/montserrat-900.ttf",
+      weight: "900",
+      style: "normal",
+    },
+  ],
   variable: "--font-montserrat",
-  subsets: ["latin"],
   display: "swap",
-  preload: true,
 });
 
 export const metadata: Metadata = {
