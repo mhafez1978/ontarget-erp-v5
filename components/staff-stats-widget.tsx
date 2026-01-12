@@ -59,7 +59,7 @@ export function StaffStatsWidget({ companyId }: StaffStatsWidgetProps) {
       <Card className="overflow-hidden border-2 shadow-lg">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -114,9 +114,7 @@ export function StaffStatsWidget({ companyId }: StaffStatsWidgetProps) {
             <Calendar className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-muted-foreground font-medium">
-              Hire Date
-            </p>
+            <p className="text-xs dark:text-gray-200 font-medium">Hire Date</p>
             <p className="text-sm font-semibold">{stats.hireDate}</p>
           </div>
         </div>
@@ -127,7 +125,7 @@ export function StaffStatsWidget({ companyId }: StaffStatsWidgetProps) {
             <TrendingUp className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-muted-foreground font-medium">
+            <p className="text-xs dark:text-gray-200 font-medium">
               Days Employed
             </p>
             <p className="text-sm font-semibold">
@@ -142,9 +140,7 @@ export function StaffStatsWidget({ companyId }: StaffStatsWidgetProps) {
             <Briefcase className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-muted-foreground font-medium">
-              Job Title
-            </p>
+            <p className="text-xs dark:text-gray-200 font-medium">Job Title</p>
             <p className="text-sm font-semibold">{stats.jobTitle || "N/A"}</p>
           </div>
         </div>
@@ -155,7 +151,7 @@ export function StaffStatsWidget({ companyId }: StaffStatsWidgetProps) {
             <Shield className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-muted-foreground font-medium">Role</p>
+            <p className="text-xs dark:text-gray-200 font-medium">Role</p>
             <p className="text-sm font-semibold">{stats.role}</p>
           </div>
         </div>
@@ -166,7 +162,7 @@ export function StaffStatsWidget({ companyId }: StaffStatsWidgetProps) {
             <CreditCard className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-muted-foreground font-medium">Plan</p>
+            <p className="text-xs dark:text-gray-200 font-medium">Plan</p>
             <p className="text-sm font-semibold">{stats.plan}</p>
           </div>
         </div>
@@ -178,9 +174,7 @@ export function StaffStatsWidget({ companyId }: StaffStatsWidgetProps) {
               <DollarSign className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <p className="text-xs text-muted-foreground font-medium">
-                Pay Rate
-              </p>
+              <p className="text-xs dark:text-gray-200 font-medium">Pay Rate</p>
               <p className="text-sm font-semibold">{stats.payRate}</p>
             </div>
           </div>

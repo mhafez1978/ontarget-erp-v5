@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Shield } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -57,7 +56,7 @@ function MfaLoginPageContent() {
   if (loading || !userId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-3 text-muted-foreground">
+        <div className="flex items-center gap-3 dark:text-gray-200">
           <Loader2 className="h-5 w-5 animate-spin" />
           <span>Preparing MFA challenge...</span>
         </div>
@@ -74,7 +73,7 @@ function MfaLoginPageContent() {
             <CardTitle>Verify your login</CardTitle>
           </div>
           {email && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm dark:text-gray-200">
               Account: {email} {provider ? `(via ${provider})` : ""}
             </p>
           )}
@@ -102,7 +101,7 @@ export default function MfaLoginPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="flex items-center gap-3 dark:text-gray-200">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span>Preparing MFA challenge...</span>
           </div>

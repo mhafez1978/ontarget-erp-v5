@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm dark:text-gray-200">
               Please check your email inbox and follow the instructions to reset
               your password. The link will expire in 1 hour.
             </p>
@@ -127,7 +127,7 @@ export default function ForgotPasswordPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Sending..." : "Send Reset Link"}
             </Button>
-            <div className="text-sm text-center text-muted-foreground">
+            <div className="text-sm text-center dark:text-gray-200">
               Remember your password?{" "}
               <Link href="/login" className="text-primary hover:underline">
                 Login

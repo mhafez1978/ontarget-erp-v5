@@ -221,13 +221,13 @@ export function ContactSection() {
     >
       <div className="container mx-auto max-w-7xl">
         <div className="text-center mb-16 flex flex-col items-center">
-          <h2 className="max-w-3xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-6 dark:text-gray-200 text-center">
-            <span className="text-purple-500 dark:text-primary mr-4">
+          <h2 className="max-w-3xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-6 dark:dark:text-gray-200 text-center">
+            <span className="text-purple-500 dark:text-[#2bee79] mr-4">
               Stay in-touch
             </span>
             We&apos;d Love to Hear From You
           </h2>
-          <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+          <p className="w-full px-4 mx-auto text-base md:text-lg text-black dark:text-gray-50 mb-12 leading-relaxed md:max-w-4xl ">
             We would love to hear from you. Please reach out with any questions,
             comments, or feedback.
           </p>
@@ -241,11 +241,11 @@ export function ContactSection() {
               <div className="rounded-lg border bg-card p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start gap-4">
                   <div className="rounded-lg bg-primary/10 p-3">
-                    <Building2 className="h-6 w-6 text-primary" />
+                    <Building2 className="h-6 w-6 dark:text-[#2bee79]" />
                   </div>
                   <div className="flex-1">
                     <h4 className="font-semibold mb-1">Nodes Unlimited LLC</h4>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-sm dark:text-gray-200">
                       <MapPin className="h-4 w-4" />
                       <span>Lowell, Massachusetts</span>
                     </div>
@@ -261,11 +261,11 @@ export function ContactSection() {
                   className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent hover:border-primary/50 transition-all group"
                 >
                   <div className="rounded-lg bg-[#0A66C2]/10 p-3 group-hover:bg-[#0A66C2]/20 transition-colors">
-                    <Linkedin className="h-5 w-5 text-[#0A66C2]" />
+                    <Linkedin className="h-5 w-5 tdark:text-[#2bee79]" />
                   </div>
                   <div className="flex-1">
                     <div className="font-semibold">LinkedIn</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm dark:text-gray-200">
                       /in/mohamedhafez1978
                     </div>
                   </div>
@@ -278,11 +278,11 @@ export function ContactSection() {
                   className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent hover:border-primary/50 transition-all group"
                 >
                   <div className="rounded-lg bg-foreground/10 p-3 group-hover:bg-foreground/20 transition-colors">
-                    <Github className="h-5 w-5" />
+                    <Github className="h-5 w-5 dark:text-[#2bee79]" />
                   </div>
                   <div className="flex-1">
                     <div className="font-semibold">GitHub</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm dark:text-gray-200">
                       @mhafez1978 • 75+ repositories
                     </div>
                   </div>
@@ -295,11 +295,11 @@ export function ContactSection() {
                   className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent hover:border-primary/50 transition-all group"
                 >
                   <div className="rounded-lg bg-[#1DA1F2]/10 p-3 group-hover:bg-[#1DA1F2]/20 transition-colors">
-                    <Twitter className="h-5 w-5 text-[#1DA1F2]" />
+                    <Twitter className="h-5 w-5 dark:text-[#2bee79]" />
                   </div>
                   <div className="flex-1">
                     <div className="font-semibold">Twitter / X</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm dark:text-gray-200">
                       @geeksondemand
                     </div>
                   </div>
@@ -316,7 +316,7 @@ export function ContactSection() {
                   </div>
                   <div className="flex-1">
                     <div className="font-semibold">Personal Website</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm dark:text-gray-200">
                       beingmohamedhafez.com
                     </div>
                   </div>
@@ -328,21 +328,21 @@ export function ContactSection() {
                 <Mail className="h-5 w-5 text-primary" />
                 Business Inquiries
               </h4>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm dark:text-gray-200 mb-4">
                 For partnership opportunities, enterprise solutions, or custom
                 development needs, feel free to reach out through the contact
                 form or connect on LinkedIn.
               </p>
               <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 dark:text-gray-200">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                   <span>Enterprise consulting available</span>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 dark:text-gray-200">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                   <span>Custom development solutions</span>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 dark:text-gray-200">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                   <span>Cloud architecture design</span>
                 </div>
@@ -374,7 +374,7 @@ export function ContactSection() {
                   </svg>
                 </div>
                 <div className="text-xl font-semibold">Message Sent</div>
-                <div className="text-sm text-muted-foreground max-w-md">
+                <div className="text-sm dark:text-gray-200 max-w-md">
                   Thank you for contacting us. We&apos;ll get back to you within
                   24 - 48 hours.
                 </div>
@@ -463,7 +463,7 @@ export function ContactSection() {
 
                 <Button
                   type="submit"
-                  className="w-full group bg-purple-500 text-white dark:bg-primary dark:text-black hover:bg-purple-600 dark:hover:bg-green-300"
+                  className="w-full group bg-purple-500 text-white hover:bg-purple-600  dark:bg-[#2bee79] dark:text-black dark:hover:bg-green-300"
                   size="lg"
                   disabled={isSubmitting}
                 >
@@ -477,7 +477,7 @@ export function ContactSection() {
                   )}
                 </Button>
                 {captchaActive && siteKey ? (
-                  <div className="mt-2 text-[11px] text-muted-foreground text-center">
+                  <div className="mt-2 text-[11px] dark:text-gray-200 text-center">
                     Protected by reCAPTCHA •
                     <a
                       href="https://policies.google.com/privacy"
@@ -499,11 +499,11 @@ export function ContactSection() {
                   </div>
                 ) : null}
                 {captchaBypass ? (
-                  <div className="mt-2 text-[11px] text-muted-foreground text-center">
+                  <div className="mt-2 text-[11px] dark:text-gray-200 text-center">
                     Captcha bypass active for localhost testing.
                   </div>
                 ) : null}
-                <p className="text-xs text-muted-foreground text-center mt-2">
+                <p className="text-xs dark:text-gray-200 text-center mt-2">
                   By submitting this form, you agree to our privacy policy.
                   We&apos;ll respond within 24-48 hours.
                 </p>

@@ -155,7 +155,7 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">My Companies</h2>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Welcome back, {userName || "Admin"}! Manage your companies here.
           </p>
         </div>
@@ -168,14 +168,12 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
       </div>
 
       {userPlan && (
-        <div className="text-sm text-muted-foreground">
-          {getPlanLimitText()}
-        </div>
+        <div className="text-sm dark:text-gray-200">{getPlanLimitText()}</div>
       )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
         </div>
       ) : error ? (
         <div className="text-center py-12">
@@ -186,8 +184,8 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
         </div>
       ) : companies.length === 0 ? (
         <div className="text-center py-12 space-y-4">
-          <Building2 className="h-12 w-12 mx-auto opacity-50 text-muted-foreground" />
-          <p className="text-muted-foreground">
+          <Building2 className="h-12 w-12 mx-auto opacity-50 dark:text-gray-200" />
+          <p className="dark:text-gray-200">
             {userPlan?.canCreateMore
               ? 'No companies yet. Click "Create Company" to get started.'
               : "No companies yet."}
@@ -224,7 +222,7 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
                   <td className="px-4 py-4">
                     <div className="font-medium">{company.name}</div>
                     {company.slogan && (
-                      <div className="text-xs text-muted-foreground mt-0.5">
+                      <div className="text-xs dark:text-gray-200 mt-0.5">
                         {company.slogan}
                       </div>
                     )}
@@ -232,36 +230,36 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
                   <td className="px-4 py-4 text-sm">
                     <div className="space-y-1">
                       {company.email && (
-                        <div className="text-muted-foreground">
+                        <div className="dark:text-gray-200">
                           {company.email}
                         </div>
                       )}
                       {company.phone && (
-                        <div className="text-muted-foreground">
+                        <div className="dark:text-gray-200">
                           {company.phone}
                         </div>
                       )}
                       {company.website && (
-                        <div className="text-muted-foreground truncate max-w-[200px]">
+                        <div className="dark:text-gray-200 truncate max-w-[200px]">
                           {company.website}
                         </div>
                       )}
                       {!company.email && !company.phone && !company.website && (
-                        <span className="text-muted-foreground italic">
+                        <span className="dark:text-gray-200 italic">
                           No contact info
                         </span>
                       )}
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <span className="text-sm text-muted-foreground line-clamp-2">
+                    <span className="text-sm dark:text-gray-200 line-clamp-2">
                       {company.description || "No description"}
                     </span>
                   </td>
                   <td className="px-4 py-4 text-center">
                     {company.memberCount}
                   </td>
-                  <td className="px-4 py-4 text-sm text-muted-foreground">
+                  <td className="px-4 py-4 text-sm dark:text-gray-200">
                     {new Date(company.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-4">

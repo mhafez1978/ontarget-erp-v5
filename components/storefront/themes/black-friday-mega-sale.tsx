@@ -2,10 +2,6 @@ import { ShoppingCart, Star, Mail, Phone, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-
-
-
-;
 import {
   Card,
   CardContent,
@@ -101,7 +97,7 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
               </span>
             </h1>
 
-            <p className="max-w-lg text-base text-gray-200 sm:text-lg">
+            <p className="max-w-lg text-base dark:text-gray-200 sm:text-lg">
               {description}
             </p>
 
@@ -158,7 +154,7 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs text-gray-200">
+              <div className="grid grid-cols-2 gap-3 text-xs dark:text-gray-200">
                 <div className="rounded-xl bg-white/5 px-3 py-3">
                   <p className="text-[11px] text-gray-400">Sitewide Savings</p>
                   <p className="text-lg font-semibold text-white">Up to 70%</p>
@@ -447,7 +443,7 @@ export function BlackFridayTheme(props: ThemeRendererProps) {
                     {title && <p className="text-xs text-gray-400">{title}</p>}
                   </div>
                 </div>
-                <blockquote className="mt-2 text-xs text-gray-200 line-clamp-4">
+                <blockquote className="mt-2 text-xs dark:text-gray-200 line-clamp-4">
                   {body}
                 </blockquote>
                 <div className="mt-2 flex items-center gap-1">

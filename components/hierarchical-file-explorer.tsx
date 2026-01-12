@@ -1,23 +1,24 @@
 "use client";
 
-
-import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Upload, Lock, Unlock, RefreshCw, FolderPlus, Grid3x3, List, Download, AlertCircle } from "lucide-react";
+import {
+  Folder,
+  FolderOpen,
+  File,
+  ChevronRight,
+  ChevronDown,
+  Upload,
+  Lock,
+  Unlock,
+  RefreshCw,
+  FolderPlus,
+  Grid3x3,
+  List,
+  Download,
+  AlertCircle,
+} from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 
-
-
-
-
-
-
-
-
-
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -458,7 +459,7 @@ export function HierarchicalFileExplorer({
   const renderFileList = () => {
     if (!selectedFolder) {
       return (
-        <div className="flex items-center justify-center h-64 text-muted-foreground">
+        <div className="flex items-center justify-center h-64 dark:text-gray-200">
           <div className="text-center">
             <Folder className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Select a folder to view files</p>
@@ -469,7 +470,7 @@ export function HierarchicalFileExplorer({
 
     if (!selectedFolder.files || selectedFolder.files.length === 0) {
       return (
-        <div className="flex items-center justify-center h-64 text-muted-foreground">
+        <div className="flex items-center justify-center h-64 dark:text-gray-200">
           <div className="text-center">
             <File className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No files in this folder</p>
@@ -544,12 +545,12 @@ export function HierarchicalFileExplorer({
                           className="hidden w-full h-full items-center justify-center"
                           style={{ display: "none" }}
                         >
-                          <FileIcon className="h-16 w-16 text-muted-foreground" />
+                          <FileIcon className="h-16 w-16 dark:text-gray-200" />
                         </div>
                       </div>
                     ) : (
                       <div className="w-full h-32 flex items-center justify-center bg-muted rounded">
-                        <FileIcon className="h-16 w-16 text-muted-foreground" />
+                        <FileIcon className="h-16 w-16 dark:text-gray-200" />
                       </div>
                     )}
 
@@ -560,10 +561,10 @@ export function HierarchicalFileExplorer({
                       >
                         {file.fileName}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs dark:text-gray-200">
                         {formatFileSize(file.fileSize)}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs dark:text-gray-200">
                         {new Date(file.createdAt).toLocaleDateString()}
                       </div>
                     </div>
@@ -606,17 +607,17 @@ export function HierarchicalFileExplorer({
                   onCheckedChange={() => toggleFileSelection(file.id)}
                   onClick={(e) => e.stopPropagation()}
                 />
-                <FileIcon className="h-5 w-5 text-muted-foreground shrink-0" />
+                <FileIcon className="h-5 w-5 dark:text-gray-200 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm truncate">
                     {file.fileName}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs dark:text-gray-200">
                     {formatFileSize(file.fileSize)} •{" "}
                     {new Date(file.createdAt).toLocaleDateString()}
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs dark:text-gray-200">
                   Right-click for options
                 </div>
               </div>
@@ -634,7 +635,7 @@ export function HierarchicalFileExplorer({
           <CardTitle>File Explorer</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 dark:text-gray-200">
             Loading file system...
           </div>
         </CardContent>
@@ -736,7 +737,7 @@ export function HierarchicalFileExplorer({
           <div className="col-span-1 border rounded-lg p-4 max-h-[600px] overflow-y-auto">
             <div className="mb-4 font-semibold text-sm">Folders</div>
             {folders.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
+              <div className="text-center py-12 dark:text-gray-200">
                 <Folder className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="text-sm mb-4">No folders found</p>
                 {isAdmin && (
@@ -871,7 +872,7 @@ export function HierarchicalFileExplorer({
                   <p className="text-lg font-semibold text-primary">
                     Drop files here to upload
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     to {selectedFolder.name}
                   </p>
                 </div>

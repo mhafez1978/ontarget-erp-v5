@@ -1,15 +1,8 @@
 "use client";
 
-
 import { Mail, Plus, Edit, Eye, Send, Trash2, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 
-
-
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -220,7 +213,7 @@ export default function SuperAdminTemplatesView() {
             <Mail className="h-8 w-8" />
             Email Templates
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="dark:text-gray-200 mt-2">
             Manage global email templates sent by the system
           </p>
         </div>
@@ -237,7 +230,7 @@ export default function SuperAdminTemplatesView() {
             <CardTitle className="text-sm font-medium">
               Total Templates
             </CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
+            <Mail className="h-4 w-4 dark:text-gray-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{templates.length}</div>
@@ -248,7 +241,7 @@ export default function SuperAdminTemplatesView() {
             <CardTitle className="text-sm font-medium">
               Active Templates
             </CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
+            <Mail className="h-4 w-4 dark:text-gray-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -261,7 +254,7 @@ export default function SuperAdminTemplatesView() {
             <CardTitle className="text-sm font-medium">
               Default Templates
             </CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
+            <Mail className="h-4 w-4 dark:text-gray-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -297,7 +290,7 @@ export default function SuperAdminTemplatesView() {
                         >
                           Welcome Staff
                         </Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Sent when a new staff member is added
                         </p>
                       </div>
@@ -318,7 +311,7 @@ export default function SuperAdminTemplatesView() {
                         >
                           Welcome Customer
                         </Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Sent when a new customer signs up
                         </p>
                       </div>
@@ -339,7 +332,7 @@ export default function SuperAdminTemplatesView() {
                         >
                           Password Reset
                         </Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Sent when user requests password reset
                         </p>
                       </div>
@@ -360,7 +353,7 @@ export default function SuperAdminTemplatesView() {
                         >
                           Account Verification
                         </Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Sent to verify user email address
                         </p>
                       </div>
@@ -381,7 +374,7 @@ export default function SuperAdminTemplatesView() {
                         >
                           Password Changed
                         </Label>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm dark:text-gray-200">
                           Sent after password is successfully changed
                         </p>
                       </div>
@@ -494,7 +487,7 @@ export default function SuperAdminTemplatesView() {
                         {!Array.isArray(template.variables) && (
                           <Badge
                             variant="outline"
-                            className="text-xs text-muted-foreground"
+                            className="text-xs dark:text-gray-200"
                           >
                             No variables
                           </Badge>

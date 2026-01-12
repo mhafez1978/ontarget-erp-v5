@@ -1,6 +1,5 @@
 "use client";
 
-
 import { AlertTriangle, Settings } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -15,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-;
 import Link from "next/link";
 
 export default function HubPage() {
@@ -120,14 +118,14 @@ export default function HubPage() {
             <CardContent className="space-y-4">
               {isSuperAdmin && (
                 <>
-                  <p className="text-muted-foreground">
+                  <p className="dark:text-gray-200">
                     <strong>
                       Configure Global Root Company Provider for all subscribers
                       and internal system
                     </strong>{" "}
                     before you can access the Business Hub.
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     As a Super Admin, you need to set up the global email
                     provider that will be used by all subscribers and the
                     internal system. This is required to send emails through the
@@ -137,11 +135,11 @@ export default function HubPage() {
               )}
               {isAdmin && !emailConfigLevel && (
                 <>
-                  <p className="text-muted-foreground">
+                  <p className="dark:text-gray-200">
                     <strong>The global email system is not configured</strong> -
                     Set up your own company&apos;s email provider.
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm dark:text-gray-200">
                     The Super Admin has not configured a global email provider
                     yet. You can set up your own company-specific email provider
                     to access the Business Hub and send emails to your team.

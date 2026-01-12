@@ -15,41 +15,6 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatedBeam } from "@/components/ui/animated-beam";
 
-// Keep `Block` for future but comment out heavy UI when switching to circles.
-// const Block = forwardRef<HTMLDivElement, BlockProps>(function Block(
-//   { icon, label, tooltipTitle, tooltipText, rotate = "", large, stepNumber },
-//   ref
-// ) {
-//   return (
-//     <div className="group relative z-20" ref={ref}>
-//       {/* Step badge (top center) */}
-//       {typeof stepNumber === "number" ? (
-//         <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30">
-//           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-purple-500 text-white dark:bg-primary dark:text-black border border-border">
-//             {stepNumber}
-//           </div>
-//         </div>
-//       ) : null}
-
-//       <div
-//         className={`bg-card dark:bg-input/30 border border-border ${
-//           large ? "w-40 h-40" : "w-32 h-32"
-//         } rounded-xl ${rotate} flex flex-col items-center justify-center transition-transform hover:scale-105 px-4 py-3`}
-//       >
-//         <div className="mb-2 text-purple-500 dark:text-primary">{icon}</div>
-//         <span className="text-xs uppercase tracking-widest text-text font-bold">
-//           {label}
-//         </span>
-//       </div>
-
-//       <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity bg-card dark:bg-input/30 p-3 rounded-lg w-44 text-left pointer-events-none -top-16 left-1/2 -translate-x-1/2 border border-border z-30">
-//         <p className="text-xs font-bold text-text">{tooltipTitle}</p>
-//         <p className="text-[12px] text-text-muted">{tooltipText}</p>
-//       </div>
-//     </div>
-//   );
-// });
-// Block.displayName = "Block";
 
 // Simple Circle component to mimic Magic UI example
 const Circle = forwardRef<

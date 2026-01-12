@@ -204,7 +204,7 @@ export function SuperAdminCustomerView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-4">Customers</h1>
-          <p className="text-muted-foreground">Welcome {userName || "Guest"}</p>
+          <p className="dark:text-gray-200">Welcome {userName || "Guest"}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -231,7 +231,7 @@ export function SuperAdminCustomerView({
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -246,7 +246,7 @@ export function SuperAdminCustomerView({
             </div>
           ) : subscribers.length === 0 ? (
             <div className="text-center py-12 space-y-4">
-              <p className="text-muted-foreground">
+              <p className="dark:text-gray-200">
                 No subscriber customers yet. Click &quot;Add Customer&quot; to
                 create your first subscriber.
               </p>
@@ -294,7 +294,7 @@ export function SuperAdminCustomerView({
                             {subscriber.companyName}
                           </div>
                           {subscriber.companyDescription && (
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-sm dark:text-gray-200">
                               {subscriber.companyDescription}
                             </div>
                           )}
@@ -303,7 +303,7 @@ export function SuperAdminCustomerView({
                           <div className="font-medium">
                             {subscriber.ownerName}
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm dark:text-gray-200">
                             {subscriber.ownerEmail}
                           </div>
                         </td>
@@ -336,21 +336,21 @@ export function SuperAdminCustomerView({
                                 {daysRemaining !== null &&
                                   `${daysRemaining} days left`}
                               </div>
-                              <div className="text-muted-foreground">
+                              <div className="dark:text-gray-200">
                                 Ends: {formatDate(subscriber.trialEndsAt)}
                               </div>
                             </div>
                           ) : subscriber.billingCycleEnd ? (
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-sm dark:text-gray-200">
                               Next: {formatDate(subscriber.billingCycleEnd)}
                             </div>
                           ) : (
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm dark:text-gray-200">
                               N/A
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-4 text-sm text-muted-foreground">
+                        <td className="px-4 py-4 text-sm dark:text-gray-200">
                           {formatDate(subscriber.createdAt)}
                         </td>
                         <td className="px-4 py-4 text-right">
@@ -394,7 +394,7 @@ export function SuperAdminCustomerView({
         <CardContent>
           {isLoadingErp ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
             </div>
           ) : erpError ? (
             <div className="text-center py-12">
@@ -409,7 +409,7 @@ export function SuperAdminCustomerView({
             </div>
           ) : erpCustomers.length === 0 ? (
             <div className="text-center py-12 space-y-4">
-              <p className="text-muted-foreground">
+              <p className="dark:text-gray-200">
                 No individual subscribers yet.
               </p>
             </div>
@@ -452,7 +452,7 @@ export function SuperAdminCustomerView({
                           {c.emailVerified ? "Yes" : "No"}
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm text-muted-foreground">
+                      <td className="px-4 py-4 text-sm dark:text-gray-200">
                         {new Date(c.createdAt).toLocaleDateString()}
                       </td>
                     </tr>

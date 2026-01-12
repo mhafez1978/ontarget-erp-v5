@@ -347,7 +347,7 @@ export function TaskDetailDialog({
                 {...register("dueDate")}
                 className="pl-10"
               />
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 dark:text-gray-200 pointer-events-none" />
             </div>
           </div>
 
@@ -370,7 +370,7 @@ export function TaskDetailDialog({
                 <span className="text-sm font-medium">
                   {task.createdBy.user.name || task.createdBy.user.email}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs dark:text-gray-200">
                   Created this task
                 </span>
               </div>
@@ -403,13 +403,13 @@ export function TaskDetailDialog({
                       </span>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">Unassigned</span>
+                    <span className="dark:text-gray-200">Unassigned</span>
                   )}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="UNASSIGNED">
-                  <span className="text-muted-foreground">Unassigned</span>
+                  <span className="dark:text-gray-200">Unassigned</span>
                 </SelectItem>
                 {teamMembers.map((member) => (
                   <SelectItem key={member.id} value={member.staff.id}>
@@ -445,7 +445,7 @@ export function TaskDetailDialog({
               onTimeChange={setTimeEntry}
               initialMinutes={timeEntry}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               Track time spent on this task. Time is saved automatically when
               you save the task.
             </p>

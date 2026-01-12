@@ -146,7 +146,7 @@ export function Navbar() {
                   <span className="font-bold text-xl leading-tight text-text">
                     {branding.name}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs dark:text-gray-200">
                     {branding.slogan}
                   </span>
                 </div>
@@ -162,7 +162,7 @@ export function Navbar() {
                 <span className="font-bold text-xl leading-tight">
                   {branding.name}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs dark:text-gray-200">
                   {branding.slogan}
                 </span>
               </div>
@@ -196,7 +196,7 @@ export function Navbar() {
             <Link href="/login">Login</Link>
           </Button>
           <Button
-            className="hidden md:inline-flex bg-purple-500 text-white hover:bg-purple-600 dark:bg-background-dark/50 dark:text-text"
+            className="hidden md:inline-flex bg-purple-500 text-white hover:bg-purple-600 dark:bg-[#2bee79] dark:text-black"
             size="sm"
             asChild
           >
@@ -255,7 +255,7 @@ export function Navbar() {
                             <span className="font-bold text-xl leading-tight text-text">
                               {branding.name}
                             </span>
-                            <span className="text-xs text-muted-foreground font-normal">
+                            <span className="text-xs dark:text-gray-200 font-normal">
                               {branding.slogan}
                             </span>
                           </div>
@@ -271,7 +271,7 @@ export function Navbar() {
                           <span className="font-bold text-xl leading-tight text-text">
                             {branding.name}
                           </span>
-                          <span className="text-xs text-muted-foreground font-normal">
+                          <span className="text-xs dark:text-gray-200 font-normal">
                             {branding.slogan}
                           </span>
                         </div>
@@ -303,7 +303,7 @@ export function Navbar() {
                   <Button
                     onClick={() => setIsOpen(false)}
                     asChild
-                    className="bg-purple-500 text-white hover:bg-purple-600 dark:bg-primary dark:text-black"
+                    className="bg-purple-500 text-white hover:bg-purple-600 dark:bg-[#2bee79] dark:text-black"
                   >
                     <Link href="/register">Get Started</Link>
                   </Button>

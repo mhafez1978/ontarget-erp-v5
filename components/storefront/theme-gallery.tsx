@@ -1,21 +1,22 @@
 "use client";
 
-
-import { Check, Sparkles, Zap, Snowflake, Ghost, Flag, Sun, Flower, Laptop, UtensilsCrossed } from "lucide-react";
+import {
+  Check,
+  Sparkles,
+  Zap,
+  Snowflake,
+  Ghost,
+  Flag,
+  Sun,
+  Flower,
+  Laptop,
+  UtensilsCrossed,
+} from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-
-
-
-
-
-
-
-
-;
 import { defaultThemes } from "@/lib/storefront-themes";
 import { cn } from "@/lib/utils";
 
@@ -78,7 +79,7 @@ export function ThemeGallery({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm dark:text-gray-200">
         <Sparkles className="h-4 w-4" />
         <span>Choose a theme that best represents your brand</span>
       </div>
@@ -213,7 +214,7 @@ export function ThemeGallery({
                 <div className="text-center space-y-3">
                   <div className="space-y-1">
                     <h3 className="font-bold text-lg">{theme.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-sm dark:text-gray-200 line-clamp-2">
                       {theme.description}
                     </p>
                   </div>
@@ -249,7 +250,7 @@ export function ThemeGallery({
                   </div>
 
                   {/* Sections count */}
-                  <div className="text-xs text-muted-foreground pt-2">
+                  <div className="text-xs dark:text-gray-200 pt-2">
                     {theme.sections.length} sections included
                   </div>
                 </div>
@@ -278,7 +279,7 @@ export function ThemeGallery({
                   {defaultThemes.find((t) => t.id === selectedTheme)?.name}{" "}
                   Theme Selected
                 </h4>
-                <p className="text-sm text-muted-foreground p-1.5">
+                <p className="text-sm dark:text-gray-200 p-1.5">
                   Customize the content in the Content Wizard tab
                 </p>
               </div>

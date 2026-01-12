@@ -347,7 +347,7 @@ export function BulkImportCustomers({
                     </div>
                     <div>
                       <p className="text-sm font-medium">{file.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs dark:text-gray-200">
                         {(file.size / 1024).toFixed(1)} KB
                       </p>
                     </div>
@@ -375,7 +375,7 @@ export function BulkImportCustomers({
                     <p className="text-sm font-medium">
                       Drop your file here or click to browse
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs dark:text-gray-200 mt-1">
                       Supports CSV, XLSX, and XLS files
                     </p>
                   </div>
@@ -383,7 +383,7 @@ export function BulkImportCustomers({
               )}
             </div>
 
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               Need a template? Download a sample file:{" "}
               <a
                 href="/samples/customers-sample.csv"
@@ -462,16 +462,12 @@ export function BulkImportCustomers({
                       <tr key={idx} className="border-t">
                         <td className="py-1 pr-4">
                           {r.email || (
-                            <span className="text-muted-foreground italic">
-                              -
-                            </span>
+                            <span className="dark:text-gray-200 italic">-</span>
                           )}
                         </td>
                         <td className="py-1 pr-4">
                           {r.name || (
-                            <span className="text-muted-foreground italic">
-                              -
-                            </span>
+                            <span className="dark:text-gray-200 italic">-</span>
                           )}
                         </td>
                         <td className="py-1">
@@ -489,7 +485,7 @@ export function BulkImportCustomers({
                     ))}
                   </tbody>
                 </table>
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs dark:text-gray-200 mt-2">
                   Showing first 5 rows. Additional columns (password, phone,
                   address, etc.) will be imported if provided.
                 </p>

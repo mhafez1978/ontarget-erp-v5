@@ -608,7 +608,7 @@ export default function ProjectDetailPage() {
     return (
       <div className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="text-sm font-semibold text-muted-foreground">
+          <div className="text-sm font-semibold dark:text-gray-200">
             {label} overview
           </div>
           <Button
@@ -622,18 +622,18 @@ export default function ProjectDetailPage() {
         </div>
 
         {financeLoading && isActiveTab ? (
-          <div className="flex items-center justify-center rounded border border-dashed border-border p-8 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center rounded border border-dashed border-border p-8 text-sm dark:text-gray-200">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Loading {label.toLowerCase()}...
           </div>
         ) : entries.length === 0 ? (
-          <div className="rounded border border-dashed border-border p-6 text-sm text-muted-foreground">
+          <div className="rounded border border-dashed border-border p-6 text-sm dark:text-gray-200">
             No {label.toLowerCase()} recorded yet.
           </div>
         ) : (
           <div className="overflow-x-auto rounded border border-border">
             <table className="w-full text-left text-sm">
-              <thead className="border-b bg-muted text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+              <thead className="border-b bg-muted text-[0.65rem] uppercase tracking-wide dark:text-gray-200">
                 <tr>
                   <th className="px-4 py-3 font-normal">Description</th>
                   <th className="px-4 py-3 font-normal">Vendor</th>
@@ -655,7 +655,7 @@ export default function ProjectDetailPage() {
                         {entry.description || "—"}
                       </div>
                       {entry.notes && (
-                        <p className="text-[0.7rem] text-muted-foreground">
+                        <p className="text-[0.7rem] dark:text-gray-200">
                           {entry.notes}
                         </p>
                       )}
@@ -671,7 +671,7 @@ export default function ProjectDetailPage() {
                         <div>
                           <div>{formatMoney(entry.markupAmount)}</div>
                           {entry.markupPercent && (
-                            <div className="text-[0.65rem] text-muted-foreground">
+                            <div className="text-[0.65rem] dark:text-gray-200">
                               {Number(entry.markupPercent).toFixed(2)}%
                             </div>
                           )}
@@ -799,7 +799,7 @@ export default function ProjectDetailPage() {
     return (
       <DashboardLayout user={user}>
         <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] gap-4">
-          <p className="text-muted-foreground">Project not found</p>
+          <p className="dark:text-gray-200">Project not found</p>
           <Button onClick={() => router.push("/dashboard/projects")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Projects
@@ -827,7 +827,7 @@ export default function ProjectDetailPage() {
                 <h1 className="text-2xl font-bold tracking-tight">
                   {project.name}
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   {project.company.name}
                 </p>
               </div>
@@ -866,7 +866,7 @@ export default function ProjectDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              <CheckCircle2 className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{project._count.tasks}</div>
@@ -877,7 +877,7 @@ export default function ProjectDetailPage() {
               <CardTitle className="text-sm font-medium">
                 Team Members
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -890,13 +890,13 @@ export default function ProjectDetailPage() {
               <CardTitle className="text-sm font-medium">
                 Time Tracked
               </CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {totalTimeMinutes > 0 ? formatTime(totalTimeMinutes) : "0m"}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs dark:text-gray-200 mt-1">
                 {totalTaskTime > 0 && `${formatTime(totalTaskTime)} tasks`}
                 {totalTaskTime > 0 && totalNoteTime > 0 && " • "}
                 {totalNoteTime > 0 && `${formatTime(totalNoteTime)} notes`}
@@ -906,7 +906,7 @@ export default function ProjectDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Start Date</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -922,7 +922,7 @@ export default function ProjectDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Due Date</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 dark:text-gray-200" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">

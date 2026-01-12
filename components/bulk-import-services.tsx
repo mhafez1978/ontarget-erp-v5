@@ -334,7 +334,7 @@ export function BulkImportServices({
                     </div>
                     <div>
                       <p className="text-sm font-medium">{file.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm dark:text-gray-200">
                         {(file.size / 1024).toFixed(1)} KB
                       </p>
                     </div>
@@ -362,7 +362,7 @@ export function BulkImportServices({
                     <p className="text-sm font-medium">
                       Drop your file here or click to browse
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       Supports CSV, XLSX, and XLS files
                     </p>
                   </div>
@@ -370,7 +370,7 @@ export function BulkImportServices({
               )}
             </div>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm dark:text-gray-200">
               Need a template? Download a sample file:{" "}
               <a
                 href="/samples/services-sample.csv"
@@ -433,30 +433,24 @@ export function BulkImportServices({
                       <tr key={idx} className="border-t">
                         <td className="py-1 pr-4">
                           {r.name || (
-                            <span className="text-muted-foreground italic">
-                              -
-                            </span>
+                            <span className="dark:text-gray-200 italic">-</span>
                           )}
                         </td>
                         <td className="py-1 pr-4">
                           {r.price || (
-                            <span className="text-muted-foreground italic">
-                              -
-                            </span>
+                            <span className="dark:text-gray-200 italic">-</span>
                           )}
                         </td>
                         <td className="py-1">
                           {r.duration || (
-                            <span className="text-muted-foreground italic">
-                              -
-                            </span>
+                            <span className="dark:text-gray-200 italic">-</span>
                           )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm dark:text-gray-200 mt-2">
                   Showing first 5 rows. Additional columns (description, images,
                   etc.) will be imported if provided.
                 </p>

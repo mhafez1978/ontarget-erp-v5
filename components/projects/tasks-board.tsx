@@ -1,13 +1,11 @@
 "use client";
 
-
 import { Plus, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-;
 import { toast } from "sonner";
 import {
   DndContext,
@@ -293,7 +291,7 @@ export function TasksBoard({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">Tasks Board</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm dark:text-gray-200">
               {tasks.length} task{tasks.length !== 1 ? "s" : ""} total
               {isUpdating && " • Updating..."}
             </p>
@@ -311,7 +309,7 @@ export function TasksBoard({
             return (
               <DroppableColumn key={status} status={status} config={config}>
                 {statusTasks.length === 0 ? (
-                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center py-8 text-sm dark:text-gray-200">
                     No tasks
                   </div>
                 ) : (
@@ -349,10 +347,10 @@ export function TasksBoard({
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Plus className="h-6 w-6 text-muted-foreground" />
+                <Plus className="h-6 w-6 dark:text-gray-200" />
               </div>
               <h3 className="text-lg font-semibold mb-2">No Tasks Yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm dark:text-gray-200 mb-4">
                 Get started by creating your first task
               </p>
               <Button onClick={() => handleCreateTask("TODO")}>

@@ -1,13 +1,10 @@
 "use client";
 
-
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { RootCompanyBrandingCard } from "@/components/root-company-branding-card";
 import { CompanyWhiteLabelSettings } from "@/components/company-white-label-settings";
-;
-
 export default function BrandingPage() {
   const [user, setUser] = useState<{
     name: string | null;
@@ -40,7 +37,7 @@ export default function BrandingPage() {
     return (
       <DashboardLayout user={user || undefined}>
         <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
         </div>
       </DashboardLayout>
     );
@@ -55,7 +52,7 @@ export default function BrandingPage() {
               ? "System Branding"
               : "Company Branding"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             {user?.role === "SUPER_ADMIN"
               ? "Manage the global OnTarget ERP branding and appearance"
               : "Customize your company's branding and appearance"}
@@ -68,7 +65,7 @@ export default function BrandingPage() {
           <CompanyWhiteLabelSettings />
         ) : (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">
+            <p className="dark:text-gray-200">
               You don&apos;t have permission to access this page.
             </p>
           </div>

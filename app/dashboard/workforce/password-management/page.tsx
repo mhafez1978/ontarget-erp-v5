@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Lock, Eye, EyeOff, Shield, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -33,12 +32,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-
-
-
-
-
-;
 
 interface UserProfile {
   id: string;
@@ -262,7 +255,7 @@ export default function PasswordManagementPage() {
             <Shield className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold">Password Management</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             {currentUser.role === "SUPER_ADMIN"
               ? "Reset passwords for any user in the system"
               : "Reset passwords for members of your company"}
@@ -278,7 +271,7 @@ export default function PasswordManagementPage() {
             </CardDescription>
             <div className="mt-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 dark:text-gray-200" />
                 <Input
                   placeholder="Search by name, email, or role..."
                   value={searchQuery}
@@ -290,7 +283,7 @@ export default function PasswordManagementPage() {
           </CardHeader>
           <CardContent>
             {filteredUsers.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
+              <div className="text-center py-12 dark:text-gray-200">
                 {searchQuery
                   ? "No users found matching your search"
                   : "No users available"}
@@ -402,9 +395,9 @@ export default function PasswordManagementPage() {
                     onClick={() => setShowNewPassword(!showNewPassword)}
                   >
                     {showNewPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
@@ -413,7 +406,7 @@ export default function PasswordManagementPage() {
                     className={
                       newPassword.length >= 8
                         ? "text-green-600"
-                        : "text-muted-foreground"
+                        : "dark:text-gray-200"
                     }
                   >
                     ✓ At least 8 characters
@@ -422,7 +415,7 @@ export default function PasswordManagementPage() {
                     className={
                       /[A-Z]/.test(newPassword)
                         ? "text-green-600"
-                        : "text-muted-foreground"
+                        : "dark:text-gray-200"
                     }
                   >
                     ✓ One uppercase letter
@@ -431,7 +424,7 @@ export default function PasswordManagementPage() {
                     className={
                       /[a-z]/.test(newPassword)
                         ? "text-green-600"
-                        : "text-muted-foreground"
+                        : "dark:text-gray-200"
                     }
                   >
                     ✓ One lowercase letter
@@ -440,7 +433,7 @@ export default function PasswordManagementPage() {
                     className={
                       /[0-9]/.test(newPassword)
                         ? "text-green-600"
-                        : "text-muted-foreground"
+                        : "dark:text-gray-200"
                     }
                   >
                     ✓ One number
@@ -470,9 +463,9 @@ export default function PasswordManagementPage() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>

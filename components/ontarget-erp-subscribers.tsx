@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Building2, Users, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -19,8 +18,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-
-;
 import { Button } from "@/components/ui/button";
 
 interface CompanyData {
@@ -75,7 +72,7 @@ export function OnTargetERPSubscribers() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -128,7 +125,7 @@ export function OnTargetERPSubscribers() {
       </CardHeader>
       <CardContent>
         {companies.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 dark:text-gray-200">
             <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No companies found ...</p>
           </div>
@@ -156,7 +153,7 @@ export function OnTargetERPSubscribers() {
                       {company.name}
                     </TableCell>
                     <TableCell className="max-w-md">
-                      <span className="text-sm text-muted-foreground line-clamp-2">
+                      <span className="text-sm dark:text-gray-200 line-clamp-2">
                         {company.description || "No description"}
                       </span>
                     </TableCell>
@@ -165,7 +162,7 @@ export function OnTargetERPSubscribers() {
                         <p className="font-medium text-sm">
                           {company.ownerName}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs dark:text-gray-200">
                           {company.ownerEmail}
                         </p>
                       </div>
@@ -175,7 +172,7 @@ export function OnTargetERPSubscribers() {
                         {company.memberCount}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm dark:text-gray-200">
                       {new Date(company.createdAt).toLocaleTimeString()}
                     </TableCell>
                   </TableRow>

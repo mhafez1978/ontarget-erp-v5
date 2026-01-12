@@ -2309,6 +2309,24 @@ model HederaCompanyAudit {
   @@index([companyId])
 }
 
+// Outbox job table for async background processing (e.g., historical anchoring)
+model OutboxJob {
+  id        String   @id @default(cuid())
+  type      String
+  payload   Json
+  status    String   @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | FAILED
+  attempts  Int      @default(0)
+  lastError String?  @db.Text
+  runAt     DateTime? // scheduled time to run
+  lockedAt  DateTime?
+  lockId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([runAt])
+}
+
 model EmailTemplate {
   id          String                @id @default(cuid())
   type        EmailTemplateType // Template type (PASSWORD_RESET, WELCOME_CUSTOMER, etc.)

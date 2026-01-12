@@ -1,7 +1,13 @@
 "use client";
 
-
-import { Database, HardDrive, Cloud, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Database,
+  HardDrive,
+  Cloud,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,12 +27,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-
-
-
-
-
-;
 
 interface StorageConfig {
   // LOCAL
@@ -172,7 +172,7 @@ export function StorageProviderSettings({
                 value={config.path || ""}
                 onChange={(e) => setConfig({ ...config, path: e.target.value })}
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs dark:text-gray-200 mt-1">
                 Default server storage path for cold data
               </p>
             </div>
@@ -459,7 +459,7 @@ export function StorageProviderSettings({
 
         <div className="bg-muted/50 p-4 rounded-md text-sm space-y-2">
           <p className="font-medium">Storage Usage:</p>
-          <ul className="space-y-1 text-muted-foreground">
+          <ul className="space-y-1 dark:text-gray-200">
             <li>• Failed login attempts (archived after 30 days)</li>
             <li>• Visitor tracking logs (archived after 30 days)</li>
             <li>• User activity logs (archived after 30 days)</li>

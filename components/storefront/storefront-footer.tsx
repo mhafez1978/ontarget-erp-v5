@@ -1,12 +1,7 @@
 "use client";
 
-
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import Link from "next/link";
-
-
-
-;
 
 interface AiMeta {
   primaryColor?: string;
@@ -50,7 +45,7 @@ export function StorefrontFooter({
       <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs md:text-sm">
         <div className="text-left">
           <div className="text-sm font-semibold capitalize">{companyName}.</div>
-          <div className="text-xs text-muted-foreground capitalize">
+          <div className="text-xs dark:text-gray-200 capitalize">
             © {new Date().getFullYear()} {companyName ?? slug}. All rights
             reserved.
           </div>

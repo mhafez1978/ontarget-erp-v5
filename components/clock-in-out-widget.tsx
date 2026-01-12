@@ -182,7 +182,7 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-4">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>

@@ -373,7 +373,7 @@ export function AuditLog({ maxHeight = 600, limit = 50 }: AuditLogProps) {
     return (
       <div className="rounded-xl border bg-card shadow-sm p-6">
         <div className="flex items-center justify-center">
-          <div className="text-muted-foreground">Loading audit logs...</div>
+          <div className="dark:text-gray-200">Loading audit logs...</div>
         </div>
       </div>
     );
@@ -395,9 +395,7 @@ export function AuditLog({ maxHeight = 600, limit = 50 }: AuditLogProps) {
   if (auditLogs.length === 0) {
     return (
       <div className="rounded-xl border bg-card shadow-sm p-6">
-        <div className="text-center text-muted-foreground">
-          No activities yet
-        </div>
+        <div className="text-center dark:text-gray-200">No activities yet</div>
       </div>
     );
   }
@@ -435,12 +433,12 @@ export function AuditLog({ maxHeight = 600, limit = 50 }: AuditLogProps) {
                     {meta.label}
                   </span>
                   {evt.description && (
-                    <span className="text-sm text-muted-foreground mt-1">
+                    <span className="text-sm dark:text-gray-200 mt-1">
                       {evt.description}
                     </span>
                   )}
                   {evt.company && (
-                    <span className="text-xs text-muted-foreground mt-1">
+                    <span className="text-xs dark:text-gray-200 mt-1">
                       Company: {evt.company.name}
                     </span>
                   )}
@@ -448,7 +446,7 @@ export function AuditLog({ maxHeight = 600, limit = 50 }: AuditLogProps) {
               </div>
 
               {/* Metadata section */}
-              <div className="flex flex-col gap-1 text-xs text-muted-foreground pl-[52px]">
+              <div className="flex flex-col gap-1 text-xs dark:text-gray-200 pl-[52px]">
                 <span>
                   <strong>Time:</strong>{" "}
                   {formatDateTime(evt.createdAt) || "Unknown time"}

@@ -214,7 +214,7 @@
 //                     ? "bg-primary text-primary-foreground"
 //                     : s < step
 //                     ? "bg-primary/20 text-primary"
-//                     : "bg-muted text-muted-foreground"
+//                     : "bg-muted dark:text-gray-200"
 //                 }`}
 //               >
 //                 {s}
@@ -277,7 +277,7 @@
 //             <div className="space-y-2">
 //               <div className="flex items-center justify-between">
 //                 <Label>Team Managers (Optional)</Label>
-//                 <span className="text-sm text-muted-foreground">
+//                 <span className="text-sm dark:text-gray-200">
 //                   {managerIds.length} selected
 //                 </span>
 //               </div>
@@ -285,12 +285,12 @@
 //                 <ScrollArea className="h-[150px]">
 //                   {staffLoading ? (
 //                     <div className="flex items-center justify-center h-full">
-//                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+//                       <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
 //                     </div>
 //                   ) : staffMembers.length === 0 ? (
 //                     <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-//                       <Users className="h-8 w-8 text-muted-foreground mb-2" />
-//                       <span className="text-sm text-muted-foreground">
+//                       <Users className="h-8 w-8 dark:text-gray-200 mb-2" />
+//                       <span className="text-sm dark:text-gray-200">
 //                         No staff members available
 //                       </span>
 //                     </div>
@@ -347,7 +347,7 @@
 //                                 <p className="text-sm font-medium">
 //                                   {displayName}
 //                                 </p>
-//                                 <p className="text-xs text-muted-foreground">
+//                                 <p className="text-xs dark:text-gray-200">
 //                                   {staff.jobTitle || staff.role}
 //                                 </p>
 //                               </div>
@@ -370,7 +370,7 @@
 //             <div className="space-y-2">
 //               <div className="flex items-center justify-between">
 //                 <Label>Team Leads (Optional)</Label>
-//                 <span className="text-sm text-muted-foreground">
+//                 <span className="text-sm dark:text-gray-200">
 //                   {teamLeadIds.length} selected
 //                 </span>
 //               </div>
@@ -378,12 +378,12 @@
 //                 <ScrollArea className="h-[150px]">
 //                   {staffLoading ? (
 //                     <div className="flex items-center justify-center h-full">
-//                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+//                       <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
 //                     </div>
 //                   ) : staffMembers.length === 0 ? (
 //                     <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-//                       <Users className="h-8 w-8 text-muted-foreground mb-2" />
-//                       <span className="text-sm text-muted-foreground">
+//                       <Users className="h-8 w-8 dark:text-gray-200 mb-2" />
+//                       <span className="text-sm dark:text-gray-200">
 //                         No staff members available
 //                       </span>
 //                     </div>
@@ -440,7 +440,7 @@
 //                                 <p className="text-sm font-medium">
 //                                   {displayName}
 //                                 </p>
-//                                 <p className="text-xs text-muted-foreground">
+//                                 <p className="text-xs dark:text-gray-200">
 //                                   {staff.jobTitle || staff.role}
 //                                 </p>
 //                               </div>
@@ -463,19 +463,19 @@
 //             <div className="space-y-3">
 //               <div className="flex items-center justify-between">
 //                 <Label>Team Staff (Optional)</Label>
-//                 <span className="text-sm text-muted-foreground">
+//                 <span className="text-sm dark:text-gray-200">
 //                   {selectedMembers.length} selected
 //                 </span>
 //               </div>
 
 //               {staffLoading ? (
 //                 <div className="flex items-center justify-center py-8">
-//                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+//                   <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
 //                 </div>
 //               ) : staffMembers.length === 0 ? (
 //                 <div className="text-center py-8 border-2 border-dashed rounded-lg">
-//                   <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-//                   <p className="text-sm text-muted-foreground">
+//                   <Users className="h-8 w-8 dark:text-gray-200 mx-auto mb-2" />
+//                   <p className="text-sm dark:text-gray-200">
 //                     No staff members available
 //                   </p>
 //                 </div>
@@ -517,7 +517,7 @@
 //                               {displayName}
 //                             </p>
 //                             {member.jobTitle && (
-//                               <p className="text-sm text-muted-foreground truncate">
+//                               <p className="text-sm dark:text-gray-200 truncate">
 //                                 {member.jobTitle}
 //                               </p>
 //                             )}
@@ -812,7 +812,7 @@ export function CreateTeamDialog({
                     ? "bg-primary text-primary-foreground"
                     : s < step
                     ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
+                    : "bg-muted dark:text-gray-200"
                 }`}
               >
                 {s}
@@ -908,7 +908,7 @@ export function CreateTeamDialog({
                             <p className="font-medium text-sm">
                               {user.name || user.email}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs dark:text-gray-200">
                               {m.jobTitle}
                             </p>
                           </div>
@@ -967,7 +967,7 @@ export function CreateTeamDialog({
                           <p className="font-medium text-sm">
                             {user.name || user.email}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             {m.jobTitle}
                           </p>
                         </div>
@@ -1019,7 +1019,7 @@ export function CreateTeamDialog({
                             {user.name || user.email}
                           </p>
                           {m.jobTitle && (
-                            <p className="text-sm text-muted-foreground truncate">
+                            <p className="text-sm dark:text-gray-200 truncate">
                               {m.jobTitle}
                             </p>
                           )}

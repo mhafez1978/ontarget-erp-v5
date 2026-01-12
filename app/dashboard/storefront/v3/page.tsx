@@ -305,7 +305,7 @@ export default function V3StorefrontPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
       </div>
     );
   }
@@ -322,7 +322,7 @@ export default function V3StorefrontPage() {
               </div>
               AI Storefront V3
             </h1>
-            <p className="text-muted-foreground mt-2 text-lg">
+            <p className="dark:text-gray-200 mt-2 text-lg">
               Professional multi-page websites with AI-powered generation
             </p>
           </div>
@@ -496,7 +496,7 @@ export default function V3StorefrontPage() {
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                   What You&apos;ll Get
                 </div>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+                <ul className="space-y-2 text-sm dark:text-gray-200">
                   <li className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                     Multi-page website (Home, About, Services, Contact)
@@ -561,7 +561,7 @@ export default function V3StorefrontPage() {
                   {websites.length}
                 </Badge>
               </h2>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm dark:text-gray-200 mt-1">
                 {selectedCompany?.name} websites
               </p>
             </div>
@@ -581,11 +581,11 @@ export default function V3StorefrontPage() {
               <CardContent className="py-16 text-center">
                 <div className="flex justify-center mb-4">
                   <div className="p-4 bg-muted rounded-full">
-                    <Globe className="h-12 w-12 text-muted-foreground" />
+                    <Globe className="h-12 w-12 dark:text-gray-200" />
                   </div>
                 </div>
                 <h3 className="text-lg font-semibold mb-2">No websites yet</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
+                <p className="dark:text-gray-200 max-w-md mx-auto">
                   Generate your first AI-powered website using the form above.
                   It only takes a few seconds!
                 </p>
@@ -623,7 +623,7 @@ export default function V3StorefrontPage() {
                             <Badge variant="secondary">Draft</Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 text-sm dark:text-gray-200">
                           <div className="flex items-center gap-1">
                             <Clock className="h-3.5 w-3.5" />
                             {new Date(website.createdAt).toLocaleDateString()}
@@ -691,7 +691,7 @@ export default function V3StorefrontPage() {
                       <div className="p-4 rounded-lg bg-linear-to-br from-primary/5 to-primary/10 border border-primary/20">
                         <div className="flex items-center gap-2 mb-2">
                           <BarChart3 className="h-4 w-4 text-primary" />
-                          <div className="text-xs font-semibold text-muted-foreground">
+                          <div className="text-xs font-semibold dark:text-gray-200">
                             Quality Score
                           </div>
                         </div>
@@ -709,22 +709,22 @@ export default function V3StorefrontPage() {
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2 mb-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <div className="text-xs font-semibold text-muted-foreground">
+                          <FileText className="h-4 w-4 dark:text-gray-200" />
+                          <div className="text-xs font-semibold dark:text-gray-200">
                             Total Pages
                           </div>
                         </div>
                         <div className="text-3xl font-bold">
                           {website.websiteData.pages.length}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs dark:text-gray-200 mt-1">
                           Multi-page site
                         </div>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2 mb-2">
-                          <Zap className="h-4 w-4 text-muted-foreground" />
-                          <div className="text-xs font-semibold text-muted-foreground">
+                          <Zap className="h-4 w-4 dark:text-gray-200" />
+                          <div className="text-xs font-semibold dark:text-gray-200">
                             SEO Optimized
                           </div>
                         </div>
@@ -748,8 +748,8 @@ export default function V3StorefrontPage() {
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-2 mb-2">
-                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                          <div className="text-xs font-semibold text-muted-foreground">
+                          <CheckCircle2 className="h-4 w-4 dark:text-gray-200" />
+                          <div className="text-xs font-semibold dark:text-gray-200">
                             Accessibility
                           </div>
                         </div>
@@ -801,7 +801,7 @@ export default function V3StorefrontPage() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <div className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1">
+                          <div className="text-xs font-semibold dark:text-gray-200 mb-3 flex items-center gap-1">
                             <div className="w-1 h-4 bg-purple-500 rounded" />
                             Color Palette
                           </div>
@@ -825,7 +825,7 @@ export default function V3StorefrontPage() {
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1">
+                          <div className="text-xs font-semibold dark:text-gray-200 mb-3 flex items-center gap-1">
                             <div className="w-1 h-4 bg-purple-500 rounded" />
                             Typography
                           </div>
@@ -870,13 +870,13 @@ export default function V3StorefrontPage() {
                                     {page.pageName}
                                   </Badge>
                                 </div>
-                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                <p className="text-xs dark:text-gray-200 line-clamp-2">
                                   {page.seo.description}
                                 </p>
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="text-right">
-                                  <div className="text-xs text-muted-foreground">
+                                  <div className="text-xs dark:text-gray-200">
                                     Sections
                                   </div>
                                   <div className="text-lg font-bold">

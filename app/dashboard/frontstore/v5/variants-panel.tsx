@@ -16,13 +16,13 @@ export default function VariantsPanel({
   return (
     <div className="p-4 bg-white rounded shadow mt-4">
       <h4 className="text-md font-semibold">Generated Sections & Variations</h4>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm dark:text-gray-200">
         Drag a variant into the canvas to add it to the page.
       </p>
 
       <div className="mt-4 space-y-4">
         {groups.length === 0 && (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm dark:text-gray-200">
             No generated sections yet.
           </div>
         )}
@@ -102,7 +102,7 @@ export default function VariantsPanel({
                           }
                           // fallback to placeholder when asset src is empty
                           return (
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-xs dark:text-gray-200">
                               {v.schema?.title
                                 ? String(v.schema.title).slice(0, 12)
                                 : v.layout}
@@ -110,7 +110,7 @@ export default function VariantsPanel({
                           );
                         })()
                       ) : (
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs dark:text-gray-200">
                           {v.layout}
                         </div>
                       )}
@@ -119,10 +119,10 @@ export default function VariantsPanel({
                       <div className="font-semibold text-sm">
                         {String(v.schema?.title) || "Variant"}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs dark:text-gray-200">
                         {String(v.schema?.description)}
                       </div>
-                      <div className="mt-2 text-xs text-muted-foreground">
+                      <div className="mt-2 text-xs dark:text-gray-200">
                         Score: {String(v.meta?.score ?? "-")}
                       </div>
                     </div>

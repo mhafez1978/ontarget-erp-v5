@@ -11,12 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { encrypt } from "@/lib/encryption";
+import type { HederaSetting, Company } from "@prisma/client";
 
 export default function HederaAdminPage() {
   const [loading, setLoading] = useState(false);
-  const [setting, setSetting] = useState<any>(null);
-  const [companies, setCompanies] = useState<any[]>([]);
+  const [setting, setSetting] = useState<HederaSetting | null>(null);
+  const [companies, setCompanies] = useState<
+    (Company & { companyHederaSetting?: { enabled?: boolean } | null })[]
+  >([]);
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmTyping, setConfirmTyping] = useState("");
@@ -148,10 +150,20 @@ export default function HederaAdminPage() {
       <Sheet open={modalOpen} onOpenChange={setModalOpen}>
         <SheetContent className="w-full sm:max-w-lg">
           <SheetHeader>
-            <SheetTitle>Confirm Bulk Action</SheetTitle>
+            <SheetTitle>
+              {currentBulkAction === "disable"
+                ? "Confirm Disable"
+                : "Confirm Bulk Action"}
+            </SheetTitle>
             <p className="mt-2">
-              This action is irreversible. Type <strong>ENABLE</strong> to
-              confirm enabling Hedera for the selected companies.
+              {currentBulkAction === "disable" ? (
+                <>This action will disable Hedera for the selected companies.</>
+              ) : (
+                <>
+                  This action is irreversible. Type <strong>ENABLE</strong> to
+                  confirm enabling Hedera for the selected companies.
+                </>
+              )}
             </p>
           </SheetHeader>
           <div className="mt-4">
@@ -162,7 +174,9 @@ export default function HederaAdminPage() {
               className="mt-2"
             />
             <div className="mt-4 flex gap-2">
-              <Button onClick={submitBulk}>Confirm</Button>
+              <Button onClick={submitBulk} disabled={loading}>
+                {loading ? "Working..." : "Confirm"}
+              </Button>
               <Button variant="ghost" onClick={() => setModalOpen(false)}>
                 Cancel
               </Button>

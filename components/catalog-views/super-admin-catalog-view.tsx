@@ -1,7 +1,13 @@
 "use client";
 
-
-import { Package, Briefcase, Loader2, Search, Grid3x3, List } from "lucide-react";
+import {
+  Package,
+  Briefcase,
+  Loader2,
+  Search,
+  Grid3x3,
+  List,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,11 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-
-
-
-;
 import { AddProductSheet } from "@/components/add-product-sheet";
 import { AddServiceSheet } from "@/components/add-service-sheet";
 import { EditProductSheet } from "@/components/edit-product-sheet";
@@ -494,7 +495,7 @@ export function SuperAdminCatalogView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-4">Catalog</h1>
-          <p className="text-muted-foreground">Welcome {userName || "Guest"}</p>
+          <p className="dark:text-gray-200">Welcome {userName || "Guest"}</p>
         </div>
         {activeTab === "products" && (
           <Button onClick={() => setIsAddingProduct(true)} className="shrink-0">
@@ -534,7 +535,7 @@ export function SuperAdminCatalogView({
             </Select>
 
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 dark:text-gray-200" />
               <Input
                 type="text"
                 placeholder="Search products or services..."
@@ -595,7 +596,7 @@ export function SuperAdminCatalogView({
               <CardContent>
                 {isLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
                   </div>
                 ) : error ? (
                   <div className="text-center py-12">
@@ -603,15 +604,15 @@ export function SuperAdminCatalogView({
                   </div>
                 ) : products.length === 0 ? (
                   <div className="text-center py-12">
-                    <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                    <Package className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                    <p className="dark:text-gray-200">
                       No products yet. Add your first product to get started.
                     </p>
                   </div>
                 ) : filteredProducts.length === 0 ? (
                   <div className="text-center py-12">
-                    <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                    <Package className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                    <p className="dark:text-gray-200">
                       No products match your search.
                     </p>
                   </div>
@@ -714,7 +715,7 @@ export function SuperAdminCatalogView({
               <CardContent>
                 {isLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <Loader2 className="w-6 h-6 animate-spin dark:text-gray-200" />
                   </div>
                 ) : error ? (
                   <div className="text-center py-12">
@@ -722,15 +723,15 @@ export function SuperAdminCatalogView({
                   </div>
                 ) : services.length === 0 ? (
                   <div className="text-center py-12">
-                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                    <Briefcase className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                    <p className="dark:text-gray-200">
                       No services yet. Add your first service to get started.
                     </p>
                   </div>
                 ) : filteredServices.length === 0 ? (
                   <div className="text-center py-12">
-                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
+                    <Briefcase className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+                    <p className="dark:text-gray-200">
                       No services match your search.
                     </p>
                   </div>

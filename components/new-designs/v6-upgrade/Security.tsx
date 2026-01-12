@@ -83,21 +83,23 @@ const Security: React.FC = () => {
   return (
     <section
       id="security"
-      className="bg-background dark:bg-zinc-900/30 backdrop-blur-md rounded-2xl py-20"
+      className="bg-slate-100 dark:bg-zinc-900/30 backdrop-blur-md rounded-2xl py-20"
     >
-      <div className="text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10  text-purple-500 dark:text-primary font-bold text-xs mb-8">
-          CHAPTER IV: FOUNDATION OF TRUST
+      <div className="container mx-auto flex flex-col items-center justify-center">
+        <div className="w-[255px] px-4 py-2 rounded-full border border-purple-500 text-purple-500 dark:text-[#2bee79] dark:border-[#2bee79] text-xs font-semibold mb-6">
+          CHAPTER VI: FOUNDATION OF TRUST
         </div>
-        <h2 className="max-w-4xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:text-gray-200">
-          <span className="text-purple-500 dark:text-primary">Un-Wavering</span>{" "}
+        <h2 className="max-w-4xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
+          <span className="text-purple-500 dark:text-[#2bee79]">
+            Un-Wavering
+          </span>{" "}
           Security
         </h2>
-        <p className="text-sm text-text-muted leading-relaxed font-body mb-16 px-10 text-justify md:max-w-3xl md:mx-auto md:text-center">
+        <p className="w-full px-4 mx-auto text-base md:text-lg text-black dark:text-gray-50 text-center leading-relaxed font-body md:max-w-4xl mb-20">
           Protect your data with enterprise controls: multi‑factor
-          authentication (MFA), end‑to‑end encryption, and auditing. OnTarget
-          ERP includes system‑wide geo‑IP blocking across all accounts,
-          automated brute‑force detection, and events logging for compliance.
+          authentication, end‑to‑end encryption, and auditing. OnTarget ERP
+          includes system‑wide geo‑IP blocking across all accounts, automated
+          brute‑force detection, and events logging for compliance.
         </p>
         <div className="flex flex-wrap justify-center items-center gap-x-16 gap-y-10 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
           <div className="flex flex-col items-center gap-3">
@@ -107,7 +109,7 @@ const Security: React.FC = () => {
             </span>
           </div>
           <div className="flex flex-col items-center gap-3">
-            <GitHubLogo className="w-12 h-12 text-gray-200" />
+            <GitHubLogo className="w-12 h-12 dark:text-gray-200" />
             <span className="text-[10px] font-bold tracking-widest text-text-muted">
               GITHUB
             </span>

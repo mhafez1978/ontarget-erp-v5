@@ -76,7 +76,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">No Active Website</h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             This company hasn&apos;t published a V3 website yet.
           </p>
         </div>

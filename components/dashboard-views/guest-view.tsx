@@ -6,8 +6,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-;
-
 interface GuestViewProps {
   userName?: string | null;
 }
@@ -19,7 +17,7 @@ export function GuestView({ userName }: GuestViewProps) {
         <h1 className="text-3xl font-bold tracking-tight">
           You are a Guest, welcome {userName || "Guest"}!
         </h1>
-        <p className="text-muted-foreground">
+        <p className="dark:text-gray-200">
           You have limited access. Please contact an administrator to upgrade
           your account.
         </p>

@@ -1,7 +1,20 @@
 "use client";
 
-
-import { Loader2, Upload, Building2, Pencil, Save, X, Sun, Moon, Trash2, ImageIcon, Lock, Crown, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  Upload,
+  Building2,
+  Pencil,
+  Save,
+  X,
+  Sun,
+  Moon,
+  Trash2,
+  ImageIcon,
+  Lock,
+  Crown,
+  Sparkles,
+} from "lucide-react";
 import { useState, useEffect, useCallback, DragEvent } from "react";
 import {
   Card,
@@ -15,18 +28,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
-
-
-
-
-
-
-
-
-
-
-
-;
 import { toast } from "sonner";
 import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -389,7 +390,7 @@ export function CompanyWhiteLabelSettings() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -435,7 +436,7 @@ export function CompanyWhiteLabelSettings() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">No company found</p>
+          <p className="text-center dark:text-gray-200">No company found</p>
         </CardContent>
       </Card>
     );
@@ -485,7 +486,7 @@ export function CompanyWhiteLabelSettings() {
             </div>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm dark:text-gray-200">
           Upload logos and assign them to light or dark themes. These will
           appear in the dashboard sidebar when you override global branding.
         </p>
@@ -547,7 +548,7 @@ export function CompanyWhiteLabelSettings() {
                 <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 Auto-remove background from uploaded images
               </label>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs dark:text-gray-200 mt-1">
                 AI will automatically remove backgrounds before upload. ⚠️{" "}
                 <strong>This takes 30-90 seconds per image</strong> as it runs
                 AI models in your browser (100% free, no server cost).
@@ -581,13 +582,13 @@ export function CompanyWhiteLabelSettings() {
                       className="object-contain"
                     />
                   </div>
-                  <p className="text-xs text-center mt-1 text-muted-foreground truncate">
+                  <p className="text-xs text-center mt-1 dark:text-gray-200 truncate">
                     {company.logoLight.split("/").pop()}
                   </p>
                 </div>
               ) : (
                 <div className="h-24 flex items-center justify-center border-2 border-dashed rounded-lg bg-white dark:bg-gray-900">
-                  <div className="text-center text-muted-foreground">
+                  <div className="text-center dark:text-gray-200">
                     <ImageIcon className="h-6 w-6 mx-auto mb-1 opacity-50" />
                     <p className="text-xs">Drag here</p>
                   </div>
@@ -619,13 +620,13 @@ export function CompanyWhiteLabelSettings() {
                       className="object-contain"
                     />
                   </div>
-                  <p className="text-xs text-center mt-1 text-muted-foreground truncate">
+                  <p className="text-xs text-center mt-1 dark:text-gray-200 truncate">
                     {company.logoDark.split("/").pop()}
                   </p>
                 </div>
               ) : (
                 <div className="h-24 flex items-center justify-center border-2 border-dashed rounded-lg bg-gray-900">
-                  <div className="text-center text-muted-foreground">
+                  <div className="text-center dark:text-gray-200">
                     <ImageIcon className="h-6 w-6 mx-auto mb-1 opacity-50" />
                     <p className="text-xs">Drag here</p>
                   </div>
@@ -640,7 +641,7 @@ export function CompanyWhiteLabelSettings() {
               <Label className="text-sm font-medium">
                 Uploaded Logos ({uploadedLogos.length})
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Drag logos to assign them to light or dark theme
               </p>
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
@@ -687,7 +688,7 @@ export function CompanyWhiteLabelSettings() {
             </p>
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs dark:text-gray-200">
             Recommended: 200x200px, PNG or JPG, max 2MB per file
           </p>
         </div>
@@ -700,7 +701,7 @@ export function CompanyWhiteLabelSettings() {
               <div>
                 <h3 className="text-xl font-bold">{company.name}</h3>
                 {company.slogan && (
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm dark:text-gray-200 mt-1">
                     {company.slogan}
                   </p>
                 )}
@@ -781,7 +782,7 @@ export function CompanyWhiteLabelSettings() {
                       setFormData({ ...formData, description: e.target.value })
                     }
                     placeholder="Brief description of your company"
-                    className="w-full min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
                 <div>

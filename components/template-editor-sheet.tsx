@@ -1,9 +1,7 @@
 "use client";
 
-
 import { X } from "lucide-react";
 import { useState, useEffect } from "react";
-;
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -339,7 +337,7 @@ export function TemplateEditorSheet({
               rows={6}
               className="font-mono text-sm"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               Fallback for email clients that don&apos;t support HTML
             </p>
           </div>
@@ -381,7 +379,7 @@ export function TemplateEditorSheet({
                 </Badge>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               Variables are used in the template as {`{{variableName}}`}
             </p>
           </div>

@@ -93,7 +93,7 @@ export function PlatformFeesAdminDashboard() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
         </div>
       </div>
     );
@@ -101,7 +101,7 @@ export function PlatformFeesAdminDashboard() {
 
   if (!stats) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-center py-12 dark:text-gray-200">
         No platform fee data available
       </div>
     );
@@ -113,7 +113,7 @@ export function PlatformFeesAdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Platform Fees</h2>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Revenue from marketplace transactions
           </p>
         </div>
@@ -138,13 +138,13 @@ export function PlatformFeesAdminDashboard() {
             <CardTitle className="text-sm font-medium">
               Total Fees Collected
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 dark:text-gray-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(stats.totalFeesCollected)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               From {stats.totalTransactions} transactions
             </p>
           </CardContent>
@@ -153,26 +153,22 @@ export function PlatformFeesAdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Transactions</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 dark:text-gray-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalTransactions}</div>
-            <p className="text-xs text-muted-foreground">
-              Using fallback gateway
-            </p>
+            <p className="text-xs dark:text-gray-200">Using fallback gateway</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Companies</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 dark:text-gray-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.byCompany.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Using platform gateway
-            </p>
+            <p className="text-xs dark:text-gray-200">Using platform gateway</p>
           </CardContent>
         </Card>
       </div>

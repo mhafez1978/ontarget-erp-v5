@@ -19,13 +19,6 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatedBeam } from "@/components/ui/animated-beam";
 
-interface SectionProps {
-  id: string;
-  className?: string;
-  backgroundImage?: string;
-  children: React.ReactNode;
-}
-
 const Circle = forwardRef<
   HTMLDivElement,
   { className?: string; children?: React.ReactNode; label?: string }
@@ -44,21 +37,6 @@ const Circle = forwardRef<
 });
 
 Circle.displayName = "Circle";
-
-const Section = React.forwardRef<HTMLDivElement, SectionProps>(
-  ({ id, className = "", children }, ref) => (
-    <section
-      ref={ref as React.Ref<HTMLDivElement>}
-      id={id}
-      className={`bg-background/30 dark:bg-zinc-900/30 backdrop-blur-md rounded-2xl ${className}`}
-    >
-      <div className="linear-overlay"></div>
-      <div className="section-content">{children}</div>
-    </section>
-  )
-);
-
-Section.displayName = "Section";
 
 const WShapeBlockchainVerificationProcess: React.FC = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -81,41 +59,36 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
   const personRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <Section
-      id="immutable-process"
-      className="relative w-full flex flex-col items-center justify-center py-24 overflow-hidden min-h-screen py-24"
+    <section
+      className="hidden relative w-full flex flex-col gap-24 items-center justify-center py-24 overflow-hidden md:flex"
       ref={containerRef}
     >
-      <div className="w-full flex flex-col gap-8 items-center py-12 md:py-20">
-        <div className="w-full flex flex-col justify-center items-center text-center md:text-left px-6 md:px-0">
-          <div className="w-52 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-purple-500 dark:text-primary text-xs font-bold mb-4 mx-auto md:mx-0">
-            CHAPTER III: AI INTEGRATION
-          </div>
-          <h2 className=" mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:text-gray-200">
-            <span className="text-purple-500 dark:text-primary">
-              Our Blockchain{" "}
-            </span>{" "}
-            Process
-          </h2>
-          <p className="w-full px-4 mx-auto text-lg md:text-2xl text-black dark:text-gray-50 leading-relaxed font-body md:max-w-4xl mb-6">
-            If you&apos;ve not yet integrated AI into your business operations,
-            you&apos;re missing out on a transformative opportunity. OnTarget
-            ERP seamlessly incorporates cutting-edge AI technologies to
-            supercharge your productivity, enhance decision-making, and drive
-            unprecedented brand growth.
-          </p>
-          <p className="w-full px-4 mx-auto text-lg md:text-2xl text-black dark:text-gray-50 leading-relaxed font-body md:max-w-4xl mb-2">
-            We continue to add features as AI technology evolves. Coming soon:
-            immutable business records stored on blockchain, enabling secure,
-            transparent transactions that help drive trust and accountability.
-            Just imagine who would not want to have immutable business records!
-            <br /> <br /> I know some wont like it we&apos;re not for everyone
-            but those that do will love it.
-          </p>
+      <div className="container mx-auto flex flex-col items-center justify-center">
+        <div className="w-52 px-4 py-2 rounded-full border border-purple-500 text-purple-500 dark:text-[#2bee79] dark:border-[#2bee79] text-xs font-semibold mb-6">
+          CHAPTER V: PUBLIC TRUST
         </div>
+        <h2 className=" mx-auto text-center text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
+          <span className="text-purple-500 dark:text-[#2bee79]">
+            Public Trust
+          </span>{" "}
+          Built-in
+        </h2>
+        <p className="w-full px-4 mx-auto text-base md:text-lg text-black dark:text-gray-50 text-center leading-relaxed font-body md:max-w-4xl mb-6">
+          If you&apos;ve not yet integrated AI into your business operations,
+          you&apos;re missing out on a transformative opportunity. OnTarget ERP
+          seamlessly incorporates cutting-edge AI technologies to supercharge
+          your productivity, enhance decision-making, and drive unprecedented
+          brand growth.
+        </p>
+        <p className="max-w-4xl  mx-auto text-center text-lg md:text-xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
+          Immutable{" "}
+          <span className="text-purple-500 dark:text-[#2bee79]">
+            Business Records
+          </span>{" "}
+          Data Flow
+        </p>
       </div>
-
-      <div className="container mx-auto">
+      <div className="container max-w-6xl mx-auto">
         {/* 6 Column Layout: 5 for the W-Shape, 1 for the Verifiers */}
         <div className="w-full grid grid-cols-6 gap-x-32 gap-y-2">
           {/* Row 1 */}
@@ -150,7 +123,7 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
           </div>
           {/* Verifier Column Start */}
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold uppercase text-red-500">
+            <span className="text-xs font-bold uppercase ">
               IRS, Other legal
             </span>
             <Circle
@@ -182,7 +155,7 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
           </div>
           <div />
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold uppercase text-blue-500">
+            <span className="text-xs font-bold uppercase">
               Commercial Lenders
             </span>
             <Circle
@@ -220,15 +193,13 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
             </Circle>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold uppercase text-green-500">
-              Ledger
-            </span>
+            <span className="text-xs font-bold uppercase">Ledger</span>
             <Circle ref={ledgerRef}>
               <Database className="w-8 h-8 text-green-500" />
             </Circle>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold uppercase text-amber-500">
+            <span className="text-xs font-bold uppercase">
               TAX Professionals
             </span>
             <Circle
@@ -242,9 +213,7 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
           {/* Row 4 */}
           <div className="col-span-5" />
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold uppercase text-slate-500">
-              Public Person
-            </span>
+            <span className="text-xs font-bold uppercase">Public Person</span>
             <Circle
               ref={personRef}
               className="border-slate-200 dark:border-slate-700"
@@ -456,7 +425,7 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
           gradientStopColor="#64748b"
         />
       </div>
-    </Section>
+    </section>
   );
 };
 

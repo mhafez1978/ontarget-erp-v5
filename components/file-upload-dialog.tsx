@@ -1,13 +1,8 @@
 "use client";
 
-
 import { Upload, X, FileIcon, CheckCircle, AlertCircle } from "lucide-react";
 import { useState, useCallback } from "react";
 
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -170,13 +165,13 @@ export function FileUploadDialog({
             <div className="space-y-1 text-sm pt-2">
               {companyName && (
                 <div>
-                  <span className="text-muted-foreground">Company:</span>{" "}
+                  <span className="dark:text-gray-200">Company:</span>{" "}
                   <strong>{companyName}</strong>
                 </div>
               )}
               {folderName && (
                 <div>
-                  <span className="text-muted-foreground">Folder:</span>{" "}
+                  <span className="dark:text-gray-200">Folder:</span>{" "}
                   <strong>{folderName}</strong>
                 </div>
               )}
@@ -204,8 +199,8 @@ export function FileUploadDialog({
               onDragOver={handleDrag}
               onDrop={handleDrop}
             >
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-sm text-muted-foreground mb-2">
+              <Upload className="mx-auto h-12 w-12 dark:text-gray-200 mb-4" />
+              <p className="text-sm dark:text-gray-200 mb-2">
                 Drag and drop a file here, or click to select
               </p>
               <input
@@ -227,10 +222,10 @@ export function FileUploadDialog({
             <div className="border rounded-lg p-4">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center space-x-3">
-                  <FileIcon className="h-8 w-8 text-muted-foreground" />
+                  <FileIcon className="h-8 w-8 dark:text-gray-200" />
                   <div>
                     <p className="font-medium text-sm">{selectedFile.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs dark:text-gray-200">
                       {formatFileSize(selectedFile.size)}
                     </p>
                   </div>
@@ -252,7 +247,7 @@ export function FileUploadDialog({
               {uploading && (
                 <div className="space-y-2">
                   <Progress value={uploadProgress} className="h-2" />
-                  <p className="text-xs text-muted-foreground text-center">
+                  <p className="text-xs dark:text-gray-200 text-center">
                     Uploading... {uploadProgress}%
                   </p>
                 </div>

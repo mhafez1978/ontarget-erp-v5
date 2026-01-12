@@ -1,7 +1,18 @@
 "use client";
 
-
-import { Loader2, Upload, Building2, Pencil, Save, X, Sun, Moon, Trash2, ImageIcon, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  Upload,
+  Building2,
+  Pencil,
+  Save,
+  X,
+  Sun,
+  Moon,
+  Trash2,
+  ImageIcon,
+  Sparkles,
+} from "lucide-react";
 import { useState, useEffect, useCallback, DragEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,16 +20,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
-
-
-
-
-
-
-
-
-
-;
 import { toast } from "sonner";
 import { confirmToast } from "@/lib/confirm";
 import Image from "next/image";
@@ -414,7 +415,7 @@ export function RootCompanyBrandingCard() {
       <Card className="border-2 border-primary/20 bg-linear-to-br from-primary/5 to-transparent">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -474,7 +475,7 @@ export function RootCompanyBrandingCard() {
             </div>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm dark:text-gray-200">
           Upload logos and assign them to light or dark themes. These will
           appear in the dashboard sidebar.
         </p>
@@ -506,7 +507,7 @@ export function RootCompanyBrandingCard() {
                   </div>
                 ) : (
                   <div className="h-32 flex items-center justify-center border-2 border-dashed border-yellow-300 rounded-lg bg-white/50">
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs dark:text-gray-200">
                       No logo assigned
                     </p>
                   </div>
@@ -532,7 +533,7 @@ export function RootCompanyBrandingCard() {
                   </div>
                 ) : (
                   <div className="h-32 flex items-center justify-center border-2 border-dashed border-purple-300 rounded-lg bg-gray-900/50">
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs dark:text-gray-200">
                       No logo assigned
                     </p>
                   </div>
@@ -550,7 +551,7 @@ export function RootCompanyBrandingCard() {
                 <Label className="text-base font-semibold">
                   Logo Management
                 </Label>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs dark:text-gray-200 mt-1">
                   Upload logos, then drag them to Light or Dark theme zones
                   below
                 </p>
@@ -607,7 +608,7 @@ export function RootCompanyBrandingCard() {
                   <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   Auto-remove background from uploaded images
                 </label>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs dark:text-gray-200 mt-1">
                   AI will automatically remove backgrounds before upload (runs
                   in your browser, 100% free)
                 </p>
@@ -678,8 +679,8 @@ export function RootCompanyBrandingCard() {
                     setDraggedLogo(null);
                   }}
                 >
-                  <ImageIcon className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-sm text-muted-foreground">
+                  <ImageIcon className="h-12 w-12 mx-auto mb-3 dark:text-gray-200 opacity-50" />
+                  <p className="text-sm dark:text-gray-200">
                     No logos uploaded yet. Click &quot;Upload Logos&quot; to get
                     started.
                   </p>
@@ -874,7 +875,7 @@ export function RootCompanyBrandingCard() {
                         </p>
                       )}
                       {!tempLogoLight && (
-                        <p className="text-xs text-center mt-2 text-muted-foreground">
+                        <p className="text-xs text-center mt-2 dark:text-gray-200">
                           Current logo • Drag a new one to replace
                         </p>
                       )}
@@ -975,7 +976,7 @@ export function RootCompanyBrandingCard() {
                         </p>
                       )}
                       {!tempLogoDark && (
-                        <p className="text-xs text-center mt-2 text-muted-foreground">
+                        <p className="text-xs text-center mt-2 dark:text-gray-200">
                           Current logo • Drag a new one to replace
                         </p>
                       )}
@@ -1012,7 +1013,7 @@ export function RootCompanyBrandingCard() {
               <div>
                 <h3 className="text-xl font-bold">{rootCompany.name}</h3>
                 {rootCompany.slogan && (
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm dark:text-gray-200 mt-1">
                     {rootCompany.slogan}
                   </p>
                 )}
@@ -1093,7 +1094,7 @@ export function RootCompanyBrandingCard() {
                       setFormData({ ...formData, description: e.target.value })
                     }
                     placeholder="Brief description of your company"
-                    className="w-full min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
                 <div>

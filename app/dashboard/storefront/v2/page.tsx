@@ -564,7 +564,7 @@ export default function FrontstoreV2Page() {
         </h2>
         <div className="flex items-center gap-2">
           {!versionId && !previewSpec && conversationId && (
-            <div className="text-sm text-muted-foreground italic">
+            <div className="text-sm dark:text-gray-200 italic">
               💬 AI is asking a question - respond to generate a design
             </div>
           )}
@@ -845,7 +845,7 @@ export default function FrontstoreV2Page() {
                 isPreview={true}
               />
             ) : (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm dark:text-gray-200">
                 No preview yet. Generate a preview to see live rendering here.
               </div>
             )}
@@ -853,10 +853,10 @@ export default function FrontstoreV2Page() {
             {diffSummary && (
               <div className="mt-4 border rounded p-3 bg-white">
                 <h3 className="font-medium mb-2">Proposed changes</h3>
-                <div className="text-sm text-muted-foreground mb-2">
+                <div className="text-sm dark:text-gray-200 mb-2">
                   {diffSummary}
                 </div>
-                <div className="text-xs text-muted-foreground mb-2">
+                <div className="text-xs dark:text-gray-200 mb-2">
                   {providerUsed !== null && (
                     <span className="mr-3">
                       Provider config used: {providerUsed ? "yes" : "no"}

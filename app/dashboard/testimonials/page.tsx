@@ -349,9 +349,9 @@ export default function TestimonialsPage() {
         <div className="container mx-auto py-6 px-4">
           <Card>
             <CardContent className="py-12 text-center">
-              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <MessageSquare className="h-12 w-12 dark:text-gray-200 mx-auto mb-4" />
               <p className="text-lg font-medium mb-2">No Companies Found</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 You need to be an admin of a company to manage testimonials.
               </p>
             </CardContent>
@@ -367,7 +367,7 @@ export default function TestimonialsPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">Store Testimonials</h1>
-            <p className="text-muted-foreground">
+            <p className="dark:text-gray-200">
               Manage customer testimonials for your storefront
             </p>
           </div>
@@ -383,7 +383,7 @@ export default function TestimonialsPage() {
                 className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
               />
             </Button>
-            <MessageSquare className="h-10 w-10 text-muted-foreground" />
+            <MessageSquare className="h-10 w-10 dark:text-gray-200" />
           </div>
         </div>
 
@@ -470,9 +470,9 @@ export default function TestimonialsPage() {
         ) : testimonials.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <MessageSquare className="h-12 w-12 dark:text-gray-200 mx-auto mb-4" />
               <p className="text-lg font-medium mb-2">No testimonials found</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 {statusFilter === "PENDING"
                   ? "No testimonials are awaiting review"
                   : statusFilter === "APPROVED"
@@ -503,11 +503,11 @@ export default function TestimonialsPage() {
                           {testimonial.customerName}
                         </div>
                         {testimonial.customerTitle && (
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs dark:text-gray-200">
                             {testimonial.customerTitle}
                           </div>
                         )}
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs dark:text-gray-200 mt-1">
                           {testimonial.customerEmail}
                         </div>
                         <div className="flex items-center gap-1 mt-2">
@@ -529,7 +529,7 @@ export default function TestimonialsPage() {
                         <p className="text-sm line-clamp-2 leading-relaxed">
                           &ldquo;{testimonial.testimonial}&rdquo;
                         </p>
-                        <div className="text-xs text-muted-foreground mt-2">
+                        <div className="text-xs dark:text-gray-200 mt-2">
                           {new Date(testimonial.createdAt).toLocaleDateString(
                             "en-US",
                             {
@@ -605,7 +605,7 @@ export default function TestimonialsPage() {
                               className={`h-8 w-8 p-0 ${
                                 testimonial.isFeatured
                                   ? "text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-950"
-                                  : "text-muted-foreground hover:text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-950"
+                                  : "dark:text-gray-200 hover:text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-950"
                               }`}
                               onClick={() =>
                                 handleFeature(

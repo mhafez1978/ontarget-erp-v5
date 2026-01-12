@@ -1,10 +1,8 @@
 "use client";
 
-
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
 
 export default function LogoutPage() {
   const router = useRouter();
@@ -52,7 +50,7 @@ export default function LogoutPage() {
           </div>
         </div>
         <h2 className="text-lg font-semibold mb-2">Signing out</h2>
-        <p className="text-sm text-muted-foreground">{message}</p>
+        <p className="text-sm dark:text-gray-200">{message}</p>
       </div>
     </div>
   );

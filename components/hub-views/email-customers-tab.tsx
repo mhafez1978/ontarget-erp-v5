@@ -1,12 +1,8 @@
 "use client";
 
-
 import { Send, Building2, Users, Mail } from "lucide-react";
 import { useState, useEffect } from "react";
 
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -366,7 +362,7 @@ export default function EmailCustomersTab({}: EmailCustomersTabProps) {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                   </div>
                 ) : companies.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
+                  <p className="text-sm dark:text-gray-200 text-center py-8">
                     No companies available
                   </p>
                 ) : (
@@ -392,7 +388,7 @@ export default function EmailCustomersTab({}: EmailCustomersTabProps) {
                           <TableCell className="font-medium">
                             {company.name}
                           </TableCell>
-                          <TableCell className="text-muted-foreground text-sm">
+                          <TableCell className="dark:text-gray-200 text-sm">
                             {company.email || "—"}
                           </TableCell>
                           <TableCell>
@@ -448,7 +444,7 @@ export default function EmailCustomersTab({}: EmailCustomersTabProps) {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                     </div>
                   ) : employees.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
+                    <p className="text-sm dark:text-gray-200 text-center py-8">
                       No staff members found in {selectedCompany?.name}
                     </p>
                   ) : (
@@ -486,7 +482,7 @@ export default function EmailCustomersTab({}: EmailCustomersTabProps) {
                             <TableCell className="font-medium">
                               {employee.name || "—"}
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="text-sm dark:text-gray-200">
                               {employee.email || "—"}
                             </TableCell>
                             <TableCell>
@@ -494,7 +490,7 @@ export default function EmailCustomersTab({}: EmailCustomersTabProps) {
                                 {employee.role}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="text-sm dark:text-gray-200">
                               {employee.jobTitle || "—"}
                             </TableCell>
                           </TableRow>
@@ -538,7 +534,7 @@ export default function EmailCustomersTab({}: EmailCustomersTabProps) {
                       <div className="space-y-2">
                         <div className="text-sm">
                           <span className="font-medium">Subject:</span>{" "}
-                          <span className="text-muted-foreground">
+                          <span className="dark:text-gray-200">
                             {selectedTemplate.subject}
                           </span>
                         </div>

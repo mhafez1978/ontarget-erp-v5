@@ -227,7 +227,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
                 <Input
                   id="email"
                   type="email"
@@ -254,7 +254,7 @@ export default function LoginPage() {
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -270,7 +270,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-3 dark:text-gray-200 hover:text-foreground"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -300,7 +300,7 @@ export default function LoginPage() {
               )}
             </Button>
 
-            <div className="text-sm text-center text-muted-foreground">
+            <div className="text-sm text-center dark:text-gray-200">
               Don&apos;t have an account?{" "}
               <Link href="/register" className="text-primary hover:underline">
                 Sign up
@@ -318,7 +318,7 @@ export default function LoginPage() {
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
+                    <span className="bg-background px-2 dark:text-gray-200">
                       Or continue with
                     </span>
                   </div>

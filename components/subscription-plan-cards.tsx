@@ -1,22 +1,23 @@
 "use client";
 
-
-import { CheckCircle2, Loader2, Zap, Rocket, Crown, Building2, Users, TrendingUp, Sparkles, Info } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  Zap,
+  Rocket,
+  Crown,
+  Building2,
+  Users,
+  TrendingUp,
+  Sparkles,
+  Info,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BorderBeam } from "@/components/ui/border-beam";
 
-
-
-
-
-
-
-
-
-;
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -266,7 +267,7 @@ export function SubscriptionPlanCards() {
                         </span>
                       )}
                     </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       {plan.description}
                     </p>
                   </div>
@@ -284,7 +285,7 @@ export function SubscriptionPlanCards() {
                         <span className="text-3xl font-bold">
                           ${PLAN_PRICING.ESSENTIAL.monthlyPromoPrice}
                         </span>
-                        <span className="text-lg font-normal text-muted-foreground">
+                        <span className="text-lg font-normal dark:text-gray-200">
                           /mo
                         </span>
                       </div>
@@ -295,21 +296,21 @@ export function SubscriptionPlanCards() {
                   ) : (
                     <div className="text-3xl font-bold">
                       ${PLAN_PRICING[plan.type].monthlyPrice}
-                      <span className="text-lg font-normal text-muted-foreground">
+                      <span className="text-lg font-normal dark:text-gray-200">
                         /mo
                       </span>
                     </div>
                   )}
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-xs dark:text-gray-200 mt-1">
                     or ${PLAN_PRICING[plan.type].annualPriceMonthly}/month
                     billed annually
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-xs dark:text-gray-200 mt-1">
                     Transaction fee:{" "}
                     {PLAN_PRICING[plan.type].transactionFeePercent}% + $
                     {PLAN_PRICING[plan.type].transactionFeeFixed}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-xs dark:text-gray-200 mt-1">
                     Extra storage: $
                     {PLAN_PRICING[plan.type].extraStoragePricePerGB}/GB per
                     month
@@ -319,7 +320,7 @@ export function SubscriptionPlanCards() {
                 {/* Company Limit Badge */}
                 <div className="mb-4">
                   <div className="inline-flex items-center gap-2 rounded-md bg-muted px-3 py-1.5">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <Building2 className="h-4 w-4 dark:text-gray-200" />
                     <span className="text-sm font-medium">
                       {plan.companyLimit === "Unlimited"
                         ? "Unlimited Companies"

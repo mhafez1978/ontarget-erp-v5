@@ -762,7 +762,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   placeholder="xxxxxxxxx.apps.googleusercontent.com"
                   required
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   From{" "}
                   <a
                     href="https://console.cloud.google.com/apis/credentials"
@@ -802,7 +802,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   placeholder="your-email@gmail.com"
                   required
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   The Gmail address that will send emails
                 </p>
               </div>
@@ -993,7 +993,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                         <div className="mt-1 font-mono">
                           https://your-app.example.com/api/auth/microsoft/callback
                         </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
+                        <div className="mt-1 text-xs dark:text-gray-200">
                           (This app uses <code>NEXT_PUBLIC_APP_URL</code> to
                           build the redirect URI on the server — set it to your
                           app URL.)
@@ -1011,7 +1011,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                       <div className="mt-1 ml-3 font-mono">
                         https://your-app.example.com/
                       </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
+                      <div className="mt-1 text-xs dark:text-gray-200">
                         (Azure will perform a GET redirect after sign-out;
                         choose your public landing page such as &apos;/&apos; or
                         a dedicated &apos;/logout&apos; page.)
@@ -1038,7 +1038,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   }}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Azure AD Directory (tenant) ID
                 </p>
               </div>
@@ -1054,7 +1054,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   }}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Application (client) ID from Azure app registration
                 </p>
               </div>
@@ -1082,9 +1082,9 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     onClick={() => setShowOffice365Secret(!showOffice365Secret)}
                   >
                     {showOffice365Secret ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
@@ -1093,7 +1093,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     {office365SecretError}
                   </div>
                 )}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Paste the client secret <strong>value</strong> from Azure (the
                   value shown once after creation). Do not paste the secret{" "}
                   <em>ID</em> and avoid surrounding whitespace.
@@ -1106,7 +1106,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   onChange={(e) => setOffice365FromEmail(e.target.value)}
                   placeholder="noreply@company.com"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Email address that will send emails (must have a mailbox)
                 </p>
               </div>
@@ -1152,13 +1152,13 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     onClick={() => setShowSendgridKey(!showSendgridKey)}
                   >
                     {showSendgridKey ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   API key from SendGrid dashboard (starts with SG.)
                 </p>
               </div>
@@ -1237,13 +1237,13 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     onClick={() => setShowMailgunKey(!showMailgunKey)}
                   >
                     {showMailgunKey ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Private API key from Mailgun dashboard
                 </p>
               </div>
@@ -1254,7 +1254,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   onChange={(e) => setMailgunDomain(e.target.value)}
                   placeholder="mg.yourdomain.com"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Your verified sending domain (e.g., mg.yourdomain.com)
                 </p>
               </div>
@@ -1323,7 +1323,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   onChange={(e) => setAwsRegion(e.target.value)}
                   placeholder="us-east-1"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   AWS region where SES is configured (e.g., us-east-1,
                   eu-west-1)
                 </p>
@@ -1346,13 +1346,13 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     onClick={() => setShowAwsKeys(!showAwsKeys)}
                   >
                     {showAwsKeys ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   IAM user access key ID from AWS credentials
                 </p>
               </div>
@@ -1374,13 +1374,13 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     onClick={() => setShowAwsKeys(!showAwsKeys)}
                   >
                     {showAwsKeys ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   IAM user secret access key from AWS credentials
                 </p>
               </div>
@@ -1434,7 +1434,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   onChange={(e) => setResendApiKey(e.target.value)}
                   placeholder="re_••••••••"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   API key from Resend dashboard (starts with re_)
                 </p>
               </div>
@@ -1505,7 +1505,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                       Gmail password)
                     </li>
                   </ol>
-                  <p className="mt-2 text-xs text-muted-foreground">
+                  <p className="mt-2 text-xs dark:text-gray-200">
                     <strong>Note:</strong> Gmail SMTP is pre-configured for you.
                     Just enter your Gmail address and App Password.
                   </p>
@@ -1529,7 +1529,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                   onChange={(e) => setNodemailerHost(e.target.value)}
                   placeholder="smtp.example.com"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   {selectedProvider.isGmail
                     ? "Pre-configured for Gmail (smtp.gmail.com)"
                     : "SMTP server hostname (e.g., smtp.gmail.com, smtp.office365.com)"}
@@ -1544,7 +1544,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     onChange={(e) => setNodemailerPort(e.target.value)}
                     placeholder="587"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     {selectedProvider.isGmail
                       ? "Pre-configured (587 with TLS)"
                       : "Usually 587 (TLS) or 465 (SSL)"}
@@ -1562,7 +1562,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     />
                     <label
                       htmlFor="nodemailer-secure"
-                      className="text-sm text-muted-foreground"
+                      className="text-sm dark:text-gray-200"
                     >
                       {selectedProvider.isGmail
                         ? "Enabled (Required)"
@@ -1582,7 +1582,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                       : "your-email@example.com"
                   }
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   {selectedProvider.isGmail
                     ? "Your Gmail address"
                     : "Usually your email address"}
@@ -1612,13 +1612,13 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     }
                   >
                     {showNodemailerPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <EyeOff className="h-4 w-4 dark:text-gray-200" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Eye className="h-4 w-4 dark:text-gray-200" />
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   {selectedProvider.isGmail
                     ? "Use the 16-character App Password from Google (NOT your regular Gmail password)"
                     : "Your email password or app-specific password"}
@@ -1681,7 +1681,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   {userRole === "SUPER_ADMIN"
                     ? "Configure global default settings or override for specific companies you own."
                     : "Choose a company to override the global email settings with custom configuration."}
@@ -1752,7 +1752,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
                         </span>
                       )}
                     </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       {provider.description}
                     </p>
                   </div>
@@ -1908,7 +1908,7 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
             {!testSuccess &&
               selectedProvider &&
               selectedProvider.type !== "GOOGLE_OAUTH" && (
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-xs dark:text-gray-200 text-center">
                   Test connection successfully before saving
                 </p>
               )}

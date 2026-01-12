@@ -8,17 +8,8 @@ import { ApprovedTestimonials } from "@/components/new-designs/v6-upgrade/Testim
 import { ContactSection } from "@/components/contact-section";
 import { HomepagePricing } from "@/components/homepage-pricing";
 import Footer from "@/components/new-designs/v6-upgrade/Footer";
-import BlockchainDiagram from "@/components/new-designs/v6-upgrade/BlockchainDiagram";
-// import CircleShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/CircleShapeBlockchainDiagram";
-// import UShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/UShapeBlockchainDiagram";
-// import MShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/MShapeBlockchainDiagram";
-// import WShapeBlockchainDiagram from "@/components/new-designs/v6-upgrade/WShapeBlockchainDiagram";
+import ImmutableStory from "@/components/new-designs/v6-upgrade/ImmutableStory";
 import WShapeBlockchainVerificationProcess from "@/components/new-designs/v6-upgrade/WShapeBlockchainVerificationProcess";
-
-// type TestimonialFormProps = {
-//   slug?: string;
-//   apiPath?: string;
-// } | null;
 
 const getPricingData = async () => {
   return getAllPlanPricing();
@@ -48,21 +39,17 @@ export default function Homepage() {
       <Features />
       <AIIntegration />
       <Blockchain />
-      <BlockchainDiagram />
+      <WShapeBlockchainVerificationProcess />
+      <ImmutableStory />
+      {/* <BlockchainDiagram /> */}
       <Security />
-
+      <HomepagePricing pricingMap={pricingMap} />
       <ApprovedTestimonials
         testimonialFormProps={{
           slug: "homepage",
           apiPath: "/api/homepage/approved-testimonials",
         }}
       />
-      <HomepagePricing pricingMap={pricingMap} />
-      {/* <CircleShapeBlockchainDiagram />
-      <UShapeBlockchainDiagram />
-      <MShapeBlockchainDiagram />
-      <WShapeBlockchainDiagram /> */}
-      <WShapeBlockchainVerificationProcess />
       <ContactSection />
       <Footer />
     </div>

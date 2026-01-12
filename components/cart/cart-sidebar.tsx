@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 import { Button } from "@/components/ui/button";
@@ -15,9 +14,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
-
-
-;
 import Image from "next/image";
 
 export function CartSidebar() {
@@ -54,9 +50,9 @@ export function CartSidebar() {
 
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
-            <ShoppingBag className="h-24 w-24 text-muted-foreground/20 mb-4" />
+            <ShoppingBag className="h-24 w-24 dark:text-gray-200/20 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Your cart is empty</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm dark:text-gray-200 mb-4">
               Add some products to get started!
             </p>
             <Button onClick={closeCart}>Continue Shopping</Button>
@@ -148,11 +144,11 @@ export function CartSidebar() {
               {/* Totals */}
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="dark:text-gray-200">Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tax (8%)</span>
+                  <span className="dark:text-gray-200">Tax (8%)</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
                 <Separator />
@@ -177,7 +173,7 @@ export function CartSidebar() {
                 </Button>
               </div>
 
-              <p className="text-xs text-center text-muted-foreground">
+              <p className="text-xs text-center dark:text-gray-200">
                 Shipping calculated at checkout
               </p>
             </div>

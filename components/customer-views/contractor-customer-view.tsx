@@ -9,7 +9,7 @@ export function ContractorCustomerView({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-        <p className="text-muted-foreground">
+        <p className="dark:text-gray-200">
           Welcome {userName || "Guest"}! As a Contractor, you can view customer
           information related to your assigned projects.
         </p>
@@ -20,7 +20,7 @@ export function ContractorCustomerView({
           <h2 className="text-2xl font-semibold">
             Project Customer Information
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="dark:text-gray-200 max-w-2xl mx-auto">
             This is the contractor customer view. You can view customer details
             and contact information for the projects you are working on. Access
             to customer requirements, specifications, and project-specific

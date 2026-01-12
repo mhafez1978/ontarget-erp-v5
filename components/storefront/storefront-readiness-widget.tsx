@@ -1,19 +1,20 @@
 "use client";
 
-
-import { AlertCircle, CheckCircle2, AlertTriangle, TrendingUp, ExternalLink, RefreshCw, Flag } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  AlertTriangle,
+  TrendingUp,
+  ExternalLink,
+  RefreshCw,
+  Flag,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-
-
-
-
-
-;
 import { StorefrontReadiness } from "@/lib/storefront-readiness";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
@@ -71,7 +72,7 @@ export function StorefrontReadinessWidget({
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+            <RefreshCw className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -236,7 +237,7 @@ export function StorefrontReadinessWidget({
               {readiness.suggestions.slice(0, 3).map((suggestion, idx) => (
                 <li
                   key={idx}
-                  className="text-sm text-muted-foreground flex items-start gap-2"
+                  className="text-sm dark:text-gray-200 flex items-start gap-2"
                 >
                   <span className="text-yellow-600 mt-0.5">•</span>
                   <span>{suggestion}</span>

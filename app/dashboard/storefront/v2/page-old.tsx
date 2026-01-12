@@ -1,7 +1,15 @@
 "use client";
 
-
-import { Sparkles, Send, Loader2, Smartphone, Monitor, Save, Wand2, MessageSquare } from "lucide-react";
+import {
+  Sparkles,
+  Send,
+  Loader2,
+  Smartphone,
+  Monitor,
+  Save,
+  Wand2,
+  MessageSquare,
+} from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/dashboard-layout";
@@ -14,13 +22,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { mapAiSpecToThemeSections as mapAiSpecToThemeSectionsShared } from "@/lib/storefront/ai-spec-mapper";
 
-
-
-
-
-
-
-;
 import type { AiFrontstoreSpec } from "@/lib/ai/ai-storefront-types";
 import type { ThemeSection } from "@/lib/storefront-themes";
 
@@ -384,7 +385,7 @@ export default function FrontstoreV2Page() {
               <ScrollArea className="h-96 pr-4">
                 <div className="space-y-3 mt-2">
                   {messages.length === 0 && (
-                    <div className="p-4 border-2 border-dashed rounded-lg text-center text-muted-foreground">
+                    <div className="p-4 border-2 border-dashed rounded-lg text-center dark:text-gray-200">
                       <p className="text-sm">
                         👋 Start by entering your Company ID and describing what
                         kind of design you&apos;d like!
@@ -553,7 +554,7 @@ export default function FrontstoreV2Page() {
                   />
                 )
               ) : (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm dark:text-gray-200">
                   No preview yet. Generate a preview to see live rendering here.
                 </div>
               )}
@@ -561,10 +562,10 @@ export default function FrontstoreV2Page() {
               {diffSummary && (
                 <div className="mt-4 border rounded p-3 bg-white">
                   <h3 className="font-medium mb-2">Proposed changes</h3>
-                  <div className="text-sm text-muted-foreground mb-2">
+                  <div className="text-sm dark:text-gray-200 mb-2">
                     {diffSummary}
                   </div>
-                  <div className="text-xs text-muted-foreground mb-2">
+                  <div className="text-xs dark:text-gray-200 mb-2">
                     {providerUsed !== null && (
                       <span className="mr-3">
                         Provider config used: {providerUsed ? "yes" : "no"}

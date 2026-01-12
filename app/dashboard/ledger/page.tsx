@@ -1,7 +1,21 @@
 "use client";
 
-
-import { ShoppingCart, FileText, DollarSign, Calculator, Receipt, TrendingUp, TrendingDown, Wallet, Calendar, Users, Clock, Globe, ChevronRight, Loader2 } from "lucide-react";
+import {
+  ShoppingCart,
+  FileText,
+  DollarSign,
+  Calculator,
+  Receipt,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Calendar,
+  Users,
+  Clock,
+  Globe,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -23,19 +37,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-
-
-
-
-
-
-
-
-
-
-
-;
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
@@ -399,7 +400,7 @@ export default function LedgerPage() {
             <h1 className="text-3xl font-bold tracking-tight">
               Company Ledger
             </h1>
-            <p className="text-muted-foreground">
+            <p className="dark:text-gray-200">
               Manage your company&apos;s financial operations
             </p>
           </div>
@@ -440,9 +441,7 @@ export default function LedgerPage() {
                 <div className="text-2xl font-bold">
                   ${ledgerSummary.totalRevenue}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  From all invoices
-                </p>
+                <p className="text-xs dark:text-gray-200">From all invoices</p>
               </CardContent>
             </Card>
 
@@ -457,9 +456,7 @@ export default function LedgerPage() {
                 <div className="text-2xl font-bold">
                   ${ledgerSummary.totalExpenses}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Business expenses
-                </p>
+                <p className="text-xs dark:text-gray-200">Business expenses</p>
               </CardContent>
             </Card>
 
@@ -472,9 +469,7 @@ export default function LedgerPage() {
                 <div className="text-2xl font-bold">
                   ${ledgerSummary.totalPayroll}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Employee payments
-                </p>
+                <p className="text-xs dark:text-gray-200">Employee payments</p>
               </CardContent>
             </Card>
 
@@ -541,9 +536,9 @@ export default function LedgerPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
+                  <ShoppingCart className="h-12 w-12 dark:text-gray-200 mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm dark:text-gray-200 mb-4">
                     Start tracking your customer orders
                   </p>
                 </div>
@@ -561,11 +556,11 @@ export default function LedgerPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                  <FileText className="h-12 w-12 dark:text-gray-200 mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
                     No invoices yet
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm dark:text-gray-200 mb-4">
                     Create your first invoice
                   </p>
                 </div>
@@ -605,7 +600,7 @@ export default function LedgerPage() {
                           <CardTitle className="text-sm font-medium">
                             Total Gross Pay
                           </CardTitle>
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <DollarSign className="h-4 w-4 dark:text-gray-200" />
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold">
@@ -614,7 +609,7 @@ export default function LedgerPage() {
                               payrollDisplayCurrency
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             Before taxes and deductions
                           </p>
                         </CardContent>
@@ -634,7 +629,7 @@ export default function LedgerPage() {
                               payrollDisplayCurrency
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             After taxes and deductions
                           </p>
                         </CardContent>
@@ -654,7 +649,7 @@ export default function LedgerPage() {
                               payrollDisplayCurrency
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             Federal, state, and payroll
                           </p>
                         </CardContent>
@@ -671,7 +666,7 @@ export default function LedgerPage() {
                           <div className="text-2xl font-bold">
                             {payrollSummary.staffCount}
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             {payrollSummary.totalEntries} entries
                           </p>
                         </CardContent>
@@ -684,9 +679,9 @@ export default function LedgerPage() {
                           (currencyTotal) => (
                             <div
                               key={currencyTotal.currency}
-                              className="rounded-lg border border-dashed border-muted p-3 text-xs text-muted-foreground"
+                              className="rounded-lg border border-dashed border-muted p-3 text-xs dark:text-gray-200"
                             >
-                              <div className="font-semibold text-muted-foreground">
+                              <div className="font-semibold dark:text-gray-200">
                                 {currencyTotal.currency} totals
                               </div>
                               <div className="space-y-1">
@@ -739,7 +734,7 @@ export default function LedgerPage() {
                         <Loader2 className="h-8 w-8 animate-spin" />
                       </div>
                     ) : pendingEntries.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm dark:text-gray-200">
                         No approved entries waiting for payment.
                       </p>
                     ) : (
@@ -793,11 +788,11 @@ export default function LedgerPage() {
                   <CardContent>
                     {payrollEntries.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <DollarSign className="h-12 w-12 text-muted-foreground mb-4" />
+                        <DollarSign className="h-12 w-12 dark:text-gray-200 mb-4" />
                         <h3 className="text-lg font-semibold mb-2">
                           No payroll entries yet
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <p className="text-sm dark:text-gray-200 mb-4">
                           Set up payroll for your employees to get started
                         </p>
                         <Button
@@ -829,7 +824,7 @@ export default function LedgerPage() {
                                   <div className="font-medium">
                                     {entry.staff.user.name}
                                   </div>
-                                  <div className="text-sm text-muted-foreground">
+                                  <div className="text-sm dark:text-gray-200">
                                     {entry.staff.employmentClassification ||
                                       "N/A"}
                                   </div>
@@ -837,10 +832,10 @@ export default function LedgerPage() {
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2 text-sm">
-                                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                                  <Calendar className="h-4 w-4 dark:text-gray-200" />
                                   <div>
                                     <div>{formatDate(entry.periodStart)}</div>
-                                    <div className="text-muted-foreground">
+                                    <div className="dark:text-gray-200">
                                       to {formatDate(entry.periodEnd)}
                                     </div>
                                   </div>
@@ -849,29 +844,29 @@ export default function LedgerPage() {
                               <TableCell>
                                 {entry.jurisdiction ? (
                                   <div className="flex items-center gap-2">
-                                    <Globe className="h-4 w-4 text-muted-foreground" />
+                                    <Globe className="h-4 w-4 dark:text-gray-200" />
                                     <div>
                                       <div className="text-sm">
                                         {entry.jurisdiction.code}
                                       </div>
-                                      <div className="text-xs text-muted-foreground">
+                                      <div className="text-xs dark:text-gray-200">
                                         {entry.jurisdiction.name}
                                       </div>
                                     </div>
                                   </div>
                                 ) : (
-                                  <span className="text-muted-foreground">
+                                  <span className="dark:text-gray-200">
                                     N/A
                                   </span>
                                 )}
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-muted-foreground" />
+                                  <Clock className="h-4 w-4 dark:text-gray-200" />
                                   <div className="text-sm">
                                     {parseFloat(entry.hoursWorked).toFixed(1)}h
                                     {parseFloat(entry.overtimeHours) > 0 && (
-                                      <span className="text-xs text-muted-foreground ml-1">
+                                      <span className="text-xs dark:text-gray-200 ml-1">
                                         (+
                                         {parseFloat(
                                           entry.overtimeHours
@@ -950,7 +945,7 @@ export default function LedgerPage() {
                       {/* Pay Summary */}
                       <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
                         <div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm dark:text-gray-200">
                             Gross Pay
                           </p>
                           <p className="text-2xl font-bold">
@@ -961,7 +956,7 @@ export default function LedgerPage() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm dark:text-gray-200">
                             Total Taxes
                           </p>
                           <p className="text-2xl font-bold text-red-600">
@@ -973,9 +968,7 @@ export default function LedgerPage() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">
-                            Net Pay
-                          </p>
+                          <p className="text-sm dark:text-gray-200">Net Pay</p>
                           <p className="text-2xl font-bold text-green-600">
                             {formatCurrency(
                               selectedEntry.netAmount,
@@ -1073,7 +1066,7 @@ export default function LedgerPage() {
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm dark:text-gray-200">
                               Classification
                             </p>
                             <p className="font-medium">
@@ -1082,7 +1075,7 @@ export default function LedgerPage() {
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm dark:text-gray-200">
                               Pay Rate
                             </p>
                             <p className="font-medium">
@@ -1095,7 +1088,7 @@ export default function LedgerPage() {
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm dark:text-gray-200">
                               Hours Worked
                             </p>
                             <p className="font-medium">
@@ -1104,7 +1097,7 @@ export default function LedgerPage() {
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm dark:text-gray-200">
                               Pay Date
                             </p>
                             <p className="font-medium">
@@ -1130,11 +1123,11 @@ export default function LedgerPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Calculator className="h-12 w-12 text-muted-foreground mb-4" />
+                  <Calculator className="h-12 w-12 dark:text-gray-200 mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
                     No accounting entries
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm dark:text-gray-200 mb-4">
                     Start tracking your business accounts
                   </p>
                 </div>
@@ -1153,11 +1146,11 @@ export default function LedgerPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
+                  <Receipt className="h-12 w-12 dark:text-gray-200 mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
                     No expenses tracked
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm dark:text-gray-200 mb-4">
                     Record your first business expense
                   </p>
                 </div>

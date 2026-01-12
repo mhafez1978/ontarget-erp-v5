@@ -92,7 +92,7 @@ import type { AuditLog, User, Company } from "@prisma/client";
 
 //     if (Array.isArray(value)) {
 //       if (value.length === 0) {
-//         return <span className="text-muted-foreground">[]</span>;
+//         return <span className="dark:text-gray-200">[]</span>;
 //       }
 
 //       const isCollapsed = collapsed[path];
@@ -100,7 +100,7 @@ import type { AuditLog, User, Company } from "@prisma/client";
 //         <div className="inline-block">
 //           <button
 //             onClick={() => toggleCollapse(path)}
-//             className="text-muted-foreground hover:text-foreground"
+//             className="dark:text-gray-200 hover:text-foreground"
 //           >
 //             {isCollapsed ? "▶" : "▼"} Array({value.length})
 //           </button>
@@ -108,7 +108,7 @@ import type { AuditLog, User, Company } from "@prisma/client";
 //             <div className="ml-4 border-l-2 border-gray-300 dark:border-gray-700 pl-3 mt-1">
 //               {value.map((item, index) => (
 //                 <div key={index} className="py-0.5">
-//                   <span className="text-muted-foreground">[{index}]: </span>
+//                   <span className="dark:text-gray-200">[{index}]: </span>
 //                   {renderValue(item, String(index), `${path}.${index}`)}
 //                 </div>
 //               ))}
@@ -121,7 +121,7 @@ import type { AuditLog, User, Company } from "@prisma/client";
 //     if (typeof value === "object") {
 //       const keys = Object.keys(value);
 //       if (keys.length === 0) {
-//         return <span className="text-muted-foreground">{"{}"}</span>;
+//         return <span className="dark:text-gray-200">{"{}"}</span>;
 //       }
 
 //       const isCollapsed = collapsed[path];
@@ -129,7 +129,7 @@ import type { AuditLog, User, Company } from "@prisma/client";
 //         <div className="inline-block">
 //           <button
 //             onClick={() => toggleCollapse(path)}
-//             className="text-muted-foreground hover:text-foreground"
+//             className="dark:text-gray-200 hover:text-foreground"
 //           >
 //             {isCollapsed ? "▶" : "▼"} Object({keys.length})
 //           </button>
@@ -467,7 +467,7 @@ export function AuditLogClientStatic({
     return (
       <div className="rounded-xl border bg-card shadow-sm p-4">
         <div className="flex items-center justify-center">
-          <div className="text-muted-foreground text-sm">
+          <div className="dark:text-gray-200 text-sm">
             Loading activity logs...
           </div>
         </div>
@@ -491,7 +491,7 @@ export function AuditLogClientStatic({
   if (auditLogs.length === 0) {
     return (
       <div className="rounded-xl border bg-card shadow-sm p-4">
-        <div className="text-center text-muted-foreground text-sm">
+        <div className="text-center dark:text-gray-200 text-sm">
           No activities yet
         </div>
       </div>
@@ -661,7 +661,7 @@ export function AuditLogClientStatic({
                     >
                       {meta.label}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs dark:text-gray-200">
                       {formatDateTime(evt.createdAt)}
                     </span>
                   </div>
@@ -673,7 +673,7 @@ export function AuditLogClientStatic({
                   )}
 
                   {/* Compact metadata */}
-                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground dark:text-foreground/70">
+                  <div className="flex items-center gap-3 text-[11px] dark:text-gray-200 dark:text-foreground/70">
                     <span className="truncate">
                       {evt.user?.name || evt.user?.email || "Unknown"}
                     </span>
@@ -736,7 +736,7 @@ export function AuditLogClientStatic({
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm dark:text-gray-200">
                   {selectedEventIndex !== null &&
                     `${selectedEventIndex + 1} / ${auditLogs.length}`}
                 </span>
@@ -795,7 +795,7 @@ export function AuditLogClientStatic({
                   {/* Metadata Grid */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <h4 className="text-xs md:text-sm font-semibold text-muted-foreground">
+                      <h4 className="text-xs md:text-sm font-semibold dark:text-gray-200">
                         Time
                       </h4>
                       <p className="text-sm md:text-base">
@@ -804,7 +804,7 @@ export function AuditLogClientStatic({
                     </div>
 
                     <div className="space-y-1">
-                      <h4 className="text-xs md:text-sm font-semibold text-muted-foreground">
+                      <h4 className="text-xs md:text-sm font-semibold dark:text-gray-200">
                         User who performed action
                       </h4>
                       <p className="text-sm md:text-base">
@@ -821,7 +821,7 @@ export function AuditLogClientStatic({
 
                     {selectedEvent.company && (
                       <div className="space-y-1">
-                        <h4 className="text-xs md:text-sm font-semibold text-muted-foreground">
+                        <h4 className="text-xs md:text-sm font-semibold dark:text-gray-200">
                           Company
                         </h4>
                         <p className="text-sm md:text-base">
@@ -831,7 +831,7 @@ export function AuditLogClientStatic({
                     )}
 
                     <div className="space-y-1">
-                      <h4 className="text-xs md:text-sm font-semibold text-muted-foreground">
+                      <h4 className="text-xs md:text-sm font-semibold dark:text-gray-200">
                         IP Address
                       </h4>
                       <p className="text-sm md:text-base">
@@ -850,7 +850,7 @@ export function AuditLogClientStatic({
                       selectedEvent.state ||
                       selectedEvent.country) && (
                       <div className="space-y-1">
-                        <h4 className="text-xs md:text-sm font-semibold text-muted-foreground">
+                        <h4 className="text-xs md:text-sm font-semibold dark:text-gray-200">
                           Location
                         </h4>
                         <p className="text-sm md:text-base flex items-center gap-2">
@@ -871,7 +871,7 @@ export function AuditLogClientStatic({
                     )}
 
                     <div className="space-y-1">
-                      <h4 className="text-xs md:text-sm font-semibold text-muted-foreground">
+                      <h4 className="text-xs md:text-sm font-semibold dark:text-gray-200">
                         Entity Type
                       </h4>
                       <p className="text-sm md:text-base">
@@ -881,7 +881,7 @@ export function AuditLogClientStatic({
 
                     {selectedEvent.entityId && (
                       <div className="space-y-1 col-span-2">
-                        <h4 className="text-xs md:text-sm font-semibold text-muted-foreground">
+                        <h4 className="text-xs md:text-sm font-semibold dark:text-gray-200">
                           Entity ID
                         </h4>
                         <p className="font-mono text-xs md:text-sm break-all">

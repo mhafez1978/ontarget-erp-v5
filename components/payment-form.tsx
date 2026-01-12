@@ -312,7 +312,7 @@ export const PaymentForm = forwardRef<PaymentFormHandle, PaymentFormProps>(
           )}
         </div>
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs dark:text-gray-200">
             All card fields below are secure and processed by Stripe. We never
             store full card numbers.
           </p>
@@ -321,7 +321,7 @@ export const PaymentForm = forwardRef<PaymentFormHandle, PaymentFormProps>(
         {/* Expiry and CVV - Stripe Secure Elements */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-muted-foreground text-xs">
+            <Label className="flex items-center gap-2 dark:text-gray-200 text-xs">
               <Lock className="h-3 w-3" />
               Secure Expiry
             </Label>
@@ -337,7 +337,7 @@ export const PaymentForm = forwardRef<PaymentFormHandle, PaymentFormProps>(
           </div>
 
           <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-muted-foreground text-xs">
+            <Label className="flex items-center gap-2 dark:text-gray-200 text-xs">
               <Lock className="h-3 w-3" />
               Secure CVV
             </Label>
@@ -353,8 +353,8 @@ export const PaymentForm = forwardRef<PaymentFormHandle, PaymentFormProps>(
 
         {/* Security Message */}
         <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-md">
-          <Lock className="h-4 w-4 text-muted-foreground mt-0.5" />
-          <div className="text-xs text-muted-foreground">
+          <Lock className="h-4 w-4 dark:text-gray-200 mt-0.5" />
+          <div className="text-xs dark:text-gray-200">
             <p className="font-medium">Your payment information is secure</p>
             <p className="mt-1">
               For your security, full card numbers are never exposed to the app.

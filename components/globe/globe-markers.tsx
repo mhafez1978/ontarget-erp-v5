@@ -139,7 +139,7 @@ function GlobeMarkersComponent({ className }: { className?: string }) {
         }`}
       >
         {/* Placeholder while loading */}
-        <div className="flex items-center justify-center h-full text-muted-foreground">
+        <div className="flex items-center justify-center h-full dark:text-gray-200">
           Loading map…
         </div>
       </div>

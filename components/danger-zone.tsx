@@ -168,12 +168,12 @@ export function DangerZone({
     return (
       <div className="rounded-lg border border-muted bg-muted/50 p-6">
         <div className="flex items-start gap-4">
-          <AlertTriangle className="h-5 w-5 text-muted-foreground mt-0.5" />
+          <AlertTriangle className="h-5 w-5 dark:text-gray-200 mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-semibold text-sm text-muted-foreground">
+            <h3 className="font-semibold text-sm dark:text-gray-200">
               Danger Zone
             </h3>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm dark:text-gray-200 mt-1">
               Only the company owner can access data export and account
               cancellation features.
             </p>
@@ -190,7 +190,7 @@ export function DangerZone({
           <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
           <div className="flex-1">
             <h3 className="font-semibold text-destructive">Danger Zone</h3>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm dark:text-gray-200 mt-1">
               Irreversible actions that affect your company account and data.
             </p>
           </div>
@@ -201,7 +201,7 @@ export function DangerZone({
           <div className="flex items-center justify-between p-4 rounded-lg border bg-background">
             <div className="flex-1">
               <h4 className="font-medium text-sm">Export Company Data</h4>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm dark:text-gray-200 mt-1">
                 Download a complete backup of your company data including staff,
                 customers, products, services, and orders.
               </p>
@@ -228,7 +228,7 @@ export function DangerZone({
           <div className="flex items-center justify-between p-4 rounded-lg border bg-background">
             <div className="flex-1">
               <h4 className="font-medium text-sm">Restore from Backup</h4>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm dark:text-gray-200 mt-1">
                 Upload a previously exported backup file to restore your company
                 data.
               </p>
@@ -251,7 +251,7 @@ export function DangerZone({
               <h4 className="font-medium text-sm text-destructive">
                 Cancel Subscription & Delete Account
               </h4>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm dark:text-gray-200 mt-1">
                 Permanently cancel your subscription and delete your company
                 account. This action cannot be undone.
               </p>
@@ -307,7 +307,7 @@ export function DangerZone({
                     >
                       Schedule for 30 days from now (Recommended)
                     </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       You&apos;ll have 30 days to change your mind and
                       reactivate your account.
                     </p>
@@ -326,7 +326,7 @@ export function DangerZone({
                     >
                       Delete immediately
                     </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       Your account will be deleted right away. This cannot be
                       undone.
                     </p>
@@ -373,7 +373,7 @@ export function DangerZone({
 
             <div className="rounded-lg bg-muted p-4">
               <p className="text-sm font-medium">Before you go:</p>
-              <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+              <ul className="text-sm dark:text-gray-200 mt-2 space-y-1 list-disc list-inside">
                 <li>Export your data using the button above</li>
                 <li>All your company data will be permanently deleted</li>
                 <li>Active subscriptions will be cancelled</li>
@@ -421,7 +421,7 @@ export function DangerZone({
               className="w-full mt-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
             />
             {importFile && (
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-sm dark:text-gray-200 mt-2">
                 Selected: {importFile.name} (
                 {(importFile.size / 1024).toFixed(2)} KB)
               </p>

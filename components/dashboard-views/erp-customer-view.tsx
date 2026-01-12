@@ -1,11 +1,9 @@
 "use client";
 
-
 import { Building2, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
-;
 import { CreateCompanyModal } from "@/components/create-company-modal";
 import { getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import { Card } from "../ui/card";
@@ -55,7 +53,7 @@ export function ErpCustomerView({
   if (isChecking) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
       </div>
     );
   }
@@ -73,7 +71,7 @@ export function ErpCustomerView({
               <h1 className="text-3xl font-bold tracking-tight">
                 Welcome, {userName || "Guest"}!
               </h1>
-              <p className="text-muted-foreground text-2xl max-w-md">
+              <p className="dark:text-gray-200 text-2xl max-w-md">
                 To get started you need to create your first company{" "}
                 <span className="italic underline">profile</span>.
               </p>
@@ -107,7 +105,7 @@ export function ErpCustomerView({
       <h1 className="text-3xl font-bold tracking-tight">
         Welcome back, {userName || "Guest"}!
       </h1>
-      <p className="text-muted-foreground">
+      <p className="dark:text-gray-200">
         View your orders, track shipments, and manage your account.
       </p>
     </div>

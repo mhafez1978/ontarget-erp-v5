@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -43,14 +42,14 @@ export default function RegisterSuccessPage() {
           <h1 className="text-4xl font-bold bg-linear-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
             Account Created Successfully!
           </h1>
-          <p className="text-xl text-muted-foreground max-w-md mx-auto">
+          <p className="text-xl dark:text-gray-200 max-w-md mx-auto">
             Welcome aboard! Your account has been created and your 30-day free
             trial has started.
           </p>
         </div>
 
         {/* Countdown */}
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm dark:text-gray-200">
           Redirecting to login in{" "}
           <span className="font-bold text-primary">{countdown}</span> seconds...
         </div>

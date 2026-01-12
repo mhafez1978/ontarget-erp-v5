@@ -28,16 +28,16 @@ export function EmailProviderWizard() {
 
   const Step1 = () => (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm dark:text-gray-200">
         Register a new app in Azure AD → <strong>App registrations</strong>.
         Example name: <em>OnTarget ERP Mailer</em>.
       </p>
-      <div className="text-xs text-muted-foreground">
+      <div className="text-xs dark:text-gray-200">
         After creation, copy the <strong>Application (client) ID</strong> and
         <strong> Directory (tenant) ID</strong> — you will paste these into the
         form later.
       </div>
-      <div className="mt-2 text-xs text-muted-foreground p-2 border rounded bg-muted/4">
+      <div className="mt-2 text-xs dark:text-gray-200 p-2 border rounded bg-muted/4">
         Note: Redirect URIs (Reply URLs) and a Front-channel logout URL are
         required only for delegated (interactive user) auth flows. They are not
         required for server-side client_credentials (app-only) mail sending.
@@ -56,7 +56,7 @@ export function EmailProviderWizard() {
         </div>
         <div>
           <Label>What to add</Label>
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-1 text-xs dark:text-gray-200">
             Application permissions:{" "}
             <strong>Microsoft Graph → Mail.Send (Application)</strong>
           </div>
@@ -67,18 +67,18 @@ export function EmailProviderWizard() {
 
   const Step2 = () => (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm dark:text-gray-200">
         Create a client secret (Certificates & secrets) and copy the value now —
         the value is shown only once.
       </p>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm dark:text-gray-200">
         Add API permissions →{" "}
         <strong>Microsoft Graph → Application permissions → Mail.Send</strong>{" "}
         and then click{" "}
         <strong>Grant admin consent for &lt;your tenant&gt;</strong>. This
         action must be performed by a tenant administrator.
       </p>
-      <div className="text-xs text-muted-foreground mt-2 p-2 border rounded bg-muted/5">
+      <div className="text-xs dark:text-gray-200 mt-2 p-2 border rounded bg-muted/5">
         Important: Implicit grant / hybrid flows (Access tokens / ID tokens) are
         for delegated or single-page apps and should not be enabled for
         server-side client_credentials (app-only) mail sending.
@@ -102,23 +102,23 @@ export function EmailProviderWizard() {
 
   const Step3 = () => (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm dark:text-gray-200">
         Finalize the form: paste Tenant ID, Client ID, Client Secret and From
         Email (must be a mailbox-enabled userPrincipalName like
         <em>admin@yourdomain.com</em>), then Save and click{" "}
         <strong>Test</strong>.
       </p>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm dark:text-gray-200">
         Quick verification commands (run from a shell) — the first gets an
         access token, the second sends a test message. Replace placeholders.
       </p>
 
-      <pre className="text-xs bg-background p-2 rounded border text-muted-foreground overflow-auto">{`curl -X POST "https://login.microsoftonline.com/<TENANT_ID>/oauth2/v2.0/token" -d "client_id=<CLIENT_ID>&client_secret=<CLIENT_SECRET>&scope=https://graph.microsoft.com/.default&grant_type=client_credentials"`}</pre>
+      <pre className="text-xs bg-background p-2 rounded border dark:text-gray-200 overflow-auto">{`curl -X POST "https://login.microsoftonline.com/<TENANT_ID>/oauth2/v2.0/token" -d "client_id=<CLIENT_ID>&client_secret=<CLIENT_SECRET>&scope=https://graph.microsoft.com/.default&grant_type=client_credentials"`}</pre>
 
-      <pre className="text-xs bg-background p-2 rounded border text-muted-foreground overflow-auto">{`curl -X POST "https://graph.microsoft.com/v1.0/users/<FROM_EMAIL>/sendMail" -H "Authorization: Bearer <ACCESS_TOKEN>" -H "Content-Type: application/json" -d '{"message":{"subject":"Test","body":{"contentType":"HTML","content":"Test"},"toRecipients":[{"emailAddress":{"address":"<RECIPIENT>"}}]}}'`}</pre>
+      <pre className="text-xs bg-background p-2 rounded border dark:text-gray-200 overflow-auto">{`curl -X POST "https://graph.microsoft.com/v1.0/users/<FROM_EMAIL>/sendMail" -H "Authorization: Bearer <ACCESS_TOKEN>" -H "Content-Type: application/json" -d '{"message":{"subject":"Test","body":{"contentType":"HTML","content":"Test"},"toRecipients":[{"emailAddress":{"address":"<RECIPIENT>"}}]}}'`}</pre>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm dark:text-gray-200">
         Troubleshooting: If token acquisition fails, re-check Tenant ID, Client
         ID and Client Secret and confirm admin consent. If send returns "Access
         denied" ensure Mail.Send (Application) is granted and Exchange tenant
@@ -152,7 +152,7 @@ export function EmailProviderWizard() {
         </DialogHeader>
 
         <div className="pt-2">
-          <div className="mb-4 text-sm text-muted-foreground">
+          <div className="mb-4 text-sm dark:text-gray-200">
             Follow these steps to create and configure an Azure AD application
             to send mail from the server using Microsoft Graph (app-only).
           </div>

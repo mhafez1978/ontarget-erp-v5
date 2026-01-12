@@ -1,7 +1,15 @@
 "use client";
 
-
-import { UserPlus, Mail, Lock, User, Loader2, Eye, EyeOff, Store } from "lucide-react";
+import {
+  UserPlus,
+  Mail,
+  Lock,
+  User,
+  Loader2,
+  Eye,
+  EyeOff,
+  Store,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -17,13 +25,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-
-
-
-
-
-
-;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import Image from "next/image";
 
@@ -256,7 +257,7 @@ export default function StorefrontRegisterPage() {
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <User className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
                 <Input
                   id="name"
                   type="text"
@@ -275,7 +276,7 @@ export default function StorefrontRegisterPage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
                 <Input
                   id="email"
                   type="email"
@@ -294,7 +295,7 @@ export default function StorefrontRegisterPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -310,7 +311,7 @@ export default function StorefrontRegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-3 dark:text-gray-200 hover:text-foreground"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -319,7 +320,7 @@ export default function StorefrontRegisterPage() {
                   )}
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Must be at least 8 characters long
               </p>
             </div>
@@ -327,7 +328,7 @@ export default function StorefrontRegisterPage() {
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 dark:text-gray-200" />
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
@@ -346,7 +347,7 @@ export default function StorefrontRegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-3 dark:text-gray-200 hover:text-foreground"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -377,7 +378,7 @@ export default function StorefrontRegisterPage() {
               )}
             </Button>
 
-            <div className="text-sm text-center text-muted-foreground">
+            <div className="text-sm text-center dark:text-gray-200">
               Already have an account?{" "}
               <Link
                 href={`/store/${slug}/login`}
@@ -398,7 +399,7 @@ export default function StorefrontRegisterPage() {
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
+                    <span className="bg-background px-2 dark:text-gray-200">
                       Or continue with
                     </span>
                   </div>

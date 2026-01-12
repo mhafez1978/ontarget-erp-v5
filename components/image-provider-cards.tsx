@@ -295,11 +295,11 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Image Providers</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm dark:text-gray-200">
             Configure Unsplash and Pexels keys globally (SUPER_ADMIN only).
           </p>
           {lastAudit && (
-            <div className="mt-2 text-xs text-muted-foreground">
+            <div className="mt-2 text-xs dark:text-gray-200">
               Last changed by{" "}
               <span className="font-medium">
                 {lastAudit.user?.name || "Unknown"}
@@ -335,7 +335,7 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
 
                   <div className="text-center">
                     <div className="font-semibold text-lg">{p.name}</div>
-                    <div className="text-sm text-muted-foreground mt-1">
+                    <div className="text-sm dark:text-gray-200 mt-1">
                       {p.description}
                     </div>
                   </div>
@@ -346,9 +346,7 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
                         Active
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">
-                        Global
-                      </span>
+                      <span className="text-xs dark:text-gray-200">Global</span>
                     )}
                     <CheckCircle2
                       className={cn(

@@ -1,19 +1,20 @@
 "use client";
 
-
-import { Activity, User2, FileEdit, Trash2, Eye, Plus, Calendar, Loader2 } from "lucide-react";
+import {
+  Activity,
+  User2,
+  FileEdit,
+  Trash2,
+  Eye,
+  Plus,
+  Calendar,
+  Loader2,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-
-
-
-
-
-
-;
 import { toast } from "sonner";
 
 interface AuditLog {
@@ -102,7 +103,7 @@ export function ProjectActivityTab({
       case "PROJECT_VIEWED":
         return "text-gray-600 bg-gray-500/10";
       default:
-        return "text-muted-foreground bg-muted";
+        return "dark:text-gray-200 bg-muted";
     }
   };
 
@@ -166,9 +167,9 @@ export function ProjectActivityTab({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Activity className="h-12 w-12 text-muted-foreground mb-4" />
+          <Activity className="h-12 w-12 dark:text-gray-200 mb-4" />
           <h3 className="text-lg font-semibold mb-2">No Activity Yet</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm dark:text-gray-200">
             Activity logs will appear here as actions are performed on this
             project
           </p>
@@ -225,7 +226,7 @@ export function ProjectActivityTab({
                       <p className="text-sm font-medium">
                         {log.user.name || "Unknown User"}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm dark:text-gray-200">
                         {getMetadataDescription(log)}
                       </p>
                     </div>
@@ -234,7 +235,7 @@ export function ProjectActivityTab({
                     </Badge>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-xs dark:text-gray-200">
                     <Calendar className="h-3 w-3" />
                     <span>{formatTimestamp(log.createdAt)}</span>
                     <span>•</span>
@@ -260,7 +261,7 @@ export function ProjectActivityTab({
                                 key={key}
                                 className="flex items-center gap-2"
                               >
-                                <span className="text-muted-foreground">
+                                <span className="dark:text-gray-200">
                                   {key}:
                                 </span>
                                 <span className="font-mono">

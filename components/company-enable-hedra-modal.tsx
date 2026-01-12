@@ -53,7 +53,7 @@ export function CompanyEnableHederaModal({
       if (!res.ok) throw new Error(data.error || "Failed to enable");
       toast.success("Hedera enabled for company");
       onOpenChange(false);
-      onSuccess && onSuccess();
+      if (onSuccess) onSuccess();
     } catch (err) {
       console.error(err);
       toast.error("Failed to enable Hedera for company");
@@ -89,7 +89,7 @@ export function CompanyEnableHederaModal({
                 checked={anchorHistory}
                 onCheckedChange={(v) => setAnchorHistory(!!v)}
               />
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm dark:text-gray-200">
                 I understand the cost and privacy implications of anchoring
                 historical records.
               </div>

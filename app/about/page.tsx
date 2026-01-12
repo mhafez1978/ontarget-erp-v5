@@ -13,7 +13,7 @@ export default function AboutPage() {
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mb-4">
             About OnTarget ERP
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg dark:text-gray-200 max-w-2xl mx-auto">
             Learn more about our mission to help businesses grow with powerful
             ERP solutions
           </p>

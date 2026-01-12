@@ -7,7 +7,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="font-semibold mb-4">Product</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm dark:text-gray-200">
               <li>
                 <Link
                   href="/features"
@@ -36,7 +36,7 @@ export function Footer() {
           </div>
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm dark:text-gray-200">
               <li>
                 <Link
                   href="#about"
@@ -73,7 +73,7 @@ export function Footer() {
           </div>
           <div>
             <h3 className="font-semibold mb-4">Resources</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm dark:text-gray-200">
               <li>
                 <Link
                   href="/docs"
@@ -102,7 +102,7 @@ export function Footer() {
           </div>
           <div>
             <h3 className="font-semibold mb-4">Legal</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm dark:text-gray-200">
               <li>
                 <Link
                   href="/privacy"
@@ -130,7 +130,7 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        <div className="border-t pt-8 text-center text-sm text-muted-foreground">
+        <div className="border-t pt-8 text-center text-sm dark:text-gray-200">
           <p>&copy; 2025 OnTarget ERP. All rights reserved.</p>
         </div>
       </div>

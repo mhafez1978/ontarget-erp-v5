@@ -60,7 +60,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         {icon}
       </span>
     </div>
-    <h3 className="text-2xl font-display font-bold mb-4 text-gray-200">
+    <h3 className="text-2xl font-display font-bold mb-4 dark:text-gray-200">
       {title}
     </h3>
     <p className="text-text-muted text-base leading-relaxed font-body">
@@ -86,7 +86,7 @@ const Testimonial: React.FC<TestimonialProps> = ({
       className="size-24 rounded-full object-cover mb-6 border-2 border-primary/50 shadow-lg group-hover:scale-105 transition-transform duration-300"
       src={image}
     />
-    <h3 className="text-xl font-display font-bold text-gray-200 mb-2">
+    <h3 className="text-xl font-display font-bold dark:text-gray-200 mb-2">
       {name}
     </h3>
     <p className="text-sm font-body text-text-muted mb-4">
@@ -111,7 +111,7 @@ const Testimonial: React.FC<TestimonialProps> = ({
 
 const Homepage3: React.FC = () => {
   return (
-    <div className="bg-background-dark text-gray-200 font-body">
+    <div className="bg-background-dark dark:text-gray-200 font-body">
       <main className="relative">
         {/* Hero Section */}
         <Section
@@ -120,14 +120,14 @@ const Homepage3: React.FC = () => {
           backgroundImage="https://lh3.googleusercontent.com/aida-public/AB6AXuAnxPZO1Z71-RjeZPP8W9uqBJIm7HBUOXGRd9Pf1TXzuuEqp7WOhi9OqgUeW3PKz2SPVrYh712izDQGq70QA8_Uz20qs3hA_3KL4gDBWkoEeL5dsAQpCsubLmwKVG4rOU8YhvIx3Ar1t9xXCxW8AuSf4BjT6yVkMZ-FEJ9aV_qbXEEBCEbcDQkSSvBLUa1z36X1vnW49D-OZpkFc4bz-9bob9ZxHvQ2wMs9-qADTWasa4d6YH5hFbGyMvAXh4RJYt3wj-70bxkGKJuT"
         >
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-8">
+            <div className="w-52 mx-auto px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-purple-500 dark:text-primary text-xs font-bold mb-4 mx-auto md:mx-0">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-500 dark:bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400 dark:bg-emerald-300"></span>
               </span>
               CHAPTER I: THE VISION
             </div>
-            <h1 className="text-6xl md:text-9xl font-display font-black tracking-tighter mb-8 leading-tight text-gray-200">
+            <h1 className="text-6xl md:text-9xl font-display font-black tracking-tighter mb-8 leading-tight dark:text-gray-200">
               OnTarget ERP: <br /> People Driven,{" "}
               <span className="text-primary italic">AI-Powered.</span>
             </h1>
@@ -144,7 +144,7 @@ const Homepage3: React.FC = () => {
                 Begin Your Journey
                 <span className="material-symbols-outlined">arrow_forward</span>
               </a>
-              <button className="px-10 py-5 bg-white/5 border border-white/10 font-bold rounded-xl text-xl flex items-center gap-3 hover:bg-white/10 transition-all text-gray-200">
+              <button className="px-10 py-5 bg-white/5 border border-white/10 font-bold rounded-xl text-xl flex items-center gap-3 hover:bg-white/10 transition-all dark:text-gray-200">
                 Discover the Experience
                 <span className="material-symbols-outlined">play_circle</span>
               </button>
@@ -159,13 +159,13 @@ const Homepage3: React.FC = () => {
           backgroundImage="https://lh3.googleusercontent.com/aida-public/AB6AXuChrJOR8k-faGUnwNZ8-5W7tMQAbLOc1DieztWgSoQRppKE7IUc_P3ffU2A-PULwEUNQ-SrNT-8Xjydj0Vxfgl9hjaqqEgGoY24vFI6pCTH8dHtsiAjZnnyMrVZPmepx1m88O-R_Pbetxo6Y2mrisZi0K4phSvlMFGITGQGWkjDiElH1mzbiEO20aUKma8_l3sSkqgbwvr-mTI3QfwU5jZVc0zluBlcWdg1P0xZxZnranUuAx7k0SrU0p8N9KJ9JdUknc1bS5f68TUq"
         >
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-8">
+            <div className="w-52 mx-auto px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-purple-500 dark:text-primary text-xs font-bold mb-4 mx-auto md:mx-0">
               <span className="material-symbols-outlined text-sm">
                 auto_awesome
               </span>
               CHAPTER II: FOUNDATIONAL CAPABILITIES
             </div>
-            <h2 className="text-5xl md:text-7xl font-display font-black tracking-tight mb-6 text-gray-200">
+            <h2 className="text-5xl md:text-7xl font-display font-black tracking-tight mb-6 dark:text-gray-200">
               Orchestrate Your Enterprise
             </h2>
             <p className="max-w-4xl mx-auto text-xl text-text-muted leading-relaxed font-body">
@@ -207,13 +207,13 @@ const Homepage3: React.FC = () => {
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="flex flex-col gap-8 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-4 mx-auto lg:mx-0">
+              <div className="w-52 mx-auto px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-purple-500 dark:text-primary text-xs font-bold mb-4 mx-auto lg:mx-0">
                 <span className="material-symbols-outlined text-sm">
                   psychology
                 </span>
                 CHAPTER III: AI INTEGRATION
               </div>
-              <h2 className="text-5xl md:text-7xl font-display font-black mb-6 tracking-tight text-gray-200">
+              <h2 className="text-5xl md:text-7xl font-display font-black mb-6 tracking-tight dark:text-gray-200">
                 Unleash Hyper-Growth with AI
               </h2>
               <p className="text-text-muted text-xl leading-relaxed font-body max-w-2xl lg:max-w-none mx-auto">
@@ -227,7 +227,7 @@ const Homepage3: React.FC = () => {
                     smart_toy
                   </span>
                   <div>
-                    <p className="font-display font-bold text-lg text-gray-200">
+                    <p className="font-display font-bold text-lg dark:text-gray-200">
                       AI Storefront Generation
                     </p>
                     <p className="text-sm text-text-muted font-body">
@@ -241,7 +241,7 @@ const Homepage3: React.FC = () => {
                     analytics
                   </span>
                   <div>
-                    <p className="font-display font-bold text-lg text-gray-200">
+                    <p className="font-display font-bold text-lg dark:text-gray-200">
                       Automated Deep Analytics
                     </p>
                     <p className="text-sm text-text-muted font-body">
@@ -300,13 +300,13 @@ const Homepage3: React.FC = () => {
           backgroundImage="https://lh3.googleusercontent.com/aida-public/AB6AXuCtqtcTuubHr-Mvzn2WXo0d9toJyalpk0gDGdHlg7ByXCevOb9B3mlEAlK34cf170T-JafuoWN67b_jyYt_jUV6NJan88bFNhg8b3_jI2KcY1nN_mH2Dw21gnS91l666eiaPZP_denSm9_2yGo56YSJ_1axG_G7cnhl5i5B0gkYiZN-q7m0k_rZVwH8wLS1RI82YmWTrNF67yjONNpqsZXSb99v1UtJg7Q2XG7hZyVv2tFhKKdoqPY_qYwcjlewCXdUAFXV98SRrEJq"
         >
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold text-xs mb-8">
+            <div className="w-52 mx-auto px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-purple-500 dark:text-primary text-xs font-bold mb-4 mx-auto md:mx-0">
               <span className="material-symbols-outlined text-sm">
                 verified_user
               </span>
               CHAPTER IV: FOUNDATION OF TRUST
             </div>
-            <h2 className="text-5xl md:text-7xl font-display font-black tracking-tight mb-8 text-gray-200">
+            <h2 className="text-5xl md:text-7xl font-display font-black tracking-tight mb-8 dark:text-gray-200">
               Unwavering Reliability & Security
             </h2>
             <p className="max-w-4xl mx-auto text-xl text-text-muted leading-relaxed font-body mb-16">
@@ -316,7 +316,7 @@ const Homepage3: React.FC = () => {
             </p>
             <div className="flex flex-wrap justify-center items-center gap-x-16 gap-y-10 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
               <div className="flex flex-col items-center gap-3">
-                <span className="material-symbols-outlined text-5xl text-gray-200">
+                <span className="material-symbols-outlined text-5xl dark:text-gray-200">
                   google
                 </span>
                 <span className="text-[10px] font-bold tracking-widest text-text-muted">
@@ -324,7 +324,7 @@ const Homepage3: React.FC = () => {
                 </span>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <span className="material-symbols-outlined text-5xl text-gray-200">
+                <span className="material-symbols-outlined text-5xl dark:text-gray-200">
                   terminal
                 </span>
                 <span className="text-[10px] font-bold tracking-widest text-text-muted">
@@ -332,7 +332,7 @@ const Homepage3: React.FC = () => {
                 </span>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <span className="material-symbols-outlined text-5xl text-gray-200">
+                <span className="material-symbols-outlined text-5xl dark:text-gray-200">
                   cloud
                 </span>
                 <span className="text-[10px] font-bold tracking-widest text-text-muted">
@@ -340,7 +340,7 @@ const Homepage3: React.FC = () => {
                 </span>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <span className="material-symbols-outlined text-5xl text-gray-200">
+                <span className="material-symbols-outlined text-5xl dark:text-gray-200">
                   database
                 </span>
                 <span className="text-[10px] font-bold tracking-widest text-text-muted">
@@ -364,13 +364,13 @@ const Homepage3: React.FC = () => {
           <div className="section-content">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
               <div className="lg:col-span-7 flex flex-col gap-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-4 w-fit">
+                <div className="w-52 mx-auto px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-purple-500 dark:text-primary text-xs font-bold mb-4 mx-auto md:mx-0">
                   <span className="material-symbols-outlined text-sm">
                     link
                   </span>
                   CHAPTER V: FUTURE-PROOF INTEGRITY
                 </div>
-                <h2 className="text-6xl md:text-8xl font-display font-black tracking-tight text-gray-200">
+                <h2 className="text-6xl md:text-8xl font-display font-black tracking-tight dark:text-gray-200">
                   Immutable <br />
                   <span className="text-primary italic">Company Records.</span>
                 </h2>
@@ -387,7 +387,7 @@ const Homepage3: React.FC = () => {
                       </span>
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold font-display text-gray-200">
+                      <h4 className="text-lg font-bold font-display dark:text-gray-200">
                         Public Verification Protocol
                       </h4>
                       <p className="text-text-muted text-sm font-body">
@@ -403,7 +403,7 @@ const Homepage3: React.FC = () => {
                       </span>
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold font-display text-gray-200">
+                      <h4 className="text-lg font-bold font-display dark:text-gray-200">
                         Zero-Knowledge Auditing
                       </h4>
                       <p className="text-text-muted text-sm font-body">
@@ -436,7 +436,7 @@ const Homepage3: React.FC = () => {
                       <div className="absolute -top-2 left-1/2 -translate-x-1/2 size-4 bg-primary rounded-sm shadow-[0_0_15px_#2bee79]"></div>
                       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 size-4 bg-primary rounded-sm shadow-[0_0_15px_#2bee79]"></div>
                     </div>
-                    <h3 className="text-2xl font-display font-black mb-2 text-gray-200 uppercase tracking-tighter">
+                    <h3 className="text-2xl font-display font-black mb-2 dark:text-gray-200 uppercase tracking-tighter">
                       OnTarget Verified
                     </h3>
                     <p className="text-primary font-bold text-xs tracking-widest uppercase mb-6">
@@ -465,11 +465,11 @@ const Homepage3: React.FC = () => {
         {/* Testimonials Section */}
         <Section id="testimonials" className="section-bg-linear-6">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-8">
+            <div className="w-52 mx-auto px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-purple-500 dark:text-primary text-xs font-bold mb-4 mx-auto md:mx-0">
               <span className="material-symbols-outlined text-sm">stars</span>
               CHAPTER VI: THE ONTARGET ADVANTAGE
             </div>
-            <h2 className="text-5xl md:text-7xl font-display font-black tracking-tight mb-8 text-gray-200">
+            <h2 className="text-5xl md:text-7xl font-display font-black tracking-tight mb-8 dark:text-gray-200">
               Executive{" "}
               <span className="text-primary italic">Testimonials.</span>
             </h2>
@@ -561,7 +561,7 @@ const Homepage3: React.FC = () => {
                 </div>
               </div>
               <div>
-                <h4 className="font-display font-bold mb-6 text-gray-200">
+                <h4 className="font-display font-bold mb-6 dark:text-gray-200">
                   Product
                 </h4>
                 <ul className="flex flex-col gap-4 text-sm text-text-muted">
@@ -600,7 +600,7 @@ const Homepage3: React.FC = () => {
                 </ul>
               </div>
               <div>
-                <h4 className="font-display font-bold mb-6 text-gray-200">
+                <h4 className="font-display font-bold mb-6 dark:text-gray-200">
                   Resources
                 </h4>
                 <ul className="flex flex-col gap-4 text-sm text-text-muted">
@@ -639,7 +639,7 @@ const Homepage3: React.FC = () => {
                 </ul>
               </div>
               <div>
-                <h4 className="font-display font-bold mb-6 text-gray-200">
+                <h4 className="font-display font-bold mb-6 dark:text-gray-200">
                   Legal
                 </h4>
                 <ul className="flex flex-col gap-4 text-sm text-text-muted">
@@ -801,7 +801,7 @@ const Homepage3: React.FC = () => {
           background-color: #0a1912;
         }
 
-        .text-gray-200 {
+        .dark .text-gray-200 {
           color: #e2e8f0;
         }
 

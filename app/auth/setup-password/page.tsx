@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Lock, Eye, EyeOff } from "lucide-react";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -8,9 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-
-
-;
 
 function SetupPasswordForm() {
   const router = useRouter();
@@ -100,7 +96,7 @@ function SetupPasswordForm() {
           <h1 className="text-2xl font-bold text-center mb-2">
             Set Your Password
           </h1>
-          <p className="text-sm text-muted-foreground text-center mb-6">
+          <p className="text-sm dark:text-gray-200 text-center mb-6">
             Create a new password using your access code
           </p>
 
@@ -138,7 +134,7 @@ function SetupPasswordForm() {
                   )}
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 This is the temporary code sent to your email
               </p>
             </div>
@@ -203,7 +199,7 @@ function SetupPasswordForm() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs dark:text-gray-200">
               Need help?{" "}
               <a href="/contact" className="text-blue-600 hover:underline">
                 Contact Support

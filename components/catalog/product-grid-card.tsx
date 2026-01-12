@@ -99,7 +99,7 @@ export function ProductGridCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ImageIcon className="h-12 w-12 text-muted-foreground" />
+            <ImageIcon className="h-12 w-12 dark:text-gray-200" />
           </div>
         )}
 
@@ -160,7 +160,7 @@ export function ProductGridCard({
         <div>
           <h3 className="font-semibold mb-1">{product.name}</h3>
           {product.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-sm dark:text-gray-200 line-clamp-2">
               {product.description}
             </p>
           )}
@@ -171,7 +171,7 @@ export function ProductGridCard({
             ${parseFloat(product.price.toString()).toFixed(2)}
           </span>
           {product.sku && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs dark:text-gray-200">
               SKU: {product.sku}
             </span>
           )}
@@ -186,7 +186,7 @@ export function ProductGridCard({
         )}
 
         {(product.city || product.state) && (
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs dark:text-gray-200">
             {[product.city, product.state].filter(Boolean).join(", ")}
           </div>
         )}

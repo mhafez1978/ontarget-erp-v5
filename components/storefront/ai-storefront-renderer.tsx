@@ -377,13 +377,13 @@ export function AiStorefrontRenderer({
                     {title}
                   </h1>
                   {subtitle && (
-                    <p className="text-lg font-semibold text-muted-foreground">
+                    <p className="text-lg font-semibold dark:text-gray-200">
                       {subtitle}
                     </p>
                   )}
                   {description && (
                     <p
-                      className="text-base text-muted-foreground"
+                      className="text-base dark:text-gray-200"
                       style={{ color: textColor || undefined }}
                     >
                       {description}
@@ -569,7 +569,7 @@ export function AiStorefrontRenderer({
                 <div className="mb-8 text-center">
                   {heading && <h2 className="text-3xl font-bold">{heading}</h2>}
                   {subheading && (
-                    <p className="mt-2 text-muted-foreground">{subheading}</p>
+                    <p className="mt-2 dark:text-gray-200">{subheading}</p>
                   )}
                 </div>
               )}
@@ -590,7 +590,7 @@ export function AiStorefrontRenderer({
                         ? Number(item.value).toLocaleString()
                         : item.value}
                     </div>
-                    <div className="mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <div className="mt-1 text-xs font-medium dark:text-gray-200 uppercase tracking-wide">
                       {item.label}
                     </div>
                   </div>
@@ -615,7 +615,7 @@ export function AiStorefrontRenderer({
                     {readContentString(contentRecord, "heading")}
                   </h2>
                   {readContentString(contentRecord, "subheading") && (
-                    <p className="mt-2 text-muted-foreground">
+                    <p className="mt-2 dark:text-gray-200">
                       {readContentString(contentRecord, "subheading")}
                     </p>
                   )}
@@ -642,7 +642,7 @@ export function AiStorefrontRenderer({
                       <div className="p-4 space-y-1 flex-1 flex flex-col">
                         <h3 className="font-semibold">{product.name}</h3>
                         {product.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-3">
+                          <p className="text-sm dark:text-gray-200 line-clamp-3">
                             {product.description}
                           </p>
                         )}
@@ -674,7 +674,7 @@ export function AiStorefrontRenderer({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-sm dark:text-gray-200 text-center">
                   No featured products yet. Add products to your catalog and
                   mark them as featured to showcase them here.
                 </p>
@@ -697,7 +697,7 @@ export function AiStorefrontRenderer({
                     {readContentString(contentRecord, "heading")}
                   </h2>
                   {readContentString(contentRecord, "subheading") && (
-                    <p className="mt-2 text-muted-foreground">
+                    <p className="mt-2 dark:text-gray-200">
                       {readContentString(contentRecord, "subheading")}
                     </p>
                   )}
@@ -724,7 +724,7 @@ export function AiStorefrontRenderer({
                       <div className="p-4 space-y-1 flex-1 flex flex-col">
                         <h3 className="font-semibold">{service.name}</h3>
                         {service.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-3">
+                          <p className="text-sm dark:text-gray-200 line-clamp-3">
                             {service.description}
                           </p>
                         )}
@@ -756,7 +756,7 @@ export function AiStorefrontRenderer({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-sm dark:text-gray-200 text-center">
                   No featured services yet. Add services to your catalog and
                   mark them as featured to showcase them here.
                 </p>
@@ -785,7 +785,7 @@ export function AiStorefrontRenderer({
                         readContentString(contentRecord, "title")}
                     </h2>
                     {readContentString(contentRecord, "subheading") && (
-                      <p className="mt-2 text-muted-foreground">
+                      <p className="mt-2 dark:text-gray-200">
                         {readContentString(contentRecord, "subheading")}
                       </p>
                     )}
@@ -809,12 +809,12 @@ export function AiStorefrontRenderer({
                       <div className="p-4 space-y-2">
                         <h3 className="text-lg font-semibold">{p.title}</h3>
                         {p.excerpt && (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm dark:text-gray-200">
                             {p.excerpt}
                           </p>
                         )}
                         {p.publishedAt && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs dark:text-gray-200">
                             {new Date(p.publishedAt).toLocaleDateString()}
                           </p>
                         )}
@@ -856,7 +856,7 @@ export function AiStorefrontRenderer({
                 </h2>
               )}
               {readContentString(contentRecord, "subheading") && (
-                <p className="text-muted-foreground">
+                <p className="dark:text-gray-200">
                   {readContentString(contentRecord, "subheading")}
                 </p>
               )}
@@ -911,7 +911,7 @@ export function AiStorefrontRenderer({
               <div className="mb-6 text-center">
                 <h2 className="text-3xl font-bold">{heading}</h2>
                 {subheading && (
-                  <p className="mt-2 text-muted-foreground">{subheading}</p>
+                  <p className="mt-2 dark:text-gray-200">{subheading}</p>
                 )}
               </div>
               {hasTestimonials ? (
@@ -922,7 +922,7 @@ export function AiStorefrontRenderer({
                         key={t.id}
                         className="rounded-lg border bg-card px-4 py-3 text-left shadow-sm flex flex-col justify-between"
                       >
-                        <p className="text-sm text-muted-foreground italic">
+                        <p className="text-sm dark:text-gray-200 italic">
                           “{t.testimonial}”
                         </p>
                         <p className="mt-3 text-sm font-semibold">
@@ -942,7 +942,7 @@ export function AiStorefrontRenderer({
                           key={t.id}
                           className="mx-4 my-2 rounded-lg border bg-card px-4 py-3 text-left shadow-sm min-w-[220px]"
                         >
-                          <p className="text-xs text-muted-foreground italic line-clamp-3">
+                          <p className="text-xs dark:text-gray-200 italic line-clamp-3">
                             “{t.testimonial}”
                           </p>
                           <p className="mt-2 text-xs font-semibold">
@@ -954,7 +954,7 @@ export function AiStorefrontRenderer({
                   </div>
                 )
               ) : (
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-sm dark:text-gray-200 text-center">
                   No testimonials yet. Testimonials will be highlighted here.
                 </p>
               )}
@@ -1086,7 +1086,7 @@ export function AiStorefrontRenderer({
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold">{heading}</h2>
                 {subheading && (
-                  <p className="mt-2 text-muted-foreground">{subheading}</p>
+                  <p className="mt-2 dark:text-gray-200">{subheading}</p>
                 )}
               </div>
               {combined.length > 0 ? (
@@ -1097,14 +1097,14 @@ export function AiStorefrontRenderer({
                       className="rounded-lg border bg-card px-4 py-3 text-left"
                     >
                       <p className="font-semibold">{item.question}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-1 text-sm dark:text-gray-200">
                         {item.answer}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-sm dark:text-gray-200 text-center">
                   Have questions? Reach out via the contact section below and
                   we&apos;ll be happy to help.
                 </p>
@@ -1178,12 +1178,12 @@ export function AiStorefrontRenderer({
                 </h2>
               )}
               {readContentString(contentRecord, "description") && (
-                <p className="text-muted-foreground">
+                <p className="dark:text-gray-200">
                   {readContentString(contentRecord, "description")}
                 </p>
               )}
               {(contactEmail || contactPhone) && (
-                <div className="mt-4 space-y-1 text-sm text-muted-foreground">
+                <div className="mt-4 space-y-1 text-sm dark:text-gray-200">
                   {contactEmail && (
                     <p>
                       Email:{" "}
@@ -1217,7 +1217,7 @@ export function AiStorefrontRenderer({
           <div className="container mx-auto px-4">
             <div className="mb-6 text-center">
               <h2 className="text-3xl font-bold">Meet the Team</h2>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 dark:text-gray-200">
                 The people behind {companyName}
               </p>
             </div>
@@ -1248,12 +1248,12 @@ export function AiStorefrontRenderer({
                   )}
                   <h3 className="font-semibold">{member.name}</h3>
                   {member.jobTitle && (
-                    <p className="w-full text-xs text-muted-foreground wrap-break-word">
+                    <p className="w-full text-xs dark:text-gray-200 wrap-break-word">
                       {member.jobTitle}
                     </p>
                   )}
                   {member.bio && (
-                    <p className="w-full mt-2 text-xs text-muted-foreground wrap-break-word max-h-24">
+                    <p className="w-full mt-2 text-xs dark:text-gray-200 wrap-break-word max-h-24">
                       {member.bio}
                     </p>
                   )}
@@ -1282,7 +1282,7 @@ export function AiStorefrontRenderer({
           <span>
             © {new Date().getFullYear()} {companyName} - All rights reserved.
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs dark:text-gray-200">
             Powered by your OnTarget Brands Inc.
           </span>
         </div>

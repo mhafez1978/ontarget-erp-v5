@@ -363,7 +363,7 @@ export default function SupportPage() {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="mt-4 text-muted-foreground">Loading...</p>
+            <p className="mt-4 dark:text-gray-200">Loading...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -379,7 +379,7 @@ export default function SupportPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Support</h1>
-              <p className="text-muted-foreground mt-2">
+              <p className="dark:text-gray-200 mt-2">
                 Find guides, tutorials, and answers to common questions
               </p>
             </div>
@@ -457,7 +457,7 @@ export default function SupportPage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 dark:text-gray-200" />
                     <Input
                       placeholder="Search articles, guides, and tutorials..."
                       value={searchQuery}
@@ -521,7 +521,7 @@ export default function SupportPage() {
                       user?.role === "COMPANY_CUSTOMER" ? (
                         <button
                           onClick={() => setTicketDialogOpen(true)}
-                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                          className="flex items-center gap-2 text-sm dark:text-gray-200 hover:text-primary transition-colors"
                         >
                           <HelpCircle className="h-4 w-4" />
                           <span>Submit a Ticket</span>
@@ -530,14 +530,14 @@ export default function SupportPage() {
                         <>
                           <a
                             href="mailto:support@ontarget-erp.com"
-                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                            className="flex items-center gap-2 text-sm dark:text-gray-200 hover:text-primary transition-colors"
                           >
                             <Mail className="h-4 w-4" />
                             <span>Email Support</span>
                           </a>
                           <a
                             href="#"
-                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                            className="flex items-center gap-2 text-sm dark:text-gray-200 hover:text-primary transition-colors"
                           >
                             <HelpCircle className="h-4 w-4" />
                             <span>Submit a Ticket</span>
@@ -553,11 +553,11 @@ export default function SupportPage() {
                   {filteredArticles.length === 0 ? (
                     <Card>
                       <CardContent className="flex flex-col items-center justify-center py-12">
-                        <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+                        <BookOpen className="h-12 w-12 dark:text-gray-200 mb-4" />
                         <h3 className="text-lg font-semibold mb-2">
                           No articles found
                         </h3>
-                        <p className="text-sm text-muted-foreground text-center">
+                        <p className="text-sm dark:text-gray-200 text-center">
                           Try adjusting your search or browse different
                           categories
                         </p>
@@ -815,9 +815,9 @@ export default function SupportPage() {
             <TabsContent value="video-tutorials">
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16">
-                  <Video className="h-16 w-16 text-muted-foreground mb-4" />
+                  <Video className="h-16 w-16 dark:text-gray-200 mb-4" />
                   <h3 className="text-xl font-semibold mb-2">Coming Soon</h3>
-                  <p className="text-sm text-muted-foreground text-center max-w-md">
+                  <p className="text-sm dark:text-gray-200 text-center max-w-md">
                     Video tutorials will be available here soon. Check back
                     later for step-by-step video guides.
                   </p>
@@ -829,9 +829,9 @@ export default function SupportPage() {
             <TabsContent value="faq">
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16">
-                  <MessageSquare className="h-16 w-16 text-muted-foreground mb-4" />
+                  <MessageSquare className="h-16 w-16 dark:text-gray-200 mb-4" />
                   <h3 className="text-xl font-semibold mb-2">Coming Soon</h3>
-                  <p className="text-sm text-muted-foreground text-center max-w-md">
+                  <p className="text-sm dark:text-gray-200 text-center max-w-md">
                     Frequently asked questions will be available here soon.
                   </p>
                 </CardContent>
@@ -857,7 +857,7 @@ export default function SupportPage() {
                           <h4 className="font-semibold mb-1">
                             Submit a Ticket
                           </h4>
-                          <p className="text-sm text-muted-foreground mb-2">
+                          <p className="text-sm dark:text-gray-200 mb-2">
                             Send us a support request and we&apos;ll respond as
                             soon as possible
                           </p>
@@ -875,7 +875,7 @@ export default function SupportPage() {
                         <Mail className="h-6 w-6 text-primary mt-1" />
                         <div>
                           <h4 className="font-semibold mb-1">Email Support</h4>
-                          <p className="text-sm text-muted-foreground mb-2">
+                          <p className="text-sm dark:text-gray-200 mb-2">
                             Send us an email and we&apos;ll respond within 24
                             hours
                           </p>

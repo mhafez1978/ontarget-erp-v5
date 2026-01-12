@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Package, X, Upload, Star } from "lucide-react";
 import { useState, useRef } from "react";
 import Image from "next/image";
@@ -514,7 +513,7 @@ export function AddProductSheet({
                       })
                     }
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Get notified when stock falls below this number
                   </p>
                 </div>
@@ -581,7 +580,7 @@ export function AddProductSheet({
                   />
                   <div className="flex items-center gap-2">
                     <span className="text-sm">Upload files</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs dark:text-gray-200">
                       (click or drag & drop — multiple allowed)
                     </span>
                   </div>
@@ -664,7 +663,7 @@ export function AddProductSheet({
                   ))}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Add image URLs or upload image files. Click the star to set a
                 featured image.
               </p>

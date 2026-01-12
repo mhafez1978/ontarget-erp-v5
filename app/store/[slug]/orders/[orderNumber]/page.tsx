@@ -4,10 +4,6 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
 
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -189,18 +185,18 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
         <div className="bg-white rounded-lg shadow-sm border p-8 mb-8 text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
-          <p className="text-lg text-muted-foreground mb-4">
+          <p className="text-lg dark:text-gray-200 mb-4">
             Thank you for your order. We&apos;ve sent a confirmation email to{" "}
             <span className="font-medium">{order.customerEmail}</span>
           </p>
           <div className="flex items-center justify-center gap-4 text-sm">
             <div>
-              <span className="text-muted-foreground">Order Number:</span>{" "}
+              <span className="dark:text-gray-200">Order Number:</span>{" "}
               <span className="font-bold">{order.orderNumber}</span>
             </div>
             <Separator orientation="vertical" className="h-6" />
             <div>
-              <span className="text-muted-foreground">Date:</span>{" "}
+              <span className="dark:text-gray-200">Date:</span>{" "}
               <span className="font-medium">
                 {format(new Date(order.createdAt), "MMMM d, yyyy")}
               </span>
@@ -227,7 +223,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                 </div>
                 {order.shippedAt && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Shipped on:</span>
+                    <span className="dark:text-gray-200">Shipped on:</span>
                     <span className="font-medium">
                       {format(new Date(order.shippedAt), "MMM d, yyyy")}
                     </span>
@@ -235,7 +231,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                 )}
                 {order.deliveredAt && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Delivered on:</span>
+                    <span className="dark:text-gray-200">Delivered on:</span>
                     <span className="font-medium">
                       {format(new Date(order.deliveredAt), "MMM d, yyyy")}
                     </span>
@@ -285,10 +281,10 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                           <h3 className="font-medium">
                             {itemData?.name || "Unknown Item"}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm dark:text-gray-200">
                             Quantity: {item.quantity}
                           </p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm dark:text-gray-200">
                             ${Number(item.price).toFixed(2)} each
                           </p>
                         </div>
@@ -339,15 +335,15 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal:</span>
+                  <span className="dark:text-gray-200">Subtotal:</span>
                   <span>${Number(order.subtotal).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax:</span>
+                  <span className="dark:text-gray-200">Tax:</span>
                   <span>${Number(order.tax).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Shipping:</span>
+                  <span className="dark:text-gray-200">Shipping:</span>
                   <span>${Number(order.shipping).toFixed(2)}</span>
                 </div>
                 {Number(order.discount) > 0 && (
@@ -372,7 +368,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
               <CardContent className="space-y-3">
                 {company.email && (
                   <div className="flex items-start gap-3">
-                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <Mail className="h-5 w-5 dark:text-gray-200 mt-0.5" />
                     <div className="text-sm">
                       <div className="font-medium">Email Us</div>
                       <a
@@ -386,7 +382,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                 )}
                 {company.phone && (
                   <div className="flex items-start gap-3">
-                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <Phone className="h-5 w-5 dark:text-gray-200 mt-0.5" />
                     <div className="text-sm">
                       <div className="font-medium">Call Us</div>
                       <a

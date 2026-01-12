@@ -1,12 +1,8 @@
 "use client";
 
-
 import { Check, ChevronRight, Circle } from "lucide-react";
 import * as React from "react";
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu";
-
-
-;
 
 import { cn } from "@/lib/utils";
 
@@ -176,7 +172,7 @@ const ContextMenuShortcut = ({
   return (
     <span
       className={cn(
-        "ml-auto text-xs tracking-widest text-muted-foreground",
+        "ml-auto text-xs tracking-widest dark:text-gray-200",
         className
       )}
       {...props}

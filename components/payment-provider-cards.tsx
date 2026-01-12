@@ -278,7 +278,7 @@ export default function PaymentProviderCards({
                     </span>
                   )}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm dark:text-gray-200 mt-1">
                   Accept card and ACH payments
                 </p>
               </div>
@@ -352,7 +352,7 @@ export default function PaymentProviderCards({
                     </span>
                   )}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm dark:text-gray-200 mt-1">
                   Accept PayPal balance and cards
                 </p>
               </div>
@@ -581,13 +581,13 @@ export default function PaymentProviderCards({
                   ))}
                 </div>
                 {companies.length === 0 && userRole !== "SUPER_ADMIN" && (
-                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border">
+                  <p className="text-sm dark:text-gray-200 bg-muted/50 p-3 rounded-md border">
                     No companies found. You need to own or be an admin of a
                     company to configure payment providers.
                   </p>
                 )}
                 {companies.length === 0 && userRole === "SUPER_ADMIN" && (
-                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border">
+                  <p className="text-sm dark:text-gray-200 bg-muted/50 p-3 rounded-md border">
                     No companies found. Configure the global (root) payment
                     provider for ERP subscription billing.
                   </p>
@@ -617,7 +617,7 @@ export default function PaymentProviderCards({
                 }
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 {selectedProvider === "stripe"
                   ? "Found in Stripe Dashboard → Developers → API keys"
                   : "Found in PayPal Developer Dashboard"}
@@ -642,7 +642,7 @@ export default function PaymentProviderCards({
                 }
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Encrypted before storage. Never shown after saving.
               </p>
             </div>
@@ -663,7 +663,7 @@ export default function PaymentProviderCards({
                 }
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Used to verify webhook signatures from{" "}
                 {selectedProvider === "stripe" ? "Stripe" : "PayPal"}.
               </p>
@@ -689,7 +689,7 @@ export default function PaymentProviderCards({
                   }
                   className="font-mono text-sm"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   For marketplace platform fees. Found in Stripe Dashboard →
                   Connect → Settings
                 </p>
@@ -704,7 +704,7 @@ export default function PaymentProviderCards({
                 >
                   Test Mode
                 </Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs dark:text-gray-200">
                   Use test credentials and simulate transactions
                 </p>
               </div>

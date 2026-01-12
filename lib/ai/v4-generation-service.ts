@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { callStorefrontModel } from "./model-client.ts";
+import * as modelClient from "./model-client";
 import { generateUnsplashUrl } from "./unsplash-helper.ts";
 import type {
   V4CompanyContext,
@@ -515,7 +515,7 @@ CRITICAL: Return ONLY raw JSON (no markdown fences or explanatory text). Return 
         `[V4 Design System] 🎨 Generating design system (attempt ${attempt}/${maxRetries})...`
       );
 
-      const result = await callStorefrontModel(
+      const result = await modelClient.callStorefrontModel(
         [{ role: "user", content: prompt }],
         designSystemSchema,
         providerConfig,
@@ -1053,6 +1053,15 @@ function determineSections(
 ) {
   const sections = [];
 
+  // Normalize inputs to be defensive against missing fields in tests or edge data
+  const prefs = preferences || ({} as V4DesignPreferences);
+  const products = context?.products ?? [];
+  const services = context?.services ?? [];
+  const team = context?.team ?? [];
+  const testimonials = context?.testimonials ?? [];
+  const projects = context?.projects ?? [];
+  const blogPosts = context?.blogPosts ?? [];
+
   // Always include hero
   sections.push({ type: "hero", name: "Hero Section" });
 
@@ -1063,10 +1072,10 @@ function determineSections(
   // This ensures we show what the company actually has
 
   // Products - if company has products, show them
-  if (context.products.length > 0) {
+  if (products.length > 0) {
     sections.push({ type: "products", name: "Products Section" });
     // Add individual product detail sections
-    context.products.forEach((product) => {
+    products.forEach((product) => {
       sections.push({
         type: "product-detail",
         name: `Product Detail: ${product.name}`,
@@ -1076,10 +1085,10 @@ function determineSections(
   }
 
   // Services - if company has services, show them
-  if (context.services.length > 0) {
+  if (services.length > 0) {
     sections.push({ type: "services", name: "Services Section" });
     // Add individual service detail sections
-    context.services.forEach((service) => {
+    services.forEach((service) => {
       sections.push({
         type: "service-detail",
         name: `Service Detail: ${service.name}`,
@@ -1089,40 +1098,40 @@ function determineSections(
   }
 
   // Team - if company has team members, show them
-  if (context.team.length > 0) {
+  if (team.length > 0) {
     sections.push({ type: "team", name: "Team Section" });
   }
 
   // Testimonials - if company has testimonials, show them
-  if (context.testimonials.length > 0) {
+  if (testimonials.length > 0) {
     sections.push({ type: "testimonials", name: "Testimonials Section" });
   }
 
   // Portfolio/Case Studies - if company has featured projects, show them
-  if (context.projects.length > 0) {
+  if (projects.length > 0) {
     sections.push({ type: "portfolio", name: "Portfolio Section" });
   }
 
   // Gallery - if products or services have many images
   const totalImages = [
-    ...context.products.flatMap((p) => p.images),
-    ...context.services.flatMap((s) => s.images),
+    ...products.flatMap((p) => p.images ?? []),
+    ...services.flatMap((s) => s.images ?? []),
   ].length;
-  if (totalImages > 6 && preferences.sections?.gallery !== false) {
+  if (totalImages > 6 && prefs.sections?.gallery !== false) {
     sections.push({ type: "gallery", name: "Gallery Section" });
   }
 
   // FAQ - if explicitly requested in preferences
-  if (preferences.sections?.faq) {
+  if (prefs.sections?.faq) {
     sections.push({ type: "faq", name: "FAQ Section" });
   }
 
   // Blog/Posts - if explicitly requested
-  if (preferences.sections?.blog) {
+  if (prefs.sections?.blog) {
     sections.push({ type: "blog", name: "Blog Section" });
     // Add individual blog post detail sections
-    if (context.blogPosts && context.blogPosts.length > 0) {
-      context.blogPosts.forEach((post) => {
+    if (blogPosts && blogPosts.length > 0) {
+      blogPosts.forEach((post) => {
         sections.push({
           type: "blog-post-detail",
           name: `Blog Post: ${post.title}`,
@@ -1537,7 +1546,7 @@ ${
 }
 
 CRITICAL REQUIREMENTS FOR FOOTER:
-1. **HIGH CONTRAST**: Use light text (text-gray-200 or text-white) on dark backgrounds (bg-gray-900 or darker)
+1. **HIGH CONTRAST**: Use light text (dark:text-gray-200 or text-white) on dark backgrounds (bg-gray-900 or darker)
 2. **READABLE TEXT**: Ensure WCAG AA compliance - text must be easily readable
 3. Include company name, copyright, contact info, and quick links
 4. **SOCIAL MEDIA ICONS** (REQUIRED if links provided above):
@@ -1561,7 +1570,7 @@ CRITICAL REQUIREMENTS FOR FOOTER:
 8. TEST: All text should pass contrast ratio 4.5:1 minimum
 
 Example of GOOD contrast:
-- bg-gray-900 text-gray-200 ✓
+- bg-gray-900 dark:text-gray-200 ✓
 - bg-black text-white ✓  
 - bg-gray-800 text-gray-100 ✓
 
@@ -1615,7 +1624,7 @@ Example colors to use in inline styles:
 
 CRITICAL: Return ONLY raw JSON (no markdown fences or explanatory text). The response should be a single JSON object with the HTML string in the "code" field and any additional metadata fields as specified.`;
 
-  const result = await callStorefrontModel(
+  const result = await modelClient.callStorefrontModel(
     [{ role: "user", content: prompt }],
     componentSchema,
     providerConfig,
@@ -1865,7 +1874,7 @@ Just return pure JSON matching the schema.`;
 
       // The metadata returned by models is frequently inconsistent (alternate keys like pageTitle/metaDescription).
       // Accept any JSON here and normalize explicitly below to avoid Zod rejection of otherwise valid variants.
-      const result = await callStorefrontModel(
+      const result = await modelClient.callStorefrontModel(
         [{ role: "user", content: prompt }],
         // Use the flexible metadata schema that accepts several common variants
         metadataSchema,

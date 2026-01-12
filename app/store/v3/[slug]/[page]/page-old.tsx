@@ -60,7 +60,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">No Active Website</h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             This company hasn&apos;t published a V3 website yet.
           </p>
         </div>
@@ -131,7 +131,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                 >
                   <h2 className="text-2xl font-bold mb-4">{section.heading}</h2>
                   {section.subheading && (
-                    <p className="text-lg text-muted-foreground mb-6">
+                    <p className="text-lg dark:text-gray-200 mb-6">
                       {section.subheading}
                     </p>
                   )}
@@ -160,7 +160,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                                   {location.name}
                                 </h3>
                                 {location.type && (
-                                  <p className="text-sm text-muted-foreground mb-4">
+                                  <p className="text-sm dark:text-gray-200 mb-4">
                                     {location.type}
                                   </p>
                                 )}
@@ -270,7 +270,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                               <h3 className="font-semibold text-lg mb-2">
                                 {item.name}
                               </h3>
-                              <p className="text-muted-foreground mb-4">
+                              <p className="dark:text-gray-200 mb-4">
                                 {item.description}
                               </p>
                               {item.price && (
@@ -310,7 +310,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                                     {testimonial.author}
                                   </p>
                                   {testimonial.role && (
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-sm dark:text-gray-200">
                                       {testimonial.role}
                                     </p>
                                   )}
@@ -330,9 +330,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                             <h3 className="font-semibold mb-2">
                               {faq.question}
                             </h3>
-                            <p className="text-muted-foreground">
-                              {faq.answer}
-                            </p>
+                            <p className="dark:text-gray-200">{faq.answer}</p>
                           </div>
                         )
                       )}
@@ -363,7 +361,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
       <footer className="border-t py-8 mt-16">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm dark:text-gray-200">
               © {new Date().getFullYear()} {company.name}. All rights reserved.
             </div>
             {websiteData.navigation.footer && (
@@ -372,7 +370,7 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                   <a
                     key={idx}
                     href={`/store/v3/${slug}/${item.slug}`}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm dark:text-gray-200 hover:text-foreground transition-colors"
                   >
                     {item.label}
                   </a>

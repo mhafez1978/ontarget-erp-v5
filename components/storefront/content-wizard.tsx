@@ -292,7 +292,7 @@ export function ContentWizard({
                 <Wand2 className="h-5 w-5" />
                 Content Wizard
               </h3>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm dark:text-gray-200 mt-1">
                 Customize your storefront content for the {activeTheme.name}{" "}
                 theme
               </p>
@@ -337,7 +337,7 @@ export function ContentWizard({
                 {section.enabled ? (
                   <Eye className="h-3 w-3 mx-auto text-green-500" />
                 ) : (
-                  <EyeOff className="h-3 w-3 mx-auto text-muted-foreground" />
+                  <EyeOff className="h-3 w-3 mx-auto dark:text-gray-200" />
                 )}
               </div>
             </CardContent>
@@ -696,7 +696,7 @@ export function ContentWizard({
                   <div className="text-sm font-medium">
                     Stats & Testimonials
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm dark:text-gray-200">
                     Stats and testimonials can be customized in the advanced
                     editor (coming soon)
                   </div>
@@ -858,7 +858,7 @@ export function ContentWizard({
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-sm">FAQ Items (optional)</Label>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs dark:text-gray-200">
                         Use this area to manage common questions and answers
                         about your business.
                       </p>
@@ -925,14 +925,14 @@ export function ContentWizard({
                               className="border rounded-md p-3 space-y-2"
                             >
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-muted-foreground">
+                                <span className="text-xs font-medium dark:text-gray-200">
                                   Q{index + 1}
                                 </span>
                                 <Button
                                   type="button"
                                   size="sm"
                                   variant="ghost"
-                                  className="text-xs text-muted-foreground"
+                                  className="text-xs dark:text-gray-200"
                                   onClick={() => {
                                     setSections((prev) =>
                                       prev.map((section) => {
@@ -1103,7 +1103,7 @@ export function ContentWizard({
                 </div>
 
                 <div className="p-4 border rounded-md bg-muted/50 space-y-1">
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs dark:text-gray-200">
                     Individual team members are auto-populated from your
                     company&apos;s featured staff. Edit those in the Teams &amp;
                     Workforce area.
@@ -1267,7 +1267,7 @@ export function ContentWizard({
                   <div className="text-sm font-medium">
                     Social Links & Quick Links
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm dark:text-gray-200">
                     Social media links and footer navigation can be customized
                     in advanced settings
                   </div>

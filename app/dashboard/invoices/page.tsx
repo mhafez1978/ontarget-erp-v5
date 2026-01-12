@@ -164,7 +164,7 @@ export default function InvoicesPage() {
     return (
       <DashboardLayout user={user}>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
         </div>
       </DashboardLayout>
     );
@@ -183,7 +183,7 @@ export default function InvoicesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
-            <p className="text-muted-foreground">View and pay your invoices</p>
+            <p className="dark:text-gray-200">View and pay your invoices</p>
           </div>
         </div>
 
@@ -219,9 +219,9 @@ export default function InvoicesPage() {
           <CardContent>
             {invoices.length === 0 ? (
               <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <FileText className="h-12 w-12 dark:text-gray-200 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No invoices yet</h3>
-                <p className="text-muted-foreground">
+                <p className="dark:text-gray-200">
                   Your invoices will appear here when issued
                 </p>
               </div>

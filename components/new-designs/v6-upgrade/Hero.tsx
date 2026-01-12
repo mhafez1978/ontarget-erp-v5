@@ -7,7 +7,7 @@ const Hero: React.FC = () => {
   return (
     <section
       id="vision"
-      className="overflow-x-hidden flex items-center justify-center bg-background dark:bg-zinc-900/30 backdrop-blur-md rounded-2xl min-h-[60vh] pt-30"
+      className="overflow-x-hidden flex items-center justify-center section-bg-linear-2 bg-background dark:bg-zinc-900/30 backdrop-blur-md rounded-2xl min-h-[60vh] pt-30"
     >
       <div className="hidden">
         <p>
@@ -17,21 +17,22 @@ const Hero: React.FC = () => {
           novice but please dont do it.
         </p>
       </div>
-      <div className="w-screen flex flex-col items center justify-center text-center px-4">
-        <div className="w-[200px] mx-auto inline-flex justify-center items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-purple-500 dark:text-primary text-xs font-bold mb-8">
+
+      <div className="container mx-auto flex flex-col items-center justify-center text-center px-4">
+        <div className="w-52 mx-auto inline-flex justify-center items-center gap-2 px-4 py-2 rounded-full border border-purple-500 text-purple-500 dark:text-[#2bee79] dark:border-[#2bee79] text-xs font-semibold mb-8 mx-auto md:mx-0">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-500  dark:bg-primary opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400 dark:bg-primary"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-500 dark:bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400 dark:bg-emerald-300"></span>
           </span>
           CHAPTER I: THE VISION
         </div>
-        <h2 className="text-6xl md:text-6xl font-display font-black tracking-tight mb-6 text-black dark:text-gray-200">
+        <h2 className="text-6xl md:text-6xl font-display font-black tracking-tight mb-6 text-black dark:dark:text-gray-200">
           All-in-One Business{" "}
-          <span className="text-purple-500 dark:text-primary mr-4">
+          <span className="text-purple-500 dark:text-[#2bee79] mr-4">
             Powerhouse
           </span>{" "}
         </h2>
-        <p className="w-full px-4 mx-auto text-lg md:text-2xl text-black dark:text-gray-50 mb-12 leading-relaxed font-body md:max-w-4xl ">
+        <p className="w-full px-4 mx-auto text-base text-black mb-12 leading-relaxed font-body dark:text-gray-300 md:max-w-4xl md:text-lg">
           Tired of switching between websites, tools and plugins to run your
           business? Sign up for a free trial and discover OnTarget ERP the
           all-in‑one, AI-powered platform that helps you streamline your
@@ -40,7 +41,7 @@ const Hero: React.FC = () => {
         </p>
         <div className="flex flex-wrap justify-center gap-6">
           <Link
-            className="p-4 px-10 bg-purple-500 text-white dark:text-black font-bold rounded-xl text-xl flex items-center gap-3 dark:bg-primary dark:hover:shadow-[0_0_40px_rgba(43,238,121,0.4)] transition-all"
+            className="p-4 px-10 bg-purple-500 text-white font-bold rounded-xl text-xl flex items-center gap-3 dark:bg-[#2bee79] dark:text-black dark:hover:shadow-[0_0_40px_rgba(43,238,121,0.4)] transition-all"
             href="/register?trial=true"
           >
             Start Your Journey
@@ -50,7 +51,7 @@ const Hero: React.FC = () => {
           </Link>
           <Link
             href="#features"
-            className="px-10 py-5 bg-white/5 font-bold rounded-xl text-xl flex items-center gap-3 hover:bg-white/10 transition-all text-black dark:text-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+            className="px-10 py-5 bg-white/5 font-bold rounded-xl text-xl flex items-center gap-3 hover:bg-white/10 transition-all text-black dark:dark:text-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
             Discover Features
             <span className="material-symbols-outlined">

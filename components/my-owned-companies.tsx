@@ -1,7 +1,13 @@
 "use client";
 
-
-import { Building2, Users, Loader2, Pencil, Trash2, ExternalLink } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Loader2,
+  Pencil,
+  Trash2,
+  ExternalLink,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -29,11 +35,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-
-
-
-
-;
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { EditCompanySheet } from "@/components/edit-company-sheet";
@@ -145,7 +146,7 @@ export function MyOwnedCompanies() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -222,7 +223,7 @@ export function MyOwnedCompanies() {
                   <TableCell>
                     <div className="font-medium">{company.name}</div>
                     {company.slogan && (
-                      <div className="text-xs text-muted-foreground mt-0.5">
+                      <div className="text-xs dark:text-gray-200 mt-0.5">
                         {company.slogan}
                       </div>
                     )}
@@ -230,29 +231,29 @@ export function MyOwnedCompanies() {
                   <TableCell className="text-sm">
                     <div className="space-y-1">
                       {company.email && (
-                        <div className="text-muted-foreground">
+                        <div className="dark:text-gray-200">
                           {company.email}
                         </div>
                       )}
                       {company.phone && (
-                        <div className="text-muted-foreground">
+                        <div className="dark:text-gray-200">
                           {company.phone}
                         </div>
                       )}
                       {company.website && (
-                        <div className="text-muted-foreground truncate max-w-[200px]">
+                        <div className="dark:text-gray-200 truncate max-w-[200px]">
                           {company.website}
                         </div>
                       )}
                       {!company.email && !company.phone && !company.website && (
-                        <span className="text-muted-foreground italic">
+                        <span className="dark:text-gray-200 italic">
                           No contact info
                         </span>
                       )}
                     </div>
                   </TableCell>
                   <TableCell className="max-w-md">
-                    <span className="text-sm text-muted-foreground line-clamp-2">
+                    <span className="text-sm dark:text-gray-200 line-clamp-2">
                       {company.description || "No description"}
                     </span>
                   </TableCell>
@@ -261,7 +262,7 @@ export function MyOwnedCompanies() {
                       {company.memberCount}
                     </span>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm dark:text-gray-200">
                     {new Date(company.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>

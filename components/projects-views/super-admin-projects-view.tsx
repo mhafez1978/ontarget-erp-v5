@@ -1,7 +1,16 @@
 "use client";
 
-
-import { FolderKanban, Plus, Search, LayoutGrid, List, Calendar, Users, Loader2, Filter } from "lucide-react";
+import {
+  FolderKanban,
+  Plus,
+  Search,
+  LayoutGrid,
+  List,
+  Calendar,
+  Users,
+  Loader2,
+  Filter,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,14 +24,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-
-
-
-
-
-
-
-;
 import {
   ProjectsListSkeleton,
   ProjectsBoardSkeleton,
@@ -355,9 +356,9 @@ export function SuperAdminProjectsView() {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
         <div className="text-center space-y-4">
-          <FolderKanban className="h-16 w-16 mx-auto text-muted-foreground" />
+          <FolderKanban className="h-16 w-16 mx-auto dark:text-gray-200" />
           <h2 className="text-2xl font-bold">No Companies Found</h2>
-          <p className="text-muted-foreground max-w-md">
+          <p className="dark:text-gray-200 max-w-md">
             You need to create a company first before you can manage projects.
           </p>
           <Button
@@ -376,7 +377,7 @@ export function SuperAdminProjectsView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Manage your teams and projects across companies
           </p>
         </div>
@@ -442,7 +443,7 @@ export function SuperAdminProjectsView() {
 
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 dark:text-gray-200" />
           <Input
             placeholder="Search projects..."
             className="pl-10"
@@ -455,7 +456,7 @@ export function SuperAdminProjectsView() {
       {/* Filters Bar */}
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Filter className="h-4 w-4 dark:text-gray-200" />
           <span className="text-sm font-medium">Filters:</span>
         </div>
 
@@ -517,9 +518,9 @@ export function SuperAdminProjectsView() {
       ) : filteredProjects.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <FolderKanban className="h-16 w-16 text-muted-foreground mb-4" />
+            <FolderKanban className="h-16 w-16 dark:text-gray-200 mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Projects Found</h3>
-            <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
+            <p className="text-sm dark:text-gray-200 text-center max-w-md mb-4">
               {projects.length === 0
                 ? "Get started by creating your first project."
                 : "No projects match your current filters."}

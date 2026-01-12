@@ -1,13 +1,10 @@
 "use client";
 
-
 import { Folder } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { HierarchicalFileExplorer } from "@/components/hierarchical-file-explorer";
-;
-
 export default function FilesPage() {
   const router = useRouter();
   const [user, setUser] = useState({
@@ -73,18 +70,16 @@ export default function FilesPage() {
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <Folder className="h-6 w-6" /> Files
             </h1>
-            <p className="text-muted-foreground">
+            <p className="dark:text-gray-200">
               Browse and manage company files
             </p>
           </div>
         </div>
 
         {!ready ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Loading…
-          </div>
+          <div className="text-center py-12 dark:text-gray-200">Loading…</div>
         ) : !companyId ? (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 dark:text-gray-200">
             No company selected
           </div>
         ) : (

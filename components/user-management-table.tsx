@@ -199,7 +199,7 @@ export function UserManagementTable({
     return (
       <Card>
         <CardContent className="flex items-center justify-center p-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin dark:text-gray-200" />
         </CardContent>
       </Card>
     );
@@ -311,7 +311,7 @@ export function UserManagementTable({
                               <ShieldAlert className="h-3 w-3 text-destructive" />
                             )}
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm dark:text-gray-200">
                             {user.email}
                           </div>
                         </div>
@@ -327,22 +327,22 @@ export function UserManagementTable({
                           {user.ownedCompanies.map((company) => (
                             <div
                               key={company.id}
-                              className="text-muted-foreground"
+                              className="dark:text-gray-200"
                             >
                               {company.name}
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm dark:text-gray-200">
                           No companies
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-4 text-sm text-muted-foreground">
+                    <td className="px-4 py-4 text-sm dark:text-gray-200">
                       {formatDate(user.lastLoginAt)}
                     </td>
-                    <td className="px-4 py-4 text-sm text-muted-foreground">
+                    <td className="px-4 py-4 text-sm dark:text-gray-200">
                       {formatDate(user.createdAt)}
                     </td>
                     <td className="px-4 py-4">
@@ -385,7 +385,7 @@ export function UserManagementTable({
         </div>
 
         {users.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 dark:text-gray-200">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No users found</p>
           </div>

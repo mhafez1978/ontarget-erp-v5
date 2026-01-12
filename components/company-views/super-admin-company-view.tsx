@@ -1,7 +1,15 @@
 "use client";
 
-
-import { Building2, Loader2, Users, Briefcase, TrendingUp, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import {
+  Building2,
+  Loader2,
+  Users,
+  Briefcase,
+  TrendingUp,
+  ExternalLink,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,13 +24,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-
-
-
-
-
-
-;
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MyOwnedCompanies } from "@/components/my-owned-companies";
@@ -166,7 +167,7 @@ export function SuperAdminCompanyView({
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             All Companies
           </h2>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Welcome back, {userName || "Admin"}! View all companies in the
             system.
           </p>
@@ -174,7 +175,7 @@ export function SuperAdminCompanyView({
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
             </div>
           </CardContent>
         </Card>
@@ -189,7 +190,7 @@ export function SuperAdminCompanyView({
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             All Companies
           </h2>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Welcome back, {userName || "Admin"}! View all companies in the
             system.
           </p>
@@ -220,7 +221,7 @@ export function SuperAdminCompanyView({
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             Companies Management
           </h2>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Welcome back, {userName || "Admin"}! Manage your companies and view
             all ERP subscribers.
           </p>
@@ -243,7 +244,7 @@ export function SuperAdminCompanyView({
         <TabsContent value="personal" className="space-y-4">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm dark:text-gray-200 mb-4">
                 Companies you own as SUPER_ADMIN. These are free with unlimited
                 access.
               </p>
@@ -259,8 +260,8 @@ export function SuperAdminCompanyView({
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <Building2 className="h-4 w-4 dark:text-gray-200" />
+                  <p className="text-sm font-medium dark:text-gray-200">
                     Total Companies
                   </p>
                 </div>
@@ -273,8 +274,8 @@ export function SuperAdminCompanyView({
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <Users className="h-4 w-4 dark:text-gray-200" />
+                  <p className="text-sm font-medium dark:text-gray-200">
                     Total Members
                   </p>
                 </div>
@@ -287,8 +288,8 @@ export function SuperAdminCompanyView({
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <Briefcase className="h-4 w-4 dark:text-gray-200" />
+                  <p className="text-sm font-medium dark:text-gray-200">
                     Total Staff
                   </p>
                 </div>
@@ -301,8 +302,8 @@ export function SuperAdminCompanyView({
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <TrendingUp className="h-4 w-4 dark:text-gray-200" />
+                  <p className="text-sm font-medium dark:text-gray-200">
                     By Plan
                   </p>
                 </div>
@@ -326,10 +327,10 @@ export function SuperAdminCompanyView({
             <CardContent className="pt-6">
               {subscribersLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
                 </div>
               ) : subscriberCompanies.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 dark:text-gray-200">
                   <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No subscriber companies yet</p>
                   <p className="text-sm mt-2">
@@ -368,7 +369,7 @@ export function SuperAdminCompanyView({
                                 </div>
                               ) : (
                                 <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-                                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                                  <Building2 className="h-4 w-4 dark:text-gray-200" />
                                 </div>
                               )}
                               <div>
@@ -376,7 +377,7 @@ export function SuperAdminCompanyView({
                                   {company.name}
                                 </div>
                                 {company.slogan && (
-                                  <div className="text-xs text-muted-foreground">
+                                  <div className="text-xs dark:text-gray-200">
                                     {company.slogan}
                                   </div>
                                 )}
@@ -386,7 +387,7 @@ export function SuperAdminCompanyView({
                           <TableCell>
                             <div className="text-sm">
                               <div>{company.owner.name}</div>
-                              <div className="text-xs text-muted-foreground">
+                              <div className="text-xs dark:text-gray-200">
                                 {company.owner.email}
                               </div>
                             </div>
@@ -404,7 +405,7 @@ export function SuperAdminCompanyView({
                           <TableCell className="text-center">
                             {company.staffCount}
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
+                          <TableCell className="text-sm dark:text-gray-200">
                             {new Date(company.createdAt).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
@@ -425,7 +426,7 @@ export function SuperAdminCompanyView({
                                   </Link>
                                 </Button>
                               ) : (
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-xs dark:text-gray-200">
                                   No store
                                 </span>
                               )}

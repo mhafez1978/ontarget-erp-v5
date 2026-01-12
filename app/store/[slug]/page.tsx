@@ -519,7 +519,7 @@ export default async function StorefrontPage({ params }: PageProps) {
               ).replace(
                 /</g,
                 "&lt;"
-              )}</p><footer class=\"mt-2 text-sm text-muted-foreground\">— ${
+              )}</p><footer class=\"mt-2 text-sm dark:text-gray-200\">— ${
                 t.customerName || ""
               }</footer></blockquote>`
           )
@@ -662,7 +662,7 @@ export default async function StorefrontPage({ params }: PageProps) {
             (m) =>
               `<div class="p-4"><h4 class="font-medium">${
                 m.user?.name || "Team Member"
-              }</h4><p class="text-sm text-muted-foreground">${
+              }</h4><p class="text-sm dark:text-gray-200">${
                 m.jobTitle || ""
               }</p></div>`
           )

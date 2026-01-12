@@ -1,13 +1,10 @@
 "use client";
 
-
 import { UserPlus } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { CompanyCustomers } from "@/components/company-customers";
 import { AddCustomerSheet } from "@/components/add-customer-sheet";
 import { Button } from "@/components/ui/button";
-;
-
 interface AdminCustomerViewProps {
   userName?: string | null;
 }
@@ -60,7 +57,7 @@ export function AdminCustomerView({ userName }: AdminCustomerViewProps) {
           <h2 className="text-2xl font-bold tracking-tight">
             Customer Management
           </h2>
-          <p className="text-muted-foreground">
+          <p className="dark:text-gray-200">
             Welcome back, {userName || "Admin"}! Manage your company customers
             here.
           </p>

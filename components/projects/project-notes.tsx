@@ -206,14 +206,14 @@ export function ProjectNotes({
             <StickyNote className="h-5 w-5" />
             <CardTitle>Notes</CardTitle>
             {notes.length > 0 && (
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm dark:text-gray-200">
                 ({notes.length})
               </span>
             )}
           </div>
           <div className="flex items-center gap-3">
             {totalTime > 0 && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1 text-sm dark:text-gray-200">
                 <Clock className="h-4 w-4" />
                 <span>{formatTime(totalTime)} tracked</span>
               </div>
@@ -290,7 +290,7 @@ export function ProjectNotes({
 
         {/* Notes List */}
         {notes.length === 0 && !isAdding ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 dark:text-gray-200">
             <StickyNote className="h-12 w-12 mx-auto mb-2 opacity-20" />
             <p>No notes yet. Add your first note to track project updates.</p>
           </div>
@@ -382,7 +382,7 @@ export function ProjectNotes({
                                 Private
                               </Badge>
                             )}
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs dark:text-gray-200">
                               {new Date(note.createdAt).toLocaleDateString(
                                 "en-US",
                                 {
@@ -394,7 +394,7 @@ export function ProjectNotes({
                               )}
                             </span>
                             {note.timeEntry > 0 && (
-                              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1 text-xs dark:text-gray-200">
                                 <Clock className="h-3 w-3" />
                                 {formatTime(note.timeEntry)}
                               </span>

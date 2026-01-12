@@ -195,7 +195,7 @@ export function V4ChatInterface({
             </div>
             <div>
               <h3 className="text-xl font-semibold mb-2">AI Storefront V4</h3>
-              <p className="text-muted-foreground text-sm mb-4">
+              <p className="dark:text-gray-200 text-sm mb-4">
                 Have a conversation with AI to design a unique website tailored
                 to your company. The AI will guide you through choosing hero
                 styles, colors, fonts, and layout preferences.
@@ -296,7 +296,7 @@ export function V4ChatInterface({
               >
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs dark:text-gray-200 mt-1">
                 {new Date(msg.timestamp).toLocaleTimeString()}
               </p>
             </div>

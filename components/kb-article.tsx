@@ -1,17 +1,19 @@
 "use client";
 
-import { ArrowLeft, Clock, Tag, Share2, Printer, ThumbsUp, ThumbsDown } from "lucide-react";
+import {
+  ArrowLeft,
+  Clock,
+  Tag,
+  Share2,
+  Printer,
+  ThumbsUp,
+  ThumbsDown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-
-
-
-
-
-;
 import Link from "next/link";
 import { useState } from "react";
 
@@ -82,13 +84,11 @@ export function KBArticle({
             {/* Title & Description */}
             <div>
               <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-              <p className="text-muted-foreground mt-2 text-lg">
-                {description}
-              </p>
+              <p className="dark:text-gray-200 mt-2 text-lg">{description}</p>
             </div>
 
             {/* Meta Information */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-4 text-sm dark:text-gray-200">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 <span>{readTime} read</span>
@@ -99,7 +99,7 @@ export function KBArticle({
 
             {/* Tags */}
             <div className="flex items-center gap-2 flex-wrap">
-              <Tag className="h-4 w-4 text-muted-foreground" />
+              <Tag className="h-4 w-4 dark:text-gray-200" />
               {tags.map((tag) => (
                 <Badge key={tag} variant="outline" className="text-xs">
                   {tag}
@@ -167,7 +167,7 @@ export function KBArticle({
               </Button>
             </div>
             {helpful !== null && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 {helpful
                   ? "Thank you for your feedback! 🎉"
                   : "We're sorry this didn't help. Please contact support for more assistance."}

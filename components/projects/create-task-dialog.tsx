@@ -322,7 +322,7 @@ export function CreateTaskDialog({
             <div className="space-y-2">
               <Label htmlFor="assignee">Task Owner (Assignee)</Label>
               {isLoadingStaff ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm dark:text-gray-200">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading...
                 </div>
@@ -337,7 +337,7 @@ export function CreateTaskDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {staffMembers.length === 0 ? (
-                      <div className="p-2 text-sm text-muted-foreground">
+                      <div className="p-2 text-sm dark:text-gray-200">
                         No team members found
                       </div>
                     ) : (
@@ -355,7 +355,7 @@ export function CreateTaskDialog({
             <div className="space-y-2">
               <Label htmlFor="assignedTo">Assigned To (Optional)</Label>
               {isLoadingStaff ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm dark:text-gray-200">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading...
                 </div>
@@ -370,7 +370,7 @@ export function CreateTaskDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {staffMembers.length === 0 ? (
-                      <div className="p-2 text-sm text-muted-foreground">
+                      <div className="p-2 text-sm dark:text-gray-200">
                         No team members found
                       </div>
                     ) : (

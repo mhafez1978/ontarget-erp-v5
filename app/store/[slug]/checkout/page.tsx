@@ -1,15 +1,11 @@
 "use client";
 
-
 import { ArrowLeft, CreditCard, Loader2, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
-
-
-;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -234,13 +230,13 @@ export default function CheckoutPage() {
                   <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
                 <h2 className="text-3xl font-bold mb-2">Order Confirmed!</h2>
-                <p className="text-muted-foreground mb-6">
+                <p className="dark:text-gray-200 mb-6">
                   Thank you for your order. We&apos;ve sent a confirmation email
                   to <strong>{formData.customerEmail}</strong>
                 </p>
                 {orderNumber && (
                   <div className="bg-muted p-4 rounded-lg inline-block">
-                    <p className="text-sm text-muted-foreground mb-1">
+                    <p className="text-sm dark:text-gray-200 mb-1">
                       Order Number
                     </p>
                     <p className="text-2xl font-bold">{orderNumber}</p>
@@ -317,7 +313,7 @@ export default function CheckoutPage() {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Checkout</h1>
-          <p className="text-muted-foreground">Complete your order</p>
+          <p className="dark:text-gray-200">Complete your order</p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -537,15 +533,15 @@ export default function CheckoutPage() {
                   {/* Totals */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="dark:text-gray-200">Subtotal</span>
                       <span>${calculateSubtotal().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Tax (10%)</span>
+                      <span className="dark:text-gray-200">Tax (10%)</span>
                       <span>${calculateTax().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Shipping</span>
+                      <span className="dark:text-gray-200">Shipping</span>
                       <span>${calculateShipping().toFixed(2)}</span>
                     </div>
                     <Separator />

@@ -163,7 +163,7 @@ export function ChangeTeamRoleDialog({
               </SelectContent>
             </Select>
             {selectedRoleData && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 {selectedRoleData.description}
               </p>
             )}
@@ -171,7 +171,7 @@ export function ChangeTeamRoleDialog({
 
           {selectedRole !== currentRole && (
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm dark:text-gray-200">
                 This will change {memberName}&apos;s permissions and access
                 level within the team.
               </p>

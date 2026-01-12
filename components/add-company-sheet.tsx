@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import {
@@ -84,6 +85,7 @@ export function AddCompanySheet({
   const [addressData, setAddressData] =
     useState<AddressData>(initialAddressData);
   const [taxData, setTaxData] = useState(initialTaxData);
+  const [hedraEnabled, setHedraEnabled] = useState(false);
 
   // Track if form is dirty
   const isFormDirty = useFormDirty(initialFormData, formData);
@@ -112,6 +114,7 @@ export function AddCompanySheet({
             taxData.legalEntity && taxData.taxIdType && taxData.taxId
               ? taxData
               : undefined,
+          hedraEnabled,
         }),
       });
 
@@ -209,7 +212,7 @@ export function AddCompanySheet({
                 {Object.entries(getIndustriesByCategory()).map(
                   ([category, industries]) => (
                     <div key={category}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                      <div className="px-2 py-1.5 text-xs font-semibold dark:text-gray-200">
                         {category}
                       </div>
                       {industries.map((industry) => (
@@ -298,12 +301,12 @@ export function AddCompanySheet({
           {/* Tax Information Section */}
           <div className="space-y-4 pt-4 border-t">
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <AlertCircle className="h-5 w-5 dark:text-gray-200 mt-0.5" />
               <div>
                 <h3 className="font-semibold text-sm">
                   Tax Information (Optional)
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs dark:text-gray-200 mt-1">
                   Required for invoicing, payroll, and IRS compliance
                 </p>
               </div>
@@ -326,7 +329,7 @@ export function AddCompanySheet({
                       <SelectItem key={key} value={key}>
                         <div className="flex flex-col">
                           <span>{label}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs dark:text-gray-200">
                             {region}
                           </span>
                         </div>
@@ -394,12 +397,27 @@ export function AddCompanySheet({
                       })
                     }
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs dark:text-gray-200">
                     Data is encrypted and stored securely for compliance
                   </p>
                 </div>
               </>
             )}
+          </div>
+
+          {/* Hedera Anchoring Option */}
+          <div className="space-y-2 pt-4 border-t">
+            <Label>Hedera Anchoring (Optional)</Label>
+            <div className="flex items-center gap-2 mt-2">
+              <Checkbox
+                checked={hedraEnabled}
+                onCheckedChange={(v) => setHedraEnabled(!!v)}
+              />
+              <div className="text-sm dark:text-gray-200">
+                Enable Hedera anchoring for this company (requires Super Admin
+                to enable globally).
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">

@@ -9,7 +9,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
+/* @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -63,7 +63,7 @@
       opacity: 0;
     }
   }
-}
+} */
 
 @keyframes marquee {
   from {
@@ -618,7 +618,7 @@ button[data-active="true"] {
   background-color: #0a1912;
 }
 
-.text-gray-200 {
+.dark .text-gray-200 {
   color: #e2e8f0;
 }
 

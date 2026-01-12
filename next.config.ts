@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  serverExternalPackages: ["@hashgraph/sdk"],
   output: "standalone", // Temporarily disabled for Lighthouse testing
   reactCompiler: true,
   // Compression and performance optimizations

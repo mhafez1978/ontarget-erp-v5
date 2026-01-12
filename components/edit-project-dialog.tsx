@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -25,7 +24,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-;
 import { toast } from "sonner";
 
 interface Team {
@@ -340,7 +338,7 @@ export function EditProjectDialog({
             </Label>
             {teamsLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
               </div>
             ) : (
               <Select value={teamId} onValueChange={setTeamId} required>
@@ -357,7 +355,7 @@ export function EditProjectDialog({
               </Select>
             )}
             {selectedTeam && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs dark:text-gray-200">
                 Assigned to: <strong>{selectedTeam.name}</strong>
               </p>
             )}
@@ -418,7 +416,7 @@ export function EditProjectDialog({
             <Label htmlFor="projectManager">Project Manager (Optional)</Label>
             {staffLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
               </div>
             ) : (
               <Select
@@ -435,7 +433,7 @@ export function EditProjectDialog({
                       <div className="flex items-center gap-2">
                         <span>{member.user.name || member.user.email}</span>
                         {member.jobTitle && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs dark:text-gray-200">
                             - {member.jobTitle}
                           </span>
                         )}
@@ -469,7 +467,7 @@ export function EditProjectDialog({
             <Label htmlFor="teamLead">Team Lead (Optional)</Label>
             {staffLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
               </div>
             ) : (
               <Select value={teamLeadId} onValueChange={setTeamLeadId}>
@@ -483,7 +481,7 @@ export function EditProjectDialog({
                       <div className="flex items-center gap-2">
                         <span>{member.user.name || member.user.email}</span>
                         {member.jobTitle && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs dark:text-gray-200">
                             - {member.jobTitle}
                           </span>
                         )}
@@ -516,13 +514,13 @@ export function EditProjectDialog({
           <div className="space-y-2">
             <Label htmlFor="customer">
               Customer{" "}
-              <span className="text-muted-foreground text-xs font-normal">
+              <span className="dark:text-gray-200 text-xs font-normal">
                 (Company customer, optional)
               </span>
             </Label>
             {customersLoading ? (
               <div className="flex items-center justify-center py-4 border rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
               </div>
             ) : (
               <Select value={customerId} onValueChange={setCustomerId}>

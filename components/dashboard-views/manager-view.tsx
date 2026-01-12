@@ -13,7 +13,7 @@ export function ManagerView({ userName, companyId }: ManagerViewProps) {
       <h1 className="text-3xl font-bold tracking-tight">
         You are a Manager, welcome {userName || "Guest"}!
       </h1>
-      <p className="text-muted-foreground">
+      <p className="dark:text-gray-200">
         Manage your team, oversee projects, and track performance metrics.
       </p>
 

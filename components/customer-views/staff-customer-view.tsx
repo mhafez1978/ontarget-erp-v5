@@ -11,7 +11,7 @@ export function StaffCustomerView({ userName }: StaffCustomerViewProps) {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-        <p className="text-muted-foreground">
+        <p className="dark:text-gray-200">
           Welcome {userName || "Guest"}! As a Staff member, you can view
           customer information and handle day-to-day customer interactions.
         </p>

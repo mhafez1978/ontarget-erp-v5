@@ -1,14 +1,10 @@
 "use client";
 
-
 import { Users, FolderKanban, ListTodo, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-
-
-;
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 
@@ -135,7 +131,7 @@ export function TeamView({ projects }: TeamViewProps) {
                   </div>
                   <div>
                     <CardTitle className="text-xl">{team.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm dark:text-gray-200 mt-1">
                       {totalProjects} project{totalProjects !== 1 ? "s" : ""} •{" "}
                       {totalTasks} task{totalTasks !== 1 ? "s" : ""}
                     </p>
@@ -146,21 +142,19 @@ export function TeamView({ projects }: TeamViewProps) {
                     <div className="text-2xl font-bold text-blue-600">
                       {inProgressProjects}
                     </div>
-                    <div className="text-xs text-muted-foreground">Active</div>
+                    <div className="text-xs dark:text-gray-200">Active</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">
                       {completedProjects}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Completed
-                    </div>
+                    <div className="text-xs dark:text-gray-200">Completed</div>
                   </div>
                   <div className="text-center min-w-20">
                     <div className="text-2xl font-bold">
                       {Math.round(avgProgress)}%
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs dark:text-gray-200">
                       Avg Progress
                     </div>
                   </div>
@@ -181,7 +175,7 @@ export function TeamView({ projects }: TeamViewProps) {
                             {project.name}
                           </h4>
                           {project.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                            <p className="text-xs dark:text-gray-200 line-clamp-2 mt-1">
                               {project.description}
                             </p>
                           )}
@@ -200,9 +194,7 @@ export function TeamView({ projects }: TeamViewProps) {
                       {project.progress !== undefined && (
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground">
-                              Progress
-                            </span>
+                            <span className="dark:text-gray-200">Progress</span>
                             <span className="font-medium">
                               {project.progress}%
                             </span>
@@ -213,8 +205,8 @@ export function TeamView({ projects }: TeamViewProps) {
 
                       {/* Tasks Count */}
                       <div className="flex items-center gap-2 text-sm">
-                        <ListTodo className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">
+                        <ListTodo className="w-4 h-4 dark:text-gray-200" />
+                        <span className="dark:text-gray-200">
                           {project._count.tasks} task
                           {project._count.tasks !== 1 ? "s" : ""}
                         </span>
@@ -223,8 +215,8 @@ export function TeamView({ projects }: TeamViewProps) {
                       {/* Dates */}
                       {(project.startDate || project.endDate) && (
                         <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground text-xs">
+                          <Calendar className="w-4 h-4 dark:text-gray-200" />
+                          <span className="dark:text-gray-200 text-xs">
                             {project.startDate &&
                               new Date(project.startDate).toLocaleDateString(
                                 "en-US",
@@ -273,7 +265,7 @@ export function TeamView({ projects }: TeamViewProps) {
                             </Avatar>
                           )}
                         </div>
-                        <div className="text-xs text-muted-foreground flex-1 min-w-0">
+                        <div className="text-xs dark:text-gray-200 flex-1 min-w-0">
                           {project.projectManager && (
                             <div className="truncate">
                               PM: {project.projectManager.user.name || "N/A"}
@@ -311,7 +303,7 @@ export function TeamView({ projects }: TeamViewProps) {
       {teams.length === 0 && (
         <Card>
           <CardContent className="py-12">
-            <div className="text-center text-muted-foreground">
+            <div className="text-center dark:text-gray-200">
               <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">No projects found</p>
               <p className="text-sm mt-2">

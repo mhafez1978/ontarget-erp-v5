@@ -176,7 +176,7 @@ export function StaffStatusWidget({
       <Card className="overflow-hidden border-2 shadow-lg">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin dark:text-gray-200" />
           </div>
         </CardContent>
       </Card>
@@ -256,7 +256,7 @@ export function StaffStatusWidget({
         <ScrollArea className="h-[400px] w-full">
           <div className="p-2 space-y-1">
             {staffMembers.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
+              <div className="text-center py-8 dark:text-gray-200 text-sm">
                 No staff members found
               </div>
             ) : (
@@ -291,7 +291,7 @@ export function StaffStatusWidget({
                     <p className="text-xs font-semibold truncate">
                       {member.user.name || "Unknown"}
                     </p>
-                    <p className="text-[10px] text-muted-foreground truncate">
+                    <p className="text-[10px] dark:text-gray-200 truncate">
                       {member.jobTitle || "Staff"}
                     </p>
                   </div>
@@ -313,7 +313,7 @@ export function StaffStatusWidget({
                       {getStatusLabel(member)}
                     </div>
                     {member.currentEntry && (
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                      <div className="text-[10px] dark:text-gray-200 mt-0.5">
                         {new Date(
                           member.currentEntry.clockIn
                         ).toLocaleTimeString([], {
@@ -323,7 +323,7 @@ export function StaffStatusWidget({
                       </div>
                     )}
                     {member.status === "OFFLINE" && member.lastSeen && (
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                      <div className="text-[10px] dark:text-gray-200 mt-0.5">
                         {new Date(member.lastSeen).toLocaleDateString([], {
                           month: "short",
                           day: "numeric",

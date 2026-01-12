@@ -1,7 +1,13 @@
 "use client";
 
-
-import { Clock, Coffee, CheckCircle2, Download, Filter, Loader2 } from "lucide-react";
+import {
+  Clock,
+  Coffee,
+  CheckCircle2,
+  Download,
+  Filter,
+  Loader2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/dashboard-layout";
@@ -32,11 +38,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-
-
-
-
-;
 import {
   format,
   startOfWeek,
@@ -315,7 +316,7 @@ export default function TimesheetPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Timesheet</h1>
-            <p className="text-muted-foreground">
+            <p className="dark:text-gray-200">
               View and manage employee time tracking records
             </p>
           </div>
@@ -430,7 +431,7 @@ export default function TimesheetPage() {
             <div className="text-3xl font-bold">
               {calculateWeeklyTotal()} hours
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm dark:text-gray-200 mt-1">
               {entries.length} time {entries.length === 1 ? "entry" : "entries"}
             </p>
           </CardContent>
@@ -447,9 +448,9 @@ export default function TimesheetPage() {
           <CardContent>
             {entries.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+                <Clock className="h-12 w-12 dark:text-gray-200 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No time entries</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm dark:text-gray-200">
                   No clock in/out records found for the selected period
                 </p>
               </div>
@@ -487,7 +488,7 @@ export default function TimesheetPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Coffee className="h-3 w-3 text-muted-foreground" />
+                            <Coffee className="h-3 w-3 dark:text-gray-200" />
                             {entry.breakMinutes} min
                           </div>
                         </TableCell>
