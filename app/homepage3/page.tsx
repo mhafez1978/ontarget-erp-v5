@@ -370,10 +370,10 @@ const Homepage3: React.FC = () => {
                   </span>
                   CHAPTER V: FUTURE-PROOF INTEGRITY
                 </div>
-                <h2 className="text-6xl md:text-8xl font-display font-black tracking-tight dark:text-gray-200">
+                <h3 className="text-6xl md:text-8xl font-display font-black tracking-tight dark:text-gray-200">
                   Immutable <br />
                   <span className="text-primary italic">Company Records.</span>
-                </h2>
+                </h3>
                 <p className="text-text-muted text-xl md:text-2xl leading-relaxed font-body max-w-2xl">
                   The definitive evolution of corporate transparency. Every
                   critical transaction is hashed and tracked on a decentralized

@@ -67,12 +67,12 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
         <div className="w-52 px-4 py-2 rounded-full border border-purple-500 text-purple-500 dark:text-[#2bee79] dark:border-[#2bee79] text-xs font-semibold mb-6">
           CHAPTER V: PUBLIC TRUST
         </div>
-        <h2 className=" mx-auto text-center text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
+        <h3 className=" mx-auto text-center text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
           <span className="text-purple-500 dark:text-[#2bee79]">
             Public Trust
           </span>{" "}
           Built-in
-        </h2>
+        </h3>
         <p className="w-full px-4 mx-auto text-base md:text-lg text-black dark:text-gray-50 text-center leading-relaxed font-body md:max-w-4xl mb-6">
           If you&apos;ve not yet integrated AI into your business operations,
           you&apos;re missing out on a transformative opportunity. OnTarget ERP

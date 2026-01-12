@@ -464,7 +464,7 @@ function RegisterForm() {
   const renderPlanSelection = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Choose Your Plan</h2>
+        <h3 className="text-2xl font-bold mb-2">Choose Your Plan</h3>
         <p className="dark:text-gray-200 text-sm">
           Start with a 30-day free trial • Cancel anytime
         </p>
@@ -608,7 +608,7 @@ function RegisterForm() {
   const renderPaymentStep = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold mb-2">Payment Details</h2>
+        <h3 className="text-2xl font-bold mb-2">Payment Details</h3>
         <p className="text-sm dark:text-gray-200">
           Secure payment processing via Stripe
         </p>
@@ -764,7 +764,7 @@ function RegisterForm() {
   const renderAccountStep = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold mb-2">Secure Your Account</h2>
+        <h3 className="text-2xl font-bold mb-2">Secure Your Account</h3>
         <p className="text-sm dark:text-gray-200">
           Set a strong password to protect your data
         </p>

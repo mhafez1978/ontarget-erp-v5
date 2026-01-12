@@ -171,7 +171,7 @@ export default function RootLayout({
       <body className={`bg-background ${montserrat.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

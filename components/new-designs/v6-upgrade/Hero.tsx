@@ -19,19 +19,19 @@ const Hero: React.FC = () => {
       </div>
 
       <div className="container mx-auto flex flex-col items-center justify-center text-center px-4">
-        <div className="w-52 mx-auto inline-flex justify-center items-center gap-2 px-4 py-2 rounded-full border border-purple-500 text-purple-500 dark:text-[#2bee79] dark:border-[#2bee79] text-xs font-semibold mb-8 mx-auto md:mx-0">
+        <div className="w-52 mx-auto inline-flex justify-center items-center gap-2 px-4 py-2 rounded-full border border-purple-500 text-purple-500 dark:text-[#2bee79] dark:border-[#2bee79] text-xs font-semibold mb-8 md:mx-0">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-500 dark:bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400 dark:bg-emerald-300"></span>
           </span>
           CHAPTER I: THE VISION
         </div>
-        <h2 className="text-6xl md:text-6xl font-display font-black tracking-tight mb-6 text-black dark:dark:text-gray-200">
+        <h1 className="text-6xl md:text-6xl font-display font-black tracking-tight mb-6 text-black dark:dark:text-gray-200">
           All-in-One Business{" "}
           <span className="text-purple-500 dark:text-[#2bee79] mr-4">
             Powerhouse
           </span>{" "}
-        </h2>
+        </h1>
         <p className="w-full px-4 mx-auto text-base text-black mb-12 leading-relaxed font-body dark:text-gray-300 md:max-w-4xl md:text-lg">
           Tired of switching between websites, tools and plugins to run your
           business? Sign up for a free trial and discover OnTarget ERP the

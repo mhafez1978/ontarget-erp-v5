@@ -259,14 +259,14 @@ export function SubscriptionPlanCards() {
                     <Icon className="h-7 w-7 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg flex items-center gap-2">
+                    <h4 className="font-bold text-lg flex items-center gap-2">
                       {plan.name}
                       {isCurrentPlan && (
                         <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
                           Current
                         </span>
                       )}
-                    </h3>
+                    </h4>
                     <p className="text-sm dark:text-gray-200 mt-1">
                       {plan.description}
                     </p>

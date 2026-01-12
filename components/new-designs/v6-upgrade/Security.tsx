@@ -89,12 +89,12 @@ const Security: React.FC = () => {
         <div className="w-[255px] px-4 py-2 rounded-full border border-purple-500 text-purple-500 dark:text-[#2bee79] dark:border-[#2bee79] text-xs font-semibold mb-6">
           CHAPTER VI: FOUNDATION OF TRUST
         </div>
-        <h2 className="max-w-4xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
+        <h3 className="max-w-4xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
           <span className="text-purple-500 dark:text-[#2bee79]">
             Un-Wavering
           </span>{" "}
           Security
-        </h2>
+        </h3>
         <p className="w-full px-4 mx-auto text-base md:text-lg text-black dark:text-gray-50 text-center leading-relaxed font-body md:max-w-4xl mb-20">
           Protect your data with enterprise controls: multi‑factor
           authentication, end‑to‑end encryption, and auditing. OnTarget ERP

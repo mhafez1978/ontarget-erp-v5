@@ -112,12 +112,12 @@ export function ApprovedTestimonials({
         id="testimonials"
         className="flex flex-col items-center justify-center pt-24 bg-background skew-3"
       >
-        <h2 className="max-w-2xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200 -skew-3 text-center pl-6 pb-20">
+        <h3 className="max-w-2xl mx-auto text-5xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200 -skew-3 text-center pl-6 pb-20">
           You&apos;ve Asked,
           <span className="text-purple-500 dark:text-[#2bee79] ml-4">
             We Listened.
           </span>
-        </h2>
+        </h3>
         <div className="border-b-2 border-t-2 w-full border-black shadow-2xl overflow-hidden">
           <div className="w-full flex flex-col items-center justify-center">
             {/* Full-bleed marquee */}
