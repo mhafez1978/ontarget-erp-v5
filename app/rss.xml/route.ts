@@ -23,6 +23,14 @@ export async function GET() {
     </item>
     
     <item>
+      <title>About OnTarget ERP</title>
+      <link>${baseUrl}/about</link>
+      <description>Learn more about OnTarget ERP - our mission, features, and how we help businesses streamline operations with blockchain-backed security.</description>
+      <pubDate>${currentDate}</pubDate>
+      <guid>${baseUrl}/about</guid>
+    </item>
+    
+    <item>
       <title>Register for an Account</title>
       <link>${baseUrl}/register</link>
       <description>Sign up for OnTarget ERP to start managing your business operations with our powerful platform.</description>
