@@ -194,16 +194,19 @@ body {
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
-    outline-color: hsl(var(--ring) / 0.5);
+    /* Use raw CSS variables (hex / rgba) directly so theme tokens map correctly */
+    border-color: var(--border);
+    outline-color: var(--ring);
   }
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: var(--font-body, "Outfit", sans-serif);
   }
   body ::selection {
-    background-color: hsl(var(--primary) / 0.3);
+    /* Fallback to primary color for selection; opacity can be tuned via alpha in the var if desired */
+    background-color: var(--primary);
+    color: var(--primary-foreground);
   }
 }
 

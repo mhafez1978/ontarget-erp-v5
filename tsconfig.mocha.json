@@ -6,7 +6,8 @@
     "esModuleInterop": true,
     "noEmit": true,
     "allowJs": true,
-    "types": ["node", "mocha", "chai", "@testing-library/jest-dom"]
+    "types": ["node", "mocha", "chai", "@testing-library/jest-dom"],
+    "typeRoots": ["./types", "./node_modules/@types"]
   },
-  "include": ["tests/**/*.ts", "tests/**/*.tsx"]
+  "include": ["tests/**/*.ts", "tests/**/*.tsx", "types/**/*.d.ts"]
 }

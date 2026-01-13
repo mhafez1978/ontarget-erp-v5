@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
     if (!validation.valid) return validation.response;
 
     const user = validation.user;
-    if (user.role !== "SUPER_ADMIN") {
+
+    // Only SUPER_ADMIN and ADMIN may access; ADMINs see only companies they own
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -19,18 +21,43 @@ export async function GET(request: NextRequest) {
     const safe = setting
       ? {
           ...setting,
-          hederaKey: maskSensitiveData(setting.hederaKey || ""),
+          hederaHexKey: maskSensitiveData(setting.hederaHexKey || ""),
+          hederaDerKey: maskSensitiveData(setting.hederaDerKey || ""),
+          hederaDerPub: maskSensitiveData(setting.hederaDerPub || ""),
           hashSalt: maskSensitiveData(setting.hashSalt || ""),
         }
       : null;
 
-    const companies = await db.company.findMany({
-      select: {
-        id: true,
-        name: true,
-        companyHederaSetting: true,
-      },
-    });
+    let companies;
+
+    if (user.role === "SUPER_ADMIN") {
+      // Show root company and any companies owned by this super admin
+      companies = await db.company.findMany({
+        where: { OR: [{ ownerId: user.id }, { isRoot: true }] },
+        select: {
+          id: true,
+          name: true,
+          companyHederaSetting: true,
+        },
+        orderBy: { name: "asc" },
+      });
+    } else {
+      // ADMIN: only companies owned by this admin
+      companies = await db.company.findMany({
+        where: { ownerId: user.id },
+        select: {
+          id: true,
+          name: true,
+          companyHederaSetting: true,
+        },
+        orderBy: { name: "asc" },
+      });
+
+      // If ADMIN doesn't own any companies, deny access to the admin hedra page
+      if (!companies || companies.length === 0) {
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      }
+    }
 
     return NextResponse.json({ success: true, setting: safe, companies });
   } catch (error) {
@@ -55,16 +82,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       hederaAccount,
-      hederaKey,
+      hederaHexKey,
+      hederaDerKey,
+      hederaDerPub,
       topicId,
       hashSalt,
       isActive,
-      useTestnet,
+      network,
       enableCompanies, // optional array of company ids to enable
     } = body;
 
     // Encrypt sensitive fields
-    const encryptedKey = hederaKey ? encrypt(hederaKey) : undefined;
+    const encryptedHexKey = hederaHexKey ? encrypt(hederaHexKey) : undefined;
+    const encryptedDerKey = hederaDerKey ? encrypt(hederaDerKey) : undefined;
+    const encryptedDerPub = hederaDerPub ? encrypt(hederaDerPub) : undefined;
     const encryptedSalt = hashSalt ? encrypt(hashSalt) : undefined;
 
     const existing = await db.hederaSetting.findFirst();
@@ -74,22 +105,26 @@ export async function POST(request: NextRequest) {
         where: { id: existing.id },
         data: {
           hederaAccount,
-          hederaKey: encryptedKey,
+          hederaHexKey: encryptedHexKey,
+          hederaDerKey: encryptedDerKey,
+          hederaDerPub: encryptedDerPub,
           topicId,
           hashSalt: encryptedSalt,
           isActive,
-          useTestnet,
+          network,
         },
       });
     } else {
       setting = await db.hederaSetting.create({
         data: {
           hederaAccount,
-          hederaKey: encryptedKey,
+          hederaHexKey: encryptedHexKey,
+          hederaDerKey: encryptedDerKey,
+          hederaDerPub: encryptedDerPub,
           topicId,
           hashSalt: encryptedSalt,
           isActive,
-          useTestnet,
+          network,
         },
       });
     }

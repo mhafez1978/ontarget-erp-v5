@@ -72,6 +72,28 @@ export function GeoTrackingDisplay() {
     fetchUserRole();
   }, []);
 
+  // Utility: deduplicate arrays of objects with an `id` field
+  const uniqueById = <T extends { id: string }>(items: T[]) => {
+    const seen = new Set<string>();
+    const out: T[] = [];
+    for (const it of items) {
+      if (!it || !it.id) continue;
+      if (seen.has(it.id)) continue;
+      seen.add(it.id);
+      out.push(it);
+    }
+    return out;
+  };
+
+  // Merge prev and incoming while keeping unique ids (prev items preserved first)
+  const mergeUnique = <T extends { id: string }>(prev: T[], incoming: T[]) => {
+    const seen = new Set<string>(prev.map((p) => p.id));
+    const filteredIncoming = (incoming || []).filter(
+      (i) => i && !seen.has(i.id)
+    );
+    return [...prev, ...filteredIncoming];
+  };
+
   const fetchTrackingData = useCallback(
     async (showLoading = true, resetVisitors = true) => {
       if (showLoading) {
@@ -94,8 +116,11 @@ export function GeoTrackingDisplay() {
 
         if (visitorsRes.ok) {
           const visitorsData = await visitorsRes.json();
+          const incomingVisitors = visitorsData.visitors || [];
           if (resetVisitors) {
-            setVisitors(visitorsData.visitors || []);
+            setVisitors(uniqueById(incomingVisitors));
+          } else {
+            setVisitors((prev) => mergeUnique(prev, incomingVisitors));
           }
           setVisitorsCursor(visitorsData.nextCursor || null);
           setHasMoreVisitors(visitorsData.hasMore || false);
@@ -107,7 +132,8 @@ export function GeoTrackingDisplay() {
 
         if (sessionsRes.ok) {
           const sessionsData = await sessionsRes.json();
-          setActiveSessions(sessionsData.sessions || []);
+          const incomingSessions = sessionsData.sessions || [];
+          setActiveSessions(uniqueById(incomingSessions));
         }
       } catch (error) {
         console.error("Failed to fetch tracking data:", error);
@@ -131,7 +157,8 @@ export function GeoTrackingDisplay() {
       );
       if (response.ok) {
         const data = await response.json();
-        setVisitors((prev) => [...prev, ...(data.visitors || [])]);
+        const incoming = data.visitors || [];
+        setVisitors((prev) => mergeUnique(prev, incoming));
         setVisitorsCursor(data.nextCursor || null);
         setHasMoreVisitors(data.hasMore || false);
       }
@@ -345,7 +372,7 @@ export function GeoTrackingDisplay() {
             <div className="max-h-[600px] overflow-y-auto space-y-2 pr-2">
               {visitors.map((visitor) => (
                 <div
-                  key={visitor.id}
+                  key={`${visitor.id}-${visitor.visitedAt}`}
                   className="flex items-center justify-between p-3 rounded-lg border bg-card text-sm"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">

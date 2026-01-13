@@ -214,7 +214,7 @@ const Features: React.FC = () => {
           icon={
             <FileSignal className="w-10 h-10 text-purple-500 dark:text-[#2bee79]" />
           }
-          title="Hadera Blockchain"
+          title="Hedera Blockchain"
           description="Hedera Consensus Service guaranteeing that everyone sees the same transaction order, exactly as it happened"
         />
         <FeatureCard

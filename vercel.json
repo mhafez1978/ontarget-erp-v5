@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/check-trial-expiration",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/reset-hedera-budgets",
+      "schedule": "0 0 1 * *"
     }
   ]
 }
