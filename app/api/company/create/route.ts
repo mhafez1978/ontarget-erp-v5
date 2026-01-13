@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           companyId: company.id,
           role: "ADMIN",
-          jobTitle: "MANAGER_ROLE",
+          jobTitle: "Administrator",
           employmentType: "FULL_TIME",
           status: "ACTIVE",
           hireDate: new Date(),

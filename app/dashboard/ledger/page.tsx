@@ -39,6 +39,7 @@ import {
 
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { HederaCostDashboard } from "@/components/hedera-cost-dashboard";
 import {
   Table,
   TableBody,
@@ -523,6 +524,10 @@ export default function LedgerPage() {
             <TabsTrigger value="expenses" className="gap-2">
               <Receipt className="h-4 w-4" />
               Expense Tracker
+            </TabsTrigger>
+            <TabsTrigger value="blockchain" className="gap-2">
+              <Globe className="h-4 w-4" />
+              Blockchain Ledger
             </TabsTrigger>
           </TabsList>
 
@@ -1154,6 +1159,24 @@ export default function LedgerPage() {
                     Record your first business expense
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="blockchain" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Blockchain Ledger</CardTitle>
+                <CardDescription>
+                  View Hedera transactions and company blockchain costs
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Hedera cost dashboard will handle zero-state and data fetching */}
+                <HederaCostDashboard
+                  companyId={selectedCompany}
+                  isAdminView={true}
+                />
               </CardContent>
             </Card>
           </TabsContent>

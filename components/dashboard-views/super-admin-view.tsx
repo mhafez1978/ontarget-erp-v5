@@ -119,7 +119,7 @@ export function SuperAdminView({ userName, companyId }: SuperAdminViewProps) {
               {recentVisitors}
             </div>
             <p className="text-xs md:text-md">
-              Guest visitors tracked (all time)
+              All visitors tracked by geo-tracking system
             </p>
           </CardContent>
         </Card>
