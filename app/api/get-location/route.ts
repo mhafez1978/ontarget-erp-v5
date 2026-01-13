@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { countryCodeToFlag } from "@/lib/ip-lookup";
+import type { Prisma } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 // Small in-memory TTL cache for recent lookups to reduce provider calls.
 // Use globalThis to survive hot module reloads in development.
 type CacheItem = { payload: unknown; expiresAt: number };
@@ -38,12 +40,10 @@ export function __clearGetLocationCache() {
 }
 
 export async function GET(request: NextRequest) {
-  console.log("====== GET LOCATION API CALLED ======");
   try {
     // Get provider settings from database
     const settings = await db.geoTrackingSetting.findFirst();
-    console.log("GET LOCATION - Settings:", JSON.stringify(settings, null, 2));
-
+    console.log("GET LOCATION ===> ", JSON.stringify(settings, null, 2));
     if (!settings || !settings.enabled) {
       return NextResponse.json(
         { error: "Geo tracking is disabled" },
@@ -58,12 +58,18 @@ export async function GET(request: NextRequest) {
     // x-forwarded-for can contain multiple IPs (client, proxy1, proxy2...)
     // The first one is the real client IP
     let clientIp = forwardedFor?.split(",")[0]?.trim() || realIp;
+    const clientDevice = request.headers.get("user-agent") || "Unknown";
 
     // Allow ip override via query param (useful for local dev or explicit lookups)
     const ipOverride = request.nextUrl.searchParams.get("ip");
     if (ipOverride) {
       clientIp = ipOverride;
-      console.log("[Get Location] Using ip override:", clientIp);
+      console.log(
+        "[Get Location] Using ip override:",
+        clientIp,
+        "Device:",
+        clientDevice
+      );
     }
 
     // Check if this is a localhost/private IP
@@ -81,7 +87,7 @@ export async function GET(request: NextRequest) {
       console.log(
         `[Get Location] Localhost detected (${
           clientIp || "unknown"
-        }), returning mock data`
+        }), and client device: ${clientDevice}`
       );
       try {
         const ipRes = await fetch("https://api.ipify.org?format=json", {
@@ -91,9 +97,12 @@ export async function GET(request: NextRequest) {
           const ipJson = await ipRes.json();
           if (ipJson?.ip) {
             clientIp = String(ipJson.ip);
+
             console.log(
               "[Get Location] Fetched public IP from ipify:",
-              clientIp
+              clientIp,
+              "Device:",
+              clientDevice
             );
           }
         }
@@ -110,20 +119,24 @@ export async function GET(request: NextRequest) {
         console.log(
           `[Get Location] Returning mock data for localhost (${
             clientIp || "unknown"
-          })`
+          }), and client device: ${clientDevice}`
         );
         const mockData = {
+          device: clientDevice,
           ip: "127.0.0.1",
           ipv4: "127.0.0.1",
-          ipv6: null,
-          city: "Localhost",
-          region: null,
-          country_name: "Local Development",
-          country_code: "LOCAL",
+          ipv6: "::1",
+          city: "Lowell",
+          district: "Middlesex County",
+          region: "MA",
+          regionName: "Massachusetts",
+          zip: "01854",
+          country: "United States",
+          country_code: "US",
           flag: "🏠",
-          latitude: null,
-          longitude: null,
-          timezone: null,
+          latitude: 42.4335,
+          longitude: -71.3162,
+          timezone: "America/New_York",
         };
         return NextResponse.json(mockData);
       }
@@ -196,8 +209,10 @@ export async function GET(request: NextRequest) {
     console.log(`[Get Location] Response status:`, response.status);
     if (!response.ok) {
       // Rate limited or API error - try to at least return the client IP
+      const fallbackdevice = clientDevice || "Unknown";
       const fallbackIp = clientIp || "127.0.0.1";
       const isLocalhost =
+        fallbackdevice === "Unknown-Device" ||
         fallbackIp === "127.0.0.1" ||
         fallbackIp === "::1" ||
         fallbackIp?.startsWith("192.168.") ||
@@ -206,12 +221,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Rate limited or API unavailable",
+          device: fallbackdevice,
           ip: fallbackIp,
           ipv4: fallbackIp && !fallbackIp.includes(":") ? fallbackIp : null,
           ipv6: fallbackIp && fallbackIp.includes(":") ? fallbackIp : null,
-          city: isLocalhost ? "Localhost" : null,
+          city: isLocalhost ? "Lowell" : "Unknown City",
           region: null,
-          country_name: isLocalhost ? "Local Development" : null,
+          country_name: isLocalhost ? "United States" : "Unknown Country",
           country_code: null,
           flag: isLocalhost ? "🏠" : null,
         },
@@ -220,13 +236,14 @@ export async function GET(request: NextRequest) {
     }
 
     const apiData = await response.json();
+    const apiJson = apiData as Record<string, unknown>;
     console.log(
       `[Get Location] Raw API response:`,
-      JSON.stringify(apiData, null, 2)
+      JSON.stringify(apiJson, null, 2)
     );
 
     // Normalize response based on provider
-    let data: Record<string, unknown>;
+    let data: Record<string, unknown> = {};
 
     switch (settings.provider) {
       case "IP_API":
@@ -427,6 +444,68 @@ export async function GET(request: NextRequest) {
       setCached(cacheKey, payload);
     } catch (err) {
       console.debug("Failed to set geo cache:", err);
+    }
+
+    // Persist an enriched GeoLocationRecord (best-effort; failures should not block the response)
+    try {
+      const createData: Prisma.GeoLocationRecordCreateInput = {
+        ip: String(payload.ip || ""),
+        ipv4: payload.ipv4 ?? null,
+        ipv6: payload.ipv6 ?? null,
+        provider: settings.provider,
+        providerRaw: apiJson as Prisma.InputJsonValue,
+
+        city: payload.city ?? null,
+        region: payload.region ?? null,
+        regionName: data.regionName ? String(data.regionName) : null,
+        district: data.district ? String(data.district) : null,
+        zip: data.zip ? String(data.zip) : null,
+
+        countryName: payload.country_name ?? null,
+        countryCode: payload.country_code ?? null,
+        continent: apiJson.continent ? String(apiJson.continent) : null,
+        continentCode: apiJson.continentCode
+          ? String(apiJson.continentCode)
+          : null,
+
+        isp: apiJson.isp ? String(apiJson.isp) : null,
+        org: apiJson.org ? String(apiJson.org) : null,
+        as: apiJson.as
+          ? String(apiJson.as)
+          : apiJson.asname
+          ? String(apiJson.asname)
+          : null,
+        asName: apiJson.asname ? String(apiJson.asname) : null,
+        mobile:
+          typeof apiJson.mobile === "boolean"
+            ? (apiJson.mobile as boolean)
+            : null,
+        proxy:
+          typeof apiJson.proxy === "boolean"
+            ? (apiJson.proxy as boolean)
+            : null,
+        hosting:
+          typeof apiJson.hosting === "boolean"
+            ? (apiJson.hosting as boolean)
+            : null,
+
+        dnsGeo:
+          apiJson.dns && (apiJson.dns as Record<string, unknown>).geo
+            ? String((apiJson.dns as Record<string, unknown>).geo)
+            : null,
+        dnsIp:
+          apiJson.dns && (apiJson.dns as Record<string, unknown>).ip
+            ? String((apiJson.dns as Record<string, unknown>).ip)
+            : null,
+
+        latitude: data.latitude ? new Decimal(String(data.latitude)) : null,
+        longitude: data.longitude ? new Decimal(String(data.longitude)) : null,
+        timezone: data.timezone ? String(data.timezone) : null,
+      };
+
+      await db.geoLocationRecord.create({ data: createData });
+    } catch (err) {
+      console.debug("Failed to persist geo record:", err);
     }
 
     return NextResponse.json(payload);
