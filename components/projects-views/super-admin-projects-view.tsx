@@ -384,6 +384,7 @@ export function SuperAdminProjectsView() {
         <Button
           onClick={() => setCreateDialogOpen(true)}
           disabled={!selectedCompanyId}
+          className="bg-purple-500 text-white dark:bg-grn-500 dark:text-black"
         >
           <Plus className="h-4 w-4 mr-2" />
           Create Project

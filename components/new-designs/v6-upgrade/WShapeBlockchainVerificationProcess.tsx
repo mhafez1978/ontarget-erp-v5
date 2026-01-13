@@ -15,6 +15,7 @@ import {
   Landmark,
   Briefcase,
   Users,
+  Building,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatedBeam } from "@/components/ui/animated-beam";
@@ -27,7 +28,7 @@ const Circle = forwardRef<
     <div
       ref={ref}
       className={cn(
-        "z-10 flex size-[80px] items-center justify-center rounded-full border-2 bg-white p-3 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)] dark:bg-input/30",
+        "z-10 flex size-20 items-center justify-center rounded-full border-2 bg-white p-3 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)] dark:bg-input/30",
         className
       )}
     >
@@ -60,7 +61,7 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
 
   return (
     <section
-      className="hidden relative w-full flex flex-col gap-24 items-center justify-center py-24 overflow-hidden md:flex"
+      className="hidden relative w-full flex-col gap-24 items-center justify-center py-24 overflow-hidden md:flex"
       ref={containerRef}
     >
       <div className="container mx-auto flex flex-col items-center justify-center">
@@ -97,7 +98,7 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
               Customers
             </span>
             <Circle ref={customerRef}>
-              <User className="w-6 h-6 text-purple-500 dark:text-primary" />
+              <User className="w-6 h-6 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
           <div />
@@ -106,31 +107,31 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
               Payment Complete
             </span>
             <Circle ref={paymentRef}>
-              <CreditCard className="w-6 h-6 text-purple-500 dark:text-primary" />
+              <CreditCard className="w-6 h-6 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
           <div />
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs font-bold uppercase text-foreground">
-              Immutable Blockchain Records
+              Immutable Blockchain Records Lives forever
             </span>
             <Circle
               ref={nodeRef}
               className="size-[100px] border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
             >
-              <Network className="w-10 h-10 text-purple-500 dark:text-primary" />
+              <Network className="w-10 h-10 text-purple-500 dark:text-green-500 dark:border-0" />
             </Circle>
           </div>
           {/* Verifier Column Start */}
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs font-bold uppercase ">
-              IRS, Other legal
+              IRS or Government can verify and audit transactions
             </span>
             <Circle
               ref={irsRef}
-              className="border-red-200 dark:border-red-900/50"
+              className="border-black ext-purple-500 dark:text-green-500"
             >
-              <ShieldCheck className="w-6 h-6 text-red-500" />
+              <ShieldCheck className="w-6 h-6 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
 
@@ -141,7 +142,7 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
               Company
             </span>
             <Circle ref={companyRef}>
-              <Building2 className="w-6 h-6 text-purple-500 dark:text-primary" />
+              <Building2 className="w-6 h-6 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
           <div />
@@ -150,19 +151,19 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
               Contract Generated
             </span>
             <Circle ref={contractRef}>
-              <FileSignature className="w-6 h-6 text-purple-500 dark:text-primary" />
+              <FileSignature className="w-6 h-6 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
           <div />
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs font-bold uppercase">
-              Commercial Lenders
+              Commercial Lenders Can also Verify Transactions
             </span>
             <Circle
               ref={ccRef}
-              className="border-blue-200 dark:border-blue-900/50"
+              className="border-black text-purple-500 dark:text-green-500"
             >
-              <Briefcase className="w-6 h-6 text-blue-500" />
+              <Briefcase className="w-6 h-6 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
 
@@ -170,10 +171,10 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
           <div />
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs font-bold uppercase text-foreground">
-              Order
+              Orders Processing
             </span>
             <Circle ref={orderRef}>
-              <ShoppingCart className="w-6 h-6 text-purple-500 dark:text-primary" />
+              <ShoppingCart className="w-6 h-6 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
           <div className="flex flex-col items-center gap-2">
@@ -181,7 +182,7 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
               Invoice generated and processed.
             </span>
             <Circle ref={invoiceRef}>
-              <Receipt className="w-6 h-6 text-purple-500 dark:text-primary" />
+              <Receipt className="w-6 h-6 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
           <div className="flex flex-col items-center gap-2">
@@ -189,36 +190,40 @@ const WShapeBlockchainVerificationProcess: React.FC = () => {
               Transaction Written to / Read from ledger
             </span>
             <Circle ref={transactionRef}>
-              <ArrowRightLeft className="w-8 h-8 text-purple-500 dark:text-primary" />
-            </Circle>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold uppercase">Ledger</span>
-            <Circle ref={ledgerRef}>
-              <Database className="w-8 h-8 text-green-500" />
+              <ArrowRightLeft className="w-8 h-8 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs font-bold uppercase">
-              TAX Professionals
+              Ledger of Immutable Transactions{" "}
+            </span>
+            <Circle ref={ledgerRef}>
+              <Network className="w-8 h-8 text-purple-500 dark:text-green-500" />
+            </Circle>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs font-bold uppercase">
+              Banks and Financial Institutions Also can validate Transactions
             </span>
             <Circle
               ref={bankRef}
-              className="border-amber-200 dark:border-amber-900/50"
+              className="border-black text-purple-500 dark:text-green-500"
             >
-              <Landmark className="w-6 h-6 text-amber-500" />
+              <Landmark className="w-6 h-6" />
             </Circle>
           </div>
 
           {/* Row 4 */}
           <div className="col-span-5" />
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold uppercase">Public Person</span>
+            <span className="text-xs font-bold uppercase">
+              Other Companies Can also Verify Transactions
+            </span>
             <Circle
               ref={personRef}
-              className="border-slate-200 dark:border-slate-700"
+              className="border-black text-purple-500 dark:text-green-500"
             >
-              <Users className="w-6 h-6 text-slate-500" />
+              <Building className="w-6 h-6 text-purple-500 dark:text-green-500" />
             </Circle>
           </div>
         </div>

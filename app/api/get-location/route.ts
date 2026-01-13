@@ -57,7 +57,14 @@ export async function GET(request: NextRequest) {
 
     // x-forwarded-for can contain multiple IPs (client, proxy1, proxy2...)
     // The first one is the real client IP
-    const clientIp = forwardedFor?.split(",")[0]?.trim() || realIp;
+    let clientIp = forwardedFor?.split(",")[0]?.trim() || realIp;
+
+    // Allow ip override via query param (useful for local dev or explicit lookups)
+    const ipOverride = request.nextUrl.searchParams.get("ip");
+    if (ipOverride) {
+      clientIp = ipOverride;
+      console.log("[Get Location] Using ip override:", clientIp);
+    }
 
     // Check if this is a localhost/private IP
     const isLocalhost =
@@ -69,27 +76,57 @@ export async function GET(request: NextRequest) {
       clientIp.startsWith("10.") ||
       clientIp.startsWith("172.16.");
 
-    // For localhost, return mock data immediately
+    // For localhost, attempt public IP fallback (and return mock if none found)
     if (isLocalhost) {
       console.log(
         `[Get Location] Localhost detected (${
           clientIp || "unknown"
         }), returning mock data`
       );
-      const mockData = {
-        ip: "127.0.0.1",
-        ipv4: "127.0.0.1",
-        ipv6: null,
-        city: "Localhost",
-        region: null,
-        country_name: "Local Development",
-        country_code: "LOCAL",
-        flag: "🏠",
-        latitude: null,
-        longitude: null,
-        timezone: null,
-      };
-      return NextResponse.json(mockData);
+      try {
+        const ipRes = await fetch("https://api.ipify.org?format=json", {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (ipRes.ok) {
+          const ipJson = await ipRes.json();
+          if (ipJson?.ip) {
+            clientIp = String(ipJson.ip);
+            console.log(
+              "[Get Location] Fetched public IP from ipify:",
+              clientIp
+            );
+          }
+        }
+      } catch (err) {
+        console.debug("[Get Location] Public IP fallback failed:", err);
+      }
+      // If still local after attempting fallback, return mock data
+      if (
+        !clientIp ||
+        clientIp === "127.0.0.1" ||
+        clientIp === "::1" ||
+        clientIp === "localhost"
+      ) {
+        console.log(
+          `[Get Location] Returning mock data for localhost (${
+            clientIp || "unknown"
+          })`
+        );
+        const mockData = {
+          ip: "127.0.0.1",
+          ipv4: "127.0.0.1",
+          ipv6: null,
+          city: "Localhost",
+          region: null,
+          country_name: "Local Development",
+          country_code: "LOCAL",
+          flag: "🏠",
+          latitude: null,
+          longitude: null,
+          timezone: null,
+        };
+        return NextResponse.json(mockData);
+      }
     }
 
     // Cache key - prefer client IP but fall back to server-level key

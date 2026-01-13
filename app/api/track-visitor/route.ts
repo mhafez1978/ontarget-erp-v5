@@ -45,6 +45,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Observability: small debug log to correlate incoming posts with DB rows
+    console.debug(
+      "[Track Visitor] saved visitor",
+      visitor.id,
+      visitor.ipAddress
+    );
+
     // If the visitor is an authenticated user, update their active session geo
     const sessionToken = request.cookies.get("sessionToken")?.value;
     if (sessionToken) {

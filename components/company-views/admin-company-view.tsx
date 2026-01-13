@@ -348,7 +348,9 @@ export function AdminCompanyView({ userName }: AdminCompanyViewProps) {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete &quot;{companyToDelete?.name}&quot;
-              and remove all associated data. This action cannot be undone.
+              and remove all associated data on our systems only. This action
+              cannot be undone. Your business blockchain records with Hedera
+              will remain unaffected, which is by design and intentional.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

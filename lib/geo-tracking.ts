@@ -65,7 +65,38 @@ export async function getGeoLocation(): Promise<GeoLocation | null> {
       };
     }
 
-    const data = await response.json();
+    let data = await response.json();
+
+    // If provider returned a localhost-like response (common in local dev),
+    // try to fetch the client's public IP and re-query the server with that IP
+    const isLocalish =
+      String(data.ip || "").startsWith("127.") ||
+      data.city === "Localhost" ||
+      data.country_name === "Local Development";
+
+    if (isLocalish) {
+      try {
+        const ipifyRes = await fetch("https://api.ipify.org?format=json", {
+          cache: "no-store",
+        });
+        if (ipifyRes.ok) {
+          const ipJson = await ipifyRes.json();
+          const publicIp = ipJson?.ip;
+          if (publicIp) {
+            // Re-query our server with the public IP so providers will resolve it
+            const publicRes = await fetch(`/api/get-location?ip=${publicIp}`, {
+              cache: "no-store",
+            });
+            if (publicRes.ok) {
+              const publicData = await publicRes.json();
+              data = publicData;
+            }
+          }
+        }
+      } catch (err) {
+        console.debug("[Geo Tracking] ipify fallback failed:", err);
+      }
+    }
 
     return {
       ip: data.ip || "Unknown",

@@ -2271,15 +2271,36 @@ model HederaSetting {
   id             String   @id @default(cuid())
   scope          String   @default("GLOBAL")
   hederaAccount  String?  @db.Text // Encrypted account id
-  hederaKey      String?  @db.Text // Encrypted private key
   topicId        String?  // Hedera Topic ID
+  evmAddress     String?  // Optional EVM address derived from ECDSA public key
+  keyType        String?  // ECDSA | ED25519
+  hederaHexKey   String?  @db.Text // Encrypted HEX encoded private key (ECDSA)
+  hederaDerKey   String?  @db.Text // Encrypted DER encoded private key
+  hederaDerPub   String?  @db.Text // Encrypted DER encoded public key
   hashSalt       String?  @db.Text // Encrypted salt or KMS reference
   isActive       Boolean  @default(false)
-  useTestnet     Boolean  @default(true)
+  network        HederaNetwork @default(TESTNET)  
+  // Cost Management
+  currentBalance       Decimal? @db.Decimal(20, 8) // Current HBAR balance
+  lowBalanceThreshold  Decimal  @default(10) @db.Decimal(20, 8) // Alert when balance drops below
+  lastBalanceCheck     DateTime?
+  balanceAlertSent     Boolean  @default(false)
+  
+  // Transaction Cost Tracking
+  estimatedCostPerTx   Decimal  @default(0.0001) @db.Decimal(20, 8) // Estimated HBAR per transaction
+  totalTransactions    Int      @default(0)
+  totalCostHbar        Decimal  @default(0) @db.Decimal(20, 8)
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([scope])
+}
+
+enum HederaNetwork {
+  MAINNET
+  PREVIEWNET
+  TESTNET
 }
 
 // Per-company opt-in and historical anchoring settings
@@ -2291,6 +2312,13 @@ model CompanyHederaSetting {
   historicalJobId      String?  // optional job id for the historical anchoring batch
   enabledById          String?  // user who enabled
   enabledAt            DateTime?
+  
+  // Cost Management per Company
+  monthlyBudgetHbar    Decimal? @db.Decimal(20, 8) // Optional budget limit
+  currentMonthSpent    Decimal  @default(0) @db.Decimal(20, 8)
+  budgetResetDate      DateTime? // When to reset monthly budget
+  budgetExceeded       Boolean  @default(false)
+  transactionCount     Int      @default(0)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
@@ -2306,6 +2334,48 @@ model HederaCompanyAudit {
   details    Json?
   createdAt  DateTime @default(now())
 
+  @@index([companyId])
+}
+
+// Transaction cost tracking
+model HederaTransaction {
+  id                 String   @id @default(cuid())
+  companyId          String?
+  hash               String   @unique // The data hash anchored
+  topicId            String
+  transactionId      String?  // Hedera transaction ID
+  consensusTimestamp DateTime?
+  
+  // Cost tracking
+  costHbar           Decimal? @db.Decimal(20, 8)
+  balanceAfter       Decimal? @db.Decimal(20, 8)
+  
+  // Metadata
+  auditLogId         String?  // Link to source audit log
+  outboxJobId        String?  // Link to outbox job
+  status             String   @default("PENDING") // PENDING | CONFIRMED | FAILED
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([hash])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Cost alerts and notifications
+model HederaCostAlert {
+  id           String   @id @default(cuid())
+  alertType    String   // LOW_BALANCE | BUDGET_EXCEEDED | BALANCE_CRITICAL
+  severity     String   // INFO | WARNING | CRITICAL
+  message      String   @db.Text
+  companyId    String?  // Null for global alerts
+  acknowledged Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  
+  @@index([alertType])
+  @@index([acknowledged])
   @@index([companyId])
 }
 

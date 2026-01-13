@@ -396,6 +396,64 @@ modern workspace needing mainframe reliability.
 
 ---
 
+## ⛓️ Hedera Blockchain Integration 🔗
+
+**Optional Hedera trust layer** for immutable anchoring of content hashes and coordinated company-level management of HBAR costs. Configuration is available via the Super Admin settings UI or environment variables; see `HEDERA_OUTBOX_STATUS.md` for current status, implementation notes, and outstanding work.
+
+**Key files & locations:**
+
+- `HEDERA_OUTBOX_STATUS.md` — status, migration notes, and remaining tasks.
+- `lib/hedera/service.ts` — credential handling and anchoring helpers (`anchorHashToHedera`, `submitMessage`, `createTopic`).
+- `lib/hedera/cost-manager.ts` — balance & cost management, alerts, and sync routines.
+- `lib/hedera/enable.ts` — company enable/disable flows and audits.
+- `lib/outbox/worker.ts` — worker that processes `HEDERA_ANCHOR` outbox jobs.
+- `app/dashboard/settings/page.tsx` & `components/*` — Super Admin UI for Hedera settings and dashboards.
+
+### 🔧 Setup (env vars)
+
+Add the following (or configure via the Super Admin settings page):
+
+```ini
+# Hedera credentials (optional if configured in Admin UI)
+HEDERA_ACCOUNT_ID="0.0.xxxx"
+HEDERA_PRIVATE_KEY="302e020100300506032b657004220420..." # hex or DER private key
+HEDERA_TOPIC_ID="0.0.yyyy" # optional: set a default topic to use when DB not configured
+# Network is configurable via Admin UI (defaults to TESTNET when using env fallback)
+```
+
+Notes:
+
+- The app prefers encrypted credentials stored in the database (`hederaHexKey` or `hederaDerKey`) but will fallback to the above env vars when needed.
+- For production, consider a KMS-backed secret store and follow the `HEDERA_OUTBOX_STATUS.md` suggestions for key rotation.
+
+### 🧪 How to test (quick)
+
+You can use the developer spike endpoint (requires a logged-in **SUPER_ADMIN**) to create a topic and submit a test message:
+
+Create a topic:
+
+```bash
+curl -X POST https://localhost:3000/api/hedera/spike \
+  -H "Content-Type: application/json" \
+  --data '{"op":"createTopic"}' \
+  -b "<your_super_admin_session_cookie>"
+```
+
+Submit a message to an existing topic:
+
+```bash
+curl -X POST https://localhost:3000/api/hedera/spike \
+  -H "Content-Type: application/json" \
+  --data '{"op":"submitMessage","topicId":"0.0.yyyy","message":"test-hash-123"}' \
+  -b "<your_super_admin_session_cookie>"
+```
+
+Expected: JSON responses containing `topicId` (for create) or `res` with `transactionId` and `consensusTimestamp` for submit.
+
+> Tip: Use the Hedera cost dashboard in the Admin settings to monitor HBAR balances and transaction costs during testing.
+
+---
+
 ## 🎬 ░▒▓█ GETTING STARTED █▓▒░ 🎬
 
 ### 📀 INSTALLATION

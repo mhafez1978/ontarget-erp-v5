@@ -26,8 +26,22 @@ export default function FrontstoreV5Client({
   const [activePageId, setActivePageId] = useState<string | null>(null);
   const [queueMap, setQueueMap] = useState<Record<string, Variant[]>>({});
   const [generatedGroups, setGeneratedGroups] = useState<Variant[][]>([]);
+  const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
+    // Load current user from session (non-blocking)
+    (async () => {
+      try {
+        const r = await fetch("/api/auth/me", { cache: "no-store" });
+        if (r.ok) {
+          const d = await r.json();
+          setUserName(d?.user?.name || d?.user?.email || null);
+        }
+      } catch (err) {
+        console.warn("Failed to load user", err);
+      }
+    })();
+
     // load initial pages for company (stub for now)
     (async () => {
       try {
@@ -131,7 +145,16 @@ export default function FrontstoreV5Client({
   const shouldRenderInline = !pageSelectorPortal;
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-8 space-y-4">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">
+          V5 Storefront Engine. Personas AI Agents.
+        </h2>
+        <p className="dark:text-gray-200">
+          Welcome back, {userName || "Admin"}! Manage your company customers
+          here.
+        </p>
+      </div>
       {shouldRenderInline ? pageSelector : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">

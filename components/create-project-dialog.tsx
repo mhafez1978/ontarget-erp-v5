@@ -312,7 +312,7 @@ export function CreateProjectDialog({
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-gray-100">
         <SheetHeader>
           <SheetTitle>Create New Project</SheetTitle>
           <SheetDescription>
@@ -357,28 +357,32 @@ export function CreateProjectDialog({
                 <Loader2 className="h-5 w-5 animate-spin dark:text-gray-200" />
               </div>
             ) : teams.length === 0 ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  No teams available. You need to create a team first before you
-                  can create a project.{" "}
-                  <Button
-                    variant="link"
-                    className="h-auto p-0 text-sm"
-                    onClick={() =>
-                      (window.location.href = "/dashboard/settings")
-                    }
-                  >
-                    Go to Settings
-                  </Button>
-                </AlertDescription>
-              </Alert>
+              <div className="w-full max-auto flex flex-col overflow-hidden">
+                <Alert className="w-full text-wrap">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="text-wrap mb-4">
+                      No teams available. You need to create a team first before
+                      you can create a project.
+                    </p>
+                    <Button
+                      variant="link"
+                      className="h-auto p-0 text-sm text-purple-500 dark:txt-green-500"
+                      onClick={() =>
+                        (window.location.href = "/dashboard/settings")
+                      }
+                    >
+                      Go to the Settings Page
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              </div>
             ) : (
               <Select value={teamId} onValueChange={setTeamId} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a team" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-50">
                   {teams.map((team) => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
@@ -402,7 +406,7 @@ export function CreateProjectDialog({
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-50">
                 {PROJECT_STATUSES.map((s) => (
                   <SelectItem key={s.value} value={s.value}>
                     <div className="flex items-center gap-2">
@@ -465,7 +469,7 @@ export function CreateProjectDialog({
                 <SelectTrigger>
                   <SelectValue placeholder="Select project manager" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-50">
                   <SelectItem value="none">None</SelectItem>
                   {staff.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
@@ -518,7 +522,7 @@ export function CreateProjectDialog({
                 <SelectTrigger>
                   <SelectValue placeholder="Select customer" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-50">
                   <SelectItem value="none">None</SelectItem>
                   {customers.map((customer) => (
                     <SelectItem key={customer.id} value={customer.id}>
@@ -551,7 +555,7 @@ export function CreateProjectDialog({
                 <SelectTrigger>
                   <SelectValue placeholder="Select team lead" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-50">
                   <SelectItem value="none">None</SelectItem>
                   {staff.map((member) => (
                     <SelectItem key={member.id} value={member.id}>

@@ -113,7 +113,7 @@ function ProviderLogo({ type }: { type: "UNSPLASH" | "PEXELS" }) {
   return type === "UNSPLASH" ? <UnsplashLogo /> : <PexelsLogo />;
 }
 
-export default function ImageProviderCards({ userRole }: { userRole: string }) {
+export default function ImageProviderCards() {
   const [selectedProvider, setSelectedProvider] =
     useState<ProviderConfig | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -124,13 +124,6 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
   const [testStatus, setTestStatus] = useState<
     "not-tested" | "testing" | "success" | "failure"
   >("not-tested");
-  const [lastAudit, setLastAudit] = useState<{
-    id: string;
-    action: string;
-    description: string | null;
-    createdAt: string;
-    user?: { id: string; name?: string } | null;
-  } | null>(null);
 
   // form
   const [apiKey, setApiKey] = useState("");
@@ -138,10 +131,6 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
 
   useEffect(() => {
     fetchActiveProvider();
-    if (userRole === "SUPER_ADMIN") {
-      fetchLastAudit();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchActiveProvider = async () => {
@@ -159,22 +148,6 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
     }
   };
 
-  const fetchLastAudit = async () => {
-    try {
-      const res = await fetch(
-        "/api/audit-logs?limit=1&entityId=image-provider:GLOBAL"
-      );
-      const j = await res.json();
-      if (res.ok && j.auditLogs && j.auditLogs.length > 0) {
-        setLastAudit(j.auditLogs[0]);
-      } else {
-        setLastAudit(null);
-      }
-    } catch (e) {
-      console.error("Failed to fetch last audit:", e);
-    }
-  };
-
   const handleCardClick = async (provider: ProviderConfig) => {
     setSelectedProvider(provider);
     setApiKey("");
@@ -186,7 +159,7 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
       const res = await fetch(url);
       const j = await res.json();
       if (res.ok && j.provider && j.provider.provider === provider.type) {
-        setApiKey(j.provider.apiKey ? "••••••••" : "");
+        setApiKey(j.provider.apiKey ? "XXXXXXXXXXXXXXXXXXXXXXXX" : "");
         // do not reveal secret value
         setApiSecret("");
       }
@@ -251,7 +224,8 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
         isActive: true,
         scope: "GLOBAL",
       };
-      if (apiKey && apiKey !== "••••••••") body.apiKey = apiKey;
+      if (apiKey && apiKey !== "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+        body.apiKey = apiKey;
       if (apiSecret) body.apiSecret = apiSecret;
 
       // Validate payload before saving
@@ -275,8 +249,6 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
         setActiveProvider(selectedProvider.type);
         setIsSheetOpen(false);
         setTestStatus("not-tested");
-        // Refresh last audit info
-        if (userRole === "SUPER_ADMIN") fetchLastAudit();
       } else {
         toast.error(j.error || "Failed to save");
       }
@@ -296,17 +268,9 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
         <div>
           <h3 className="text-lg font-semibold">Image Providers</h3>
           <p className="text-sm dark:text-gray-200">
-            Configure Unsplash and Pexels keys globally (SUPER_ADMIN only).
+            Configure Global Image Provider for AI-generated images used across
+            the platform.
           </p>
-          {lastAudit && (
-            <div className="mt-2 text-xs dark:text-gray-200">
-              Last changed by{" "}
-              <span className="font-medium">
-                {lastAudit.user?.name || "Unknown"}
-              </span>{" "}
-              on {new Date(lastAudit.createdAt).toLocaleString()}.
-            </div>
-          )}
         </div>
       </div>
 
@@ -340,13 +304,15 @@ export default function ImageProviderCards({ userRole }: { userRole: string }) {
                     </div>
                   </div>
 
-                  <div className="w-full flex items-center justify-between">
+                  <div className="w-full flex flexx-col items-center justify-center">
                     {isActive ? (
-                      <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-sm font-medium text-primary-foreground">
-                        Active
+                      <span className="inline-flex items-center rounded-full bg-primary px-3 py-2 text-md font-medium text-green-600">
+                        Currently Active
                       </span>
                     ) : (
-                      <span className="text-xs dark:text-gray-200">Global</span>
+                      <span className="text-md text-gray-600">
+                        Currently Disabled
+                      </span>
                     )}
                     <CheckCircle2
                       className={cn(
