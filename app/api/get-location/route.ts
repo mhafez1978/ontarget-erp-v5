@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { countryCodeToFlag } from "@/lib/ip-lookup";
+import { normalize } from "@/lib/geo/normalize";
+import type { Prisma } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 // Small in-memory TTL cache for recent lookups to reduce provider calls.
 // Use globalThis to survive hot module reloads in development.
 type CacheItem = { payload: unknown; expiresAt: number };
@@ -66,22 +69,13 @@ export async function GET(request: NextRequest) {
       console.log("[Get Location] Using ip override:", clientIp);
     }
 
-    // Check if this is a localhost/private IP
-    const isLocalhost =
-      !clientIp ||
-      clientIp === "127.0.0.1" ||
-      clientIp === "::1" ||
-      clientIp === "localhost" ||
-      clientIp.startsWith("192.168.") ||
-      clientIp.startsWith("10.") ||
-      clientIp.startsWith("172.16.");
-
-    // For localhost, attempt public IP fallback (and return mock if none found)
-    if (isLocalhost) {
+    // Only attempt a public IP fallback if we have no client IP at all.
+    // If a client IP is present (even if it's a private/local address such as
+    // 127.0.0.1), prefer to call the configured provider and surface any
+    // provider-level errors (e.g. "private range").
+    if (!clientIp) {
       console.log(
-        `[Get Location] Localhost detected (${
-          clientIp || "unknown"
-        }), returning mock data`
+        `[Get Location] No client IP provided, attempting public IP fallback`
       );
       try {
         const ipRes = await fetch("https://api.ipify.org?format=json", {
@@ -100,17 +94,11 @@ export async function GET(request: NextRequest) {
       } catch (err) {
         console.debug("[Get Location] Public IP fallback failed:", err);
       }
-      // If still local after attempting fallback, return mock data
-      if (
-        !clientIp ||
-        clientIp === "127.0.0.1" ||
-        clientIp === "::1" ||
-        clientIp === "localhost"
-      ) {
+
+      // If still missing after attempting fallback, return mock data
+      if (!clientIp) {
         console.log(
-          `[Get Location] Returning mock data for localhost (${
-            clientIp || "unknown"
-          })`
+          `[Get Location] Returning mock data for missing client IP (unknown)`
         );
         const mockData = {
           ip: "127.0.0.1",
@@ -225,88 +213,20 @@ export async function GET(request: NextRequest) {
       JSON.stringify(apiData, null, 2)
     );
 
-    // Normalize response based on provider
-    let data: Record<string, unknown>;
-
-    switch (settings.provider) {
-      case "IP_API":
-        if (apiData.status === "fail") {
-          return NextResponse.json(
-            { error: apiData.message || "API request failed" },
-            { status: 400 }
-          );
-        }
-        data = {
-          ip: apiData.query,
-          ipv4: !apiData.query?.includes(":") ? apiData.query : null,
-          ipv6: apiData.query?.includes(":") ? apiData.query : null,
-          city: apiData.city,
-          region: apiData.regionName || apiData.region,
-          country_name: apiData.country,
-          country_code: apiData.countryCode,
-          flag: countryCodeToFlag(apiData.countryCode) || null,
-          latitude: apiData.lat,
-          longitude: apiData.lon,
-          timezone: apiData.timezone,
-        };
-        break;
-
-      case "IPINFO":
-        // Handle bogon (localhost/private IPs)
-        if (apiData.bogon === true) {
-          data = {
-            ip: apiData.ip,
-            ipv4: !apiData.ip?.includes(":") ? apiData.ip : null,
-            ipv6: apiData.ip?.includes(":") ? apiData.ip : null,
-            city: "Localhost",
-            region: null,
-            country_name: "Local Development",
-            country_code: "LOCAL",
-            flag: "🏠",
-            latitude: null,
-            longitude: null,
-            timezone: null,
-          };
-        } else {
-          data = {
-            ip: apiData.ip,
-            ipv4: !apiData.ip?.includes(":") ? apiData.ip : null,
-            ipv6: apiData.ip?.includes(":") ? apiData.ip : null,
-            city: apiData.city,
-            region: apiData.region,
-            country_name: apiData.country,
-            country_code: apiData.country,
-            flag: countryCodeToFlag(apiData.country) || null,
-            latitude: apiData.loc?.split(",")[0],
-            longitude: apiData.loc?.split(",")[1],
-            timezone: apiData.timezone,
-          };
-        }
-        break;
-
-      case "IPGEOLOCATION":
-        data = {
-          ip: apiData.ip,
-          ipv4: !apiData.ip?.includes(":") ? apiData.ip : null,
-          ipv6: apiData.ip?.includes(":") ? apiData.ip : null,
-          city: apiData.city,
-          region: apiData.state_prov,
-          country_name: apiData.country_name,
-          country_code: apiData.country_code2,
-          flag: countryCodeToFlag(apiData.country_code2) || null,
-          latitude: apiData.latitude,
-          longitude: apiData.longitude,
-          timezone: apiData.time_zone?.name,
-        };
-        break;
-
-      default:
-        console.error(`[Get Location] Unknown provider: ${settings.provider}`);
-        return NextResponse.json(
-          { error: "Invalid provider" },
-          { status: 500 }
-        );
+    // Normalize response using the shared helper
+    // Keep provider-specific behavior where necessary (e.g. IP_API status failure)
+    if (settings.provider === "IP_API" && apiData?.status === "fail") {
+      return NextResponse.json(
+        { error: apiData.message || "API request failed" },
+        { status: 400 }
+      );
     }
+
+    // Use normalization helper for a consistent shape
+    // `normalize` handles provider heuristics and maps fields to a common shape
+    // TODO: expand provider-specific handling if new providers are added
+    const normalized = normalize(settings.provider || "", apiData);
+    let data: Record<string, unknown> = normalized as Record<string, unknown>;
 
     console.log(
       `[Get Location] Normalized data:`,
@@ -427,6 +347,85 @@ export async function GET(request: NextRequest) {
       setCached(cacheKey, payload);
     } catch (err) {
       console.debug("Failed to set geo cache:", err);
+    }
+
+    // Persist an enriched GeoLocationRecord (best-effort; failures should not block the response)
+    try {
+      const createData: Prisma.GeoLocationRecordCreateInput = {
+        ip: String(payload.ip || ""),
+        ipv4: payload.ipv4 ?? null,
+        ipv6: payload.ipv6 ?? null,
+        provider: settings.provider,
+        providerRaw: apiData as Prisma.InputJsonValue,
+
+        city: payload.city ?? null,
+        region: payload.region ?? null,
+        regionName: (normalized as any).regionName
+          ? String((normalized as any).regionName)
+          : null,
+        district: (normalized as any).district
+          ? String((normalized as any).district)
+          : null,
+        zip: (normalized as any).zip ? String((normalized as any).zip) : null,
+
+        countryName: payload.country_name ?? null,
+        countryCode: payload.country_code ?? null,
+        continent:
+          apiData && (apiData.continent || (apiData as any).continent_name)
+            ? String(
+                (apiData as any).continent || (apiData as any).continent_name
+              )
+            : null,
+        continentCode:
+          apiData && (apiData.continentCode || (apiData as any).continent_code)
+            ? String(
+                (apiData as any).continentCode ||
+                  (apiData as any).continent_code
+              )
+            : null,
+
+        isp: (normalized as any).isp ? String((normalized as any).isp) : null,
+        org: (normalized as any).org ? String((normalized as any).org) : null,
+        as: (normalized as any).as ? String((normalized as any).as) : null,
+        asName: (normalized as any).asname
+          ? String((normalized as any).asname)
+          : null,
+
+        mobile:
+          typeof (normalized as any).mobile === "boolean"
+            ? (normalized as any).mobile
+            : null,
+        proxy:
+          typeof (normalized as any).proxy === "boolean"
+            ? (normalized as any).proxy
+            : null,
+        hosting:
+          typeof (normalized as any).hosting === "boolean"
+            ? (normalized as any).hosting
+            : null,
+        dnsGeo:
+          apiData && (apiData.dns as Record<string, unknown>)?.geo
+            ? String((apiData.dns as Record<string, unknown>).geo)
+            : null,
+        dnsIp:
+          apiData && (apiData.dns as Record<string, unknown>)?.ip
+            ? String((apiData.dns as Record<string, unknown>).ip)
+            : null,
+
+        latitude: (normalized as any).latitude
+          ? new Decimal(String((normalized as any).latitude))
+          : null,
+        longitude: (normalized as any).longitude
+          ? new Decimal(String((normalized as any).longitude))
+          : null,
+        timezone: (normalized as any).timezone
+          ? String((normalized as any).timezone)
+          : null,
+      };
+
+      await db.geoLocationRecord.create({ data: createData });
+    } catch (err) {
+      console.debug("Failed to persist geo record:", err);
     }
 
     return NextResponse.json(payload);
