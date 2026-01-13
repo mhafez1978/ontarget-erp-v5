@@ -1164,6 +1164,52 @@ model GeoTrackingSetting {
   @@index([provider])
 }
 
+// GeoLocationRecord stores enriched location details and the raw provider response for later analysis
+model GeoLocationRecord {
+  id            String   @id @default(cuid())
+  ip            String
+  ipv4          String?
+  ipv6          String?
+  provider      String   // IP_API | IPINFO | IPGEOLOCATION
+  providerRaw   Json     // Full provider JSON payload
+
+  // Normalized fields
+  city          String?
+  region        String?
+  regionName    String?
+  district      String?
+  zip           String?
+  countryName   String?
+  countryCode   String?
+  continent     String?
+  continentCode String?
+
+  // Network / ISP info
+  isp           String?
+  org           String?
+  as            String?
+  asName        String?
+  mobile        Boolean?
+  proxy         Boolean?
+  hosting       Boolean?
+
+  // DNS enrichment
+  dnsGeo        String?
+  dnsIp         String?
+
+  // Geolocation coords
+  latitude      Decimal? @db.Decimal(11, 8)
+  longitude     Decimal? @db.Decimal(11, 8)
+  timezone      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ip])
+  @@index([countryCode])
+  @@index([createdAt])
+}
+
 // OAuth Provider Settings (currently system-wide, can be made per-company in future)
 model OAuthProviderSetting {
   id           String   @id @default(cuid())
