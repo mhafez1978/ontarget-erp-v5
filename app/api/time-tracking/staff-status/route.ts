@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         userId: true,
+        role: true,
         jobTitle: true,
         user: {
           select: {
@@ -82,6 +83,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
+
       orderBy: {
         user: {
           name: "asc",
@@ -123,15 +125,22 @@ export async function GET(request: NextRequest) {
         status = "LOGGED_IN_CLOCKED_OUT"; // Logged in but not clocked in
       }
 
+      const roleLabels: Record<string, string> = {
+        ADMIN: "Admin",
+        MANAGER: "Manager",
+        STAFF: "Staff",
+        CONTRACTOR: "Contractor",
+      };
+
       return {
         id: staff.id,
         userId: staff.userId,
         user: staff.user,
-        jobTitle: staff.jobTitle,
+        jobTitle: roleLabels[staff.role] || staff.role,
         status,
         isLoggedIn: hasActiveSession,
         isClockedIn: currentEntry !== null,
-        lastSeen: lastSeen ? lastSeen.toISOString() : null,
+        lastSeen: lastSeen ? new Date(lastSeen).toISOString() : null,
         currentEntry: currentEntry
           ? {
               id: currentEntry.id,

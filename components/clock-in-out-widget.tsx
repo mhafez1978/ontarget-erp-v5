@@ -254,7 +254,7 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
             <Button
               onClick={handleClockIn}
               disabled={actionLoading}
-              className="w-full h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              className="w-full h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 bg-linear-to-r from-green-500 to-emerald-600 hover:to-emerald-400 "
               size="lg"
             >
               {actionLoading ? (
@@ -262,7 +262,7 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
               ) : (
                 <Clock className="h-5 w-5 mr-2" />
               )}
-              Clock In
+              Clock-in
             </Button>
           )}
 
@@ -285,7 +285,7 @@ export function ClockInOutWidget({ companyId }: ClockInOutWidgetProps) {
                 onClick={handleClockOut}
                 disabled={actionLoading}
                 variant="destructive"
-                className="w-full h-12 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+                className="w-full h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 bg-linear-to-r from-purple-500 to-pink-600 dark:from-green-500 dark:to-emerald-600 dark:hover:from-green-600 dark:hover:to-emerald-700"
               >
                 {actionLoading ? (
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />

@@ -194,7 +194,7 @@ export async function GET(request: NextRequest) {
         year: "numeric",
       }),
       daysEmployed: daysDiff,
-      jobTitle: staff.jobTitle || "Not Set",
+      jobTitle: roleLabels[staff.role] || staff.role,
       role: roleLabels[staff.role] || staff.role,
       plan: staff.company.subscriberSubscriptions[0]
         ? planNames[staff.company.subscriberSubscriptions[0].plan] ||
