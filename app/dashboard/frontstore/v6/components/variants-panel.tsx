@@ -243,7 +243,10 @@ export default function VariantsPanel({
                   title={d.title}
                   type={d.type as "video" | "image"}
                   status={
-                    jobs.find((j: any) => j.variantId === d.id)?.status || null
+                    jobs.find(
+                      (j: { variantId: string; status?: string }) =>
+                        j.variantId === d.id
+                    )?.status || null
                   }
                   jobId={
                     jobs.find((j: any) => j.variantId === d.id)?.id || null

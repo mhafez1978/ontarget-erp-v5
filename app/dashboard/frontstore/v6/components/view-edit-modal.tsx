@@ -12,8 +12,13 @@ export default function ViewEditModal({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  variant: { id: string; title: string; type: string; assets?: any[] } | null;
-  onSave: (payload: any) => void;
+  variant: {
+    id: string;
+    title: string;
+    type: string;
+    assets?: { id: string; type: string; url?: string }[];
+  } | null;
+  onSave: (payload: Record<string, unknown>) => void;
 }) {
   const [title, setTitle] = useState(variant?.title || "");
   const [subtitle, setSubtitle] = useState("");

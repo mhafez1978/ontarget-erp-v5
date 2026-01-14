@@ -1164,6 +1164,50 @@ model GeoTrackingSetting {
   @@index([provider])
 }
 
+// Persisted enriched geolocation records for IPs
+model GeoLocationRecord {
+  id          String   @id @default(cuid())
+  ip          String
+  ipv4        String?
+  ipv6        String?
+  provider    String
+  providerRaw Json?   @db.Json
+
+  city        String?
+  region      String?
+  regionName  String?
+  district    String?
+  zip         String?
+
+  countryName String?
+  countryCode String?
+  continent   String?
+  continentCode String?
+
+  isp         String?
+  org         String?
+  as          String?
+  asName      String?
+
+  mobile      Boolean?
+  proxy       Boolean?
+  hosting     Boolean?
+
+  dnsGeo      String?
+  dnsIp       String?
+
+  latitude    Decimal? @db.Decimal(9,6)
+  longitude   Decimal? @db.Decimal(9,6)
+  timezone    String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ip])
+  @@index([countryCode])
+  @@index([createdAt])
+}
+
 // OAuth Provider Settings (currently system-wide, can be made per-company in future)
 model OAuthProviderSetting {
   id           String   @id @default(cuid())
@@ -3449,20 +3493,22 @@ enum SubscriptionPlan {
   GROWTH // Paid: 3 companies limit - for ERP subscribers
   ENTERPRISE // Paid: Unlimited companies - for ERP subscribers
   COMPANY_STAFF // Free plan for company staff users - no company creation rights
+  COMPANY_CONTRACTOR // Free plan for company contractors - limited access
   TRIAL // Temporary trial plan for new ERP_CUSTOMER signups
 }
 
 // User Role Enum
 // NOTE: No GUEST role - unauthenticated users are not in the database
 enum UserRole {
-  SUPER_ADMIN // Root admin - owns the SaaS platform and root company
-  ADMIN // Company admin - can manage company settings and members
-  MANAGER // Company manager - can manage staff and operations
-  STAFF // Company staff - limited permissions within company
+  SUPER_ADMIN // Root admin - owns the SaaS platform which is root company and possibly other companis
+  ADMIN_OWNER // Company admin - owner of the company
+  ADMIN_NONOWNER // Company admin - non-owner with full permissions
+  COMPANY_MANAGER // Company manager - can manage staff and operations
+  COMPANY_STAFF // Company staff - limited permissions within company
   ERP_CUSTOMER // Paying ERP subscriber - can create companies per their plan
   COMPANY_CUSTOMER // Customer of a subscriber company - added by company or via store
-  CONTRACTOR // External contractor working with company
-  SUPPLIER // Supplier/vendor of a company
+  COMPANY_CONTRACTOR // External contractor working with company
+  COMPANY_SUPPLIER // Supplier/vendor of a company
 }
 
 // Plan Pricing Configuration - allows dynamic pricing management

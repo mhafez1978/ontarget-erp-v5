@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { countryCodeToFlag } from "@/lib/ip-lookup";
-import { normalize } from "@/lib/geo/normalize";
+import { normalize, type NormalizedGeo } from "@/lib/geo/normalize";
 import type { Prisma } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 // Small in-memory TTL cache for recent lookups to reduce provider calls.
@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const apiData = await response.json();
+    const apiData: unknown = await response.json();
     console.log(
       `[Get Location] Raw API response:`,
       JSON.stringify(apiData, null, 2)
@@ -215,9 +215,15 @@ export async function GET(request: NextRequest) {
 
     // Normalize response using the shared helper
     // Keep provider-specific behavior where necessary (e.g. IP_API status failure)
-    if (settings.provider === "IP_API" && apiData?.status === "fail") {
+    if (
+      settings.provider === "IP_API" &&
+      apiData &&
+      typeof apiData === "object" &&
+      (apiData as Record<string, unknown>).status === "fail"
+    ) {
+      const msg = (apiData as Record<string, unknown>).message;
       return NextResponse.json(
-        { error: apiData.message || "API request failed" },
+        { error: msg ? String(msg) : "API request failed" },
         { status: 400 }
       );
     }
@@ -225,8 +231,11 @@ export async function GET(request: NextRequest) {
     // Use normalization helper for a consistent shape
     // `normalize` handles provider heuristics and maps fields to a common shape
     // TODO: expand provider-specific handling if new providers are added
-    const normalized = normalize(settings.provider || "", apiData);
-    let data: Record<string, unknown> = normalized as Record<string, unknown>;
+    const normalized: NormalizedGeo = normalize(
+      settings.provider || "",
+      apiData
+    );
+    const data = normalized; // use normalized directly
 
     console.log(
       `[Get Location] Normalized data:`,
@@ -351,6 +360,46 @@ export async function GET(request: NextRequest) {
 
     // Persist an enriched GeoLocationRecord (best-effort; failures should not block the response)
     try {
+      // Small helpers to safely extract fields from the unknown `apiData` or dns objects
+      const getString = (obj: unknown, key: string): string | null => {
+        if (!obj || typeof obj !== "object") return null;
+        const v = (obj as Record<string, unknown>)[key];
+        if (typeof v === "string") return v;
+        if (typeof v === "number") return String(v);
+        return null;
+      };
+
+      const dnsObj =
+        apiData &&
+        typeof apiData === "object" &&
+        (apiData as Record<string, unknown>).dns &&
+        typeof (apiData as Record<string, unknown>).dns === "object"
+          ? ((apiData as Record<string, unknown>).dns as Record<
+              string,
+              unknown
+            >)
+          : undefined;
+
+      const continent =
+        getString(apiData, "continent") || getString(apiData, "continent_name");
+      const continentCode =
+        getString(apiData, "continentCode") ||
+        getString(apiData, "continent_code");
+      const dnsGeo = dnsObj ? getString(dnsObj, "geo") : null;
+      const dnsIp = dnsObj ? getString(dnsObj, "ip") : null;
+
+      const latVal = normalized.latitude ?? null;
+      const longVal = normalized.longitude ?? null;
+
+      const latDecimal =
+        latVal != null && !Number.isNaN(Number(latVal))
+          ? new Decimal(String(latVal))
+          : null;
+      const longDecimal =
+        longVal != null && !Number.isNaN(Number(longVal))
+          ? new Decimal(String(longVal))
+          : null;
+
       const createData: Prisma.GeoLocationRecordCreateInput = {
         ip: String(payload.ip || ""),
         ipv4: payload.ipv4 ?? null,
@@ -360,67 +409,33 @@ export async function GET(request: NextRequest) {
 
         city: payload.city ?? null,
         region: payload.region ?? null,
-        regionName: (normalized as any).regionName
-          ? String((normalized as any).regionName)
+        regionName: normalized.regionName
+          ? String(normalized.regionName)
           : null,
-        district: (normalized as any).district
-          ? String((normalized as any).district)
-          : null,
-        zip: (normalized as any).zip ? String((normalized as any).zip) : null,
+        district: normalized.district ? String(normalized.district) : null,
+        zip: normalized.zip ? String(normalized.zip) : null,
 
         countryName: payload.country_name ?? null,
         countryCode: payload.country_code ?? null,
-        continent:
-          apiData && (apiData.continent || (apiData as any).continent_name)
-            ? String(
-                (apiData as any).continent || (apiData as any).continent_name
-              )
-            : null,
-        continentCode:
-          apiData && (apiData.continentCode || (apiData as any).continent_code)
-            ? String(
-                (apiData as any).continentCode ||
-                  (apiData as any).continent_code
-              )
-            : null,
+        continent: continent ?? null,
+        continentCode: continentCode ?? null,
 
-        isp: (normalized as any).isp ? String((normalized as any).isp) : null,
-        org: (normalized as any).org ? String((normalized as any).org) : null,
-        as: (normalized as any).as ? String((normalized as any).as) : null,
-        asName: (normalized as any).asname
-          ? String((normalized as any).asname)
-          : null,
+        isp: normalized.isp ? String(normalized.isp) : null,
+        org: normalized.org ? String(normalized.org) : null,
+        as: normalized.as ? String(normalized.as) : null,
+        asName: normalized.asname ? String(normalized.asname) : null,
 
         mobile:
-          typeof (normalized as any).mobile === "boolean"
-            ? (normalized as any).mobile
-            : null,
-        proxy:
-          typeof (normalized as any).proxy === "boolean"
-            ? (normalized as any).proxy
-            : null,
+          typeof normalized.mobile === "boolean" ? normalized.mobile : null,
+        proxy: typeof normalized.proxy === "boolean" ? normalized.proxy : null,
         hosting:
-          typeof (normalized as any).hosting === "boolean"
-            ? (normalized as any).hosting
-            : null,
-        dnsGeo:
-          apiData && (apiData.dns as Record<string, unknown>)?.geo
-            ? String((apiData.dns as Record<string, unknown>).geo)
-            : null,
-        dnsIp:
-          apiData && (apiData.dns as Record<string, unknown>)?.ip
-            ? String((apiData.dns as Record<string, unknown>).ip)
-            : null,
+          typeof normalized.hosting === "boolean" ? normalized.hosting : null,
+        dnsGeo: dnsGeo ?? null,
+        dnsIp: dnsIp ?? null,
 
-        latitude: (normalized as any).latitude
-          ? new Decimal(String((normalized as any).latitude))
-          : null,
-        longitude: (normalized as any).longitude
-          ? new Decimal(String((normalized as any).longitude))
-          : null,
-        timezone: (normalized as any).timezone
-          ? String((normalized as any).timezone)
-          : null,
+        latitude: latDecimal,
+        longitude: longDecimal,
+        timezone: normalized.timezone ? String(normalized.timezone) : null,
       };
 
       await db.geoLocationRecord.create({ data: createData });

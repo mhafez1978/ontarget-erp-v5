@@ -239,13 +239,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create the user
+    const userPlan =
+      role === "CONTRACTOR" ? "COMPANY_CONTRACTOR" : "COMPANY_STAFF";
+
+    const userGlobalRole = role === "CONTRACTOR" ? "CONTRACTOR" : "STAFF";
+
     const newUser = await db.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "STAFF", // Staff members get STAFF role (not ERP_CUSTOMER)
-        plan: "COMPANY_STAFF", // Staff are on company staff subscription plan
+        role: userGlobalRole, // STAFF or CONTRACTOR
+        plan: userPlan, // COMPANY_STAFF for staff, COMPANY_CONTRACTOR for contractors
         emailVerified: new Date(), // Auto-verify staff members created by admins
         addressLine1: addressLine1 || undefined,
         addressLine2: addressLine2 || undefined,

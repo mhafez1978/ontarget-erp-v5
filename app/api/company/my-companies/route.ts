@@ -51,29 +51,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Combine owned and member companies (remove duplicates)
-    const companyMap = new Map();
+    // Policy: return companies depending on user role
+    // - SUPER_ADMIN: only companies they OWN (including root company)
+    // - ADMIN: owned companies + member companies (deduplicated)
+    // - MANAGER / STAFF / others: only member companies
 
-    // Add owned companies
-    user.ownedCompanies.forEach((company) => {
-      companyMap.set(company.id, { ...company, isOwner: true });
-    });
+    let companies: Array<any> = [];
 
-    // Add member companies
-    user.companyMemberships.forEach((membership) => {
-      if (!companyMap.has(membership.company.id)) {
-        companyMap.set(membership.company.id, {
-          ...membership.company,
-          isOwner: false,
-        });
-      }
-    });
+    if (user.role === "SUPER_ADMIN") {
+      // Only return owned companies for super admins (privacy / SOC compliance)
+      companies = user.ownedCompanies.map((company) => ({
+        ...company,
+        isOwner: true,
+      }));
+    } else if (user.role === "ADMIN") {
+      const companyMap = new Map<string, any>();
 
-    const companies = Array.from(companyMap.values());
+      user.ownedCompanies.forEach((company) => {
+        companyMap.set(company.id, { ...company, isOwner: true });
+      });
+
+      user.companyMemberships.forEach((membership) => {
+        if (!companyMap.has(membership.company.id)) {
+          companyMap.set(membership.company.id, {
+            ...membership.company,
+            isOwner: false,
+          });
+        }
+      });
+
+      companies = Array.from(companyMap.values());
+    } else {
+      // For managers/staff/other roles only return companies they are a member of
+      companies = user.companyMemberships.map((m) => ({
+        ...m.company,
+        isOwner: false,
+      }));
+    }
 
     return NextResponse.json({
       count: companies.length,
-      companies: companies,
+      companies,
       plan: user.plan,
     });
   } catch (error) {

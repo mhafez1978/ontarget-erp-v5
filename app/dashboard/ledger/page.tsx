@@ -406,7 +406,8 @@ export default function LedgerPage() {
             </p>
           </div>
 
-          {/* Company Selector for SUPER_ADMIN with multiple companies */}
+          {/* Company Selector: only show if there are multiple selectable companies (owners/admins who own multiple)
+              Managers/staff and single-company users will see no selector */}
           {companies.length > 1 && (
             <div className="w-[250px]">
               <Select

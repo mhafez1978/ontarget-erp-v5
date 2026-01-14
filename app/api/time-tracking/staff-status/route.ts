@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true,
             image: true,
+            role: true,
             sessions: {
               orderBy: {
                 expires: "desc",
@@ -66,6 +67,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+
         timeEntries: {
           where: {
             clockOut: null, // Only get current active entries
@@ -126,17 +128,24 @@ export async function GET(request: NextRequest) {
       }
 
       const roleLabels: Record<string, string> = {
+        SUPER_ADMIN: "SUPER_USER",
         ADMIN: "Admin",
         MANAGER: "Manager",
         STAFF: "Staff",
         CONTRACTOR: "Contractor",
       };
 
+      // Prefer showing the user's global role when appropriate (e.g., SUPER_ADMIN)
+      const displayTitle =
+        staff.user?.role && roleLabels[staff.user.role]
+          ? roleLabels[staff.user.role]
+          : roleLabels[staff.role] || staff.role;
+
       return {
         id: staff.id,
         userId: staff.userId,
         user: staff.user,
-        jobTitle: roleLabels[staff.role] || staff.role,
+        jobTitle: displayTitle,
         status,
         isLoggedIn: hasActiveSession,
         isClockedIn: currentEntry !== null,

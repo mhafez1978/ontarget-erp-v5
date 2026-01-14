@@ -20,23 +20,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // LEDGER ACCESS CONTROL: Only ADMIN and SUPER_ADMIN allowed
-    const allowedRoles = ["ADMIN", "SUPER_ADMIN"];
+    // LEDGER ACCESS CONTROL: allow ADMIN, SUPER_ADMIN, MANAGER, and STAFF (read-only for non-admins)
+    const allowedRoles = ["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"];
     if (!allowedRoles.includes(user.role)) {
       return NextResponse.json(
         {
           error:
-            "Access Denied: Ledger is only accessible to company administrators",
+            "Access Denied: Ledger is only accessible to company administrators or members",
         },
         { status: 403 }
       );
     }
 
-    // Get user's company
+    // Get user's company (policy enforced per role)
     let companyId: string | null = null;
 
     if (user.role === "SUPER_ADMIN") {
-      // If companyId provided in query, verify ownership
+      // Super admin may only view companies they OWN
       if (requestedCompanyId) {
         const company = await db.company.findFirst({
           where: {
@@ -55,7 +55,6 @@ export async function GET(req: NextRequest) {
 
         companyId = company.id;
       } else {
-        // No companyId provided - get first owned company
         const company = await db.company.findFirst({
           where: { ownerId: user.id },
           select: { id: true },
@@ -63,37 +62,81 @@ export async function GET(req: NextRequest) {
         companyId = company?.id || null;
       }
     } else if (user.role === "ADMIN") {
-      // For ADMIN, get company they own or are admin of
-      const company = await db.company.findFirst({
-        where: {
-          OR: [
-            { ownerId: user.id },
-            {
-              members: {
-                some: {
-                  userId: user.id,
-                  role: "ADMIN",
+      // Admins can view companies they own or are admins of
+      if (requestedCompanyId) {
+        const company = await db.company.findFirst({
+          where: {
+            id: requestedCompanyId,
+            OR: [
+              { ownerId: user.id },
+              {
+                members: {
+                  some: { userId: user.id, role: "ADMIN" },
                 },
               },
-            },
-          ],
-        },
-        select: { id: true },
-      });
-      companyId = company?.id || null;
+            ],
+          },
+          select: { id: true },
+        });
+
+        if (!company) {
+          return NextResponse.json(
+            { error: "Access Denied: You don't have access to this company" },
+            { status: 403 }
+          );
+        }
+
+        companyId = company.id;
+      } else {
+        // Prefer owned company if any, otherwise company where they're a member/admin
+        const company = await db.company.findFirst({
+          where: {
+            OR: [
+              { ownerId: user.id },
+              {
+                members: { some: { userId: user.id, role: "ADMIN" } },
+              },
+            ],
+          },
+          select: { id: true },
+        });
+        companyId = company?.id || null;
+      }
     } else {
-      // For other roles, get company through membership or staff
-      const membership = await db.companyMember.findFirst({
-        where: { userId: user.id },
-        select: { companyId: true },
-      });
+      // MANAGER / STAFF: only allowed to view company where they are a member or staff
+      if (requestedCompanyId) {
+        const membership = await db.companyMember.findFirst({
+          where: { userId: user.id, companyId: requestedCompanyId },
+          select: { companyId: true },
+        });
 
-      const staffRecord = await db.companyStaff.findFirst({
-        where: { userId: user.id },
-        select: { companyId: true },
-      });
+        const staffRecord = await db.companyStaff.findFirst({
+          where: { userId: user.id, companyId: requestedCompanyId },
+          select: { companyId: true },
+        });
 
-      companyId = membership?.companyId || staffRecord?.companyId || null;
+        if (!membership && !staffRecord) {
+          return NextResponse.json(
+            { error: "Access Denied: You don't have access to this company" },
+            { status: 403 }
+          );
+        }
+
+        companyId = requestedCompanyId;
+      } else {
+        // Pick company from membership or staff record
+        const membership = await db.companyMember.findFirst({
+          where: { userId: user.id },
+          select: { companyId: true },
+        });
+
+        const staffRecord = await db.companyStaff.findFirst({
+          where: { userId: user.id },
+          select: { companyId: true },
+        });
+
+        companyId = membership?.companyId || staffRecord?.companyId || null;
+      }
     }
 
     if (!companyId) {

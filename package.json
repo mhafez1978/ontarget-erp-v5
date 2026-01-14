@@ -21,7 +21,9 @@
     "seed:ts": "ts-node prisma/seed.ts",
     "seed:check": "node prisma/seed.mjs --check",
     "seed:contact-map": "node prisma/seed-contact-map.mjs",
-    "seed:moveweb": "TS_NODE_PROJECT=tsconfig.mocha.json ts-node -r tsconfig-paths/register scripts/seed-moveweb-products.mjs"
+    "seed:moveweb": "TS_NODE_PROJECT=tsconfig.mocha.json ts-node -r tsconfig-paths/register scripts/seed-moveweb-products.mjs",
+    "backfill:geo": "TS_NODE_PROJECT=tsconfig.mocha.json ts-node -r tsconfig-paths/register scripts/backfill-geo.ts",
+    "fix:staff-plans": "TS_NODE_PROJECT=tsconfig.mocha.json ts-node -r tsconfig-paths/register scripts/fix-staff-plans.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
