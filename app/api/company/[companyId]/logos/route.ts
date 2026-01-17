@@ -56,7 +56,7 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check authorization: SUPER_ADMIN can upload to any company, ADMIN can upload to their own companies
+    // Check authorization: SUPER_ADMIN can upload to any company, ADMIN_OWNER can upload to their own companies
     const isSuperAdmin = user.role === "SUPER_ADMIN";
     const ownsCompany = user.ownedCompanies.length > 0;
 
@@ -285,7 +285,7 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check authorization: SUPER_ADMIN can view any company logos, ADMIN can view their own company logos
+    // Check authorization: SUPER_ADMIN can view any company logos, ADMIN_OWNER can view their own company logos
     const isSuperAdmin = user.role === "SUPER_ADMIN";
     const ownsCompany = user.ownedCompanies.length > 0;
 

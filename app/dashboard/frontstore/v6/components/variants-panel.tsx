@@ -22,7 +22,7 @@ export default function VariantsPanel({
     id: string;
     title: string;
     type: "video" | "image" | string;
-    assets?: { url: string }[];
+    assets?: { id: string; type: string; url?: string }[];
     hidden: boolean;
     seo?: Record<string, string> | null;
   };
@@ -327,10 +327,19 @@ export default function VariantsPanel({
             onOpenChange={(open) => setModalOpen(open)}
             variant={selected}
             onSave={(payload) => {
+              const p = payload as {
+                id: string;
+                title: string;
+                assets?: { id: string; type: string; url?: string }[];
+              };
               setItems((prev) =>
                 prev.map((it) =>
-                  it.id === payload.id
-                    ? { ...it, title: payload.title, assets: payload.assets }
+                  it.id === p.id
+                    ? {
+                        ...it,
+                        title: p.title,
+                        assets: p.assets,
+                      }
                     : it
                 )
               );

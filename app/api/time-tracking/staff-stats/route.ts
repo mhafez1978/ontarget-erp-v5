@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
           hireDate: "Company Owner",
           daysEmployed: 0,
           jobTitle: "Company Owner",
-          role: user.role === "SUPER_ADMIN" ? "SUPER_USER" : "Admin",
+          role: user.role === "SUPER_ADMIN" ? "SUPER_ADMIN" : "Admin",
           plan: subscription
             ? subscription.plan
                 .replace("_", " ")
@@ -142,11 +142,11 @@ export async function GET(request: NextRequest) {
 
     // Get role label
     const roleLabels: Record<string, string> = {
-      SUPER_ADMIN: "SUPER_USER",
-      ADMIN: "Admin",
-      MANAGER: "Manager",
-      STAFF: "Staff",
-      CONTRACTOR: "Contractor",
+      SUPER_ADMIN: "SUPER_ADMIN",
+      ADMIN_OWNER: "Admin",
+      COMPANY_MANAGER: "Manager",
+      COMPANY_STAFF: "Staff",
+      COMPANY_CONTRACTOR: "Contractor",
     };
 
     // Get plan name

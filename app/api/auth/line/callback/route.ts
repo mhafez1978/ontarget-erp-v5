@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
+      // User doesn't exist - create new ERP_CUSTOMER with TRIAL plan
       // They will need to select a plan before accessing the dashboard
       user = await db.user.create({
         data: {
@@ -276,11 +276,11 @@ export async function GET(request: NextRequest) {
 
     // Determine redirect URL
     const redirectUrl =
-      user.plan === "GUEST" && onboarding
+      user.plan === "TRIAL" && onboarding
         ? `${process.env.NEXT_PUBLIC_APP_URL}/oauth-setup/${encodeURIComponent(
             onboarding.token
           )}`
-        : user.plan === "GUEST"
+        : user.plan === "TRIAL"
         ? `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
         : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
 

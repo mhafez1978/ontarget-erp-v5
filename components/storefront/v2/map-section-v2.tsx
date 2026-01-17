@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { Map as LeafletMap, Marker } from "leaflet";
 
 interface Location {
   id: string;
@@ -31,8 +32,8 @@ export default function MapSectionV2({
   interactive = true,
 }: MapSectionV2Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any | null>(null);
-  const markersRef = useRef<any[]>([]);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markersRef = useRef<Marker[]>([]);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function MapSectionV2({
 
     // Dynamically import Leaflet only on client
     import("leaflet").then((L) => {
-      // @ts-ignore - CSS import for side effects
+      // @ts-expect-error - CSS import for side effects
       import("leaflet/dist/leaflet.css");
       import("@/lib/maps/leaflet-config").then((config) => {
         if (!containerRef.current || mapRef.current) return;

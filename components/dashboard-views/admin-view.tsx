@@ -12,7 +12,7 @@
 // import { StaffStatsWidget } from "@/components/staff-stats-widget";
 // import { StaffStatusWidget } from "@/components/staff-status-widget";
 // import { useEffect, useState } from "react";
-// import { Prisma } from "@prisma/client";
+// import { Prisma } from "../generated/prisma/client";
 
 // interface AdminViewProps {
 //   userName?: string | null;
@@ -34,9 +34,9 @@
 //         const data = await response.json();
 
 //         if (data.success) {
-//           // Filter to only companies where user is ADMIN
+//           // Filter to only companies where user is ADMIN_OWNER
 //           const adminCompanies = data.companies.filter(
-//             (c: Company) => c.role === "ADMIN"
+//             (c: Company) => c.role === "ADMIN_OWNER"
 //           );
 //           setCompanies(adminCompanies);
 //         }
@@ -143,9 +143,9 @@ export function AdminView({ userName, companyId }: AdminViewProps) {
         const data = await response.json();
 
         if (data.success) {
-          // Filter to only companies where user is ADMIN
+          // Filter to only companies where user is ADMIN_OWNER
           const adminCompanies = data.companies.filter(
-            (c: Company) => c.role === "ADMIN"
+            (c: Company) => c.role === "ADMIN_OWNER"
           );
           setCompanies(adminCompanies);
         }

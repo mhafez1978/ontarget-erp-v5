@@ -21,7 +21,7 @@
  */
 
 import type { NextRequest } from "next/server";
-import type { User } from "@prisma/client";
+import type { User } from "@/generated/prisma/client";
 import {
   validateSession,
   type ValidateSessionResult,

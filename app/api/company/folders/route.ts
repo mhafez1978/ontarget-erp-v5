@@ -36,7 +36,12 @@ export async function GET(request: NextRequest) {
     let isAdmin = false;
     let staffRecord = null;
 
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+    if (
+      user.role === "SUPER_ADMIN" ||
+      user.role === "ADMIN_OWNER" ||
+      user.role === "ADMIN_NONOWNER" ||
+      user.role === "COMPANY_MANAGER"
+    ) {
       const company = await db.company.findFirst({
         where: {
           id: companyId,
@@ -217,13 +222,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user is ADMIN or SUPER_ADMIN
+    // Verify user is ADMIN_OWNER or SUPER_ADMIN
     const user = await db.user.findUnique({
       where: { id: userId },
       select: { id: true, role: true },
     });
 
-    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    if (
+      !user ||
+      ![
+        "ADMIN_OWNER",
+        "ADMIN_NONOWNER",
+        "SUPER_ADMIN",
+        "COMPANY_MANAGER",
+      ].includes(user.role)
+    ) {
       return NextResponse.json(
         { error: "Only Admins can create folders" },
         { status: 403 }

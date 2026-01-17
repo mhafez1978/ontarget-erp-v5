@@ -36,9 +36,7 @@ export async function GET(request: NextRequest) {
                           in: ["GROWTH", "ENTERPRISE"],
                         },
                       },
-                      select: {
-                        id: true,
-                      },
+                      select: {},
                     },
                   },
                 },

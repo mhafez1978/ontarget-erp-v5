@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
-import { ProjectStatus } from "@prisma/client";
+import { ProjectStatus } from "@/generated/prisma/client";
 
 // PATCH /api/projects/reorder - Reorder projects within a status lane
 export async function PATCH(req: NextRequest) {

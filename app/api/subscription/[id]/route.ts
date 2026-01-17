@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { SubscriptionStatus } from "@/generated/prisma/client";
 
 // PATCH - Update a subscription
 export async function PATCH(
@@ -25,10 +26,15 @@ export async function PATCH(
     const body = await request.json();
 
     // Fetch subscription to check if it exists
+    const [rootCompanyId, subscriberCompanyId] = id.split("_");
     const subscription = await db.subscription.findUnique({
-      where: { id },
+      where: {
+        rootCompanyId_subscriberCompanyId: {
+          rootCompanyId,
+          subscriberCompanyId,
+        },
+      },
       select: {
-        id: true,
         subscriberCompany: {
           select: {
             name: true,
@@ -46,10 +52,15 @@ export async function PATCH(
 
     // Update subscription
     const updatedSubscription = await db.subscription.update({
-      where: { id },
+      where: {
+        rootCompanyId_subscriberCompanyId: {
+          rootCompanyId,
+          subscriberCompanyId,
+        },
+      },
       data: {
         plan: body.plan,
-        status: body.status,
+        status: body.status as SubscriptionStatus,
         trialEndsAt: body.trialEndsAt ? new Date(body.trialEndsAt) : null,
         billingCycleStart: body.billingCycleStart
           ? new Date(body.billingCycleStart)
@@ -66,7 +77,7 @@ export async function PATCH(
         userId: userId,
         action: "UPDATED",
         entityType: "Subscription",
-        entityId: updatedSubscription.id,
+        entityId: `${rootCompanyId}-${subscriberCompanyId}`,
         description: `Updated subscription for company: ${subscription.subscriberCompany.name}`,
       },
     });
@@ -101,12 +112,17 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const [rootCompanyId, subscriberCompanyId] = id.split("_");
 
     // Fetch subscription to check if it exists
     const subscription = await db.subscription.findUnique({
-      where: { id },
+      where: {
+        rootCompanyId_subscriberCompanyId: {
+          rootCompanyId,
+          subscriberCompanyId,
+        },
+      },
       select: {
-        id: true,
         subscriberCompanyId: true,
         subscriberCompany: {
           select: {
@@ -127,7 +143,12 @@ export async function DELETE(
     // Delete the subscription (cascade will handle related records)
     // This will also delete the subscriber company if configured with cascade
     await db.subscription.delete({
-      where: { id },
+      where: {
+        rootCompanyId_subscriberCompanyId: {
+          rootCompanyId,
+          subscriberCompanyId,
+        },
+      },
     });
 
     // Optionally, you may want to also delete the subscriber company explicitly
@@ -144,7 +165,7 @@ export async function DELETE(
         userId: userId,
         action: "DELETED",
         entityType: "Subscription",
-        entityId: subscription.id,
+        entityId: `${rootCompanyId}-${subscriberCompanyId}`,
         description: `Deleted subscription for company: ${subscription.subscriberCompany.name}`,
       },
     });

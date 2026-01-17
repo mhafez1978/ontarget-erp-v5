@@ -59,9 +59,14 @@ const getRootCompany = cache(async () => {
 });
 
 const getPricingData = cache(async () => {
-  return db.planPricing.findMany({
-    orderBy: { monthlyPrice: "asc" },
-  });
+  try {
+    return await db.planPricing.findMany({
+      orderBy: { monthlyPrice: "asc" },
+    });
+  } catch (error) {
+    console.error("Error fetching plan pricing:", error);
+    return [];
+  }
 });
 
 const getTestimonials = cache(async (companyId: string) => {

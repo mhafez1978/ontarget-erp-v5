@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         companies.unshift({
           id: rootCompany.id,
           name: rootCompany.name,
-          role: "ADMIN", // Super admin acts as admin of root company
+          role: "ADMIN_OWNER", // Super admin acts as company admin for root company
         });
       }
     }

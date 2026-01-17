@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const user = validation.user;
 
-    if (!["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    if (!["ADMIN_OWNER", "ADMIN_NONOWNER", "SUPER_ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Access Denied: Only admins can view storage settings" },
         { status: 403 }
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
               members: {
                 some: {
                   userId: user.id,
-                  role: "ADMIN",
+                  role: "ADMIN_NONOWNER",
                 },
               },
             },
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     const user = validation.user;
 
-    if (!["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    if (!["ADMIN_OWNER", "SUPER_ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Access Denied: Only admins can update storage settings" },
         { status: 403 }
@@ -120,25 +120,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user has access to this company
-    const company = await db.company.findFirst({
-      where: {
-        id: companyId,
-        OR: [
-          { ownerId: user.id },
-          {
-            members: {
-              some: {
-                userId: user.id,
-                role: "ADMIN",
-              },
-            },
-          },
-        ],
-      },
+    // Owner-only: only the company owner can change storage provider
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+      select: { ownerId: true },
     });
-
-    if (!company) {
+    if (
+      !company ||
+      (company.ownerId !== user.id && user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json(
         { error: "Company not found or access denied" },
         { status: 404 }

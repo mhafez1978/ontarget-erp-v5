@@ -34,6 +34,7 @@ interface Company {
 
 interface EmailProviderCardsProps {
   userRole: string;
+  userId?: string | null;
 }
 
 interface ProviderConfig {
@@ -124,9 +125,13 @@ const PROVIDERS: ProviderConfig[] = [
   },
 ];
 
-export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
+export function EmailProviderCards({
+  userRole,
+  userId,
+}: EmailProviderCardsProps & { userId?: string | null }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("GLOBAL");
+  const [companyOwnerId, setCompanyOwnerId] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] =
     useState<ProviderConfig | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -196,17 +201,24 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
   const [showAwsKeys, setShowAwsKeys] = useState(false);
   const [showOffice365Secret, setShowOffice365Secret] = useState(false);
 
-  // Fetch companies for ADMIN and SUPER_ADMIN users
+  // Fetch companies for ADMIN_OWNER and SUPER_ADMIN users
   useEffect(() => {
-    if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
+    if (
+      userRole === "ADMIN_OWNER" ||
+      userRole === "ADMIN_NONOWNER" ||
+      userRole === "SUPER_ADMIN"
+    ) {
       const fetchCompanies = async () => {
         try {
           const response = await fetch("/api/companies/my-owned");
           const data = await response.json();
           if (response.ok) {
             setCompanies(data.companies || []);
-            // For ADMIN users, default to first company instead of GLOBAL
-            if (userRole === "ADMIN" && data.companies?.length > 0) {
+            // For ADMIN_OWNER users, default to first company instead of GLOBAL
+            if (
+              (userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") &&
+              data.companies?.length > 0
+            ) {
               setSelectedCompanyId(data.companies[0].id);
             }
           }
@@ -280,6 +292,23 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
 
       const response = await fetch(url);
       const data = await response.json();
+
+      // Also fetch company owner id for permission checks when company-scoped
+      if (selectedCompanyId !== "GLOBAL") {
+        try {
+          const cResp = await fetch(`/api/company/${selectedCompanyId}`);
+          if (cResp.ok) {
+            const cJson = await cResp.json();
+            setCompanyOwnerId(cJson.company?.ownerId || null);
+          } else {
+            setCompanyOwnerId(null);
+          }
+        } catch (e) {
+          setCompanyOwnerId(null);
+        }
+      } else {
+        setCompanyOwnerId(null);
+      }
 
       if (
         response.ok &&
@@ -367,6 +396,20 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
 
   const handleTest = async () => {
     if (!selectedProvider) return;
+
+    // Check permission: if company-scoped and not owner, disallow
+    const isGlobal = selectedCompanyId === "GLOBAL";
+    const canEdit = isGlobal
+      ? userRole === "SUPER_ADMIN"
+      : companyOwnerId === userId || userRole === "SUPER_ADMIN";
+    if (!canEdit) {
+      setTestResult({
+        success: false,
+        message: "Only company owner can test this provider",
+      });
+      setTestSuccess(false);
+      return;
+    }
 
     try {
       setIsTesting(true);
@@ -1658,8 +1701,10 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Company Selector for ADMIN and SUPER_ADMIN */}
-      {(userRole === "ADMIN" || userRole === "SUPER_ADMIN") &&
+      {/* Company Selector for ADMIN_OWNER and SUPER_ADMIN */}
+      {(userRole === "ADMIN_OWNER" ||
+        userRole === "ADMIN_NONOWNER" ||
+        userRole === "SUPER_ADMIN") &&
         companies.length > 0 && (
           <Card>
             <CardContent className="pt-6">
@@ -1865,44 +1910,73 @@ export function EmailProviderCards({ userRole }: EmailProviderCardsProps) {
 
             {/* Actions */}
             {selectedProvider && selectedProvider.type !== "GOOGLE_OAUTH" && (
-              <div className="flex gap-3 pt-4">
-                <Button
-                  onClick={handleTest}
-                  disabled={isTesting || isSaving}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  {isTesting && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <>
+                {/* If company-scoped and user is not owner, show read-only notice */}
+                {selectedCompanyId !== "GLOBAL" &&
+                  companyOwnerId !== userId &&
+                  userRole !== "SUPER_ADMIN" && (
+                    <Alert className="mb-4">
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      <div className="flex-1 text-sm">
+                        Only the company owner can modify email provider
+                        settings. You can view the current configuration.
+                      </div>
+                    </Alert>
                   )}
-                  Test Connection
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  disabled={(() => {
-                    if (isTesting || isSaving) return true;
-                    if (!testSuccess) return true;
-                    if (selectedProvider.type === "OFFICE365") {
-                      const tenantChanged =
-                        office365TenantId.trim() !== originalOffice365TenantId;
-                      const clientChanged =
-                        office365ClientId.trim() !== originalOffice365ClientId;
-                      const missingSecret =
-                        (tenantChanged || clientChanged) &&
-                        String(office365ClientSecret || "").trim() === "";
-                      if (missingSecret) return true;
-                      if (office365SecretDirty && !testSuccess) return true;
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    onClick={handleTest}
+                    disabled={
+                      isTesting ||
+                      isSaving ||
+                      (selectedCompanyId !== "GLOBAL" &&
+                        companyOwnerId !== userId &&
+                        userRole !== "SUPER_ADMIN")
                     }
-                    return false;
-                  })()}
-                  className="flex-1"
-                >
-                  {isSaving && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Save & Activate
-                </Button>
-              </div>
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    {isTesting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Test Connection
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={(() => {
+                      if (isTesting || isSaving) return true;
+                      if (!testSuccess) return true;
+                      if (selectedProvider.type === "OFFICE365") {
+                        const tenantChanged =
+                          office365TenantId.trim() !==
+                          originalOffice365TenantId;
+                        const clientChanged =
+                          office365ClientId.trim() !==
+                          originalOffice365ClientId;
+                        const missingSecret =
+                          (tenantChanged || clientChanged) &&
+                          String(office365ClientSecret || "").trim() === "";
+                        if (missingSecret) return true;
+                        if (office365SecretDirty && !testSuccess) return true;
+                      }
+                      // Owner-only check for saving company-scoped config
+                      if (
+                        selectedCompanyId !== "GLOBAL" &&
+                        companyOwnerId !== userId &&
+                        userRole !== "SUPER_ADMIN"
+                      )
+                        return true;
+                      return false;
+                    })()}
+                    className="flex-1"
+                  >
+                    {isSaving && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Save & Activate
+                  </Button>
+                </div>
+              </>
             )}
 
             {!testSuccess &&

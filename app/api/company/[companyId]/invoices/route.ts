@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { InvoiceStatus } from "@/generated/prisma/client";
 
 export async function GET(
   request: NextRequest,
@@ -32,7 +33,9 @@ export async function GET(
     );
     if (
       membership &&
-      (membership.role === "ADMIN" || membership.role === "MANAGER")
+      (membership.role === "ADMIN_OWNER" ||
+        membership.role === "ADMIN_NONOWNER" ||
+        membership.role === "COMPANY_MANAGER")
     )
       hasAccess = true;
 
@@ -48,12 +51,10 @@ export async function GET(
 
     const where: {
       companyId: string;
-      status?: import("@prisma/client").InvoiceStatus;
+      status?: InvoiceStatus;
     } = { companyId };
     const status = url.searchParams.get("status");
-    if (status)
-      where.status =
-        status.toUpperCase() as import("@prisma/client").InvoiceStatus;
+    if (status) where.status = status.toUpperCase() as InvoiceStatus;
 
     const [invoices, total] = await Promise.all([
       db.invoice.findMany({
@@ -103,7 +104,9 @@ export async function POST(
     );
     if (
       membership &&
-      (membership.role === "ADMIN" || membership.role === "MANAGER")
+      (membership.role === "ADMIN_OWNER" ||
+        membership.role === "ADMIN_NONOWNER" ||
+        membership.role === "COMPANY_MANAGER")
     )
       hasAccess = true;
 

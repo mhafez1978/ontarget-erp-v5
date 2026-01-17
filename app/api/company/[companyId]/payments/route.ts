@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { PaymentTransactionStatus } from "@/generated/prisma/client";
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +14,7 @@ export async function GET(
     const { user } = validation;
     const { companyId } = await params;
 
-    // Permission: SUPER_ADMIN or company owner or company ADMIN member
+    // Permission: SUPER_ADMIN or company owner or company ADMIN_OWNER member
     const dbUser = await db.user.findUnique({
       where: { id: user.id },
       include: {
@@ -33,7 +34,9 @@ export async function GET(
     );
     if (
       membership &&
-      (membership.role === "ADMIN" || membership.role === "MANAGER")
+      (membership.role === "ADMIN_OWNER" ||
+        membership.role === "ADMIN_NONOWNER" ||
+        membership.role === "COMPANY_MANAGER")
     )
       hasAccess = true;
 
@@ -49,12 +52,10 @@ export async function GET(
 
     const where: {
       companyId: string;
-      status?: import("@prisma/client").PaymentTransactionStatus;
+      status?: PaymentTransactionStatus;
     } = { companyId };
     const status = url.searchParams.get("status");
-    if (status)
-      where.status =
-        status.toUpperCase() as import("@prisma/client").PaymentTransactionStatus;
+    if (status) where.status = status.toUpperCase() as PaymentTransactionStatus;
 
     const [payments, total] = await Promise.all([
       db.payment.findMany({

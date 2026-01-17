@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 /**
  * GET /api/companies/blockchain-status
  * Get all companies owned by the current user with their blockchain status
- * Available to SUPER_ADMIN and ADMIN roles
+ * Available to SUPER_ADMIN and ADMIN_OWNER roles
  */
 export async function GET(request: NextRequest) {
   try {
@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
 
     const { user } = validation;
 
-    // Only SUPER_ADMIN and ADMIN can access this
-    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
+    // Only SUPER_ADMIN and ADMIN_OWNER can access this
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN_OWNER") {
       return NextResponse.json(
         { error: "Insufficient permissions" },
         { status: 403 }

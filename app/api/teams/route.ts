@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
             members: {
               some: {
                 userId,
-                role: { in: ["ADMIN"] }, // Only ADMIN members can create teams
+                role: { in: ["ADMIN_OWNER"] }, // Only ADMIN_OWNER members can create teams
               },
             },
           },
@@ -223,13 +223,17 @@ export async function POST(req: NextRequest) {
       // Add team members with appropriate roles
       await db.teamMember.createMany({
         data: memberIds.map((staffId: string) => {
-          let role: "MANAGER" | "ADMIN" | "STAFF" | "CONTRACTOR" = "STAFF";
+          let role:
+            | "COMPANY_MANAGER"
+            | "ADMIN_OWNER"
+            | "COMPANY_STAFF"
+            | "COMPANY_CONTRACTOR" = "COMPANY_STAFF";
 
           // Assign role based on managerIds/teamLeadIds arrays
           if (managerIds && managerIds.includes(staffId)) {
-            role = "MANAGER";
+            role = "COMPANY_MANAGER";
           } else if (teamLeadIds && teamLeadIds.includes(staffId)) {
-            role = "ADMIN"; // Team Lead gets ADMIN role in the team
+            role = "ADMIN_OWNER"; // Team Lead gets ADMIN_OWNER role in the team
           }
 
           return {
@@ -254,7 +258,7 @@ export async function POST(req: NextRequest) {
               data: {
                 teamId: team.id,
                 staffId: managerId,
-                role: "MANAGER",
+                role: "COMPANY_MANAGER",
               },
             });
           }
@@ -275,7 +279,7 @@ export async function POST(req: NextRequest) {
               data: {
                 teamId: team.id,
                 staffId: teamLeadId,
-                role: "ADMIN", // Team Lead gets ADMIN role
+                role: "ADMIN_NONOWNER", // Team Lead gets ADMIN_NONOWNER (team admin)
               },
             });
           }

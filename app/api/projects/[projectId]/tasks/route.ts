@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
-import { Prisma, TaskStatus, TaskPriority } from "@prisma/client";
+import { Prisma, TaskStatus, TaskPriority } from "@/generated/prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
 // Type for task with includes
@@ -91,11 +91,11 @@ export async function GET(
       );
     }
 
-    // Additional check for MANAGER/STAFF/CONTRACTOR: Must be team member
+    // Additional check for COMPANY_MANAGER/COMPANY_STAFF/COMPANY_CONTRACTOR: Must be team member
     if (
-      user.role === "MANAGER" ||
-      user.role === "STAFF" ||
-      user.role === "CONTRACTOR"
+      user.role === "COMPANY_MANAGER" ||
+      user.role === "COMPANY_STAFF" ||
+      user.role === "COMPANY_CONTRACTOR"
     ) {
       const staffRecord = await db.companyStaff.findFirst({
         where: { userId, companyId: project.companyId },
@@ -132,7 +132,7 @@ export async function GET(
         );
       }
     }
-    // SUPER_ADMIN, ADMIN: Full access if they have company access
+    // SUPER_ADMIN, ADMIN_OWNER: Full access if they have company access
 
     // Build where clause - filter private tasks for company customers
     const isCustomer =
@@ -277,7 +277,7 @@ export async function POST(
           where: {
             teamId: project.teamId,
             staff: { userId },
-            role: { in: ["ADMIN", "MANAGER"] },
+            role: { in: ["ADMIN_OWNER", "COMPANY_MANAGER"] },
           },
         })
       : null;

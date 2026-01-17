@@ -7,9 +7,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type { Prisma } from "@/generated/prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { getCompanyContext } from "@/lib/frontstore/v6-data-service";
-import { SectionKind } from "@prisma/client";
+import { SectionKind } from "@/generated/prisma/client";
 
 // ============================================================================
 // TYPES
@@ -32,10 +33,7 @@ interface PricingTier {
 // HELPERS
 // ============================================================================
 
-function generateFallbackPricing(
-  industry: string,
-  companyName: string
-): PricingTier[] {
+function generateFallbackPricing(industry: string): PricingTier[] {
   const industryPlans: Record<string, PricingTier[]> = {
     saas: [
       {
@@ -248,10 +246,7 @@ export async function POST(
 
     // 5. Generate industry-specific pricing fallbacks
     const industry = context.company.industry?.toLowerCase() || "default";
-    const pricingTiers = generateFallbackPricing(
-      industry,
-      context.company.name
-    );
+    const pricingTiers = generateFallbackPricing(industry);
 
     // 6. Generate 4 design variants
     const variants = [
@@ -455,7 +450,7 @@ export async function POST(
       data: {
         status: "GENERATED",
         kind: SectionKind.PRICING,
-        variants: variantsJson as any,
+        variants: variantsJson as unknown as Prisma.InputJsonValue,
       },
     });
 

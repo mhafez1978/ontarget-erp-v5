@@ -124,7 +124,7 @@ export default function SupportPage() {
         const response = await fetch("/api/auth/me");
         const data = await response.json();
 
-        if (!data?.authenticated || data?.user?.role === "GUEST") {
+        if (!data?.authenticated || data?.user?.role === "TRIAL") {
           router.push("/login");
           return;
         }
@@ -370,7 +370,7 @@ export default function SupportPage() {
     );
   }
 
-  // Require authenticated users (all roles except GUEST)
+  // Require authenticated users (all roles except TRIAL)
   return (
     <StaffAndAbove>
       <DashboardLayout user={user || undefined}>

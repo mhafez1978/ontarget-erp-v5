@@ -1,18 +1,18 @@
-import { SubscriptionPlan } from "@prisma/client";
+import { SubscriptionPlan } from "@/generated/prisma/client";
 
 // Plans that are allowed to use AI Storefront V1 features.
-// V1 is available for Essential, Growth, Enterprise, and SUPER_USER
+// V1 is available for Essential, Growth, Enterprise, and SUPER_ADMIN
 export const PLAN_AI_STOREFRONT_V1_ENABLED: SubscriptionPlan[] = [
-  "SUPER_USER",
+  "SUPER_ADMIN",
   "ESSENTIAL",
   "GROWTH",
   "ENTERPRISE",
 ];
 
 // Plans that are allowed to use AI Storefront V2 features.
-// V2 is only available for Growth, Enterprise, and SUPER_USER
+// V2 is only available for Growth, Enterprise, and SUPER_ADMIN
 export const PLAN_AI_STOREFRONT_V2_ENABLED: SubscriptionPlan[] = [
-  "SUPER_USER",
+  "SUPER_ADMIN",
   "GROWTH",
   "ENTERPRISE",
 ];

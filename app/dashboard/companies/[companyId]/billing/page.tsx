@@ -1,11 +1,8 @@
 "use client";
 
-
 import { Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
-;
-
 export default function CompanyBillingPage({
   params,
 }: {
@@ -44,7 +41,7 @@ export default function CompanyBillingPage({
   if (loading)
     return (
       <DashboardLayout
-        user={{ name: null, email: null, image: null, role: "GUEST" }}
+        user={{ name: null, email: null, image: null, role: "TRIAL" }}
       >
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -54,7 +51,7 @@ export default function CompanyBillingPage({
 
   return (
     <DashboardLayout
-      user={{ name: null, email: null, image: null, role: "GUEST" }}
+      user={{ name: null, email: null, image: null, role: "TRIAL" }}
     >
       <div className="container mx-auto py-10">
         <h1 className="text-2xl font-bold mb-4">Billing</h1>

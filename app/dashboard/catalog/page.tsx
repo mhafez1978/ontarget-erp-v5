@@ -14,9 +14,9 @@ function getRoleCatalogView(role: string, userName?: string | null) {
   switch (role) {
     case "SUPER_ADMIN":
       return <SuperAdminCatalogView userName={userName} />;
-    case "ADMIN":
+    case "ADMIN_OWNER":
       return <AdminCatalogView userName={userName} />;
-    case "MANAGER":
+    case "COMPANY_MANAGER":
       return <ManagerCatalogView userName={userName} />;
     case "ERP_CUSTOMER":
     case "COMPANY_CUSTOMER":
@@ -48,7 +48,7 @@ export default function CatalogPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
 
@@ -61,8 +61,8 @@ export default function CatalogPage() {
         // Check if user has access to catalog page
         const allowedRoles = [
           "SUPER_ADMIN",
-          "ADMIN",
-          "MANAGER",
+          "ADMIN_OWNER",
+          "COMPANY_MANAGER",
           "ERP_CUSTOMER",
           "COMPANY_CUSTOMER",
         ];

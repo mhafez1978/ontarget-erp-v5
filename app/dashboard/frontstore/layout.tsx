@@ -19,8 +19,8 @@ export default function DashboardLayout({
         const response = await fetch("/api/auth/me");
         const data = await response.json();
 
-        // Redirect if not authenticated or if user is GUEST
-        if (!data.authenticated || data.user?.role === "GUEST") {
+        // Redirect if not authenticated or if user is TRIAL
+        if (!data.authenticated || data.user?.role === "TRIAL") {
           router.push("/");
           return;
         }

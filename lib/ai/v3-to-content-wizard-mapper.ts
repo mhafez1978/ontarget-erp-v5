@@ -7,6 +7,23 @@
 import type { V3Website, V3Page, V3Section } from "./v3-types.ts";
 import type { ThemeSection } from "@/lib/storefront-themes";
 
+// Helper type guards and accessors
+function isRecord(input: unknown): input is Record<string, unknown> {
+  return typeof input === "object" && input !== null && !Array.isArray(input);
+}
+
+function asString(input: unknown, fallback = ""): string {
+  return typeof input === "string" ? input : fallback;
+}
+
+function asNumber(input: unknown, fallback = 0): number {
+  return typeof input === "number" ? input : fallback;
+}
+
+function asArray(input: unknown): unknown[] {
+  return Array.isArray(input) ? input : [];
+}
+
 /**
  * Map V3 section type to Content Wizard section type
  */
@@ -34,183 +51,228 @@ function mapSectionType(v3Type: string): ThemeSection["type"] {
 /**
  * Convert V3 section content to Content Wizard format
  */
-function convertSectionContent(
-  section: V3Section,
-  _pageSlug: string
-): ThemeSection["content"] {
-  const content = section.content as any;
+function convertSectionContent(section: V3Section): ThemeSection["content"] {
+  const content: Record<string, unknown> | unknown[] = section.content;
   const type = section.type;
 
   // Hero section
   if (type === "hero") {
+    const c = isRecord(content) ? content : {};
+    const ctaText = asString(c.ctaText, "");
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      description: content.description || "",
-      ctaText: content.ctaText || "Learn More",
-      ctaLink: content.ctaLink || "#",
-      backgroundImage: content.backgroundImage || "",
-      showCta: !!content.ctaText,
+      description: asString(c.description, ""),
+      ctaText: ctaText || "Learn More",
+      ctaLink: asString(c.ctaLink, "#"),
+      backgroundImage: asString(c.backgroundImage, ""),
+      showCta: !!ctaText,
     };
   }
 
   // Features/Highlights
   if (type === "features") {
-    const items = Array.isArray(content) ? content : [];
+    const items = asArray(content);
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      items: items.map((item: any) => ({
-        icon: item.icon || "Sparkles",
-        title: item.title || "",
-        description: item.description || "",
-        image: item.image || undefined,
-      })),
+      items: items.map((item) => {
+        const it = isRecord(item) ? item : {};
+        return {
+          icon: asString(it.icon, "Sparkles"),
+          title: asString(it.title, ""),
+          description: asString(it.description, ""),
+          image:
+            asString(it.image, undefined as unknown as string) || undefined,
+        };
+      }),
     };
   }
 
   // Catalog/Products/Services
   if (type === "catalog" || type === "pricing") {
-    const items = Array.isArray(content) ? content : [];
+    const items = asArray(content);
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      items: items.map((item: any) => ({
-        name: item.name || "",
-        description: item.description || "",
-        price: item.price || 0,
-        image: item.image || "",
-        category: item.category || "",
-      })),
+      items: items.map((item) => {
+        const it = isRecord(item) ? item : {};
+        return {
+          name: asString(it.name, ""),
+          description: asString(it.description, ""),
+          price: asNumber(it.price, 0),
+          image: asString(it.image, ""),
+          category: asString(it.category, ""),
+        };
+      }),
     };
   }
 
   // Testimonials
   if (type === "testimonials") {
-    const items = Array.isArray(content) ? content : [];
+    const items = asArray(content);
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      testimonials: items.map((item: any) => ({
-        quote: item.quote || item.testimonial || "",
-        author: item.author || item.customerName || "",
-        role: item.role || item.customerTitle || "",
-        photo: item.photo || item.customerPhoto || "",
-        rating: item.rating || 5,
-      })),
+      testimonials: items.map((item) => {
+        const it = isRecord(item) ? item : {};
+        return {
+          quote: asString(it.quote, asString(it.testimonial, "")),
+          author: asString(it.author, asString(it.customerName, "")),
+          role: asString(it.role, asString(it.customerTitle, "")),
+          photo: asString(it.photo, asString(it.customerPhoto, "")),
+          rating: asNumber(it.rating, 5),
+        };
+      }),
     };
   }
 
   // About section
   if (type === "about") {
+    if (isRecord(content)) {
+      return {
+        heading: section.heading,
+        subheading: section.subheading || "",
+        description: asString(content.description, ""),
+        image: asString(content.image, ""),
+      };
+    }
+
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      description:
-        typeof content === "object"
-          ? content.description || ""
-          : String(content),
-      image: typeof content === "object" ? content.image || "" : "",
+      description: String(content || ""),
+      image: "",
     };
   }
 
   // FAQ section
   if (type === "faq") {
-    const items = Array.isArray(content) ? content : [];
+    const items = asArray(content);
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      faqs: items.map((item: any) => ({
-        question: item.question || "",
-        answer: item.answer || "",
-      })),
+      faqs: items.map((item) => {
+        const it = isRecord(item) ? item : {};
+        return {
+          question: asString(it.question, ""),
+          answer: asString(it.answer, ""),
+        };
+      }),
     };
   }
 
   // CTA section
   if (type === "cta") {
+    const c = isRecord(content) ? content : {};
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      description: content.description || "",
-      buttonText: content.buttonText || content.ctaText || "Get Started",
-      buttonLink: content.buttonLink || content.ctaLink || "#",
-      backgroundImage: content.backgroundImage || "",
+      description: asString(c.description, ""),
+      buttonText: asString(c.buttonText, asString(c.ctaText, "Get Started")),
+      buttonLink: asString(c.buttonLink, asString(c.ctaLink, "#")),
+      backgroundImage: asString(c.backgroundImage, ""),
     };
   }
 
   // Contact section
   if (type === "contact") {
-    const locations = content.locations || [];
+    const c = isRecord(content) ? content : {};
+    const locations = Array.isArray(c.locations)
+      ? (c.locations as unknown[])
+      : [];
+    const primary =
+      locations.length > 0 && isRecord(locations[0])
+        ? (locations[0] as Record<string, unknown>)
+        : {};
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      email: content.email || locations[0]?.email || "",
-      phone: content.phone || locations[0]?.phone || "",
-      address: content.address || locations[0]?.address || "",
-      locations: locations.map((loc: any) => ({
-        name: loc.name || "",
-        type: loc.type || "",
-        address: loc.address || "",
-        city: loc.city || "",
-        state: loc.state || "",
-        country: loc.country || "",
-        phone: loc.phone || "",
-        email: loc.email || "",
-      })),
+      email: asString(c.email, asString(primary.email, "")),
+      phone: asString(c.phone, asString(primary.phone, "")),
+      address: asString(c.address, asString(primary.address, "")),
+      locations: locations.map((loc) => {
+        const l = isRecord(loc) ? loc : {};
+        return {
+          name: asString(l.name, ""),
+          type: asString(l.type, ""),
+          address: asString(l.address, ""),
+          city: asString(l.city, ""),
+          state: asString(l.state, ""),
+          country: asString(l.country, ""),
+          phone: asString(l.phone, ""),
+          email: asString(l.email, ""),
+        };
+      }),
     };
   }
 
   // Team section
   if (type === "team") {
-    const items = Array.isArray(content) ? content : [];
+    const items = asArray(content);
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      members: items.map((item: any) => ({
-        name: item.name || "",
-        role: item.role || "",
-        bio: item.bio || "",
-        photo: item.photo || item.image || "",
-      })),
+      members: items.map((item) => {
+        const it = isRecord(item) ? item : {};
+        return {
+          name: asString(it.name, ""),
+          role: asString(it.role, ""),
+          bio: asString(it.bio, ""),
+          photo: asString(it.photo, asString(it.image, "")),
+        };
+      }),
     };
   }
 
   // Portfolio section
   if (type === "portfolio") {
-    const items = Array.isArray(content) ? content : [];
+    const items = asArray(content);
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      projects: items.map((item: any) => ({
-        title: item.title || item.name || "",
-        description: item.description || "",
-        image: item.image || "",
-        link: item.link || "#",
-      })),
+      projects: items.map((item) => {
+        const it = isRecord(item) ? item : {};
+        return {
+          title: asString(it.title, asString(it.name, "")),
+          description: asString(it.description, ""),
+          image: asString(it.image, ""),
+          link: asString(it.link, "#"),
+        };
+      }),
     };
   }
 
   // Stats section
   if (type === "stats") {
-    const items = Array.isArray(content) ? content : [];
+    const items = asArray(content);
     return {
       heading: section.heading,
       subheading: section.subheading || "",
-      stats: items.map((item: any) => ({
-        value: item.value || item.number || "",
-        label: item.label || item.description || "",
-        icon: item.icon || "TrendingUp",
-      })),
+      stats: items.map((item) => {
+        const it = isRecord(item) ? item : {};
+        return {
+          value: asString(it.value, String(asNumber(it.number, 0))),
+          label: asString(it.label, asString(it.description, "")),
+          icon: asString(it.icon, "TrendingUp"),
+        };
+      }),
     };
   }
 
-  // Generic fallback
+  // Generic fallback - only spread if content is an object
+  if (isRecord(content)) {
+    return {
+      heading: section.heading,
+      subheading: section.subheading || "",
+      ...content,
+    } as ThemeSection["content"];
+  }
+
   return {
     heading: section.heading,
     subheading: section.subheading || "",
-    ...content,
-  };
+  } as ThemeSection["content"];
 }
 
 /**
@@ -224,7 +286,7 @@ export function convertV3PageToThemeSections(page: V3Page): ThemeSection[] {
       type: mapSectionType(section.type),
       enabled: true,
       order: index,
-      content: convertSectionContent(section, page.slug),
+      content: convertSectionContent(section),
       styling: {
         backgroundColor: undefined,
         textColor: undefined,

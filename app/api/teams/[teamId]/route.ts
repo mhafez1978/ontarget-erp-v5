@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
+import { CompanyMemberRole } from "@/generated/prisma/client";
 
 // GET /api/teams/[teamId] - Get team details
 // PATCH /api/teams/[teamId] - Update team
@@ -114,7 +115,7 @@ export async function GET(
         ...team,
         members: team.members.map((m) => ({
           id: m.id,
-          role: m.role,
+          role: m.role as CompanyMemberRole,
           joinedAt: m.createdAt,
           staff: {
             id: m.staff.id,
@@ -181,10 +182,10 @@ export async function PATCH(
       select: { role: true },
     });
 
-    // Check permissions: Company owner, Team ADMIN, or SUPER_ADMIN
+    // Check permissions: Company owner, Team ADMIN_OWNER, or SUPER_ADMIN
     const isOwner = team.company.ownerId === userId;
     const isTeamAdmin =
-      team.members.length > 0 && team.members[0].role === "ADMIN";
+      team.members.length > 0 && team.members[0].role === "ADMIN_OWNER";
     const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
     if (!isOwner && !isTeamAdmin && !isSuperAdmin) {
@@ -244,14 +245,19 @@ export async function PATCH(
 
       // Add new members with appropriate roles
       if (membersToAdd.length > 0) {
-        const memberCreations = membersToAdd.map((staffId: string) => {
-          let role: "MANAGER" | "ADMIN" | "STAFF" | "CONTRACTOR" = "STAFF";
+        const memberCreations: {
+          teamId: string;
+          staffId: string;
+          role: CompanyMemberRole;
+        }[] = membersToAdd.map((staffId: string) => {
+          let role: CompanyMemberRole = "COMPANY_STAFF";
 
           // Assign roles based on managerIds and teamLeadIds arrays
           if (managerIds && managerIds.includes(staffId)) {
-            role = "MANAGER";
+            role = "COMPANY_MANAGER";
           } else if (teamLeadIds && teamLeadIds.includes(staffId)) {
-            role = "ADMIN";
+            // Team leads treated as COMPANY_MANAGER in TeamMemberCompanyMemberRole enum
+            role = "COMPANY_MANAGER";
           }
 
           return {
@@ -283,19 +289,20 @@ export async function PATCH(
         });
 
         for (const member of existingMembers) {
-          let newRole: "MANAGER" | "ADMIN" | "STAFF" | "CONTRACTOR" = "STAFF";
+          let newCompanyMemberRole: CompanyMemberRole = "COMPANY_STAFF";
 
           if (managerIds && managerIds.includes(member.staffId)) {
-            newRole = "MANAGER";
+            newCompanyMemberRole = "COMPANY_MANAGER";
           } else if (teamLeadIds && teamLeadIds.includes(member.staffId)) {
-            newRole = "ADMIN";
+            // Team leads treated as COMPANY_MANAGER
+            newCompanyMemberRole = "COMPANY_MANAGER";
           }
 
           // Only update if role changed
-          if (member.role !== newRole) {
+          if (member.role !== newCompanyMemberRole) {
             await db.teamMember.update({
               where: { id: member.id },
-              data: { role: newRole },
+              data: { role: newCompanyMemberRole as CompanyMemberRole },
             });
           }
         }
@@ -377,10 +384,10 @@ export async function DELETE(
       select: { role: true },
     });
 
-    // Check permissions: Company owner, Team ADMIN, or SUPER_ADMIN
+    // Check permissions: Company owner, Team ADMIN_OWNER, or SUPER_ADMIN
     const isOwner = team.company.ownerId === userId;
     const isTeamAdmin =
-      team.members.length > 0 && team.members[0].role === "ADMIN";
+      team.members.length > 0 && team.members[0].role === "ADMIN_OWNER";
     const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
     if (!isOwner && !isTeamAdmin && !isSuperAdmin) {

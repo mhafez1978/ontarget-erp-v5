@@ -26,6 +26,13 @@ import {
   Lock,
   DollarSign,
   ExternalLink,
+  Info,
+  Calculator,
+  Shield,
+  TrendingUp,
+  Users,
+  Clock,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,8 +45,15 @@ interface Company {
   transactionCount: number;
 }
 
+interface HbarPrice {
+  price: number;
+  currency: string;
+  lastUpdated: string;
+  source: string;
+}
+
 interface Props {
-  userRole?: "SUPER_ADMIN" | "ADMIN";
+  userRole?: "SUPER_ADMIN" | "ADMIN_OWNER" | "ADMIN_NONOWNER";
 }
 
 export function CompanyBlockchainList({ userRole }: Props) {
@@ -48,6 +62,7 @@ export function CompanyBlockchainList({ userRole }: Props) {
   const [isGloballyConfigured, setIsGloballyConfigured] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [hbarPrice, setHbarPrice] = useState<HbarPrice | null>(null);
 
   // Dialog form state
   const [confirmText, setConfirmText] = useState("");
@@ -62,6 +77,7 @@ export function CompanyBlockchainList({ userRole }: Props) {
 
   useEffect(() => {
     fetchCompanies();
+    fetchHbarPrice();
   }, []);
 
   const fetchCompanies = async () => {
@@ -80,6 +96,18 @@ export function CompanyBlockchainList({ userRole }: Props) {
     }
   };
 
+  const fetchHbarPrice = async () => {
+    try {
+      const res = await fetch("/api/public/hbar-price");
+      const data = await res.json();
+      if (res.ok) {
+        setHbarPrice(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch HBAR price:", error);
+    }
+  };
+
   const handleToggle = (company: Company) => {
     if (company.enabled) {
       // Already enabled - cannot disable
@@ -89,8 +117,12 @@ export function CompanyBlockchainList({ userRole }: Props) {
       return;
     }
 
-    // Check if global Hedera is configured for ADMIN users
-    if (userRole === "ADMIN" && !isGloballyConfigured) {
+    // Check if global Hedera is configured for non-Super Admin users
+    if (
+      userRole !== "SUPER_ADMIN" &&
+      (userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") &&
+      !isGloballyConfigured
+    ) {
       toast.error("Global Hedera configuration required", {
         description:
           "Please contact your super admin to configure Hedera credentials first.",
@@ -188,18 +220,85 @@ export function CompanyBlockchainList({ userRole }: Props) {
 
   return (
     <>
-      {/* Alert banner for ADMIN users when global Hedera is not configured */}
-      {userRole === "ADMIN" && !isGloballyConfigured && (
-        <Alert className="mb-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Global Hedera Configuration Required</AlertTitle>
+      {/* Alert banner for ADMIN_OWNER users when global Hedera is not configured */}
+      {(userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") &&
+        !isGloballyConfigured && (
+          <Alert className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Global Hedera Configuration Required</AlertTitle>
+            <AlertDescription>
+              Blockchain features are currently disabled. Please contact your
+              super admin to configure the global Hedera credentials before you
+              can enable blockchain records for your companies.
+            </AlertDescription>
+          </Alert>
+        )}
+
+      {/* Super Admin Info Banner */}
+      {userRole === "SUPER_ADMIN" && !isGloballyConfigured && (
+        <Alert className="mb-4 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Super Admin: Configure Global Hedera First</AlertTitle>
           <AlertDescription>
-            Blockchain features are currently disabled. Please contact your
-            super admin to configure the global Hedera credentials before you
-            can enable blockchain records for your companies.
+            As a Super Admin, you can configure Hedera globally and enable
+            blockchain for any of your companies. Start by setting up the global
+            Hedera configuration in the settings panel above.
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Educational Content for New Users */}
+      <div className="mb-6 space-y-4">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-blue-500 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-sm mb-1">
+                  What is Blockchain Anchoring?
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Every business action (invoices, payments, user changes) gets
+                  a cryptographic fingerprint stored on Hedera's immutable
+                  ledger. This proves your records existed at specific times and
+                  haven't been tampered with.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-green-500">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <TrendingUp className="h-5 w-5 text-green-500 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-sm mb-1">Why Use It?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Build trust with customers, auditors, and regulators. Provide
+                  verifiable proof of business activities. Perfect for
+                  compliance, legal disputes, and due diligence.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-orange-500">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Calculator className="h-5 w-5 text-orange-500 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-sm mb-1">Cost Estimation</h3>
+                <p className="text-sm text-muted-foreground">
+                  ~$0.0001 per transaction. A busy company might use 1-2 HBAR
+                  monthly. Set budgets to control costs automatically.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="space-y-3">
         {companies.map((company) => (
@@ -267,7 +366,10 @@ export function CompanyBlockchainList({ userRole }: Props) {
                         onCheckedChange={() => handleToggle(company)}
                         disabled={
                           company.enabled ||
-                          (userRole === "ADMIN" && !isGloballyConfigured)
+                          (userRole !== "SUPER_ADMIN" &&
+                            (userRole === "ADMIN_OWNER" ||
+                              userRole === "ADMIN_NONOWNER") &&
+                            !isGloballyConfigured)
                         }
                         className="data-[state=checked]:bg-green-600"
                         aria-label={`Enable blockchain for ${company.name}`}
@@ -299,6 +401,26 @@ export function CompanyBlockchainList({ userRole }: Props) {
             </DialogHeader>
 
             <div className="space-y-4">
+              {/* Step-by-Step Guide */}
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>What Happens Next?</AlertTitle>
+                <AlertDescription className="space-y-2">
+                  <div className="text-sm">
+                    <p className="font-medium mb-2">After enabling:</p>
+                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                      <li>
+                        All future business actions get anchored to blockchain
+                      </li>
+                      <li>Historical data anchoring begins (if selected)</li>
+                      <li>You'll see transaction costs in the dashboard</li>
+                      <li>Public verification links become available</li>
+                      <li>Email notifications sent for budget alerts</li>
+                    </ol>
+                  </div>
+                </AlertDescription>
+              </Alert>
+
               {/* Critical Warning */}
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
@@ -382,6 +504,16 @@ export function CompanyBlockchainList({ userRole }: Props) {
                   </Label>
                 </div>
 
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle className="text-sm">Cost Control</AlertTitle>
+                  <AlertDescription className="text-sm">
+                    Set a monthly spending limit to prevent unexpected costs.
+                    Transactions are blocked when the limit is reached. Budgets
+                    reset automatically each month.
+                  </AlertDescription>
+                </Alert>
+
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="enableBudget"
@@ -410,6 +542,27 @@ export function CompanyBlockchainList({ userRole }: Props) {
                       onChange={(e) => setMonthlyBudget(e.target.value)}
                       placeholder="1.0"
                     />
+
+                    {/* USD Equivalent */}
+                    {hbarPrice && (
+                      <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                        <div className="flex items-center gap-1">
+                          <Calculator className="h-3 w-3" />
+                          <span>
+                            ≈ $
+                            {(
+                              parseFloat(monthlyBudget || "0") * hbarPrice.price
+                            ).toFixed(2)}{" "}
+                            USD (at ${hbarPrice.price.toFixed(4)}/HBAR)
+                          </span>
+                        </div>
+                        <p className="text-xs mt-1">
+                          Price updated:{" "}
+                          {new Date(hbarPrice.lastUpdated).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+
                     <p className="text-xs text-muted-foreground">
                       Transactions blocked when limit reached. Resets monthly.
                     </p>

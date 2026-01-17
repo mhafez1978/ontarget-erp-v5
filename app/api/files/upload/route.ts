@@ -4,6 +4,7 @@ import { uploadDocument } from "@/lib/storage-service";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { PLAN_LIMITS, calculateExtraStorageCost } from "@/lib/plan-limits";
 import { validateFile } from "@/lib/file-utils";
+import type { PlanType } from "@/lib/plan-limits";
 
 export const runtime = "nodejs";
 
@@ -99,11 +100,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check storage limit (skip for SUPER_USER)
-    if (folder.company.owner.plan !== "SUPER_USER") {
+    // Check storage limit (skip for SUPER_ADMIN)
+    if (folder.company.owner.plan !== "SUPER_ADMIN") {
       const plan =
         folder.company.subscriberSubscriptions[0]?.plan || "ESSENTIAL";
-      const planLimits = PLAN_LIMITS[plan];
+      // subscription plan is a Prisma enum (SubscriptionPlan) which may include role-like values
+      // cast to a key of PLAN_LIMITS and fallback to ESSENTIAL when unknown
+      const planKey =
+        (plan as unknown as keyof typeof PLAN_LIMITS) || "ESSENTIAL";
+      const planLimits = PLAN_LIMITS[planKey] ?? PLAN_LIMITS.ESSENTIAL;
       const fileSizeGB = file.size / (1024 * 1024 * 1024);
       const currentStorageGB = folder.company.storageUsedGB || 0;
       const newTotalGB = currentStorageGB + fileSizeGB;
@@ -112,9 +117,10 @@ export async function POST(request: NextRequest) {
         planLimits.storageGB !== Infinity &&
         newTotalGB > planLimits.storageGB
       ) {
+        const planTyped = planKey as PlanType;
         const { overageGB, monthlyCost } = calculateExtraStorageCost(
           newTotalGB,
-          plan
+          planTyped
         );
 
         return NextResponse.json(
@@ -140,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     // Check user permissions
     const isSuperAdmin = user.role === "SUPER_ADMIN";
-    const isAdmin = sessionUser.role === "ADMIN";
+    const isAdmin = sessionUser.role === "ADMIN_OWNER";
     const ownsCompany = user.ownedCompanies.some((c) => c.id === companyId);
     const isMember = user.companyMemberships.some(
       (m) => m.companyId === companyId
@@ -153,9 +159,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For EMPLOYEE/CONTRACTOR folders, verify ownership
+    // For EMPLOYEE/COMPANY_CONTRACTOR folders, verify ownership
     if (
-      (folder.type === "EMPLOYEE" || folder.type === "CONTRACTOR") &&
+      (folder.type === "EMPLOYEE" || folder.type === "COMPANY_CONTRACTOR") &&
       folder.ownerId
     ) {
       const membership = user.companyMemberships.find(
@@ -168,7 +174,7 @@ export async function POST(request: NextRequest) {
         !ownsCompany &&
         !isAdmin &&
         folder.ownerId !== user.id &&
-        membership?.role !== "ADMIN"
+        membership?.role !== "ADMIN_OWNER"
       ) {
         return NextResponse.json(
           { error: "You do not have permission to upload to this folder" },

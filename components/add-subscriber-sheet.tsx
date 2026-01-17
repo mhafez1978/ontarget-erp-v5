@@ -209,7 +209,7 @@ export function AddSubscriberSheet({
           </SheetTitle>
           <SheetDescription>
             Create a new subscriber company with OnTarget-ERP The customer will
-            be set as ADMIN and owner of their company.
+            be set as ADMIN_OWNER and owner of their company.
           </SheetDescription>
         </SheetHeader>
 

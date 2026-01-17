@@ -24,9 +24,9 @@ function getRoleWorkforceView(role: string) {
   switch (role) {
     case "SUPER_ADMIN":
       return <SuperAdminWorkforceView />;
-    case "ADMIN":
+    case "ADMIN_OWNER":
       return <AdminWorkforceView />;
-    case "MANAGER":
+    case "COMPANY_MANAGER":
       return <ManagerWorkforceView />;
     default:
       // For roles without workforce access, show unauthorized message
@@ -54,7 +54,7 @@ export default function WorkforcePage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +65,7 @@ export default function WorkforcePage() {
 
       if (data.authenticated && data.user) {
         // Check if user has access to workforce page
-        const allowedRoles = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+        const allowedRoles = ["SUPER_ADMIN", "ADMIN_OWNER", "COMPANY_MANAGER"];
 
         if (!allowedRoles.includes(data.user.role)) {
           // Redirect unauthorized users back to dashboard
@@ -109,7 +109,7 @@ export default function WorkforcePage() {
     <DashboardLayout user={user}>
       <div className="space-y-6">
         {/* Password Management Quick Access Card for Admins */}
-        {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
+        {(user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER") && (
           <Card className="bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-900">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">

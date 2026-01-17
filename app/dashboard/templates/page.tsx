@@ -14,9 +14,9 @@ function getRoleTemplatesView(role: string) {
   switch (role) {
     case "SUPER_ADMIN":
       return <SuperAdminTemplatesView />;
-    case "ADMIN":
+    case "ADMIN_OWNER":
       return <AdminTemplatesView />;
-    case "MANAGER":
+    case "COMPANY_MANAGER":
       return <ManagerTemplatesView />;
     default:
       return (
@@ -43,7 +43,7 @@ export default function TemplatesPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
 
@@ -54,7 +54,7 @@ export default function TemplatesPage() {
 
       if (data.authenticated && data.user) {
         // Check if user has access to templates page
-        const allowedRoles = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+        const allowedRoles = ["SUPER_ADMIN", "ADMIN_OWNER", "COMPANY_MANAGER"];
 
         if (!allowedRoles.includes(data.user.role)) {
           // Redirect unauthorized users back to dashboard

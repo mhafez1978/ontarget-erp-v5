@@ -7,7 +7,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
  * GET /api/company/export
  *
  * Export all company data for backup/migration purposes.
- * Only company owner (ADMIN) can export their company data.
+ * Only company owner (ADMIN_OWNER) can export their company data.
  *
  * Returns a comprehensive JSON export including:
  * - Company details
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Only owner can export
+    // Only owner can export (or SUPER_ADMIN)
     if (
       companyMembership.company.ownerId !== userId &&
       user.role !== "SUPER_ADMIN"

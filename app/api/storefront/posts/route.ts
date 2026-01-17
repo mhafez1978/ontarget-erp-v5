@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     const isOwner = dbUser.ownedCompanies.length > 0;
     const isMember = dbUser.companyMemberships.length > 0;
     const isAdminOrManager = dbUser.companyMemberships.some(
-      (m) => m.role === "ADMIN" || m.role === "MANAGER"
+      (m) => m.role === "ADMIN_OWNER" || m.role === "COMPANY_MANAGER"
     );
 
     const hasAccess =
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     const isOwner = dbUser.ownedCompanies.length > 0;
     const isMember = dbUser.companyMemberships.length > 0;
     const isAdminOrManager = dbUser.companyMemberships.some(
-      (m) => m.role === "ADMIN" || m.role === "MANAGER"
+      (m) => m.role === "ADMIN_OWNER" || m.role === "COMPANY_MANAGER"
     );
 
     const hasAccess =

@@ -27,6 +27,7 @@ interface Company {
 
 interface StorageProviderCardsProps {
   userRole: string;
+  userId?: string | null;
 }
 
 interface ProviderConfig {
@@ -81,11 +82,15 @@ const PROVIDERS: ProviderConfig[] = [
   },
 ];
 
-export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
+export function StorageProviderCards({
+  userRole,
+  userId,
+}: StorageProviderCardsProps & { userId?: string | null }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("GLOBAL");
   const [selectedProvider, setSelectedProvider] =
     useState<ProviderConfig | null>(null);
+  const [companyOwnerId, setCompanyOwnerId] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [activeProvider, setActiveProvider] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
@@ -122,9 +127,9 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
   const [doSpace, setDoSpace] = useState("");
   const [doEndpoint, setDoEndpoint] = useState("nyc3.digitaloceanspaces.com");
 
-  // Fetch companies for ADMIN users
+  // Fetch companies for ADMIN_OWNER users
   useEffect(() => {
-    if (userRole === "ADMIN") {
+    if (userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") {
       const fetchCompanies = async () => {
         try {
           const response = await fetch("/api/companies/my-owned");
@@ -137,14 +142,14 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
         }
       };
       fetchCompanies();
-    } // Also fetch global provider early so ADMIN can see global indication
+    } // Also fetch global provider early so company admins can see global indication
     const fetchGlobalEarly = async () => {
       try {
         const res = await fetch("/api/settings/storage?scope=GLOBAL");
         const j = await res.json();
         if (res.ok && j.provider?.isActive)
           setGlobalActiveProvider(j.provider.provider);
-      } catch (e) {
+      } catch {
         /* ignore */
       }
     };
@@ -207,6 +212,23 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
 
       const response = await fetch(url);
       const data = await response.json();
+
+      // Also fetch company owner id for permission checks when company-scoped
+      if (selectedCompanyId !== "GLOBAL") {
+        try {
+          const cResp = await fetch(`/api/company/${selectedCompanyId}`);
+          if (cResp.ok) {
+            const cJson = await cResp.json();
+            setCompanyOwnerId(cJson.company?.ownerId || null);
+          } else {
+            setCompanyOwnerId(null);
+          }
+        } catch {
+          setCompanyOwnerId(null);
+        }
+      } else {
+        setCompanyOwnerId(null);
+      }
 
       if (
         response.ok &&
@@ -794,44 +816,48 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Company Selector for ADMIN */}
-      {userRole === "ADMIN" && companies.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-2">
-              <Label>Configuration Level</Label>
-              <select
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-              >
-                <option value="GLOBAL">🌐 Global Default (System-wide)</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    🏢 {company.name} (Company Override)
+      {/* Company Selector for ADMIN_OWNER */}
+      {(userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") &&
+        companies.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-2">
+                <Label>Configuration Level</Label>
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                >
+                  <option value="GLOBAL">
+                    🌐 Global Default (System-wide)
                   </option>
-                ))}
-              </select>
-              <p className="text-xs dark:text-gray-200">
-                Select &quot;Global Default&quot; to use the system-wide storage
-                configuration, or choose a company to override with custom
-                settings.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  {companies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      🏢 {company.name} (Company Override)
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs dark:text-gray-200">
+                  Select &quot;Global Default&quot; to use the system-wide
+                  storage configuration, or choose a company to override with
+                  custom settings.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {userRole === "ADMIN" && globalActiveProvider && (
-        <Alert>
-          <Crown className="h-4 w-4" />
-          <AlertDescription>
-            A <strong>global cold storage</strong> provider is active (
-            {globalActiveProvider}). You can override it for your company by
-            selecting a provider and saving company-specific settings.
-          </AlertDescription>
-        </Alert>
-      )}
+      {(userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") &&
+        globalActiveProvider && (
+          <Alert>
+            <Crown className="h-4 w-4" />
+            <AlertDescription>
+              A <strong>global cold storage</strong> provider is active (
+              {globalActiveProvider}). You can override it for your company by
+              selecting a provider and saving company-specific settings.
+            </AlertDescription>
+          </Alert>
+        )}
 
       {userRole === "SUPER_ADMIN" && (
         <Alert>
@@ -982,10 +1008,27 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
             )}
 
             {/* Actions */}
+            {selectedCompanyId !== "GLOBAL" &&
+              companyOwnerId !== userId &&
+              userRole !== "SUPER_ADMIN" && (
+                <Alert className="mb-4">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  <div className="flex-1 text-sm">
+                    Only the company owner can modify storage provider settings.
+                    You can view the current configuration.
+                  </div>
+                </Alert>
+              )}
             <div className="flex gap-3 pt-4">
               <Button
                 onClick={handleTest}
-                disabled={isTesting || isSaving}
+                disabled={
+                  isTesting ||
+                  isSaving ||
+                  (selectedCompanyId !== "GLOBAL" &&
+                    companyOwnerId !== userId &&
+                    userRole !== "SUPER_ADMIN")
+                }
                 variant="outline"
                 className="flex-1"
                 type="button"
@@ -995,7 +1038,14 @@ export function StorageProviderCards({ userRole }: StorageProviderCardsProps) {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={isTesting || isSaving || !testSuccess}
+                disabled={
+                  isTesting ||
+                  isSaving ||
+                  !testSuccess ||
+                  (selectedCompanyId !== "GLOBAL" &&
+                    companyOwnerId !== userId &&
+                    userRole !== "SUPER_ADMIN")
+                }
                 className="flex-1"
                 type="button"
               >

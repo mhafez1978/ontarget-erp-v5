@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
           userId: user.id,
           companyId,
           role: {
-            in: ["ADMIN", "MANAGER"],
+            in: ["ADMIN_OWNER", "COMPANY_MANAGER"],
           },
         },
       });

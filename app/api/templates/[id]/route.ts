@@ -33,14 +33,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     // Authorization checks
     if (user.role === "SUPER_ADMIN") {
       // Super admin can edit any template
-    } else if (user.role === "ADMIN") {
+    } else if (user.role === "ADMIN_OWNER" || user.role === "ADMIN_NONOWNER") {
       // Admin can only edit templates for their own companies
       if (existingTemplate.scope !== "GLOBAL") {
         const companyMember = await db.companyMember.findFirst({
           where: {
             userId: user.id,
             companyId: existingTemplate.companyId!,
-            role: "ADMIN",
+            role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] },
           },
         });
 
@@ -141,14 +141,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     // Authorization checks
     if (user.role === "SUPER_ADMIN") {
       // Super admin can delete any non-default template
-    } else if (user.role === "ADMIN") {
+    } else if (user.role === "ADMIN_OWNER" || user.role === "ADMIN_NONOWNER") {
       // Admin can only delete templates for their own companies
       if (existingTemplate.scope !== "GLOBAL") {
         const companyMember = await db.companyMember.findFirst({
           where: {
             userId: user.id,
             companyId: existingTemplate.companyId!,
-            role: "ADMIN",
+            role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] },
           },
         });
 

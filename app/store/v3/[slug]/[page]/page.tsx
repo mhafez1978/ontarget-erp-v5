@@ -447,9 +447,9 @@ export default async function V3DynamicPage({ params }: V3PageProps) {
                               ? company.staff.map((s) => ({
                                   name: s.user.name || "Team Member",
                                   role:
-                                    s.role === "ADMIN"
+                                    s.role === "ADMIN_OWNER"
                                       ? "Administrator"
-                                      : s.role === "MANAGER"
+                                      : s.role === "COMPANY_MANAGER"
                                       ? "Manager"
                                       : "Team Member",
                                   image: s.user.image || null,

@@ -85,7 +85,7 @@ export async function GET(request: Request) {
           action: AUDIT_ACTIONS.USER_UPDATED,
           userId: staff.userId,
           companyId: staff.companyId,
-          entityType: ENTITY_TYPES.STAFF_MEMBER,
+          entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
           entityId: staff.id,
           description: `Account disabled due to incomplete onboarding - Token expired ${Math.floor(
             (now.getTime() - token.expiresAt.getTime()) / (1000 * 60 * 60)
@@ -104,7 +104,7 @@ export async function GET(request: Request) {
           action: AUDIT_ACTIONS.ONBOARDING_EXPIRED,
           userId: staff.userId,
           companyId: staff.companyId,
-          entityType: ENTITY_TYPES.STAFF_MEMBER,
+          entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
           entityId: staff.id,
           description: `Onboarding token expired for ${staff.user.email}`,
           metadata: {

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format sessions
-    const formattedSessions = sessions.map((s) => ({
+    const formattedSessions = sessions.map((s: any) => ({
       id: s.id,
       isCurrent:
         s.userId === user.id &&

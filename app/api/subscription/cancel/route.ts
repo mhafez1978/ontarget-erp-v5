@@ -4,6 +4,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import paymentsService from "@/lib/payments/service";
 import { z } from "zod";
+import { SubscriptionStatus } from "@/generated/prisma/client";
 
 const cancelSchema = z.object({
   companyId: z.string(),
@@ -171,9 +172,14 @@ export async function POST(request: NextRequest) {
 
     // Update subscription status in database
     await db.subscription.update({
-      where: { id: subscription.id },
+      where: {
+        rootCompanyId_subscriberCompanyId: {
+          rootCompanyId: subscription.rootCompanyId,
+          subscriberCompanyId: subscription.subscriberCompanyId,
+        },
+      },
       data: {
-        status: "CANCELLED",
+        status: "CANCELLED" as SubscriptionStatus,
         updatedAt: new Date(),
       },
     });
@@ -185,7 +191,7 @@ export async function POST(request: NextRequest) {
         companyId,
         action: "SUBSCRIPTION_CANCELLED",
         entityType: "Subscription",
-        entityId: subscription.id,
+        entityId: `${subscription.rootCompanyId}-${subscription.subscriberCompanyId}`,
         description: `Subscription cancelled by ${user.name}. ${
           deleteImmediately
             ? "Immediate deletion requested"

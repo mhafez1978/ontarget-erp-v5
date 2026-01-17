@@ -98,7 +98,7 @@ export async function GET(request: Request) {
         action: AUDIT_ACTIONS.ONBOARDING_TOKEN_VIEWED,
         userId: onboardingToken.staff.user.id,
         companyId: onboardingToken.staff.company?.id,
-        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
         entityId: onboardingToken.staff.id,
         description: `Expired onboarding token accessed for ${onboardingToken.staff.user.email}`,
         metadata: { token: onboardingToken.token, expired: true },
@@ -144,7 +144,7 @@ export async function GET(request: Request) {
       action: AUDIT_ACTIONS.ONBOARDING_TOKEN_VIEWED,
       userId: onboardingToken.staff.user.id,
       companyId: onboardingToken.staff.company?.id,
-      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
       entityId: onboardingToken.staff.id,
       description: `Onboarding token verified for ${onboardingToken.staff.user.email}`,
       metadata: {

@@ -4,7 +4,7 @@
  * Gathers comprehensive company data for AI to create truly unique designs
  */
 
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 import type { V4CompanyContext } from "./v4-types.ts";
 
 export async function buildV4Context(
@@ -262,13 +262,34 @@ export async function buildV4Context(
     },
 
     // Extract social media links from storeMetadata
-    socialLinks: {
-      facebook: (company.storeMetadata as any)?.socialLinks?.facebook || null,
-      twitter: (company.storeMetadata as any)?.socialLinks?.twitter || null,
-      instagram: (company.storeMetadata as any)?.socialLinks?.instagram || null,
-      linkedin: (company.storeMetadata as any)?.socialLinks?.linkedin || null,
-      youtube: (company.storeMetadata as any)?.socialLinks?.youtube || null,
-    },
+    socialLinks: (() => {
+      const sm =
+        (company.storeMetadata as Record<string, unknown> | null) || null;
+      const social =
+        (sm?.socialLinks as Record<string, unknown> | undefined) || undefined;
+      return {
+        facebook:
+          typeof social?.facebook === "string"
+            ? (social.facebook as string)
+            : null,
+        twitter:
+          typeof social?.twitter === "string"
+            ? (social.twitter as string)
+            : null,
+        instagram:
+          typeof social?.instagram === "string"
+            ? (social.instagram as string)
+            : null,
+        linkedin:
+          typeof social?.linkedin === "string"
+            ? (social.linkedin as string)
+            : null,
+        youtube:
+          typeof social?.youtube === "string"
+            ? (social.youtube as string)
+            : null,
+      };
+    })(),
 
     gallery: [], // Could be extracted from product/service images
 

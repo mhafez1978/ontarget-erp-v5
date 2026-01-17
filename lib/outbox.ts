@@ -1,17 +1,17 @@
 import { db } from "@/lib/db";
-import type { OutboxJob } from "@prisma/client";
+import type { OutboxJob, Prisma } from "@/generated/prisma/client";
 
 export type OutboxJobType = "HEDERA_ANCHOR" | string;
 
 export async function enqueueOutboxJob(
   type: OutboxJobType,
-  payload: object,
+  payload: Prisma.JsonValue,
   runAt?: Date
 ): Promise<OutboxJob> {
   return db.outboxJob.create({
     data: {
       type,
-      payload: payload as any,
+      payload: payload as unknown as Prisma.InputJsonValue,
       runAt: runAt || null,
     },
   });
@@ -48,14 +48,15 @@ export async function markJobCompleted(id: string): Promise<OutboxJob> {
 
 export async function markJobFailed(
   id: string,
-  error: any,
+  error: unknown,
   scheduleRetry: Date | null
 ): Promise<OutboxJob> {
+  const lastError = error instanceof Error ? error.message : String(error);
   const attemptsInc = await db.outboxJob.update({
     where: { id },
     data: {
       attempts: { increment: 1 },
-      lastError: String(error?.message || error),
+      lastError,
       status: scheduleRetry ? "PENDING" : "FAILED",
       runAt: scheduleRetry,
     },

@@ -46,7 +46,7 @@ export default function InvoicesPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -104,7 +104,7 @@ export default function InvoicesPage() {
   }, [fetchUser]);
 
   useEffect(() => {
-    if (!loading && user.role !== "GUEST") {
+    if (!loading && user.role !== "TRIAL") {
       fetchInvoices();
     }
   }, [loading, user.role, fetchInvoices]);

@@ -5,17 +5,23 @@ import useSWR from "swr";
 // User role types from the database
 export type UserRole =
   | "SUPER_ADMIN"
-  | "ADMIN"
-  | "MANAGER"
-  | "STAFF"
-  | "CONTRACTOR"
+  | "ADMIN_OWNER"
+  | "ADMIN_NONOWNER"
+  | "COMPANY_ADMIN"
+  | "COMPANY_MANAGER"
+  | "COMPANY_STAFF"
+  | "COMPANY_CONTRACTOR"
   | "ERP_CUSTOMER"
   | "COMPANY_CUSTOMER"
-  | "SUPPLIER"
-  | "GUEST";
+  | "COMPANY_SUPPLIER"
+  | "TRIAL";
 
 // Team member role types
-export type TeamRole = "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR";
+export type TeamRole =
+  | "COMPANY_ADMIN"
+  | "COMPANY_MANAGER"
+  | "COMPANY_STAFF"
+  | "COMPANY_CONTRACTOR";
 
 // Permission context for entities
 export interface PermissionContext {
@@ -154,7 +160,7 @@ export function checkCompanyPermissions(
   const memberRole = user.companyMemberships?.find(
     (m) => m.companyId === companyId
   )?.role;
-  const isCompanyAdmin = memberRole === "ADMIN";
+  const isCompanyAdmin = memberRole === "COMPANY_ADMIN";
 
   return {
     canView: isSuperAdmin || isOwner || isMember || isStaff,
@@ -165,7 +171,7 @@ export function checkCompanyPermissions(
     canManageSettings: isSuperAdmin || isOwner,
     isOwner,
     isAdmin: isSuperAdmin || isCompanyAdmin,
-    isManager: memberRole === "MANAGER",
+    isManager: memberRole === "COMPANY_MANAGER",
   };
 }
 
@@ -184,8 +190,8 @@ export function checkTeamPermissions(
     ? user.ownedCompanies?.some((c) => c.id === companyId) || false
     : false;
   const isSuperAdmin = user.role === "SUPER_ADMIN";
-  const isTeamAdmin = teamRole === "ADMIN";
-  const isTeamManager = teamRole === "MANAGER";
+  const isTeamAdmin = teamRole === "COMPANY_ADMIN";
+  const isTeamManager = teamRole === "COMPANY_MANAGER";
   const isTeamMember = !!teamMembership;
 
   return {
@@ -219,15 +225,15 @@ export function checkProjectPermissions(
     ? user.teamMemberships?.find((m) => m.teamId === context.teamId)
     : undefined;
   const teamRole = teamMembership?.role;
-  const isTeamAdmin = teamRole === "ADMIN";
-  const isTeamManager = teamRole === "MANAGER";
+  const isTeamAdmin = teamRole === "COMPANY_ADMIN";
+  const isTeamManager = teamRole === "COMPANY_MANAGER";
   const isTeamMember = !!teamMembership;
 
-  // For MANAGER, STAFF, CONTRACTOR - must be team member
+  // For COMPANY_MANAGER, COMPANY_STAFF, COMPANY_CONTRACTOR - must be team member
   const requiresTeamMembership =
-    user.role === "MANAGER" ||
-    user.role === "STAFF" ||
-    user.role === "CONTRACTOR";
+    user.role === "COMPANY_MANAGER" ||
+    user.role === "COMPANY_STAFF" ||
+    user.role === "COMPANY_CONTRACTOR";
 
   const hasAccess = requiresTeamMembership
     ? isSuperAdmin || isOwner || isTeamMember
@@ -265,15 +271,16 @@ export function checkTaskPermissions(
     ? user.teamMemberships?.find((m) => m.teamId === context.teamId)
     : undefined;
   const teamRole = teamMembership?.role;
-  const isTeamAdmin = teamRole === "ADMIN";
-  const isTeamManager = teamRole === "MANAGER";
+  const isTeamAdmin = teamRole === "COMPANY_ADMIN";
+  const isTeamManager = teamRole === "COMPANY_MANAGER";
   const isTeamMember = !!teamMembership;
 
-  // For MANAGER, STAFF, CONTRACTOR - must be team member
+  // For COMPANY_MANAGER, COMPANY_STAFF, COMPANY_CONTRACTOR - must be team member
   const requiresTeamMembership =
-    user.role === "MANAGER" ||
-    user.role === "STAFF" ||
-    user.role === "CONTRACTOR";
+    user.role === "COMPANY_MANAGER" ||
+    user.role === "COMPANY_STAFF" ||
+    user.role === "COMPANY_CONTRACTOR";
+  user.role === "COMPANY_CONTRACTOR";
 
   const hasAccess = requiresTeamMembership
     ? isSuperAdmin || isOwner || isTeamMember
@@ -286,7 +293,7 @@ export function checkTaskPermissions(
     isTeamAdmin ||
     isTeamManager ||
     isCreator ||
-    (isTeamMember && user.role === "STAFF");
+    (isTeamMember && user.role === "COMPANY_STAFF");
 
   return {
     canView: hasAccess,

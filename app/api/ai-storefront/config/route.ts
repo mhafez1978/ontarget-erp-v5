@@ -3,7 +3,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import { canUseAiStorefront } from "@/lib/billing/plan-gating";
 import { getAiStorefrontMonthlyLimit } from "@/lib/ai/ai-limits";
-import type { SubscriptionPlan } from "@/lib/types/subscription";
+import type { SubscriptionPlan } from "@/generated/prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -61,7 +61,9 @@ export async function GET(request: NextRequest) {
     const isMember = user.companyMemberships.length > 0;
     const isAdminOrManager = user.companyMemberships.some(
       (m: { role?: string | null }) =>
-        m.role === "ADMIN" || m.role === "MANAGER"
+        m.role === "ADMIN_OWNER" ||
+        m.role === "ADMIN_NONOWNER" ||
+        m.role === "COMPANY_MANAGER"
     );
 
     const hasAccess =
@@ -188,7 +190,9 @@ export async function POST(request: NextRequest) {
     const isMember = user.companyMemberships.length > 0;
     const isAdminOrManager = user.companyMemberships.some(
       (m: { role?: string | null }) =>
-        m.role === "ADMIN" || m.role === "MANAGER"
+        m.role === "ADMIN_OWNER" ||
+        m.role === "ADMIN_NONOWNER" ||
+        m.role === "COMPANY_MANAGER"
     );
 
     const hasAccess =

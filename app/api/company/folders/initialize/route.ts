@@ -31,13 +31,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user is ADMIN or SUPER_ADMIN
+    // Verify user is ADMIN_OWNER or SUPER_ADMIN
     const user = await db.user.findUnique({
       where: { id: userId },
       select: { id: true, role: true },
     });
 
-    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    if (
+      !user ||
+      !["ADMIN_OWNER", "ADMIN_NONOWNER", "SUPER_ADMIN"].includes(user.role)
+    ) {
       return NextResponse.json(
         { error: "Only Admins can initialize folders" },
         { status: 403 }
@@ -99,7 +102,7 @@ export async function POST(request: NextRequest) {
     const sharedFolder = await db.fileFolder.create({
       data: {
         companyId,
-        name: "Shared",
+        name: "Public Share",
         path: `${basePath}/Shared`,
         type: "SHARED",
       },
@@ -144,14 +147,14 @@ export async function POST(request: NextRequest) {
         staff.user.name?.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase() ||
         "unnamed";
 
-      if (staff.role === "CONTRACTOR") {
+      if (staff.role === "COMPANY_CONTRACTOR") {
         const folder = await db.fileFolder.create({
           data: {
             companyId,
             name: staff.user.name || "Unnamed",
             path: `${basePath}/Contractors/${sanitizedName}`,
             parentId: contractorsFolder.id,
-            type: "CONTRACTOR",
+            type: "COMPANY_CONTRACTOR",
             ownerId: staff.id,
           },
         });

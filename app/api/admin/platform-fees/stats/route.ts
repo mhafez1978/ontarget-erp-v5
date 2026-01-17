@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
+import type { Payment } from "@/generated/prisma/client";
+
+interface PaymentWithCompany extends Payment {
+  company: {
+    id: string;
+    name: string;
+    subscriberSubscriptions: Array<{
+      plan: string;
+    }>;
+  };
+}
 
 interface PaymentMetadata {
   platformFee?: {
@@ -63,7 +74,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Filter for payments with platform fees
-    const payments = allPayments.filter((payment) => {
+    const payments = allPayments.filter((payment: PaymentWithCompany) => {
       const metadata = payment.metadata as PaymentMetadata;
       return metadata && metadata.platformFee;
     });
@@ -140,17 +151,19 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.feesCollected - a.feesCollected);
 
     // Recent transactions (last 20)
-    const recentTransactions = payments.slice(0, 20).map((payment) => {
-      const platformFee = payment.metadata as PaymentMetadata;
-      return {
-        id: payment.id,
-        companyName: payment.company.name,
-        amount: Math.round(Number(payment.amount) * 100), // Convert to cents
-        feeAmount: platformFee?.platformFee?.amountCents || 0,
-        feePercent: platformFee?.platformFee?.percent || 0,
-        createdAt: payment.createdAt.toISOString(),
-      };
-    });
+    const recentTransactions = payments
+      .slice(0, 20)
+      .map((payment: PaymentWithCompany) => {
+        const platformFee = payment.metadata as PaymentMetadata;
+        return {
+          id: payment.id,
+          companyName: payment.company.name,
+          amount: Math.round(Number(payment.amount) * 100), // Convert to cents
+          feeAmount: platformFee?.platformFee?.amountCents || 0,
+          feePercent: platformFee?.platformFee?.percent || 0,
+          createdAt: payment.createdAt.toISOString(),
+        };
+      });
 
     return NextResponse.json({
       totalFeesCollected,

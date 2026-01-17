@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const userId = validation.user.id;
     const userRole = validation.user.role;
 
-    // Check that user can access this company (SUPER_ADMIN, owner, or ADMIN/MANAGER member)
+    // Check that user can access this company (SUPER_ADMIN, owner, or ADMIN_OWNER/COMPANY_MANAGER member)
     const dbUser = await db.user.findUnique({
       where: { id: userId },
       select: {
@@ -46,7 +46,10 @@ export async function GET(request: NextRequest) {
     const isOwner = dbUser.ownedCompanies.length > 0;
     const isMember = dbUser.companyMemberships.length > 0;
     const isAdminOrManager = dbUser.companyMemberships.some(
-      (m) => m.role === "ADMIN" || m.role === "MANAGER"
+      (m) =>
+        m.role === "ADMIN_OWNER" ||
+        m.role === "ADMIN_NONOWNER" ||
+        m.role === "COMPANY_MANAGER"
     );
 
     const hasAccess =

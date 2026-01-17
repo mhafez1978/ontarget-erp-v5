@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         where.scope = scope;
         where.companyId = null;
       }
-    } else if (user.role === "ADMIN") {
+    } else if (user.role === "ADMIN_OWNER") {
       // Admins can only see their company storage
       const companies = await db.company.findMany({
         where: { ownerId: userId },
@@ -103,7 +103,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (scope === "GLOBAL" && !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    if (
+      scope === "GLOBAL" &&
+      !["ADMIN_OWNER", "SUPER_ADMIN"].includes(user.role)
+    ) {
       return NextResponse.json(
         { error: "Only super admins can configure global storage" },
         { status: 403 }

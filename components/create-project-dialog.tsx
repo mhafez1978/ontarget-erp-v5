@@ -219,19 +219,21 @@ export function CreateProjectDialog({
     const selectedTeam = teams.find((t) => t.id === teamId);
     if (!selectedTeam?.members || selectedTeam.members.length === 0) return;
 
-    // Find MANAGER role for Team Lead (primary choice)
-    const manager = selectedTeam.members.find((m) => m.role === "MANAGER");
-    // Find ADMIN role as fallback or for Project Manager
-    const admin = selectedTeam.members.find((m) => m.role === "ADMIN");
+    // Find COMPANY_MANAGER role for Team Lead (primary choice)
+    const manager = selectedTeam.members.find(
+      (m) => m.role === "COMPANY_MANAGER"
+    );
+    // Find TEAM_ADMIN role as fallback or for Project Manager
+    const admin = selectedTeam.members.find((m) => m.role === "TEAM_ADMIN");
 
-    // Auto-populate Team Lead (prefer MANAGER, fallback to ADMIN)
+    // Auto-populate Team Lead (prefer COMPANY_MANAGER, fallback to TEAM_ADMIN)
     if (manager) {
       setTeamLeadId(manager.staff.id);
     } else if (admin) {
       setTeamLeadId(admin.staff.id);
     }
 
-    // Auto-populate Project Manager (prefer ADMIN, fallback to MANAGER)
+    // Auto-populate Project Manager (prefer TEAM_ADMIN, fallback to COMPANY_MANAGER)
     if (admin) {
       setProjectManagerId(admin.staff.id);
     } else if (manager) {

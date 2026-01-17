@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import type { GeneratedSection } from "@prisma/client";
+import type { GeneratedSection } from "@/generated/prisma/client";
 
 async function handleRequest(
   req: NextRequest,

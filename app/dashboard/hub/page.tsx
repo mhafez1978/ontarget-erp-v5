@@ -29,7 +29,7 @@ export default function HubPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
   const [emailConfigured, setEmailConfigured] = useState(false);
@@ -45,7 +45,7 @@ export default function HubPage() {
 
       if (data.authenticated && data.user) {
         // Check if user has access to hub page
-        const allowedRoles = ["SUPER_ADMIN", "ADMIN"];
+        const allowedRoles = ["SUPER_ADMIN", "ADMIN_OWNER"];
 
         if (!allowedRoles.includes(data.user.role)) {
           // Redirect unauthorized users back to dashboard
@@ -96,7 +96,7 @@ export default function HubPage() {
   // Show warning if email is not configured
   if (!emailConfigured) {
     const isSuperAdmin = user.role === "SUPER_ADMIN";
-    const isAdmin = user.role === "ADMIN";
+    const isAdmin = user.role === "ADMIN_OWNER";
 
     return (
       <DashboardLayout user={user}>

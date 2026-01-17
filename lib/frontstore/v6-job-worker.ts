@@ -13,7 +13,7 @@
 
 import { db } from "@/lib/db";
 import { generateAIVideo } from "@/lib/frontstore/v6-video-service";
-import type { VideoGenerationJob } from "@prisma/client";
+import type { VideoGenerationJob } from "@/generated/prisma/client";
 
 async function log(jobId: string, level: string, message: string) {
   await db.videoGenerationLog.create({ data: { jobId, level, message } });

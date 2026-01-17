@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI, hasRole } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import { encrypt } from "@/lib/encryption";
-import { Decimal } from "@prisma/client/runtime/library";
+import Decimal from "decimal.js";
 
 /**
  * GET /api/admin/hedera-settings

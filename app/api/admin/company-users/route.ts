@@ -13,8 +13,11 @@ export async function GET(request: NextRequest) {
 
     const adminUser = validation.user;
 
-    // Only ADMIN can access this endpoint (SUPER_ADMIN uses /api/admin/users)
-    if (adminUser.role !== "ADMIN") {
+    // Only company admins (owner or non-owner) can access this endpoint (SUPER_ADMIN uses /api/admin/users)
+    if (
+      adminUser.role !== "ADMIN_OWNER" &&
+      adminUser.role !== "ADMIN_NONOWNER"
+    ) {
       return NextResponse.json(
         {
           error: "Unauthorized. Only company admins can access this resource.",
@@ -32,7 +35,9 @@ export async function GET(request: NextRequest) {
             members: {
               some: {
                 userId: adminUser.id,
-                role: { in: ["ADMIN", "MANAGER"] },
+                role: {
+                  in: ["ADMIN_OWNER", "ADMIN_NONOWNER", "COMPANY_MANAGER"],
+                },
               },
             },
           },
@@ -151,14 +156,15 @@ export async function GET(request: NextRequest) {
 
     // Convert map to array and remove password hashes
     const users = Array.from(userMap.values()).sort((a, b) => {
-      // Sort by role (SUPER_ADMIN first, then ADMIN, etc.) then by name
+      // Sort by role (SUPER_ADMIN first, then ADMIN_OWNER/ADMIN_NONOWNER, etc.) then by name
       const roleOrder: { [key: string]: number } = {
         SUPER_ADMIN: 0,
-        ADMIN: 1,
-        MANAGER: 2,
-        STAFF: 3,
+        ADMIN_OWNER: 1,
+        ADMIN_NONOWNER: 1,
+        COMPANY_MANAGER: 2,
+        COMPANY_STAFF: 3,
         ERP_CUSTOMER: 4,
-        GUEST: 5,
+        TRIAL: 5,
       };
       const roleCompare = (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
       if (roleCompare !== 0) return roleCompare;

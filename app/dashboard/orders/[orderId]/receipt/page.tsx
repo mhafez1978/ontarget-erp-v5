@@ -63,7 +63,7 @@ export default function OrderReceiptPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
 
   useEffect(() => {

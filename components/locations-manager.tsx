@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
-import { CompanyLocation, LocationType } from "@prisma/client";
+import { CompanyLocation, LocationType } from "../generated/prisma/client";
 
 interface LocationsManagerProps {
   companyId: string;
@@ -44,6 +44,9 @@ const getLocationTypeLabel = (type: LocationType) => {
     BRANCH: "Branch",
     OFFICE: "Office",
     WAREHOUSE: "Warehouse",
+    STORE: "Store",
+    REMOTE: "Remote",
+    OTHER: "Other",
   };
   return labels[type];
 };

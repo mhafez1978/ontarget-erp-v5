@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { createPaymentProvider } from "@/lib/payment-providers";
+import type { PaymentProviderConfig } from "@/lib/payment-providers";
 
 export async function POST(request: NextRequest) {
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) return validation.response;
 
-    const body = await request.json();
-    const { provider, publicKey, secretKey, webhookSecret, isTestMode } =
-      body as any;
+    interface TestBody {
+      provider?: string;
+      publicKey?: string;
+      secretKey?: string;
+      webhookSecret?: string;
+      isTestMode?: boolean;
+    }
+
+    const body = (await request.json()) as TestBody;
+    const { provider, publicKey, secretKey, webhookSecret, isTestMode } = body;
 
     if (!provider)
       return NextResponse.json(
@@ -19,21 +27,29 @@ export async function POST(request: NextRequest) {
 
     // Minimal test: ensure credentials present; if provider factory has a test hook, call it
     try {
-      const impl = createPaymentProvider(provider, {
+      // Ensure the config satisfies PaymentProviderConfig (secretKey is required)
+      // We'll provide empty string for secretKey if missing so the provider can validate it explicitly
+      const config: PaymentProviderConfig = {
         publicKey,
-        secretKey,
+        secretKey: secretKey ?? "",
         webhookSecret,
-        isTestMode,
-      });
-      if (impl && typeof (impl as any).testConnection === "function") {
-        const res = await (impl as any).testConnection();
+        isTestMode: isTestMode ?? true,
+      };
+
+      const impl = createPaymentProvider(provider, config);
+      type ProviderImpl = {
+        testConnection?: () => Promise<{ message?: string } | void>;
+      };
+      const implTyped = impl as ProviderImpl;
+      if (implTyped && typeof implTyped.testConnection === "function") {
+        const res = await implTyped.testConnection();
         return NextResponse.json({
           success: true,
           message: res?.message || "Connection successful",
         });
       }
     } catch (err) {
-      console.warn("Payment provider test failed:", err);
+      console.error("Payment provider test failed:", err);
       return NextResponse.json(
         { success: false, message: String(err) },
         { status: 400 }

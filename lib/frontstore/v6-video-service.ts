@@ -4,7 +4,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { getCompanyStorage, getSuperAdminStorage } from "@/lib/storage-service";
 import { decrypt } from "@/lib/encryption";
-import type { VideoProviderConfig, Company } from "@prisma/client";
+import type { VideoProviderConfig, Company } from "@/generated/prisma/client";
 
 function normalizeError(e: unknown): string {
   if (e instanceof Error) return e.message;

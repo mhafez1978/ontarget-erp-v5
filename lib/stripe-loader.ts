@@ -3,9 +3,11 @@
  * Only load Stripe when actually needed (on payment pages)
  */
 
-let stripePromise: Promise<any> | null = null;
+import type { Stripe } from "@stripe/stripe-js";
 
-export const loadStripe = async () => {
+let stripePromise: Promise<Stripe | null> | null = null;
+
+export const loadStripe = async (): Promise<Stripe | null> => {
   if (stripePromise) {
     return stripePromise;
   }

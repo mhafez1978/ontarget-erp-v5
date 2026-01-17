@@ -157,7 +157,8 @@ export function DashboardLayout({
     if (
       user?.role &&
       (user.role === "SUPER_ADMIN" ||
-        user.role === "ADMIN" ||
+        user.role === "ADMIN_OWNER" ||
+        user.role === "ADMIN_NONOWNER" ||
         user.role === "ERP_CUSTOMER")
     ) {
       fetchCompanyCount();
@@ -166,7 +167,7 @@ export function DashboardLayout({
 
   // Get menu items based on user role, company count, and plan
   const menuItems = getRoleMenuItems(
-    user?.role || "GUEST",
+    user?.role || "TRIAL",
     companyCount,
     user?.plan
   );

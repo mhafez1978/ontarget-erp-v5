@@ -61,7 +61,7 @@ export default function BrandingPage() {
 
         {user?.role === "SUPER_ADMIN" ? (
           <RootCompanyBrandingCard />
-        ) : user?.role === "ADMIN" ? (
+        ) : user?.role === "ADMIN_OWNER" ? (
           <CompanyWhiteLabelSettings />
         ) : (
           <div className="text-center py-12">

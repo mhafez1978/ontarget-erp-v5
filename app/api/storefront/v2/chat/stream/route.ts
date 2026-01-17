@@ -6,7 +6,8 @@ import { streamStorefrontModel } from "@/lib/ai/model-client";
 import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
 import { decrypt } from "@/lib/encryption";
 import { canUseAiStorefrontV2 } from "@/lib/billing/plan-gating";
-import { SubscriptionPlan } from "@prisma/client";
+import type { SubscriptionPlan, Prisma } from "@/generated/prisma/client";
+import Decimal from "decimal.js";
 
 // Simple server-side SSE-style streaming over a readable stream. This is a
 // pragmatic MVP: we call the non-streaming model and then stream the response
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
       console.warn(
         "[AI Storefront V2] FRONTSTORE_V2_PUBLIC enabled — bypassing auth for testing"
       );
-      user = { id: "public", role: "SUPER_ADMIN", plan: "SUPER_USER" };
+      user = { id: "public", role: "SUPER_ADMIN", plan: "SUPER_ADMIN" };
     } else {
       const validation = await validateSessionForAPI(request);
       if (!validation.valid) {
@@ -375,14 +376,23 @@ export async function POST(request: NextRequest) {
         postalCode: companyData?.postalCode,
         website: companyData?.website,
       },
-      products: cleanProducts.map((p) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description ?? null,
-        price: Number(p.price ?? 0),
-        category: p.category ?? null,
-        images: p.images.map((img) => img.url), // Just pass the clean URLs
-      })),
+      products: cleanProducts.map(
+        (p: {
+          id: string;
+          name: string;
+          description: string | null;
+          price: Decimal | null;
+          category: string | null;
+          images: { url: string }[];
+        }) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description ?? null,
+          price: p.price ? Number(p.price.toNumber()) : 0,
+          category: p.category ?? null,
+          images: p.images.map((img) => img.url), // Just pass the clean URLs
+        })
+      ),
       services: services.map((s) => ({
         id: s.id,
         name: s.name,
@@ -439,21 +449,58 @@ export async function POST(request: NextRequest) {
         phone: loc.phone,
         email: loc.email,
       })),
-      metadata: {
-        title: (companyData?.storeMetadata as any)?.title || null,
-        description: (companyData?.storeMetadata as any)?.description || null,
-        keywords: (companyData?.storeMetadata as any)?.keywords || [],
+      // Safely parse store metadata (StoreMetadata is JSON in Prisma schema)
+      metadata: ((): {
+        title: string | null;
+        description: string | null;
+        keywords: string[];
         socialLinks: {
-          facebook:
-            (companyData?.storeMetadata as any)?.socialLinks?.facebook || null,
-          twitter:
-            (companyData?.storeMetadata as any)?.socialLinks?.twitter || null,
-          instagram:
-            (companyData?.storeMetadata as any)?.socialLinks?.instagram || null,
-          linkedin:
-            (companyData?.storeMetadata as any)?.socialLinks?.linkedin || null,
-        },
-      },
+          facebook: string | null;
+          twitter: string | null;
+          instagram: string | null;
+          linkedin: string | null;
+        };
+      } => {
+        const md = companyData?.storeMetadata as
+          | {
+              title?: string;
+              description?: string;
+              keywords?: string[];
+              socialLinks?: Record<string, unknown>;
+            }
+          | null
+          | undefined;
+        return {
+          title: md?.title ?? null,
+          description: md?.description ?? null,
+          keywords: Array.isArray(md?.keywords)
+            ? (md?.keywords as string[])
+            : [],
+          socialLinks: (() => {
+            const social = md?.socialLinks as
+              | Record<string, unknown>
+              | undefined;
+            return {
+              facebook:
+                social && typeof social["facebook"] === "string"
+                  ? (social["facebook"] as string)
+                  : null,
+              twitter:
+                social && typeof social["twitter"] === "string"
+                  ? (social["twitter"] as string)
+                  : null,
+              instagram:
+                social && typeof social["instagram"] === "string"
+                  ? (social["instagram"] as string)
+                  : null,
+              linkedin:
+                social && typeof social["linkedin"] === "string"
+                  ? (social["linkedin"] as string)
+                  : null,
+            };
+          })(),
+        };
+      })(),
       blogEnabled: company.storeBlogEnabled,
       blogHasPosts: posts.length > 0,
       prompt: message,
@@ -650,7 +697,7 @@ export async function POST(request: NextRequest) {
             const specVersion = await db.storefrontSpecVersion.create({
               data: {
                 companyId,
-                spec: (resultSpec || {}) as any,
+                spec: (resultSpec || {}) as unknown as Prisma.InputJsonValue,
                 createdBy: user.id,
               },
             });
@@ -719,7 +766,7 @@ export async function POST(request: NextRequest) {
           const specVersion = await db.storefrontSpecVersion.create({
             data: {
               companyId,
-              spec: (result.spec || {}) as any,
+              spec: (result.spec || {}) as unknown as Prisma.InputJsonValue,
               createdBy: user.id,
             },
           });

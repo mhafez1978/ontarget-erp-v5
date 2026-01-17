@@ -36,7 +36,10 @@ export async function POST(request: NextRequest) {
     const companyId =
       user.ownedCompanies[0]?.id ||
       user.companyMemberships.find(
-        (m) => m.role === "ADMIN" || m.role === "MANAGER"
+        (m) =>
+          m.role === "ADMIN_OWNER" ||
+          m.role === "ADMIN_NONOWNER" ||
+          m.role === "COMPANY_MANAGER"
       )?.companyId;
 
     if (!companyId) {
@@ -46,11 +49,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only ADMIN, MANAGER and SUPER_ADMIN can upload banners
+    // Only company admins (owner/non-owner), COMPANY_MANAGER and SUPER_ADMIN can upload banners
     if (
-      user.role !== "ADMIN" &&
+      user.role !== "ADMIN_OWNER" &&
+      user.role !== "ADMIN_NONOWNER" &&
       user.role !== "SUPER_ADMIN" &&
-      user.role !== "MANAGER"
+      user.role !== "COMPANY_MANAGER"
     ) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
@@ -163,7 +167,10 @@ export async function DELETE(request: NextRequest) {
     const companyId =
       user.ownedCompanies[0]?.id ||
       user.companyMemberships.find(
-        (m) => m.role === "ADMIN" || m.role === "MANAGER"
+        (m) =>
+          m.role === "ADMIN_OWNER" ||
+          m.role === "ADMIN_NONOWNER" ||
+          m.role === "COMPANY_MANAGER"
       )?.companyId;
 
     if (!companyId) {
@@ -173,11 +180,12 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Only ADMIN, MANAGER and SUPER_ADMIN can delete banners
+    // Only company admins (owner/non-owner), COMPANY_MANAGER and SUPER_ADMIN can delete banners
     if (
-      user.role !== "ADMIN" &&
+      user.role !== "ADMIN_OWNER" &&
+      user.role !== "ADMIN_NONOWNER" &&
       user.role !== "SUPER_ADMIN" &&
-      user.role !== "MANAGER"
+      user.role !== "COMPANY_MANAGER"
     ) {
       return NextResponse.json(
         { error: "Insufficient permissions" },

@@ -51,22 +51,22 @@ interface AddTeamMemberDialogProps {
 
 const TEAM_ROLES = [
   {
-    value: "ADMIN",
+    value: "ADMIN_OWNER",
     label: "Admin",
     color: "bg-purple-500/10 text-purple-700 border-purple-200",
   },
   {
-    value: "MANAGER",
+    value: "COMPANY_MANAGER",
     label: "Manager",
     color: "bg-blue-500/10 text-blue-700 border-blue-200",
   },
   {
-    value: "STAFF",
+    value: "COMPANY_STAFF",
     label: "Staff",
     color: "bg-green-500/10 text-green-700 border-green-200",
   },
   {
-    value: "CONTRACTOR",
+    value: "COMPANY_CONTRACTOR",
     label: "Contractor",
     color: "bg-orange-500/10 text-orange-700 border-orange-200",
   },
@@ -82,7 +82,7 @@ export function AddTeamMemberDialog({
 }: AddTeamMemberDialogProps) {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
-  const [selectedRole, setSelectedRole] = useState<string>("STAFF");
+  const [selectedRole, setSelectedRole] = useState<string>("COMPANY_STAFF");
   const [loading, setLoading] = useState(false);
   const [staffLoading, setStaffLoading] = useState(false);
 
@@ -144,7 +144,7 @@ export function AddTeamMemberDialog({
 
       toast.success("Team member added successfully!");
       setSelectedStaffId("");
-      setSelectedRole("STAFF");
+      setSelectedRole("COMPANY_STAFF");
       onSuccess();
       onOpenChange(false);
     } catch (error) {
@@ -160,7 +160,7 @@ export function AddTeamMemberDialog({
   const handleClose = () => {
     if (!loading) {
       setSelectedStaffId("");
-      setSelectedRole("STAFF");
+      setSelectedRole("COMPANY_STAFF");
       onOpenChange(false);
     }
   };
@@ -290,11 +290,11 @@ export function AddTeamMemberDialog({
               </SelectContent>
             </Select>
             <p className="text-xs dark:text-gray-200">
-              {selectedRole === "ADMIN" && "Full team management access"}
-              {selectedRole === "MANAGER" &&
+              {selectedRole === "ADMIN_OWNER" && "Full team management access"}
+              {selectedRole === "COMPANY_MANAGER" &&
                 "Can manage projects and assign tasks"}
-              {selectedRole === "STAFF" && "Can work on assigned tasks"}
-              {selectedRole === "CONTRACTOR" &&
+              {selectedRole === "COMPANY_STAFF" && "Can work on assigned tasks"}
+              {selectedRole === "COMPANY_CONTRACTOR" &&
                 "External workers who can be assigned tasks"}
             </p>
           </div>

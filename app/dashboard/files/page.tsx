@@ -11,7 +11,7 @@ export default function FilesPage() {
     name: null as string | null,
     email: null as string | null,
     image: null as string | null,
-    role: "GUEST",
+    role: "TRIAL",
     plan: "ESSENTIAL",
     companyId: null as string | null,
   });
@@ -27,7 +27,7 @@ export default function FilesPage() {
       try {
         const meRes = await fetch("/api/auth/me");
         const me = await meRes.json();
-        if (!me?.authenticated || me?.user?.role === "GUEST") {
+        if (!me?.authenticated || me?.user?.role === "TRIAL") {
           router.push("/");
           return;
         }
@@ -42,7 +42,7 @@ export default function FilesPage() {
         };
         setUser(u);
 
-        if (u.role === "ADMIN" || u.role === "SUPER_ADMIN") {
+        if (u.role === "ADMIN_OWNER" || u.role === "SUPER_ADMIN") {
           const cRes = await fetch("/api/companies");
           const cData = await cRes.json();
           const list: Array<{ id: string; name: string }> =

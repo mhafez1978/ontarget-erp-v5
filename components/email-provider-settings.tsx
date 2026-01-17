@@ -213,9 +213,9 @@ export default function EmailProviderSettings({
     originalConfig,
   ]);
 
-  // Fetch companies for ADMIN users
+  // Fetch companies for ADMIN_OWNER users
   useEffect(() => {
-    if (userRole === "ADMIN") {
+    if (userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") {
       const fetchCompanies = async () => {
         try {
           const response = await fetch("/api/companies/my-owned");
@@ -660,8 +660,8 @@ export default function EmailProviderSettings({
           </div>
         </CardContent>
       </Card>
-      {/* Company Selector for ADMIN */}
-      {userRole === "ADMIN" && (
+      {/* Company Selector for ADMIN_OWNER */}
+      {(userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1406,7 +1406,7 @@ export default function EmailProviderSettings({
 
           {/* Diagnostics panel for admins */}
           {testDiagnostics &&
-            (userRole === "ADMIN" || userRole === "SUPER_ADMIN") && (
+            (userRole === "ADMIN_OWNER" || userRole === "SUPER_ADMIN") && (
               <div className="mt-3 rounded-lg border bg-muted/5 p-3 text-sm">
                 <div className="flex items-center justify-between mb-2">
                   <div className="font-semibold">Diagnostics</div>

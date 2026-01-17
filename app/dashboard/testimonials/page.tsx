@@ -65,7 +65,7 @@ export default function TestimonialsPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -115,7 +115,7 @@ export default function TestimonialsPage() {
           name: data.user.name || null,
           email: data.user.email || null,
           image: data.user.image || null,
-          role: data.user.role || "GUEST",
+          role: data.user.role || "TRIAL",
         };
         console.log("Setting user:", userData); // Debug log
         setUser(userData);

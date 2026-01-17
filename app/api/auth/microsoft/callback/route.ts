@@ -173,12 +173,12 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // User doesn't exist - create new ERP_CUSTOMER
-      // Use plan from register page if provided, otherwise GUEST for plan selection
+      // Use plan from register page if provided, otherwise TRIAL for plan selection
       const userPlan =
         selectedPlan &&
         ["ESSENTIAL", "GROWTH", "ENTERPRISE"].includes(selectedPlan)
           ? (selectedPlan as "ESSENTIAL" | "GROWTH" | "ENTERPRISE")
-          : "GUEST";
+          : "TRIAL";
 
       isNewUser = true;
 
@@ -188,7 +188,7 @@ export async function GET(request: NextRequest) {
           name: displayName || email.split("@")[0],
           image: null, // Microsoft doesn't provide photo in basic profile
           role: "ERP_CUSTOMER",
-          plan: userPlan, // Use selected plan from register page or GUEST
+          plan: userPlan, // Use selected plan from register page or TRIAL
           authMethod: "oauth",
           emailVerified: new Date(), // Microsoft emails are verified
           isActive: true,
@@ -355,11 +355,11 @@ export async function GET(request: NextRequest) {
 
     // Determine redirect URL
     const redirectUrl =
-      user.plan === "GUEST" && onboarding
+      user.plan === "TRIAL" && onboarding
         ? `${process.env.NEXT_PUBLIC_APP_URL}/oauth-setup/${encodeURIComponent(
             onboarding.token
           )}`
-        : user.plan === "GUEST"
+        : user.plan === "TRIAL"
         ? `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`
         : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`;
 

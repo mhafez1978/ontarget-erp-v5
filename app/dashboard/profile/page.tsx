@@ -456,7 +456,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <DashboardLayout
-        user={user || { name: null, email: null, image: null, role: "GUEST" }}
+        user={user || { name: null, email: null, image: null, role: "TRIAL" }}
       >
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
           <Loader2 className="w-8 h-8 animate-spin dark:text-gray-200" />

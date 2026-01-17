@@ -24,7 +24,11 @@ export async function GET(
         id: companyId,
         OR: [
           { ownerId: userId },
-          { members: { some: { userId, role: "ADMIN" } } },
+          {
+            members: {
+              some: { userId, role: { in: ["ADMIN_OWNER"] } },
+            },
+          },
           ...(user.role === "SUPER_ADMIN" ? [{ id: companyId }] : []),
         ],
       },
@@ -175,8 +179,8 @@ export async function DELETE(
       );
     }
 
-    // If ADMIN user is deleting their own company, demote them to ERP_CUSTOMER
-    if (user.role === "ADMIN" && company.ownerId === userId) {
+    // If ADMIN_OWNER user is deleting their own company, demote them to ERP_CUSTOMER
+    if (user.role === "ADMIN_OWNER" && company.ownerId === userId) {
       // Check if they own any other companies
       const otherCompanies = await db.company.findMany({
         where: {
@@ -202,7 +206,7 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: "Company deleted successfully",
-      roleDemoted: user.role === "ADMIN" && company.ownerId === userId,
+      roleDemoted: user.role === "ADMIN_OWNER" && company.ownerId === userId,
     });
   } catch (error) {
     console.error("Error deleting company:", error);

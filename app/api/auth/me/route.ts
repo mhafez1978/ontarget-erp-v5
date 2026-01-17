@@ -41,9 +41,9 @@ export async function GET(request: NextRequest) {
     // For staff/contractor/manager roles, get their company from CompanyStaff
     let companyId = null;
     if (
-      user.role === "STAFF" ||
-      user.role === "CONTRACTOR" ||
-      user.role === "MANAGER"
+      user.role === "COMPANY_STAFF" ||
+      user.role === "COMPANY_CONTRACTOR" ||
+      user.role === "COMPANY_MANAGER"
     ) {
       const staffMembership = await db.companyStaff.findFirst({
         where: { userId: user.id },
@@ -52,8 +52,8 @@ export async function GET(request: NextRequest) {
       companyId = staffMembership?.companyId || null;
     }
 
-    // For ADMIN role, get their owned company
-    if (user.role === "ADMIN") {
+    // For ADMIN_OWNER role, get their owned company
+    if (user.role === "ADMIN_OWNER") {
       const ownedCompany = await db.company.findFirst({
         where: { ownerId: user.id },
         select: { id: true },

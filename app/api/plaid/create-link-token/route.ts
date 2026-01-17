@@ -37,27 +37,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if user owns the company or is an admin/manager
-    const hasAccess =
-      user.role === "SUPER_ADMIN" ||
-      user.ownedCompanies.some((c) => c.id === companyId) ||
-      user.companyMemberships.some(
-        (m) =>
-          m.companyId === companyId &&
-          ["ADMIN", "MANAGER"].includes(m.role as string)
-      );
-
-    if (!hasAccess) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
-    // Get company details
+    // Owner-only for Plaid configuration: verify company owner (or SUPER_ADMIN) and get company details
     const company = await db.company.findUnique({
       where: { id: companyId },
+      select: { ownerId: true, name: true },
     });
 
     if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    if (company.ownerId !== userId && user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     // Check if Plaid is configured

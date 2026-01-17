@@ -50,7 +50,7 @@ import {
 } from "@/components/address-autocomplete";
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import { BulkImportWorkforce } from "@/components/bulk-import-workforce";
-import type { CompanyStaff, User } from "@prisma/client";
+import type { CompanyStaff, User } from "../../generated/prisma/client";
 
 type StaffMember = CompanyStaff & {
   user: User;
@@ -75,21 +75,21 @@ const STATUS_COLORS = {
 };
 
 const ROLE_LABELS = {
-  MANAGER: "Manager",
+  COMPANY_MANAGER: "Manager",
   SALES_REP: "Sales Rep",
   CUSTOMER_SERVICE: "Customer Service",
   FIELD_TECH: "Field Tech",
   BACK_OFFICE: "Back Office",
-  STAFF: "Staff",
+  COMPANY_STAFF: "Staff",
 };
 
 const ROLE_COLORS = {
-  MANAGER: "bg-blue-500",
+  COMPANY_MANAGER: "bg-blue-500",
   SALES_REP: "bg-green-500",
   CUSTOMER_SERVICE: "bg-orange-500",
   FIELD_TECH: "bg-yellow-500",
   BACK_OFFICE: "bg-gray-500",
-  STAFF: "bg-cyan-500",
+  COMPANY_STAFF: "bg-cyan-500",
 };
 
 export function ManagerWorkforceView() {
@@ -126,12 +126,12 @@ export function ManagerWorkforceView() {
     email: "",
     password: "",
     passwordConfirmation: "",
-    role: "STAFF" as
+    role: "COMPANY_STAFF" as
       | "SALES_REP"
       | "CUSTOMER_SERVICE"
       | "FIELD_TECH"
       | "BACK_OFFICE"
-      | "STAFF",
+      | "COMPANY_STAFF",
     jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     isFeatured: false,
@@ -159,12 +159,12 @@ export function ManagerWorkforceView() {
   const initialEditFormData = {
     name: "",
     email: "",
-    role: "STAFF" as
+    role: "COMPANY_STAFF" as
       | "SALES_REP"
       | "CUSTOMER_SERVICE"
       | "FIELD_TECH"
       | "BACK_OFFICE"
-      | "STAFF",
+      | "COMPANY_STAFF",
     jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     status: "ACTIVE" as string,
@@ -228,7 +228,7 @@ export function ManagerWorkforceView() {
         | "CUSTOMER_SERVICE"
         | "FIELD_TECH"
         | "BACK_OFFICE"
-        | "STAFF",
+        | "COMPANY_STAFF",
       jobTitle: member.jobTitle || "",
       employmentType: member.employmentType,
       status: member.status,
@@ -363,7 +363,7 @@ export function ManagerWorkforceView() {
                   </SelectItem>
                   <SelectItem value="FIELD_TECH">Field Tech</SelectItem>
                   <SelectItem value="BACK_OFFICE">Back Office</SelectItem>
-                  <SelectItem value="STAFF">Staff</SelectItem>
+                  <SelectItem value="COMPANY_STAFF">Staff</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -949,7 +949,7 @@ export function ManagerWorkforceView() {
                         | "CUSTOMER_SERVICE"
                         | "FIELD_TECH"
                         | "BACK_OFFICE"
-                        | "STAFF"
+                        | "COMPANY_STAFF"
                     ) => setFormData({ ...formData, role: value })}
                   >
                     <SelectTrigger id="role">
@@ -962,7 +962,7 @@ export function ManagerWorkforceView() {
                       </SelectItem>
                       <SelectItem value="FIELD_TECH">Field Tech</SelectItem>
                       <SelectItem value="BACK_OFFICE">Back Office</SelectItem>
-                      <SelectItem value="STAFF">Staff</SelectItem>
+                      <SelectItem value="COMPANY_STAFF">Staff</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1319,7 +1319,7 @@ export function ManagerWorkforceView() {
                         | "CUSTOMER_SERVICE"
                         | "FIELD_TECH"
                         | "BACK_OFFICE"
-                        | "STAFF"
+                        | "COMPANY_STAFF"
                     ) => setEditFormData({ ...editFormData, role: value })}
                   >
                     <SelectTrigger id="editRole">
@@ -1332,7 +1332,7 @@ export function ManagerWorkforceView() {
                       </SelectItem>
                       <SelectItem value="FIELD_TECH">Field Tech</SelectItem>
                       <SelectItem value="BACK_OFFICE">Back Office</SelectItem>
-                      <SelectItem value="STAFF">Staff</SelectItem>
+                      <SelectItem value="COMPANY_STAFF">Staff</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

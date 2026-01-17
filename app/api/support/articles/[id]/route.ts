@@ -62,7 +62,7 @@
 //     const membership = user.companyMemberships.find(
 //       (m) => m.companyId === article.companyId
 //     );
-//     if (membership && membership.role === "ADMIN") {
+//     if (membership && membership.role === "ADMIN_OWNER") {
 //       return true;
 //     }
 //   }
@@ -397,7 +397,7 @@ function canManageArticle(
     const membership = user.companyMemberships.find(
       (m) => m.companyId === article.companyId
     );
-    if (membership && membership.role === "ADMIN") {
+    if (membership && membership.role === "ADMIN_OWNER") {
       return true;
     }
   }

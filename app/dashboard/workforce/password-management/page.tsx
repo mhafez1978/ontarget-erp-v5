@@ -80,8 +80,11 @@ export default function PasswordManagementPage() {
 
         const userData = await userResponse.json();
 
-        // Check if user is ADMIN or SUPER_ADMIN
-        if (userData.role !== "ADMIN" && userData.role !== "SUPER_ADMIN") {
+        // Check if user is ADMIN_OWNER or SUPER_ADMIN
+        if (
+          userData.role !== "ADMIN_OWNER" &&
+          userData.role !== "SUPER_ADMIN"
+        ) {
           toast.error("Unauthorized access");
           router.push("/dashboard");
           return;
@@ -92,8 +95,8 @@ export default function PasswordManagementPage() {
         // Fetch users based on role
         let usersEndpoint = "/api/admin/users"; // Default for SUPER_ADMIN
 
-        if (userData.role === "ADMIN") {
-          // For ADMIN, fetch all users in their companies (owner + members + staff)
+        if (userData.role === "ADMIN_OWNER") {
+          // For ADMIN_OWNER, fetch all users in their companies (owner + members + staff)
           usersEndpoint = "/api/admin/company-users";
         }
 
@@ -313,7 +316,7 @@ export default function PasswordManagementPage() {
                             variant={
                               user.role === "SUPER_ADMIN"
                                 ? "destructive"
-                                : user.role === "ADMIN"
+                                : user.role === "ADMIN_OWNER"
                                 ? "default"
                                 : "secondary"
                             }
@@ -341,7 +344,7 @@ export default function PasswordManagementPage() {
                             variant="outline"
                             onClick={() => handleOpenDialog(user)}
                             disabled={
-                              currentUser.role === "ADMIN" &&
+                              currentUser.role === "ADMIN_OWNER" &&
                               user.role === "SUPER_ADMIN"
                             }
                           >

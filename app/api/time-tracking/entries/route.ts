@@ -39,7 +39,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!staff) {
+    // Allow SUPER_ADMIN to access any company even when they are not a member
+    const userRole = user.role || "";
+    if (!staff && userRole !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "You don't have access to this company" },
         { status: 403 }
@@ -57,8 +59,9 @@ export async function GET(request: NextRequest) {
     } = { companyId };
 
     // If not admin/manager, only show own entries
-    if (!["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(staff.user.role)) {
-      where.staffId = staff.id;
+    if (!["ADMIN_OWNER", "SUPER_ADMIN", "COMPANY_MANAGER"].includes(userRole)) {
+      // staff should exist for non-admin roles
+      where.staffId = staff?.id;
     } else if (staffId) {
       // Admin/manager can filter by specific staff
       where.staffId = staffId;
@@ -92,14 +95,41 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Enrich entries with approver user info when available
+    const approverIds = [
+      ...new Set(entries.map((e) => e.approvedBy).filter(Boolean) as string[]),
+    ];
+    const approverMap: Record<
+      string,
+      { id: string; name?: string | null; email?: string | null }
+    > = {};
+    if (approverIds.length > 0) {
+      const approvers = await db.companyStaff.findMany({
+        where: { id: { in: approverIds } },
+        include: { user: { select: { id: true, name: true, email: true } } },
+      });
+      for (const a of approvers) {
+        approverMap[a.id] = {
+          id: a.user.id,
+          name: a.user.name,
+          email: a.user.email,
+        };
+      }
+    }
+
+    const enriched = entries.map((e) => ({
+      ...e,
+      approvedByUser: e.approvedBy ? approverMap[e.approvedBy] || null : null,
+    }));
+
     // Get current active entry
-    const activeEntry = entries.find(
+    const activeEntry = enriched.find(
       (e) => e.status === "CLOCKED_IN" || e.status === "ON_BREAK"
     );
 
     return NextResponse.json({
       success: true,
-      entries,
+      entries: enriched,
       activeEntry: activeEntry || null,
     });
   } catch (error) {

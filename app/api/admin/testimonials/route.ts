@@ -113,7 +113,13 @@ export async function GET(request: NextRequest) {
       );
 
       // Additional DB diagnostics to help troubleshoot production vs local differences
-      let dbInfo: any = {};
+      let dbInfo: {
+        totalCount?: number;
+        companyCount?: number;
+        sample?: unknown;
+        dbName?: string | null;
+        error?: string;
+      } = {};
       try {
         const totalCount = await db.testimonial.count();
         const companyCount = await db.testimonial.count({
@@ -124,10 +130,12 @@ export async function GET(request: NextRequest) {
           orderBy: { createdAt: "desc" },
         });
         // Attempt to read current database name (MySQL)
-        const dbNameRes: any = await db.$queryRaw`SELECT DATABASE() as db`;
+        const dbNameRes = (await db.$queryRaw`SELECT DATABASE() as db`) as {
+          db: string;
+        }[];
         const dbName = Array.isArray(dbNameRes)
           ? dbNameRes[0]?.db ?? null
-          : dbNameRes?.db ?? null;
+          : (dbNameRes as { db: string })?.db ?? null;
         dbInfo = { totalCount, companyCount, sample, dbName };
       } catch (e) {
         console.error("Debug DB query failed:", e);

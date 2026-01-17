@@ -186,8 +186,8 @@ export default function SelectPlanPage() {
         const data = await response.json();
 
         if (data.authenticated && data.user) {
-          // If user already has a plan (not GUEST), redirect to dashboard
-          if (data.user.plan && data.user.plan !== "GUEST") {
+          // If user already has a plan (not TRIAL), redirect to dashboard
+          if (data.user.plan && data.user.plan !== "TRIAL") {
             router.push("/dashboard");
             return;
           }

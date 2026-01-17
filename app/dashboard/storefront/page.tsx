@@ -142,7 +142,7 @@ export default function StorefrontPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [authChecking, setAuthChecking] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -371,7 +371,7 @@ export default function StorefrontPage() {
 
   const planAllowsAiStorefront =
     user.role === "SUPER_ADMIN" ||
-    ["SUPER_USER", "GROWTH", "ENTERPRISE"].includes(user.plan || "");
+    ["SUPER_ADMIN", "GROWTH", "ENTERPRISE"].includes(user.plan || "");
 
   const [activeTab, setActiveTab] = useState<string>("general");
 
@@ -607,7 +607,7 @@ export default function StorefrontPage() {
           "ESSENTIAL",
           "GROWTH",
           "ENTERPRISE",
-          "SUPER_USER",
+          "SUPER_ADMIN",
         ];
         const isSuperAdmin = data.user.role === "SUPER_ADMIN";
         const hasV1Access =
@@ -1262,7 +1262,7 @@ export default function StorefrontPage() {
               AI Storefront V1
             </TabsTrigger>
             {(user.role === "SUPER_ADMIN" ||
-              ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
+              ["GROWTH", "ENTERPRISE", "SUPER_ADMIN"].includes(
                 user.plan?.toUpperCase() || ""
               ) ||
               aiEnabled ||
@@ -1276,7 +1276,7 @@ export default function StorefrontPage() {
               </TabsTrigger>
             )}
             {(user.role === "SUPER_ADMIN" ||
-              ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
+              ["GROWTH", "ENTERPRISE", "SUPER_ADMIN"].includes(
                 user.plan?.toUpperCase() || ""
               ) ||
               aiEnabled ||
@@ -1290,7 +1290,7 @@ export default function StorefrontPage() {
               </TabsTrigger>
             )}
             {(user.role === "SUPER_ADMIN" ||
-              ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
+              ["GROWTH", "ENTERPRISE", "SUPER_ADMIN"].includes(
                 user.plan?.toUpperCase() || ""
               ) ||
               aiEnabled ||
@@ -1316,7 +1316,7 @@ export default function StorefrontPage() {
             {/* Webhooks (company-level) */}
             {selectedCompanyId &&
               (user.role === "SUPER_ADMIN" ||
-                ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(
+                ["GROWTH", "ENTERPRISE", "SUPER_ADMIN"].includes(
                   user.plan?.toUpperCase() || ""
                 )) && (
                 <TabsTrigger value="webhooks">

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { SubscriptionPlan } from "@/lib/types/subscription";
+import { SubscriptionPlan } from "@/generated/prisma/client";
 import {
   generateAiStorefront,
   type AiStorefrontInput,
@@ -14,7 +14,25 @@ import type {
   AiProviderType,
   ChatMessage,
 } from "@/lib/ai/model-client";
-import { Prisma } from "@prisma/client";
+import {
+  Prisma,
+  type Product,
+  type Service,
+  type Testimonial,
+} from "@/generated/prisma/client";
+
+type ProductSelect = Pick<
+  Product,
+  "id" | "name" | "description" | "price" | "category"
+>;
+type ServiceSelect = Pick<
+  Service,
+  "id" | "name" | "description" | "price" | "category" | "duration"
+>;
+type TestimonialSelect = Pick<
+  Testimonial,
+  "id" | "customerName" | "customerTitle" | "testimonial" | "rating"
+>;
 import { decrypt } from "@/lib/encryption";
 import type {
   ProductSummary,
@@ -191,7 +209,9 @@ export async function POST(request: NextRequest) {
     const isMember = user.companyMemberships.length > 0;
     const isAdminOrManager = user.companyMemberships.some(
       (m: { role?: string | null }) =>
-        m.role === "ADMIN" || m.role === "MANAGER"
+        m.role === "ADMIN_OWNER" ||
+        m.role === "ADMIN_NONOWNER" ||
+        m.role === "COMPANY_MANAGER"
     );
 
     const hasAccess =
@@ -286,7 +306,7 @@ export async function POST(request: NextRequest) {
       ],
     });
 
-    const products: ProductSummary[] = productsRaw.map((p) => ({
+    const products: ProductSummary[] = productsRaw.map((p: ProductSelect) => ({
       id: p.id,
       name: p.name,
       description: p.description,
@@ -294,7 +314,7 @@ export async function POST(request: NextRequest) {
       category: p.category,
     }));
 
-    const services: ServiceSummary[] = servicesRaw.map((s) => ({
+    const services: ServiceSummary[] = servicesRaw.map((s: ServiceSelect) => ({
       id: s.id,
       name: s.name,
       description: s.description,
@@ -303,21 +323,26 @@ export async function POST(request: NextRequest) {
       duration: s.duration !== null ? Number(s.duration) : null,
     }));
 
-    const testimonials: TestimonialSummary[] = testimonialsRaw.map((t) => ({
-      id: t.id,
-      customerName: t.customerName,
-      customerTitle: t.customerTitle,
-      testimonial: t.testimonial,
-      rating: t.rating ?? 5,
-    }));
+    const testimonials: TestimonialSummary[] = testimonialsRaw.map(
+      (t: TestimonialSelect) => ({
+        id: t.id,
+        customerName: t.customerName,
+        customerTitle: t.customerTitle,
+        testimonial: t.testimonial,
+        rating: t.rating ?? 5,
+      })
+    );
 
-    // Derive customers and approved testimonial counts
+    // Derive customers and approved testimonial counts for stats section
     const customersCount = await db.companyMember.count({
       where: { companyId, user: { role: "COMPANY_CUSTOMER" } },
     });
     const approvedTestimonialsCount = await db.testimonial.count({
       where: { companyId, status: "APPROVED" },
     });
+
+    console.log(customersCount);
+    console.log(approvedTestimonialsCount);
 
     const blogEnabled = !!company.storeBlogEnabled;
     const blogPostCount = blogEnabled
@@ -690,7 +715,7 @@ export async function POST(request: NextRequest) {
         data: {
           companyId,
           userId,
-          plan: userPlan ?? "GUEST",
+          plan: userPlan ?? "TRIAL",
         },
       });
     }

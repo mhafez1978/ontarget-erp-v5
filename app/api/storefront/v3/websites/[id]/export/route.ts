@@ -40,12 +40,19 @@ export async function POST(
             logo: true,
             email: true,
             phone: true,
-            addressLine1: true,
-            addressLine2: true,
-            city: true,
-            state: true,
-            country: true,
-            postalCode: true,
+            primaryAddress: {
+              select: {
+                line1: true,
+                line2: true,
+                city: true,
+                state: true,
+                country: true,
+                postalCode: true,
+                countryCode: true,
+                latitude: true,
+                longitude: true,
+              },
+            },
           },
         },
       },
@@ -89,6 +96,9 @@ export async function POST(
     const themeSections = convertV3WebsiteToThemeSections(websiteData);
 
     // Return converted sections
+    const { line1, line2, city, state, country, postalCode } =
+      require("@/lib/address").serializeAddress(website.company);
+
     return NextResponse.json({
       success: true,
       sections: themeSections,
@@ -98,12 +108,12 @@ export async function POST(
         logo: website.company.logo || undefined,
         email: website.company.email || undefined,
         phone: website.company.phone || undefined,
-        addressLine1: website.company.addressLine1 || undefined,
-        addressLine2: website.company.addressLine2 || undefined,
-        city: website.company.city || undefined,
-        state: website.company.state || undefined,
-        country: website.company.country || undefined,
-        postalCode: website.company.postalCode || undefined,
+        addressLine1: line1 || undefined,
+        addressLine2: line2 || undefined,
+        city: city || undefined,
+        state: state || undefined,
+        country: country || undefined,
+        postalCode: postalCode || undefined,
       },
       metadata: {
         websiteId: website.id,

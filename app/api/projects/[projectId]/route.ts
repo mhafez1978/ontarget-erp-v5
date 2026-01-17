@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
-import { Prisma, ProjectStatus } from "@prisma/client";
+import { Prisma, ProjectStatus } from "@/generated/prisma/client";
 import { canEditProject, canViewProject } from "@/lib/project-permissions";
 
 // Type for project with full includes
@@ -594,7 +594,7 @@ export async function PATCH(
       projectManagerId !== existingProject.projectManagerId
     ) {
       auditLogs.push({
-        action: AUDIT_ACTIONS.PROJECT_MANAGER_CHANGED,
+        action: AUDIT_ACTIONS.PROJECT_COMPANY_MANAGER_CHANGED,
         description: `Project manager changed: ${updatedProject.name}`,
         metadata: {
           oldManagerId: existingProject.projectManagerId,
@@ -734,7 +734,7 @@ export async function DELETE(
             where: {
               teamId: project.teamId,
               staff: { userId },
-              role: "ADMIN",
+              role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] },
             },
           })
         : null;

@@ -49,7 +49,13 @@ export async function POST(request: NextRequest) {
     const user = validation.user;
 
     // Only certain roles can create customers
-    const allowedRoles = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+    const allowedRoles = [
+      "SUPER_ADMIN",
+      "ADMIN_OWNER",
+      "ADMIN_NONOWNER",
+      "COMPANY_MANAGER",
+      "COMPANY_STAFF",
+    ];
     if (!allowedRoles.includes(user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -103,8 +109,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check customer limit (skip for SUPER_USER)
-    if (company.owner.plan !== "SUPER_USER") {
+    // Check customer limit (skip for SUPER_ADMIN)
+    if (company.owner.plan !== "SUPER_ADMIN") {
       // Get company's subscription plan
       const subscription = await db.subscription.findFirst({
         where: {
@@ -114,7 +120,8 @@ export async function POST(request: NextRequest) {
         orderBy: { createdAt: "desc" },
       });
 
-      const plan = subscription?.plan || "ESSENTIAL";
+      const plan = (subscription?.plan ??
+        "ESSENTIAL") as keyof typeof PLAN_LIMITS;
       const planLimits = PLAN_LIMITS[plan];
 
       // Count existing customers (users with COMPANY_CUSTOMER role)
@@ -181,7 +188,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId: customer.id,
         companyId: companyId,
-        role: "STAFF", // Default company role for customers
+        role: "COMPANY_CUSTOMER", // Default company role for customers
       },
     });
 

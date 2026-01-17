@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only SUPER_ADMIN, company owner, or ADMIN can create folders
-    if (!isSuperAdmin && !ownsCompany && membership?.role !== "ADMIN") {
+    // Only SUPER_ADMIN, company owner, or ADMIN_OWNER can create folders
+    if (!isSuperAdmin && !ownsCompany && membership?.role !== "ADMIN_OWNER") {
       return NextResponse.json(
         { error: "You do not have permission to create folders" },
         { status: 403 }

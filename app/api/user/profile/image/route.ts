@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
       // only allow assigning to other users if the current user has an admin role
       if (targetUserId !== validation.user.id) {
-        const allowedRoles = ["SUPER_ADMIN", "ADMIN"];
+        const allowedRoles = ["SUPER_ADMIN", "ADMIN_OWNER"];
         if (!allowedRoles.includes(validation.user.role)) {
           const response = NextResponse.json(
             {
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
 
     // only allow assigning uploads to other users if the current user has an admin role
     if (effectiveUserId !== userId) {
-      const allowedRoles = ["SUPER_ADMIN", "ADMIN"];
+      const allowedRoles = ["SUPER_ADMIN", "ADMIN_OWNER"];
       if (!allowedRoles.includes(validation.user.role)) {
         const response = NextResponse.json(
           {

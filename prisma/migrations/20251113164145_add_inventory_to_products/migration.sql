@@ -1,4 +1,0 @@
--- AlterTable
-ALTER TABLE `Product` ADD COLUMN `lowStockAlert` INTEGER NULL DEFAULT 10,
-    ADD COLUMN `quantity` INTEGER NOT NULL DEFAULT 0,
-    ADD COLUMN `trackInventory` BOOLEAN NOT NULL DEFAULT true;

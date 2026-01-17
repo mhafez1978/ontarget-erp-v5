@@ -69,17 +69,18 @@ export async function GET(
       );
     }
 
-    // For EMPLOYEE/CONTRACTOR folders, check ownership
+    // For EMPLOYEE/COMPANY_CONTRACTOR folders, check ownership
     if (
-      (file.folder.type === "EMPLOYEE" || file.folder.type === "CONTRACTOR") &&
+      (file.folder.type === "EMPLOYEE" ||
+        file.folder.type === "COMPANY_CONTRACTOR") &&
       file.folder.ownerId
     ) {
       if (
         !isSuperAdmin &&
         !ownsCompany &&
         file.folder.ownerId !== user.id &&
-        membership?.role !== "ADMIN" &&
-        membership?.role !== "MANAGER"
+        membership?.role !== "ADMIN_OWNER" &&
+        membership?.role !== "COMPANY_MANAGER"
       ) {
         return NextResponse.json(
           { error: "You do not have permission to access this file" },
@@ -176,15 +177,15 @@ export async function DELETE(
 
     // Permission rules for delete:
     // - SUPER_ADMIN: Can delete any file
-    // - Company owner (ADMIN role in User model): Can delete any file in their company
-    // - ADMIN in CompanyMember: Can delete any file in their company
-    // - MANAGER in CompanyMember: Can delete any file in their company
-    // - STAFF/CONTRACTOR: Can only delete files they uploaded
+    // - Company owner (ADMIN_OWNER role in User model): Can delete any file in their company
+    // - ADMIN_OWNER in CompanyMember: Can delete any file in their company
+    // - COMPANY_MANAGER in CompanyMember: Can delete any file in their company
+    // - COMPANY_STAFF/COMPANY_CONTRACTOR: Can only delete files they uploaded
     const canDelete =
       isSuperAdmin ||
       ownsCompany ||
-      membership?.role === "ADMIN" ||
-      membership?.role === "MANAGER" ||
+      membership?.role === "ADMIN_OWNER" ||
+      membership?.role === "COMPANY_MANAGER" ||
       isFileOwner;
 
     if (!canDelete) {

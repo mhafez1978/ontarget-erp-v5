@@ -22,7 +22,6 @@ interface ChatWidgetConfig {
 
 interface ChatWidgetProps {
   companySlug: string;
-  companyId?: string;
   companyName?: string;
   config?: ChatWidgetConfig;
   mountInside?: boolean; // if true, the widget will position relative to its container instead of fixed to window
@@ -30,7 +29,6 @@ interface ChatWidgetProps {
 
 export function ChatWidget({
   companySlug,
-  companyId,
   companyName = "Company",
   config,
   mountInside = false,
@@ -73,7 +71,7 @@ export function ChatWidget({
             document.cookie = `widgetConversationId_${companySlug}=${convId}; Path=/; Max-Age=${
               60 * 60 * 24 * 30
             }`;
-          } catch (e) {
+          } catch {
             // noop in environments where cookies aren't available
           }
         }
@@ -97,7 +95,7 @@ export function ChatWidget({
       clearInterval(flushInterval);
       window.removeEventListener("beforeunload", onUnload);
     };
-  }, [companySlug]);
+  }, [companySlug, config]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -180,7 +178,7 @@ export function ChatWidget({
               document.cookie = `widgetConversationId_${companySlug}=${convId}; Path=/; Max-Age=${
                 60 * 60 * 24 * 30
               }`;
-            } catch (e) {
+            } catch {
               // noop
             }
           }

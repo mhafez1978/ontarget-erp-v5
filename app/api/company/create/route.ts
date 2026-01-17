@@ -125,21 +125,21 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Add user as ADMIN member
+      // Add user as ADMIN_OWNER member
       await tx.companyMember.create({
         data: {
           userId: user.id,
           companyId: company.id,
-          role: "ADMIN",
+          role: "ADMIN_OWNER",
         },
       });
 
-      // Add user as ADMIN staff (for employee pane)
+      // Add user as ADMIN_OWNER staff (for employee pane)
       await tx.companyStaff.create({
         data: {
           userId: user.id,
           companyId: company.id,
-          role: "ADMIN",
+          role: "ADMIN_OWNER",
           jobTitle: "Administrator",
           employmentType: "FULL_TIME",
           status: "ACTIVE",
@@ -151,11 +151,11 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Promote user to ADMIN role if they're ERP_CUSTOMER
+      // Promote user to ADMIN_OWNER role if they're ERP_CUSTOMER
       if (user.role === "ERP_CUSTOMER") {
         await tx.user.update({
           where: { id: user.id },
-          data: { role: "ADMIN" },
+          data: { role: "ADMIN_OWNER" },
         });
       }
 

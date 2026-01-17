@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
         });
         companyId = company?.id || null;
       }
-    } else if (user.role === "ADMIN") {
+    } else if (user.role === "ADMIN_OWNER" || user.role === "ADMIN_NONOWNER") {
       const staffRecord = await db.companyStaff.findFirst({
         where: {
           userId: user.id,
-          role: "ADMIN",
+          role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] },
         },
         select: { companyId: true },
       });

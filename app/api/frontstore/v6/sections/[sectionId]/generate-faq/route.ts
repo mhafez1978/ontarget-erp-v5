@@ -7,9 +7,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type { Prisma } from "@/generated/prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { getCompanyContext } from "@/lib/frontstore/v6-data-service";
-import { SectionKind } from "@prisma/client";
+import { SectionKind } from "@/generated/prisma/client";
 
 // ============================================================================
 // TYPES
@@ -307,7 +308,7 @@ export async function POST(
           categories,
           layout: "list",
           showCategories: false,
-          defaultExpanded: null,
+          defaultExpanded: undefined,
         },
         meta: {
           designSystem: "apple",
@@ -354,12 +355,12 @@ export async function POST(
         name: "Minimalist Grid",
         schema: {
           headline: "FAQ",
-          subheadline: null,
+          subheadline: undefined,
           faqs,
           categories,
           layout: "grid",
           showCategories: true,
-          defaultExpanded: null,
+          defaultExpanded: undefined,
         },
         meta: {
           designSystem: "minimalist",
@@ -470,7 +471,7 @@ export async function POST(
       data: {
         status: "GENERATED",
         kind: SectionKind.FAQ,
-        variants: variantsJson as any,
+        variants: variantsJson as unknown as Prisma.InputJsonValue,
       },
     });
 

@@ -9,6 +9,12 @@ import {
   type AiFrontstoreSpec,
 } from "@/lib/ai/ai-storefront-types";
 import {
+  CompanyMemberRole,
+  Product,
+  Service,
+  Testimonial,
+} from "@/generated/prisma/client";
+import {
   runSafetyChecks,
   generateAiStorefront,
   type AiStorefrontInput,
@@ -19,8 +25,8 @@ import {
   type AiProviderType,
   type ChatMessage,
 } from "@/lib/ai/model-client";
-import { Prisma } from "@prisma/client";
-import type { SubscriptionPlan } from "@/lib/types/subscription";
+import { Prisma } from "@/generated/prisma/client";
+import type { SubscriptionPlan } from "@/generated/prisma/client";
 
 const BANNED_PROMPT_KEYWORDS = [
   "porn",
@@ -210,7 +216,10 @@ export async function POST(request: NextRequest) {
     const isOwner = user.ownedCompanies.length > 0;
     const isMember = user.companyMemberships.length > 0;
     const isAdminOrManager = user.companyMemberships.some(
-      (m) => m.role === "ADMIN" || m.role === "MANAGER"
+      (m: { companyId: string; role: CompanyMemberRole }) =>
+        m.role === "ADMIN_OWNER" ||
+        m.role === "ADMIN_NONOWNER" ||
+        m.role === "COMPANY_MANAGER"
     );
 
     const hasAccess =
@@ -491,30 +500,60 @@ export async function POST(request: NextRequest) {
             ],
           });
 
-          const products = productsRaw.map((p) => ({
-            id: p.id,
-            name: p.name,
-            description: p.description,
-            price: Number(p.price),
-            category: p.category,
-          }));
+          const products = productsRaw.map(
+            (
+              p: Pick<
+                Product,
+                "id" | "name" | "description" | "price" | "category"
+              >
+            ) => ({
+              id: p.id,
+              name: p.name,
+              description: p.description,
+              price: Number(p.price),
+              category: p.category,
+            })
+          );
 
-          const services = servicesRaw.map((s) => ({
-            id: s.id,
-            name: s.name,
-            description: s.description,
-            price: Number(s.price),
-            category: s.category,
-            duration: s.duration !== null ? Number(s.duration) : null,
-          }));
+          const services = servicesRaw.map(
+            (
+              s: Pick<
+                Service,
+                | "id"
+                | "name"
+                | "description"
+                | "price"
+                | "category"
+                | "duration"
+              >
+            ) => ({
+              id: s.id,
+              name: s.name,
+              description: s.description,
+              price: Number(s.price),
+              category: s.category,
+              duration: s.duration !== null ? Number(s.duration) : null,
+            })
+          );
 
-          const testimonials = testimonialsRaw.map((t) => ({
-            id: t.id,
-            customerName: t.customerName,
-            customerTitle: t.customerTitle,
-            testimonial: t.testimonial,
-            rating: t.rating ?? 5,
-          }));
+          const testimonials = testimonialsRaw.map(
+            (
+              t: Pick<
+                Testimonial,
+                | "id"
+                | "customerName"
+                | "customerTitle"
+                | "testimonial"
+                | "rating"
+              >
+            ) => ({
+              id: t.id,
+              customerName: t.customerName,
+              customerTitle: t.customerTitle,
+              testimonial: t.testimonial,
+              rating: t.rating ?? 5,
+            })
+          );
 
           // Get counts for customers and approved testimonials
           const customersCount = await db.companyMember.count({

@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
           email: normalizedEmail,
           password: hashedPassword,
           role: "SUPER_ADMIN",
-          plan: "SUPER_USER", // Super admins get free unlimited SUPER_USER plan
+          plan: "SUPER_ADMIN", // Super admins get free unlimited SUPER_ADMIN plan
           emailVerified: new Date(), // Auto-verify super admin
         },
       });
@@ -98,12 +98,12 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Add the super admin as a company member with ADMIN role
+      // Add the super admin as a company member with ADMIN_OWNER role
       await tx.companyMember.create({
         data: {
           userId: user.id,
           companyId: company.id,
-          role: "ADMIN",
+          role: "ADMIN_OWNER",
         },
       });
 
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: user.id,
           companyId: company.id,
-          role: "ADMIN",
+          role: "ADMIN_OWNER",
           jobTitle: sanitizedJobTitle,
           employmentType: "FULL_TIME",
           status: "ACTIVE",

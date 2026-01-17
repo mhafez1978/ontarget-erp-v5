@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { countryCodeToFlag } from "@/lib/ip-lookup";
 import { normalize, type NormalizedGeo } from "@/lib/geo/normalize";
-import type { Prisma } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
+import type { Prisma } from "@/generated/prisma/client";
+import Decimal from "decimal.js";
 // Small in-memory TTL cache for recent lookups to reduce provider calls.
 // Use globalThis to survive hot module reloads in development.
 type CacheItem = { payload: unknown; expiresAt: number };

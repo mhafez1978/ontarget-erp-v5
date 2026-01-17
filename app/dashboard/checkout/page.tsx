@@ -31,7 +31,7 @@ export default function CheckoutPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);

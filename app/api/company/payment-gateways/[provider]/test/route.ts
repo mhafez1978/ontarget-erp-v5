@@ -42,17 +42,15 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if user owns the company or is an admin/manager
-    const hasAccess =
-      user.role === "SUPER_ADMIN" ||
-      user.ownedCompanies.some((c) => c.id === companyId) ||
-      user.companyMemberships.some(
-        (m) =>
-          m.companyId === companyId &&
-          ["ADMIN", "MANAGER"].includes(m.role as string)
-      );
-
-    if (!hasAccess) {
+    // Owner-only for testing: verify company owner
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+      select: { ownerId: true },
+    });
+    if (
+      !company ||
+      (company.ownerId !== userId && user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

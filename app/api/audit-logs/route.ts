@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { Prisma, UserRole, CompanyMemberRole } from "@/generated/prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,17 +33,36 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query based on role
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let whereClause: any = {};
+    let whereClause: Prisma.AuditLogWhereInput = {};
 
-    if (userWithMemberships.role === "SUPER_ADMIN") {
+    // Check if user has admin roles in any company
+    const hasAdminRole = userWithMemberships.companyMemberships.some(
+      (m) =>
+        m.role === CompanyMemberRole.ADMIN_OWNER ||
+        m.role === CompanyMemberRole.ADMIN_NONOWNER ||
+        m.role === CompanyMemberRole.COMPANY_MANAGER
+    );
+
+    const hasStaffRole = userWithMemberships.companyMemberships.some(
+      (m) =>
+        m.role === CompanyMemberRole.COMPANY_STAFF ||
+        m.role === CompanyMemberRole.COMPANY_CONTRACTOR ||
+        m.role === CompanyMemberRole.COMPANY_SUPPLIER
+    );
+
+    if (userWithMemberships.role === UserRole.SUPER_ADMIN) {
       // SUPER_ADMIN sees all audit logs
       whereClause = {};
-    } else if (userWithMemberships.role === "ADMIN") {
-      // ADMIN sees logs from their company only
-      const companyIds = userWithMemberships.companyMemberships.map(
-        (m) => m.companyId
-      );
+    } else if (hasAdminRole) {
+      // Users with admin roles in companies see logs from their companies
+      const companyIds = userWithMemberships.companyMemberships
+        .filter(
+          (m) =>
+            m.role === CompanyMemberRole.ADMIN_OWNER ||
+            m.role === CompanyMemberRole.ADMIN_NONOWNER ||
+            m.role === CompanyMemberRole.COMPANY_MANAGER
+        )
+        .map((m) => m.companyId);
       if (companyIds.length > 0) {
         whereClause = {
           companyId: {
@@ -50,20 +70,21 @@ export async function GET(request: NextRequest) {
           },
         };
       } else {
-        // Admin not in any company yet
+        // Fallback to own logs
         whereClause = {
-          userId: userWithMemberships.id, // Only see their own logs
+          userId: userWithMemberships.id,
         };
       }
-    } else if (
-      ["MANAGER", "STAFF", "CONTRACTOR", "SUPPLIER"].includes(
-        userWithMemberships.role
-      )
-    ) {
-      // Other roles see logs from their company
-      const companyIds = userWithMemberships.companyMemberships.map(
-        (m) => m.companyId
-      );
+    } else if (hasStaffRole) {
+      // Staff roles see logs from their companies
+      const companyIds = userWithMemberships.companyMemberships
+        .filter(
+          (m) =>
+            m.role === CompanyMemberRole.COMPANY_STAFF ||
+            m.role === CompanyMemberRole.COMPANY_CONTRACTOR ||
+            m.role === CompanyMemberRole.COMPANY_SUPPLIER
+        )
+        .map((m) => m.companyId);
       if (companyIds.length > 0) {
         whereClause = {
           companyId: {
@@ -71,13 +92,13 @@ export async function GET(request: NextRequest) {
           },
         };
       } else {
-        // Not in any company, only see own logs
+        // Fallback to own logs
         whereClause = {
           userId: userWithMemberships.id,
         };
       }
     } else {
-      // ERP_CUSTOMER, COMPANY_CUSTOMER, GUEST see only their own logs
+      // ERP_CUSTOMER, COMPANY_CUSTOMER, TRIAL see only their own logs
       whereClause = {
         userId: userWithMemberships.id,
       };

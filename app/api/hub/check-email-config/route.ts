@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 /**
  * Check if email service is configured
  * - Checks global email provider (SUPER_ADMIN)
- * - Checks company-specific override (ADMIN)
+ * - Checks company-specific override (ADMIN_OWNER)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
     const user = validation.user;
     const userId = validation.user.id;
 
-    // Only ADMIN and SUPER_ADMIN can access hub
-    if (!["SUPER_ADMIN", "ADMIN"].includes(user.role)) {
+    // Only admins and SUPER_ADMIN can access hub
+    if (!["SUPER_ADMIN", "ADMIN_OWNER", "ADMIN_NONOWNER"].includes(user.role)) {
       return NextResponse.json(
         { error: "Access denied", configured: false },
         { status: 403 }
@@ -40,20 +40,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Check ADMIN company-specific configuration
-    if (user.role === "ADMIN") {
-      // Get all companies where user is ADMIN
-      const adminCompanies = await db.companyMember.findMany({
+    // Check admin company-specific configuration
+    if (user.role === "ADMIN_OWNER" || user.role === "ADMIN_NONOWNER") {
+      // Get all companies where user is owner or admin
+      const adminCompanies = await db.company.findMany({
         where: {
-          userId,
-          role: "ADMIN",
+          OR: [
+            { ownerId: userId },
+            {
+              members: {
+                some: {
+                  userId,
+                  role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] },
+                },
+              },
+            },
+          ],
         },
-        select: {
-          companyId: true,
-        },
+        select: { id: true },
       });
 
-      const companyIds = adminCompanies.map((m) => m.companyId);
+      const companyIds = adminCompanies.map((m) => m.id);
 
       // Check if any company has email provider configured
       const companyProvider = await db.emailProvider.findFirst({

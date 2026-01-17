@@ -17,13 +17,13 @@ function getRoleProjectsView(role: string) {
   switch (role) {
     case "SUPER_ADMIN":
       return <SuperAdminProjectsView />;
-    case "ADMIN":
+    case "ADMIN_OWNER":
       return <AdminProjectsView />;
-    case "MANAGER":
+    case "COMPANY_MANAGER":
       return <ManagerProjectsView />;
-    case "STAFF":
+    case "COMPANY_STAFF":
       return <StaffProjectsView />;
-    case "CONTRACTOR":
+    case "COMPANY_CONTRACTOR":
       return <ContractorProjectsView />;
     case "ERP_CUSTOMER":
     case "COMPANY_CUSTOMER":
@@ -55,7 +55,7 @@ export default function ProjectsPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
 
@@ -75,10 +75,10 @@ export default function ProjectsPage() {
         // Check if user has access to projects page
         const allowedRoles = [
           "SUPER_ADMIN",
-          "ADMIN",
-          "MANAGER",
-          "STAFF",
-          "CONTRACTOR",
+          "ADMIN_OWNER",
+          "COMPANY_MANAGER",
+          "COMPANY_STAFF",
+          "COMPANY_CONTRACTOR",
           "ERP_CUSTOMER",
           "COMPANY_CUSTOMER",
         ];

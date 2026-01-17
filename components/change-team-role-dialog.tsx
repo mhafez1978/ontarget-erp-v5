@@ -34,25 +34,25 @@ interface ChangeTeamRoleDialogProps {
 
 const TEAM_ROLES = [
   {
-    value: "ADMIN",
+    value: "TEAM_ADMIN",
     label: "Admin",
     color: "bg-purple-500/10 text-purple-700 border-purple-200",
     description: "Full team management access",
   },
   {
-    value: "MANAGER",
+    value: "COMPANY_MANAGER",
     label: "Manager",
     color: "bg-blue-500/10 text-blue-700 border-blue-200",
     description: "Can manage projects and assign tasks",
   },
   {
-    value: "STAFF",
+    value: "COMPANY_STAFF",
     label: "Staff",
     color: "bg-green-500/10 text-green-700 border-green-200",
     description: "Can work on assigned tasks",
   },
   {
-    value: "CONTRACTOR",
+    value: "COMPANY_CONTRACTOR",
     label: "Contractor",
     color: "bg-orange-500/10 text-orange-700 border-orange-200",
     description: "External workers who can be assigned tasks",

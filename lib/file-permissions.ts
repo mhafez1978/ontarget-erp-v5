@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { UserRole, CompanyMemberRole, FolderType } from "@prisma/client";
+import { UserRole, CompanyMemberRole, FolderType } from "@/generated/prisma/client";
 
 /**
  * File Permission Service
@@ -88,23 +88,27 @@ export async function canUserUploadToFolder(
 
   if (!membership) return false;
 
-  // ADMIN and MANAGER can upload anywhere in company
-  if (membership.role === "ADMIN" || membership.role === "MANAGER") {
+  // ADMIN_OWNER, ADMIN_NONOWNER and COMPANY_MANAGER can upload anywhere in company
+  if (
+    membership.role === "ADMIN_OWNER" ||
+    membership.role === "ADMIN_NONOWNER" ||
+    membership.role === "COMPANY_MANAGER"
+  ) {
     return true;
   }
 
-  // STAFF can upload to:
+  // COMPANY_STAFF can upload to:
   // - Shared folders
   // - Their own EMPLOYEE folder
-  if (membership.role === "STAFF") {
+  if (membership.role === "COMPANY_STAFF") {
     if (folder.type === "SHARED") return true;
     if (folder.type === "EMPLOYEE" && folder.ownerId === userId) return true;
     return false;
   }
 
-  // CONTRACTOR can only upload to their own folder
-  if (membership.role === "CONTRACTOR") {
-    return folder.type === "CONTRACTOR" && folder.ownerId === userId;
+  // COMPANY_CONTRACTOR can only upload to their own folder
+  if (membership.role === "COMPANY_CONTRACTOR") {
+    return folder.type === "COMPANY_CONTRACTOR" && folder.ownerId === userId;
   }
 
   return false;
@@ -157,12 +161,16 @@ export async function canUserDeleteFile(
 
   if (!membership) return false;
 
-  // ADMIN and MANAGER can delete any file in company
-  if (membership.role === "ADMIN" || membership.role === "MANAGER") {
+  // ADMIN_OWNER, ADMIN_NONOWNER and COMPANY_MANAGER can delete any file in company
+  if (
+    membership.role === "ADMIN_OWNER" ||
+    membership.role === "ADMIN_NONOWNER" ||
+    membership.role === "COMPANY_MANAGER"
+  ) {
     return true;
   }
 
-  // STAFF and CONTRACTOR can only delete files they uploaded
+  // COMPANY_STAFF and COMPANY_CONTRACTOR can only delete files they uploaded
   return file.uploadedById === userId;
 }
 
@@ -236,8 +244,10 @@ export async function canUserCreateFolder(
 
   if (!membership) return false;
 
-  // Only ADMIN can create folders
-  return membership.role === "ADMIN";
+  // Only company admins (owner or non-owner) can create folders
+  return (
+    membership.role === "ADMIN_OWNER" || membership.role === "ADMIN_NONOWNER"
+  );
 }
 
 /**
@@ -262,29 +272,33 @@ function canAccess(
 
   if (!membership) return false;
 
-  // ADMIN and MANAGER have access to all company files
-  if (membership.role === "ADMIN" || membership.role === "MANAGER") {
+  // ADMIN_OWNER, ADMIN_NONOWNER and COMPANY_MANAGER have access to all company files
+  if (
+    membership.role === "ADMIN_OWNER" ||
+    membership.role === "ADMIN_NONOWNER" ||
+    membership.role === "COMPANY_MANAGER"
+  ) {
     return true;
   }
 
-  // STAFF access rules:
+  // COMPANY_STAFF access rules:
   // - Can access SHARED folders
   // - Can access their own EMPLOYEE folder
   // - Cannot access other employee folders
-  // - Cannot access CONTRACTOR folders
-  if (membership.role === "STAFF") {
+  // - Cannot access COMPANY_CONTRACTOR folders
+  if (membership.role === "COMPANY_STAFF") {
     if (folderType === "SHARED") return true;
     if (folderType === "EMPLOYEE" && folderId === user.id) return true;
     return false;
   }
 
-  // CONTRACTOR access rules:
-  // - Can only access their own CONTRACTOR folder
-  if (membership.role === "CONTRACTOR") {
-    return folderType === "CONTRACTOR" && folderId === user.id;
+  // COMPANY_CONTRACTOR access rules:
+  // - Can only access their own COMPANY_CONTRACTOR folder
+  if (membership.role === "COMPANY_CONTRACTOR") {
+    return folderType === "COMPANY_CONTRACTOR" && folderId === user.id;
   }
 
-  // SUPPLIER has no file access by default
+  // COMPANY_SUPPLIER has no file access by default
   return false;
 }
 
@@ -324,8 +338,12 @@ export async function getUserAccessibleFolders(
 
   if (!membership) return [];
 
-  // ADMIN and MANAGER see all folders
-  if (membership.role === "ADMIN" || membership.role === "MANAGER") {
+  // ADMIN_OWNER, ADMIN_NONOWNER and COMPANY_MANAGER see all folders
+  if (
+    membership.role === "ADMIN_OWNER" ||
+    membership.role === "ADMIN_NONOWNER" ||
+    membership.role === "COMPANY_MANAGER"
+  ) {
     const allFolders = await db.fileFolder.findMany({
       where: { companyId },
       select: { id: true },
@@ -333,8 +351,8 @@ export async function getUserAccessibleFolders(
     return allFolders.map((f) => f.id);
   }
 
-  // STAFF sees SHARED folders and their own EMPLOYEE folder
-  if (membership.role === "STAFF") {
+  // COMPANY_STAFF sees SHARED folders and their own EMPLOYEE folder
+  if (membership.role === "COMPANY_STAFF") {
     const accessibleFolders = await db.fileFolder.findMany({
       where: {
         companyId,
@@ -345,12 +363,12 @@ export async function getUserAccessibleFolders(
     return accessibleFolders.map((f) => f.id);
   }
 
-  // CONTRACTOR sees only their own folder
-  if (membership.role === "CONTRACTOR") {
+  // COMPANY_CONTRACTOR sees only their own folder
+  if (membership.role === "COMPANY_CONTRACTOR") {
     const contractorFolder = await db.fileFolder.findFirst({
       where: {
         companyId,
-        type: "CONTRACTOR",
+        type: "COMPANY_CONTRACTOR",
         ownerId: userId,
       },
       select: { id: true },

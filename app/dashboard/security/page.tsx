@@ -17,7 +17,7 @@ export default function SecurityPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +56,7 @@ export default function SecurityPage() {
   }
 
   // Only Super Admins and Admins can access this page
-  if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
+  if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN_OWNER") {
     return (
       <DashboardLayout user={user}>
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">

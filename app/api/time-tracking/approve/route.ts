@@ -38,10 +38,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Only ADMIN, SUPER_ADMIN, or MANAGER can approve
-    const canApprove = ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(
-      validation.user.role
-    );
+    // Only ADMIN_OWNER, SUPER_ADMIN, or COMPANY_MANAGER can approve
+    const canApprove = [
+      "ADMIN_OWNER",
+      "SUPER_ADMIN",
+      "COMPANY_MANAGER",
+    ].includes(validation.user.role);
     if (!canApprove) {
       return NextResponse.json(
         { error: "Only admins and managers can approve time entries" },

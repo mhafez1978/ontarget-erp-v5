@@ -1,4 +1,4 @@
-import { Decimal } from "@prisma/client/runtime/library";
+import Decimal from "decimal.js";
 
 // Tax Configuration Types
 export interface TaxBracket {

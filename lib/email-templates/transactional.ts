@@ -1,4 +1,4 @@
-import { EmailTemplateType, EmailTemplateCategory } from "@prisma/client";
+import { EmailTemplateType, EmailTemplateCategory } from "@/generated/prisma/client";
 import {
   TemplateDefinition,
   createEmailShell,
@@ -91,9 +91,9 @@ export const TRANSACTIONAL_TEMPLATES: TemplateDefinition[] = [
       `Thanks for contacting ${vars.companyName}. We received your message.`,
   },
 
-  // WELCOME_STAFF Template
+  // WELCOME_COMPANY_STAFF Template
   {
-    type: "WELCOME_STAFF" as EmailTemplateType,
+    type: "WELCOME_COMPANY_STAFF" as EmailTemplateType,
     category: "TRANSACTIONAL" as EmailTemplateCategory,
     name: "Welcome New Staff Member",
     description: "Sent when a new staff member is added to the system",

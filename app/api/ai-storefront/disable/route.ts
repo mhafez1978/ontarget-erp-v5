@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { canUseAiStorefront } from "@/lib/billing/plan-gating";
-import type { SubscriptionPlan } from "@/lib/types/subscription";
+import type { SubscriptionPlan } from "@/generated/prisma/client";
 
 const disableSchema = z.object({
   companyId: z.string(),
@@ -70,7 +70,9 @@ export async function POST(request: NextRequest) {
     const isMember = user.companyMemberships.length > 0;
     const isAdminOrManager = user.companyMemberships.some(
       (m: { role?: string | null }) =>
-        m.role === "ADMIN" || m.role === "MANAGER"
+        m.role === "ADMIN_OWNER" ||
+        m.role === "ADMIN_NONOWNER" ||
+        m.role === "COMPANY_MANAGER"
     );
 
     const hasAccess =

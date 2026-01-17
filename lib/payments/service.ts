@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { createPaymentProvider } from "@/lib/payment-providers";
 import { PaymentProviderName } from "@/lib/payment-providers/constants";
-import type { PaymentGateway } from "@prisma/client";
+import type { PaymentGateway } from "@/generated/prisma/client";
 
 /**
  * Payments service helpers for root-company checkout

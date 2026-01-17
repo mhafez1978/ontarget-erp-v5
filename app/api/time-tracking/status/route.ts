@@ -29,9 +29,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Check if user is the company owner (ADMIN who owns the company)
+    // Check if user is the company owner (ADMIN_OWNER who owns the company)
     const isOwner =
-      user.role === "ADMIN" &&
+      user.role === "ADMIN_OWNER" &&
       (await db.company.findFirst({
         where: {
           id: companyId,

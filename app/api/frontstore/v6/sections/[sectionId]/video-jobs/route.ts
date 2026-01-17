@@ -21,9 +21,11 @@ export async function GET(
       return NextResponse.json({ error: "Section not found" }, { status: 404 });
 
     if (user.role !== "SUPER_ADMIN") {
-      const owns = (user as any).ownedCompanies?.some(
-        (c: any) => c.id === section.companyId
-      );
+      const ownedCompanies = (user as { ownedCompanies?: { id: string }[] })
+        .ownedCompanies;
+      const owns =
+        Array.isArray(ownedCompanies) &&
+        ownedCompanies.some((c) => c.id === section.companyId);
       if (!owns)
         return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }

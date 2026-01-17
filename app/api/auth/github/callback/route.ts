@@ -226,7 +226,7 @@ export async function GET(request: NextRequest) {
         });
         // No welcome email for storefront customers
       } else {
-        // ROOT PLATFORM CONTEXT: Create ERP_CUSTOMER with GUEST plan
+        // ROOT PLATFORM CONTEXT: Create ERP_CUSTOMER with TRIAL plan
         // They will need to select a plan before accessing the dashboard
         // If using placeholder email, they'll also need to update their email
         user = await db.user.create({
@@ -375,7 +375,7 @@ export async function GET(request: NextRequest) {
         // Fallback if company not found
         redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/`;
       }
-    } else if (user.plan === "GUEST") {
+    } else if (user.plan === "TRIAL") {
       // ROOT PLATFORM - new users need to set password first, then select a plan
       redirectUrl = onboarding
         ? `${process.env.NEXT_PUBLIC_APP_URL}/oauth-setup/${encodeURIComponent(

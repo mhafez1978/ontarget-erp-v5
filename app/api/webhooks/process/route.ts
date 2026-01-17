@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import crypto from "crypto";
-import type { WebhookDelivery, WebhookConfig } from "@prisma/client";
+import type { WebhookDelivery, WebhookConfig } from "@/generated/prisma/client";
 
 // Lightweight processing endpoint to be called by a cron (or invoked manually) to process pending deliveries
 export async function POST(req: NextRequest) {

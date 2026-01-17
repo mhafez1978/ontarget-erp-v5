@@ -1,7 +1,11 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 
-const restrictedRoles = new Set(["MANAGER", "STAFF", "CONTRACTOR"]);
+const restrictedRoles = new Set([
+  "COMPANY_MANAGER",
+  "COMPANY_STAFF",
+  "COMPANY_CONTRACTOR",
+]);
 
 type ProjectInfo = {
   id: string;

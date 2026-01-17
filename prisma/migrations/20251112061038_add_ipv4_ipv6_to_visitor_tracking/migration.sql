@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE `VisitorTracking` ADD COLUMN `ipv4` VARCHAR(191) NULL,
-    ADD COLUMN `ipv6` VARCHAR(191) NULL;

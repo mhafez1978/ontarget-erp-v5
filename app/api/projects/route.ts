@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit-log";
-import { Prisma, ProjectStatus } from "@prisma/client";
+import {
+  Prisma,
+  ProjectStatus,
+  TaskStatus,
+  TaskPriority,
+  Task,
+} from "@/generated/prisma/client";
 
 // Type for project with includes
 type ProjectWithIncludes = Prisma.ProjectGetPayload<{
@@ -37,13 +43,7 @@ type ProjectWithIncludes = Prisma.ProjectGetPayload<{
         };
       };
     };
-    tasks: {
-      select: {
-        id: true;
-        status: true;
-        priority: true;
-      };
-    };
+    tasks: true;
     _count: {
       select: {
         tasks: true;
@@ -87,8 +87,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if user has access to this company
-    // SUPER_ADMIN & ADMIN: Must own the company OR be a member/staff of the company
-    // MANAGER/STAFF/CONTRACTOR: Must be in company staff (see projects via team membership)
+    // SUPER_ADMIN & ADMIN_OWNER: Must own the company OR be a member/staff of the company
+    // COMPANY_MANAGER/COMPANY_STAFF/COMPANY_CONTRACTOR: Must be in company staff (see projects via team membership)
     // ERP_CUSTOMER/COMPANY_CUSTOMER: Can access via project customer relationship
     let hasAccess = false;
 
@@ -128,11 +128,11 @@ export async function GET(req: NextRequest) {
 
     // Apply role-based filtering
     if (
-      user.role === "MANAGER" ||
-      user.role === "STAFF" ||
-      user.role === "CONTRACTOR"
+      user.role === "COMPANY_MANAGER" ||
+      user.role === "COMPANY_STAFF" ||
+      user.role === "COMPANY_CONTRACTOR"
     ) {
-      // MANAGER/STAFF/CONTRACTOR: Only see projects where they are team members
+      // COMPANY_MANAGER/COMPANY_STAFF/COMPANY_CONTRACTOR: Only see projects where they are team members
       const staffRecord = await db.companyStaff.findFirst({
         where: { userId, companyId },
         select: { id: true },
@@ -160,7 +160,7 @@ export async function GET(req: NextRequest) {
       // ERP_CUSTOMER/COMPANY_CUSTOMER: Only see projects where they are the customer
       where.customerId = userId;
     }
-    // SUPER_ADMIN, ADMIN: See all projects in the company (no additional filter needed)
+    // SUPER_ADMIN, ADMIN_OWNER: See all projects in the company (no additional filter needed)
 
     if (teamId) {
       where.teamId = teamId;
@@ -221,13 +221,7 @@ export async function GET(req: NextRequest) {
             },
           },
         },
-        tasks: {
-          select: {
-            id: true,
-            status: true,
-            priority: true,
-          },
-        },
+        tasks: true,
         _count: {
           select: {
             tasks: true,
@@ -248,7 +242,7 @@ export async function GET(req: NextRequest) {
     const projectsWithProgress = projects.map((project) => {
       const totalTasks = project.tasks.length;
       const completedTasks = project.tasks.filter(
-        (t) => t.status === "COMPLETED"
+        (t: Task) => t.status === TaskStatus.COMPLETED
       ).length;
       const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
@@ -280,19 +274,32 @@ export async function GET(req: NextRequest) {
         },
         taskCount: project._count.tasks,
         tasksByStatus: {
-          todo: project.tasks.filter((t) => t.status === "TODO").length,
-          inProgress: project.tasks.filter((t) => t.status === "IN_PROGRESS")
+          todo: project.tasks.filter((t: Task) => t.status === TaskStatus.TODO)
             .length,
-          inReview: project.tasks.filter((t) => t.status === "IN_REVIEW")
-            .length,
+          inProgress: project.tasks.filter(
+            (t: Task) => t.status === TaskStatus.IN_PROGRESS
+          ).length,
+          inReview: project.tasks.filter(
+            (t: Task) => t.status === TaskStatus.IN_REVIEW
+          ).length,
           completed: completedTasks,
-          blocked: project.tasks.filter((t) => t.status === "BLOCKED").length,
+          blocked: project.tasks.filter(
+            (t: Task) => t.status === TaskStatus.BLOCKED
+          ).length,
         },
         tasksByPriority: {
-          urgent: project.tasks.filter((t) => t.priority === "URGENT").length,
-          high: project.tasks.filter((t) => t.priority === "HIGH").length,
-          medium: project.tasks.filter((t) => t.priority === "MEDIUM").length,
-          low: project.tasks.filter((t) => t.priority === "LOW").length,
+          urgent: project.tasks.filter(
+            (t: Task) => t.priority === TaskPriority.URGENT
+          ).length,
+          high: project.tasks.filter(
+            (t: Task) => t.priority === TaskPriority.HIGH
+          ).length,
+          medium: project.tasks.filter(
+            (t: Task) => t.priority === TaskPriority.MEDIUM
+          ).length,
+          low: project.tasks.filter(
+            (t: Task) => t.priority === TaskPriority.LOW
+          ).length,
         },
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
@@ -411,11 +418,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check permissions: Company owner, Team ADMIN/MANAGER, or SUPER_ADMIN
+    // Check permissions: Company owner, Team ADMIN_OWNER/COMPANY_MANAGER, or SUPER_ADMIN
     const isOwner = team.company.ownerId === userId;
     const userTeamRole = team.members[0]?.role;
     const canCreateProjects =
-      userTeamRole === "ADMIN" || userTeamRole === "MANAGER";
+      userTeamRole === "ADMIN_OWNER" || userTeamRole === "COMPANY_MANAGER";
     const isSuperAdmin = user.role === "SUPER_ADMIN";
 
     if (!isOwner && !canCreateProjects && !isSuperAdmin) {

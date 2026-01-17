@@ -20,8 +20,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // LEDGER ACCESS CONTROL: allow ADMIN, SUPER_ADMIN, MANAGER, and STAFF (read-only for non-admins)
-    const allowedRoles = ["ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"];
+    // LEDGER ACCESS CONTROL: allow ADMIN_OWNER, ADMIN_NONOWNER, SUPER_ADMIN, COMPANY_MANAGER, and COMPANY_STAFF (read-only for non-admins)
+    const allowedRoles = [
+      "ADMIN_OWNER",
+      "ADMIN_NONOWNER",
+      "SUPER_ADMIN",
+      "COMPANY_MANAGER",
+      "COMPANY_STAFF",
+    ];
     if (!allowedRoles.includes(user.role)) {
       return NextResponse.json(
         {
@@ -61,8 +67,8 @@ export async function GET(req: NextRequest) {
         });
         companyId = company?.id || null;
       }
-    } else if (user.role === "ADMIN") {
-      // Admins can view companies they own or are admins of
+    } else if (user.role === "ADMIN_OWNER" || user.role === "ADMIN_NONOWNER") {
+      // Admins can view companies they own or are admins of (for ADMIN_NONOWNER this will only match member companies)
       if (requestedCompanyId) {
         const company = await db.company.findFirst({
           where: {
@@ -71,7 +77,7 @@ export async function GET(req: NextRequest) {
               { ownerId: user.id },
               {
                 members: {
-                  some: { userId: user.id, role: "ADMIN" },
+                  some: { userId: user.id, role: "ADMIN_NONOWNER" },
                 },
               },
             ],
@@ -94,7 +100,7 @@ export async function GET(req: NextRequest) {
             OR: [
               { ownerId: user.id },
               {
-                members: { some: { userId: user.id, role: "ADMIN" } },
+                members: { some: { userId: user.id, role: "ADMIN_NONOWNER" } },
               },
             ],
           },
@@ -103,7 +109,7 @@ export async function GET(req: NextRequest) {
         companyId = company?.id || null;
       }
     } else {
-      // MANAGER / STAFF: only allowed to view company where they are a member or staff
+      // COMPANY_MANAGER / COMPANY_STAFF: only allowed to view company where they are a member or staff
       if (requestedCompanyId) {
         const membership = await db.companyMember.findFirst({
           where: { userId: user.id, companyId: requestedCompanyId },

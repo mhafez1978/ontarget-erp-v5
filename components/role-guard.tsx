@@ -135,36 +135,30 @@ export function RoleSwitch({
 
   if (isLoading || !user) return <>{fallback}</>;
 
-  switch (user.role) {
-    case "SUPER_ADMIN":
-      return <>{superAdmin || fallback}</>;
-    case "ADMIN":
-      return <>{admin || fallback}</>;
-    case "MANAGER":
-      return <>{manager || fallback}</>;
-    case "STAFF":
-      return <>{staff || fallback}</>;
-    case "CONTRACTOR":
-      return <>{contractor || fallback}</>;
-    case "ERP_CUSTOMER":
-      return <>{erpCustomer || fallback}</>;
-    case "COMPANY_CUSTOMER":
-      return <>{companyCustomer || fallback}</>;
-    case "SUPPLIER":
-      return <>{supplier || fallback}</>;
-    case "GUEST":
-      return <>{guest || fallback}</>;
-    default:
-      return <>{fallback}</>;
-  }
+  if (hasAnyRole(user, ["SUPER_ADMIN"])) return <>{superAdmin || fallback}</>;
+  if (hasAnyRole(user, ["ADMIN_OWNER", "ADMIN_NONOWNER"]))
+    return <>{admin || fallback}</>;
+  if (hasAnyRole(user, ["COMPANY_MANAGER"])) return <>{manager || fallback}</>;
+  if (hasAnyRole(user, ["COMPANY_STAFF"])) return <>{staff || fallback}</>;
+  if (hasAnyRole(user, ["COMPANY_CONTRACTOR"]))
+    return <>{contractor || fallback}</>;
+  if (hasAnyRole(user, ["ERP_CUSTOMER"])) return <>{erpCustomer || fallback}</>;
+  if (hasAnyRole(user, ["COMPANY_CUSTOMER"]))
+    return <>{companyCustomer || fallback}</>;
+  if (hasAnyRole(user, ["COMPANY_SUPPLIER"]))
+    return <>{supplier || fallback}</>;
+  if (hasAnyRole(user, ["TRIAL"])) return <>{guest || fallback}</>;
+  return <>{fallback}</>;
 }
 
 /**
- * Show content only to admins (SUPER_ADMIN or ADMIN)
+ * Show content only to admins (SUPER_ADMIN or ADMIN_OWNER)
  */
 export function AdminOnly({ children }: { children: ReactNode }) {
   return (
-    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADMIN"]}>{children}</RoleGuard>
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADMIN_OWNER", "ADMIN_NONOWNER"]}>
+      {children}
+    </RoleGuard>
   );
 }
 
@@ -176,31 +170,39 @@ export function SuperAdminOnly({ children }: { children: ReactNode }) {
 }
 
 /**
- * Show content to managers and above (SUPER_ADMIN, ADMIN, MANAGER)
+ * Show content to managers and above (SUPER_ADMIN, ADMIN_OWNER, COMPANY_MANAGER)
  */
 export function ManagerAndAbove({ children }: { children: ReactNode }) {
   return (
-    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADMIN", "MANAGER"]}>
+    <RoleGuard
+      allowedRoles={[
+        "SUPER_ADMIN",
+        "ADMIN_OWNER",
+        "ADMIN_NONOWNER",
+        "COMPANY_MANAGER",
+      ]}
+    >
       {children}
     </RoleGuard>
   );
 }
 
 /**
- * Show content to staff and above (everyone except GUEST)
+ * Show content to staff and above (everyone except TRIAL)
  */
 export function StaffAndAbove({ children }: { children: ReactNode }) {
   return (
     <RoleGuard
       allowedRoles={[
         "SUPER_ADMIN",
-        "ADMIN",
-        "MANAGER",
-        "STAFF",
-        "CONTRACTOR",
+        "ADMIN_OWNER",
+        "ADMIN_NONOWNER",
+        "COMPANY_MANAGER",
+        "COMPANY_STAFF",
+        "COMPANY_CONTRACTOR",
         "ERP_CUSTOMER",
         "COMPANY_CUSTOMER",
-        "SUPPLIER",
+        "COMPANY_SUPPLIER",
       ]}
     >
       {children}

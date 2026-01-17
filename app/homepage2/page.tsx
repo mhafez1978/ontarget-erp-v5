@@ -1,59 +1,61 @@
 import { cache } from "react";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // Lazy load components
-const ModernHero = dynamic(() =>
+const ModernHero = dynamicImport(() =>
   import("@/components/homepage2/ModernHero").then((m) => ({
     default: m.ModernHero,
   }))
 );
-const InteractiveFeatures = dynamic(() =>
+const InteractiveFeatures = dynamicImport(() =>
   import("@/components/homepage2/InteractiveFeatures").then((m) => ({
     default: m.InteractiveFeatures,
   }))
 );
-const StatsBanner = dynamic(() =>
+const StatsBanner = dynamicImport(() =>
   import("@/components/homepage2/StatsBanner").then((m) => ({
     default: m.StatsBanner,
   }))
 );
-const IndustryShowcase = dynamic(() =>
+const IndustryShowcase = dynamicImport(() =>
   import("@/components/homepage2/IndustryShowcase").then((m) => ({
     default: m.IndustryShowcase,
   }))
 );
-const TechStackSection = dynamic(() =>
+const TechStackSection = dynamicImport(() =>
   import("@/components/homepage2/TechStackSection").then((m) => ({
     default: m.TechStackSection,
   }))
 );
-const ComparisonTable = dynamic(() =>
+const ComparisonTable = dynamicImport(() =>
   import("@/components/homepage2/ComparisonTable").then((m) => ({
     default: m.ComparisonTable,
   }))
 );
-const TestimonialsCarousel = dynamic(() =>
+const TestimonialsCarousel = dynamicImport(() =>
   import("@/components/homepage2/TestimonialsCarousel").then((m) => ({
     default: m.TestimonialsCarousel,
   }))
 );
-const PricingCards = dynamic(() =>
+const PricingCards = dynamicImport(() =>
   import("@/components/homepage2/PricingCards").then((m) => ({
     default: m.PricingCards,
   }))
 );
-const FinalCTA = dynamic(() =>
+const FinalCTA = dynamicImport(() =>
   import("@/components/homepage2/FinalCTA").then((m) => ({
     default: m.FinalCTA,
   }))
 );
-const ContactSection = dynamic(() =>
+const ContactSection = dynamicImport(() =>
   import("@/components/contact-section").then((m) => ({
     default: m.ContactSection,
   }))
 );
-const Footer = dynamic(() =>
+const Footer = dynamicImport(() =>
   import("@/components/homepage/Footer").then((m) => ({ default: m.Footer }))
 );
 
@@ -69,11 +71,16 @@ const getRootCompany = cache(async () => {
   });
 });
 
-const getPricingData = cache(async () => {
-  return db.planPricing.findMany({
-    orderBy: { monthlyPrice: "asc" },
-  });
-});
+const getPricingData = async () => {
+  try {
+    return await db.planPricing.findMany({
+      orderBy: { monthlyPrice: "asc" },
+    });
+  } catch (error) {
+    console.error("Error fetching plan pricing:", error);
+    return [];
+  }
+};
 
 const getTestimonials = cache(async (companyId: string) => {
   return db.testimonial.findMany({

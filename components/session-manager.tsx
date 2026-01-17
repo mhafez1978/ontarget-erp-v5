@@ -58,7 +58,7 @@ interface Session {
 }
 
 interface SessionManagerProps {
-  userRole: "SUPER_ADMIN" | "ADMIN" | string;
+  userRole: "SUPER_ADMIN" | "ADMIN_OWNER" | "ADMIN_NONOWNER" | string;
 }
 
 export function SessionManager({ userRole }: SessionManagerProps) {
@@ -71,7 +71,7 @@ export function SessionManager({ userRole }: SessionManagerProps) {
   const [showRevokeAllDialog, setShowRevokeAllDialog] = useState(false);
 
   const isSuperAdmin = userRole === "SUPER_ADMIN";
-  const isAdmin = userRole === "ADMIN";
+  const isAdmin = userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER";
 
   const fetchSessions = useCallback(async () => {
     try {

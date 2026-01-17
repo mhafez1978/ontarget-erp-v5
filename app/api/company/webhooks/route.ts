@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
-import type { WebhookConfig, Company, CompanyMember } from "@prisma/client";
+import type { WebhookConfig, Company, CompanyMember } from "@/generated/prisma/client";
 import { z } from "zod";
 
 const CreateSchema = z.object({

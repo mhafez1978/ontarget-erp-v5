@@ -65,11 +65,8 @@ export function CompanyEnableHederaModal({
   const [anchorHistory, setAnchorHistory] = useState(true);
   const [understands, setUnderstands] = useState(false);
   const [understandsPermanence, setUnderstandsPermanence] = useState(false);
+  const [signature, setSignature] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  // Budget configuration
-  const [enableBudget, setEnableBudget] = useState(false);
-  const [monthlyBudget, setMonthlyBudget] = useState("1");
 
   useEffect(() => {
     fetchStatus();
@@ -97,6 +94,11 @@ export function CompanyEnableHederaModal({
       return;
     }
 
+    if (!signature.trim()) {
+      toast.error("Please provide your digital signature");
+      return;
+    }
+
     if (!understands || !understandsPermanence) {
       toast.error("Please confirm you understand all warnings");
       return;
@@ -111,7 +113,7 @@ export function CompanyEnableHederaModal({
           companyId,
           enable: true,
           historicalAnchoring: anchorHistory,
-          monthlyBudget: enableBudget ? parseFloat(monthlyBudget) : null,
+          digitalSignature: signature.trim(),
         }),
       });
 
@@ -131,9 +133,8 @@ export function CompanyEnableHederaModal({
       setConfirmText("");
       setUnderstands(false);
       setUnderstandsPermanence(false);
+      setSignature("");
       setAnchorHistory(true);
-      setEnableBudget(false);
-      setMonthlyBudget("1");
     } catch (err) {
       console.error(err);
       toast.error(
@@ -323,49 +324,67 @@ export function CompanyEnableHederaModal({
               </p>
             </div>
 
-            {/* Budget Configuration */}
-            <div className="space-y-3 border rounded-lg p-4">
+            {/* Digital Agreement & Signature */}
+            <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
+                <Shield className="h-4 w-4" />
                 <Label className="text-sm font-semibold">
-                  Monthly Budget (Optional)
+                  Digital Agreement & Signature
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="enableBudget"
-                  checked={enableBudget}
-                  onCheckedChange={(checked) => setEnableBudget(!!checked)}
-                />
-                <Label
-                  htmlFor="enableBudget"
-                  className="text-sm cursor-pointer"
-                >
-                  Set spending limit to prevent overuse
-                </Label>
-              </div>
-
-              {enableBudget && (
-                <div className="space-y-2 ml-6">
-                  <Label htmlFor="monthlyBudget" className="text-sm">
-                    Monthly Limit (HBAR)
-                  </Label>
-                  <Input
-                    id="monthlyBudget"
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    value={monthlyBudget}
-                    onChange={(e) => setMonthlyBudget(e.target.value)}
-                    placeholder="1.0"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Transactions will be blocked when this limit is reached.
-                    Resets monthly.
+              <div className="space-y-3 text-xs">
+                <p className="font-medium">
+                  Blockchain Anchoring Service Agreement
+                </p>
+                <div className="bg-white dark:bg-gray-900 p-3 rounded border max-h-32 overflow-y-auto text-xs leading-relaxed">
+                  <p className="mb-2">
+                    <strong>1. Service Description:</strong> Upon enabling, all
+                    audit logs, transactions, and records will be permanently
+                    anchored to the Hedera distributed ledger using
+                    cryptographic hashing.
+                  </p>
+                  <p className="mb-2">
+                    <strong>2. Cost Structure:</strong> Service costs
+                    approximately $0.014 per anchor event (0.0001 HBAR × current
+                    HBAR price of ~$0.118). Billed monthly based on actual
+                    usage. No setup fees.
+                  </p>
+                  <p className="mb-2">
+                    <strong>3. Permanence:</strong> Once enabled, anchoring
+                    cannot be disabled. Records remain on-chain permanently,
+                    even after account termination.
+                  </p>
+                  <p className="mb-2">
+                    <strong>4. Cost Responsibility:</strong> The account owner
+                    accepts responsibility for all anchoring costs incurred by
+                    this company.
+                  </p>
+                  <p>
+                    <strong>5. Legal Effect:</strong> This digital signature
+                    creates a legally binding agreement for blockchain anchoring
+                    services.
                   </p>
                 </div>
-              )}
+              </div>
+
+              {/* Signature Input */}
+              <div className="space-y-2">
+                <Label htmlFor="signature" className="text-sm">
+                  Digital Signature (Full Legal Name)
+                </Label>
+                <Input
+                  id="signature"
+                  value={signature}
+                  onChange={(e) => setSignature(e.target.value)}
+                  placeholder="Type your full legal name as signature"
+                  className="font-signature"
+                />
+                <p className="text-xs text-muted-foreground">
+                  By typing your name, you agree to the terms above and
+                  authorize permanent blockchain anchoring for this company.
+                </p>
+              </div>
             </div>
 
             {/* Confirmation Checkboxes */}

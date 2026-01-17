@@ -13,8 +13,12 @@ export async function GET(req: NextRequest) {
 
     const user = validation.user;
 
-    // Only ADMIN and SUPER_ADMIN can access payroll data
-    if (!["ADMIN", "SUPER_ADMIN"].includes(user.role || "")) {
+    // Only admins and SUPER_ADMIN can access payroll data
+    if (
+      !["ADMIN_OWNER", "ADMIN_NONOWNER", "SUPER_ADMIN"].includes(
+        user.role || ""
+      )
+    ) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
         { status: 403 }
@@ -50,11 +54,11 @@ export async function GET(req: NextRequest) {
         }
       }
     } else {
-      // ADMIN can only access their own company
+      // ADMIN_OWNER can only access their own company
       const staffRecord = await db.companyStaff.findFirst({
         where: {
           userId: user.id,
-          role: "ADMIN",
+          role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] },
         },
         select: { companyId: true },
       });

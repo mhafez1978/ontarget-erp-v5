@@ -12,7 +12,7 @@ import type {
   Service,
   Testimonial,
   CompanyStaff,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 
 // ============================================================================
 // TYPES

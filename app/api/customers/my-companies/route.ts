@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import type { User, Company } from "@/generated/prisma/client";
+
+type CompanyMemberWithUser = {
+  user: Pick<User, "id" | "name" | "email" | "image" | "role" | "createdAt">;
+  company: Pick<Company, "id" | "name">;
+  joinedAt: Date;
+};
+
+type CustomerSummary = {
+  id: CompanyMemberWithUser["user"]["id"];
+  name: CompanyMemberWithUser["user"]["name"];
+  email: CompanyMemberWithUser["user"]["email"];
+  image: CompanyMemberWithUser["user"]["image"];
+  companyId: CompanyMemberWithUser["company"]["id"];
+  companyName: CompanyMemberWithUser["company"]["name"];
+  role: CompanyMemberWithUser["user"]["role"];
+  joinedAt: CompanyMemberWithUser["joinedAt"];
+  createdAt: CompanyMemberWithUser["user"]["createdAt"];
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -69,8 +88,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // ADMIN, MANAGER, STAFF can view all company customers they manage
-    const allowedRoles = ["ADMIN", "MANAGER", "STAFF"];
+    // ADMIN_OWNER, COMPANY_MANAGER, COMPANY_STAFF can view all company customers they manage
+    const allowedRoles = [
+      "ADMIN_OWNER",
+      "ADMIN_NONOWNER",
+      "COMPANY_MANAGER",
+      "COMPANY_STAFF",
+    ];
+
     if (!allowedRoles.includes(user.role)) {
       console.log(
         "[API /customers/my-companies] Unauthorized role:",
@@ -136,7 +161,7 @@ export async function GET(request: NextRequest) {
     const companiesMap = new Map(
       managedCompanies.map((c) => [
         c.id,
-        { id: c.id, name: c.name, customers: [] as any },
+        { id: c.id, name: c.name, customers: [] as CustomerSummary[] },
       ])
     );
 

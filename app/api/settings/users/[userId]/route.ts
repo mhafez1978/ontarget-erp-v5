@@ -47,7 +47,7 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Only allow deletion of ERP_CUSTOMER role with ERP_CUSTOMER or GUEST plan
+    // Only allow deletion of ERP_CUSTOMER role with ERP_CUSTOMER or TRIAL plan
     if (userToDelete.role !== "ERP_CUSTOMER") {
       return NextResponse.json(
         { error: "Can only delete users with ERP_CUSTOMER role" },
@@ -55,9 +55,9 @@ export async function DELETE(
       );
     }
 
-    if (userToDelete.plan !== "ERP_CUSTOMER" && userToDelete.plan !== "GUEST") {
+    if (userToDelete.plan !== "ERP_CUSTOMER" && userToDelete.plan !== "TRIAL") {
       return NextResponse.json(
-        { error: "Can only delete users with ERP_CUSTOMER or GUEST plan" },
+        { error: "Can only delete users with ERP_CUSTOMER or TRIAL plan" },
         { status: 400 }
       );
     }

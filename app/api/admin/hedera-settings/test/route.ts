@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI, hasRole } from "@/lib/validate-session";
+import type { Client as HederaClient } from "@hashgraph/sdk";
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Select correct client based on requested network
-    const client = ((): any => {
+    const client = (() => {
       switch (network) {
         case "PREVIEWNET":
           return Client.forPreviewnet();
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
         default:
           return Client.forTestnet();
       }
-    })();
+    })() as HederaClient;
 
     // Try to set operator and read balance
     try {
@@ -67,31 +68,31 @@ export async function POST(request: NextRequest) {
       const { updateAccountBalance } = await import(
         "@/lib/hedera/cost-manager"
       );
-      const { Decimal } = await import("@prisma/client/runtime/library");
+      const Decimal = (await import("decimal.js")).default;
       await updateAccountBalance(new Decimal(balanceHbar));
 
       // Try to derive EVM address from hex or DER when keyType is ECDSA
       let evmAddress: string | null = null;
       try {
         if (keyType === "ECDSA") {
-          const ethers = (await import("ethers")) as any;
+          const { Wallet } = await import("ethers");
           let candidate = operatorKey.trim();
           if (!candidate.startsWith("0x")) candidate = `0x${candidate}`;
-          const wallet = new ethers.Wallet(candidate);
+          const wallet = new Wallet(candidate);
           evmAddress = wallet.address;
         }
-      } catch (err) {
+      } catch {
         // Attempt DER parse -> derive by parsing DER to PrivateKey
         try {
           if (typeof derPrivateKey === "string" && keyType === "ECDSA") {
             const parsed = PrivateKey.fromString(derPrivateKey);
             let candidate = parsed.toString();
             if (!candidate.startsWith("0x")) candidate = `0x${candidate}`;
-            const ethers = (await import("ethers")) as any;
-            const wallet = new ethers.Wallet(candidate);
+            const { Wallet } = await import("ethers");
+            const wallet = new Wallet(candidate);
             evmAddress = wallet.address;
           }
-        } catch (_) {
+        } catch {
           evmAddress = null;
         }
       }

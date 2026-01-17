@@ -1,4 +1,4 @@
-import { CompanyIndustry } from "@prisma/client";
+import { CompanyIndustry } from "@/generated/prisma/client";
 
 /**
  * Display labels for company industries

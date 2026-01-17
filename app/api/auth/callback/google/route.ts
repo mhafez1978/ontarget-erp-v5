@@ -236,7 +236,7 @@ export async function GET(request: NextRequest) {
         // No welcome email for storefront customers (company can customize this later)
       } else {
         // ROOT PLATFORM CONTEXT: Create ERP_CUSTOMER
-        // Use plan from register page if provided, otherwise GUEST for plan selection
+        // Use plan from register page if provided, otherwise TRIAL for plan selection
         const userPlan =
           selectedPlan &&
           ["ESSENTIAL", "GROWTH", "ENTERPRISE"].includes(selectedPlan)
@@ -249,7 +249,7 @@ export async function GET(request: NextRequest) {
             name: name || email.split("@")[0],
             image: picture,
             role: "ERP_CUSTOMER", // New signups are ERP customers
-            plan: userPlan, // Use selected plan from register page or GUEST
+            plan: userPlan, // Use selected plan from register page or TRIAL
             authMethod: "oauth",
             emailVerified: verified_email ? new Date() : null,
             isActive: true,
@@ -350,14 +350,17 @@ export async function GET(request: NextRequest) {
       context
     );
 
-    // If this is a newly created root-platform user and plan is GUEST, create an
+    // If this is a newly created root-platform user and plan is TRIAL, create an
     // OAuth onboarding token and redirect to Select Plan WITHOUT creating a session.
     // Note: we assume the "isNewUser" flag is set when we created the user above.
     // (This prevents automatic sign-in before onboarding completes.)
     // We'll detect by checking for a temporary marker created in the DB create block.
 
     const isNewRootOauth =
-      user && user.plan === "GUEST" && context === "root" && isNewUser === true;
+      user &&
+      String(user.plan) === "TRIAL" &&
+      context === "root" &&
+      isNewUser === true;
 
     if (isNewRootOauth) {
       // Create onboarding token valid for 1 hour
@@ -411,7 +414,7 @@ export async function GET(request: NextRequest) {
         // Fallback if company not found
         redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/`;
       }
-    } else if (user.plan === "GUEST") {
+    } else if (user.plan === "TRIAL") {
       // ROOT PLATFORM - new users need to select a plan
       redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/select-plan`;
     } else {

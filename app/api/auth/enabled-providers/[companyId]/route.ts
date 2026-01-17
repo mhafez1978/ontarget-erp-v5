@@ -21,7 +21,7 @@ export async function GET(
     });
 
     // Filter out providers with missing clientId (not fully configured)
-    const enabledProviders = providers.filter((p) => p.clientId);
+    const enabledProviders = providers.filter((p: any) => p.clientId);
 
     return NextResponse.json({ providers: enabledProviders });
   } catch (error) {

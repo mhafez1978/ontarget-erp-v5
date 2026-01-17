@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
                   email: staffMember.userEmail,
                   name: staffMember.userName,
                   password: tempPassword,
-                  role: "STAFF", // Staff members
+                  role: "COMPANY_STAFF", // Staff members
                   plan: "COMPANY_STAFF", // Company staff plan
                 },
               });
@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
                   data: {
                     companyId,
                     userId: existingUser.id,
-                    role: "STAFF",
+                    role: "COMPANY_STAFF",
                   },
                 });
               }
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
                 data: {
                   companyId,
                   userId: newCustomer.id,
-                  role: "STAFF",
+                  role: "ERP_CUSTOMER",
                 },
               });
 

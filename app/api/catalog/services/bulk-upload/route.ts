@@ -74,7 +74,14 @@ export async function POST(request: NextRequest) {
     if (!validation.valid) return validation.response;
     const user = validation.user;
 
-    if (!["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(user.role)) {
+    if (
+      ![
+        "SUPER_ADMIN",
+        "ADMIN_OWNER",
+        "ADMIN_NONOWNER",
+        "COMPANY_MANAGER",
+      ].includes(user.role)
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

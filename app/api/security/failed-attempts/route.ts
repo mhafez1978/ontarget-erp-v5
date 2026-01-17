@@ -15,16 +15,20 @@ export async function GET(request: NextRequest) {
     const user = validation.user;
 
     // Check if user is Admin or Super Admin
-    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
+    if (
+      user.role !== "SUPER_ADMIN" &&
+      user.role !== "ADMIN_OWNER" &&
+      user.role !== "ADMIN_NONOWNER"
+    ) {
       return NextResponse.json(
         { error: "Forbidden - Admin access required" },
         { status: 403 }
       );
     }
 
-    // Get company user IDs if ADMIN (to scope security data)
+    // Get company user IDs if ADMIN_OWNER (to scope security data)
     let companyUserIds: string[] = [];
-    if (user.role === "ADMIN") {
+    if (user.role === "ADMIN_OWNER" || user.role === "ADMIN_NONOWNER") {
       const userWithCompany = await db.user.findUnique({
         where: { id: user.id },
         select: {
@@ -45,7 +49,7 @@ export async function GET(request: NextRequest) {
                 },
               },
             },
-            where: { role: "ADMIN" },
+            where: { role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] } },
           },
         },
       });
@@ -79,8 +83,11 @@ export async function GET(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
 
-    // Scope to company users if ADMIN
-    if (user.role === "ADMIN" && companyUserIds.length > 0) {
+    // Scope to company users if ADMIN_OWNER
+    if (
+      (user.role === "ADMIN_OWNER" || user.role === "ADMIN_NONOWNER") &&
+      companyUserIds.length > 0
+    ) {
       where.userId = { in: companyUserIds };
     }
 

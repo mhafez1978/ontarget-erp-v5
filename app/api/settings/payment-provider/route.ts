@@ -7,7 +7,7 @@ import type {
   Company,
   CompanyMember,
   CompanyStaff,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 
 interface PaymentProviderSettingsBody {
   scope?: "GLOBAL" | string;
@@ -51,11 +51,13 @@ async function hasPaymentProviderAccess(
     userWithCompanies.ownedCompanies.some((c) => c.id === targetCompanyId) ||
     userWithCompanies.companyMemberships.some(
       (m) =>
-        m.companyId === targetCompanyId && ["ADMIN", "MANAGER"].includes(m.role)
+        m.companyId === targetCompanyId &&
+        ["ADMIN_OWNER", "COMPANY_MANAGER"].includes(m.role)
     ) ||
     userWithCompanies.companyStaff.some(
       (s) =>
-        s.companyId === targetCompanyId && ["ADMIN", "MANAGER"].includes(s.role)
+        s.companyId === targetCompanyId &&
+        ["ADMIN_OWNER", "COMPANY_MANAGER"].includes(s.role)
     )
   );
 }

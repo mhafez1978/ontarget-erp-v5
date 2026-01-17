@@ -53,7 +53,7 @@ export async function GET(
         },
       });
       hasAccess = !!company;
-    } else if (user.role === "ADMIN") {
+    } else if (user.role === "ADMIN_OWNER") {
       // Check if user owns the company
       const company = await db.company.findFirst({
         where: {

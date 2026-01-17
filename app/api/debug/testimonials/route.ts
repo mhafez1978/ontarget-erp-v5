@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +10,14 @@ export async function GET(request: NextRequest) {
     if (!validation.valid) return validation.response;
 
     const user = validation.user;
-    if (!user || !(user.role === "ADMIN" || user.role === "SUPER_ADMIN")) {
+    if (
+      !user ||
+      !(
+        user.role === "ADMIN_OWNER" ||
+        user.role === "ADMIN_NONOWNER" ||
+        user.role === "SUPER_ADMIN"
+      )
+    ) {
       return NextResponse.json(
         { error: "Admin role required" },
         { status: 403 }

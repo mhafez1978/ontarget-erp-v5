@@ -38,16 +38,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const hasAccess =
-      user.role === "SUPER_ADMIN" ||
-      dbUser.ownedCompanies.some((c) => c.id === companyId) ||
-      dbUser.companyMemberships.some(
-        (m) =>
-          m.companyId === companyId &&
-          ["ADMIN", "MANAGER"].includes(m.role as string)
-      );
-
-    if (!hasAccess) {
+    // Owner-only for Plaid account linking: verify company owner (or SUPER_ADMIN)
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+      select: { ownerId: true },
+    });
+    if (
+      !company ||
+      (company.ownerId !== userId && user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

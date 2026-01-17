@@ -50,7 +50,11 @@ export async function GET(
     if (fileRecord.staff.userId === userId) {
       // User is the owner of the document
       hasAccess = true;
-    } else if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+    } else if (
+      user.role === "SUPER_ADMIN" ||
+      user.role === "ADMIN_OWNER" ||
+      user.role === "ADMIN_NONOWNER"
+    ) {
       // Check if user has access to the company
       const company = await db.company.findFirst({
         where: {

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
 
     // Optional filter: lastHours (e.g., ?lastHours=24). If not provided, return all-time visitors.
     const lastHoursParam = searchParams.get("lastHours");
-    let where: any = {};
+    const where: any = {};
 
     if (lastHoursParam) {
       const lastHours = parseInt(lastHoursParam, 10);

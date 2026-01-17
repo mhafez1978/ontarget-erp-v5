@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       captchaProvider && typeof captchaProvider.findFirst === "function"
     );
 
-    // SUPER_ADMIN sees GLOBAL; ADMIN sees company override and global
+    // SUPER_ADMIN sees GLOBAL; ADMIN_OWNER sees company override and global
     if (user.role === "SUPER_ADMIN") {
       const global = hasModel ? await getCaptchaForScope(undefined) : null;
       return NextResponse.json({
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (user.role === "ADMIN") {
+    if (user.role === "ADMIN_OWNER") {
       // Find company owned by admin (ownerId === user.id)
       const company = await db.company.findFirst({
         where: { ownerId: user.id },
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    if (user.role === "ADMIN") {
+    if (user.role === "ADMIN_OWNER") {
       const company = await db.company.findFirst({
         where: { ownerId: user.id },
       });

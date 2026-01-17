@@ -64,12 +64,13 @@ export async function GET(request: NextRequest) {
         products,
       });
     } else if (
-      user.role === "ADMIN" ||
-      user.role === "MANAGER" ||
+      user.role === "ADMIN_OWNER" ||
+      user.role === "ADMIN_NONOWNER" ||
+      user.role === "COMPANY_MANAGER" ||
       user.role === "ERP_CUSTOMER" ||
       user.role === "COMPANY_CUSTOMER"
     ) {
-      // ADMIN/MANAGER/ERP_CUSTOMER/COMPANY_CUSTOMER can access products from companies they're members of
+      // ADMIN_OWNER/COMPANY_MANAGER/ERP_CUSTOMER/COMPANY_CUSTOMER can access products from companies they're members of
       const company = await db.company.findFirst({
         where: {
           id: companyId,
@@ -199,8 +200,8 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
-    } else if (user.role === "ADMIN") {
-      // Admin can only add products to companies they own or are admin members of
+    } else if (user.role === "ADMIN_OWNER" || user.role === "ADMIN_NONOWNER") {
+      // Company admin can only add products to companies they own or are admin members of
       const company = await db.company.findFirst({
         where: {
           id: companyId,
@@ -210,7 +211,7 @@ export async function POST(request: NextRequest) {
               members: {
                 some: {
                   userId,
-                  role: "ADMIN",
+                  role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] },
                 },
               },
             },

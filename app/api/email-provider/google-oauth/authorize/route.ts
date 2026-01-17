@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
 
     const { user } = validation;
 
-    // Only SUPER_ADMIN or ADMIN can set up email providers
-    if (!["SUPER_ADMIN", "ADMIN"].includes(user.role)) {
+    // Only SUPER_ADMIN or ADMIN_OWNER can set up email providers
+    if (!["SUPER_ADMIN", "ADMIN_OWNER"].includes(user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

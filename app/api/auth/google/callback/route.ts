@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
         });
       }
     } else {
-      // User doesn't exist - create new ERP_CUSTOMER with GUEST plan
+      // User doesn't exist - create new ERP_CUSTOMER with TRIAL plan
       // They will be redirected to plan selection
       isNewUser = true;
 
@@ -351,9 +351,9 @@ export async function GET(request: NextRequest) {
       user.plan
     );
 
-    // Check if user needs to select a plan (new users with GUEST plan)
+    // Check if user needs to select a plan (new users with TRIAL plan)
     const redirectUrl =
-      user.plan === "GUEST"
+      user.plan === "TRIAL"
         ? onboarding
           ? `${
               process.env.NEXT_PUBLIC_APP_URL

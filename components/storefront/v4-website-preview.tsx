@@ -174,16 +174,16 @@ export function V4WebsitePreview({
             {/* Import/Render the widget client-side */}
             {/* This intentionally renders inside the preview so it visually matches the generated site */}
             <div className="pointer-events-auto">
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              {/* eslint-disable-next-line react/no-unknown-property */}
+              { }
+              { }
               {typeof window !== "undefined"
                 ? // Dynamic require to avoid server-side import
-                  // eslint-disable-next-line @typescript-eslint/no-var-requires
+                   
                   (() => {
                     const {
                       ChatWidget,
                     } = require("@/components/storefront/chat-widget");
-                    // eslint-disable-next-line react/jsx-no-constructed-context-values
+                     
                     return (
                       // @ts-ignore - TS can't statically verify dynamic require return
                       <ChatWidget

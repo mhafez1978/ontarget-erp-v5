@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import type { GeneratedSection, VideoGenerationJob } from "@prisma/client";
+import type { GeneratedSection, VideoGenerationJob } from "@/generated/prisma/client";
 
 export async function POST(
   req: NextRequest,

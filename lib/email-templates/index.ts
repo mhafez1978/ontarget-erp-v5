@@ -9,7 +9,7 @@
  * - Locked structure (only content editable)
  */
 
-import { EmailTemplateType, EmailTemplateCategory } from "@prisma/client";
+import { EmailTemplateType, EmailTemplateCategory } from "@/generated/prisma/client";
 
 // Export template libraries
 export { TRANSACTIONAL_TEMPLATES } from "./transactional";

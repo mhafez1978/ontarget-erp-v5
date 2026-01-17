@@ -51,6 +51,25 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = testSchema.parse(body);
 
+    // If this is a company-scoped test (companyId provided), ensure user is company owner or SUPER_ADMIN
+    const companyId = (body as any).companyId;
+    if (companyId) {
+      // Fetch company owner
+      const company = await (
+        await import("@/lib/db")
+      ).db.company.findUnique({
+        where: { id: companyId },
+        select: { ownerId: true },
+      });
+      if (
+        !company ||
+        (company.ownerId !== validation.user.id &&
+          validation.user.role !== "SUPER_ADMIN")
+      ) {
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      }
+    }
+
     // Create test transporter based on provider type
     let transporter;
     const testEmail = validation.user.email || "test@example.com";

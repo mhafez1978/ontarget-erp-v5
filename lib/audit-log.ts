@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { countryCodeToFlag, lookupGeoByIp } from "@/lib/ip-lookup";
 import { triggerStaffStatusUpdate } from "@/lib/staff-status-events";
+import { enqueueOutboxJob } from "@/lib/outbox";
+import { createHash } from "crypto";
 
 export interface CreateAuditLogParams {
   action: string;
@@ -96,6 +98,49 @@ export async function createAuditLog(params: CreateAuditLogParams) {
       triggerStaffStatusUpdate(params.companyId, params.action);
     }
 
+    // Trigger Hedera blockchain anchoring if company has it enabled
+    if (params.companyId) {
+      try {
+        const companyHedera = await db.companyHederaSetting.findUnique({
+          where: { companyId: params.companyId },
+          select: { enabled: true, historicalAnchored: true },
+        });
+
+        if (companyHedera?.enabled) {
+          // Create a deterministic hash of the audit log data
+          const auditData = {
+            id: auditLog.id,
+            action: params.action,
+            userId: auditUserId,
+            companyId: params.companyId,
+            entityType: params.entityType,
+            entityId: params.entityId,
+            description: params.description,
+            metadata: params.metadata,
+            ipAddress,
+            city,
+            state,
+            country,
+            createdAt: auditLog.createdAt.toISOString(),
+          };
+
+          const hash = createHash("sha256")
+            .update(JSON.stringify(auditData))
+            .digest("hex");
+
+          // Enqueue Hedera anchoring job
+          await enqueueOutboxJob("HEDERA_ANCHOR", {
+            hash,
+            companyId: params.companyId,
+            auditLogId: auditLog.id,
+          });
+        }
+      } catch (error) {
+        // Don't fail audit log creation if Hedera anchoring fails
+        console.error("Failed to enqueue Hedera anchoring job:", error);
+      }
+    }
+
     return auditLog;
   } catch (error) {
     console.error("Failed to create audit log:", error);
@@ -135,10 +180,10 @@ export const AUDIT_ACTIONS = {
   LOCATION_DELETED: "LOCATION_DELETED",
 
   // Staff actions
-  STAFF_MEMBER_ADDED: "STAFF_MEMBER_ADDED",
-  STAFF_MEMBER_UPDATED: "STAFF_MEMBER_UPDATED",
-  STAFF_MEMBER_DELETED: "STAFF_MEMBER_DELETED",
-  BULK_STAFF_IMPORT: "BULK_STAFF_IMPORT",
+  COMPANY_STAFF_MEMBER_ADDED: "COMPANY_STAFF_MEMBER_ADDED",
+  COMPANY_STAFF_MEMBER_UPDATED: "COMPANY_STAFF_MEMBER_UPDATED",
+  COMPANY_STAFF_MEMBER_DELETED: "COMPANY_STAFF_MEMBER_DELETED",
+  BULK_COMPANY_STAFF_IMPORT: "BULK_COMPANY_STAFF_IMPORT",
 
   // Customer actions
   BULK_CUSTOMER_IMPORT: "BULK_CUSTOMER_IMPORT",
@@ -218,6 +263,7 @@ export const AUDIT_ACTIONS = {
   // Hedera actions
   HEDERA_ENABLED: "HEDERA_ENABLED",
   HEDERA_DISABLED: "HEDERA_DISABLED",
+  HEDERA_SIGNATURE_ANCHORED: "HEDERA_SIGNATURE_ANCHORED",
   HEDERA_HISTORICAL_REQUEST: "HEDERA_HISTORICAL_REQUEST",
   HEDERA_HISTORICAL_COMPLETE: "HEDERA_HISTORICAL_COMPLETE",
 
@@ -230,7 +276,7 @@ export const AUDIT_ACTIONS = {
   PROJECT_CANCELLED: "PROJECT_CANCELLED",
   PROJECT_REOPENED: "PROJECT_REOPENED",
   PROJECT_TEAM_CHANGED: "PROJECT_TEAM_CHANGED",
-  PROJECT_MANAGER_CHANGED: "PROJECT_MANAGER_CHANGED",
+  PROJECT_COMPANY_MANAGER_CHANGED: "PROJECT_COMPANY_MANAGER_CHANGED",
   PROJECT_LEAD_CHANGED: "PROJECT_LEAD_CHANGED",
   PROJECT_FINANCIAL_ENTRIES_VIEWED: "PROJECT_FINANCIAL_ENTRIES_VIEWED",
   PROJECT_FINANCIAL_ENTRY_CREATED: "PROJECT_FINANCIAL_ENTRY_CREATED",
@@ -267,7 +313,7 @@ export const ENTITY_TYPES = {
   USER: "User",
   COMPANY: "Company",
   COMPANY_MEMBER: "CompanyMember",
-  STAFF_MEMBER: "StaffMember",
+  COMPANY_STAFF_MEMBER: "StaffMember",
   PRODUCT: "Product",
   SERVICE: "Service",
   ORDER: "Order",

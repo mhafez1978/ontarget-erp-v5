@@ -1,6 +1,7 @@
 {
-  "name": "ontarget-erp-v5",
-  "version": "0.1.0",
+  "name": "hashora",
+  "version": "1.0.0",
+  "description": "Hashora ERP| ",
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
@@ -10,20 +11,8 @@
     "build:analyze": "cross-env ANALYZE=true next build",
     "start": "next start",
     "lint": "eslint",
-    "lint:tailwind": "node -r ts-node/register ./scripts/check-tailwind.ts",
-    "perf:audit": "npx tsx scripts/performance-audit.ts",
-    "perf:fix-icons": "npx tsx scripts/fix-lucide-imports.ts",
-    "test": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register --exclude \"tests/integration/**/*.test.ts\" \"tests/**/*.test.ts\"",
-    "test:integration": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register \"tests/integration/**/*.test.ts\"",
-    "test:hedra": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register \"tests/hedra/**/*.test.ts\" --timeout 30000",
-    "test:contact-map": "TS_NODE_PROJECT=tsconfig.mocha.json mocha -r ts-node/register -r tsconfig-paths/register \"tests/storefront/contact-map.test.ts\" --timeout 30000",
-    "seed": "node prisma/seed.mjs",
-    "seed:ts": "ts-node prisma/seed.ts",
-    "seed:check": "node prisma/seed.mjs --check",
-    "seed:contact-map": "node prisma/seed-contact-map.mjs",
-    "seed:moveweb": "TS_NODE_PROJECT=tsconfig.mocha.json ts-node -r tsconfig-paths/register scripts/seed-moveweb-products.mjs",
-    "backfill:geo": "TS_NODE_PROJECT=tsconfig.mocha.json ts-node -r tsconfig-paths/register scripts/backfill-geo.ts",
-    "fix:staff-plans": "TS_NODE_PROJECT=tsconfig.mocha.json ts-node -r tsconfig-paths/register scripts/fix-staff-plans.ts"
+    "seed": "node prisma/seed-comprehensive.mjs",
+    "seed:check": "node prisma/seed-comprehensive.mjs --check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
@@ -31,11 +20,12 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@hashgraph/sdk": "^2.79.0",
+    "@hashgraph/sdk": "2.24.2",
     "@imgly/background-removal": "^1.7.0",
     "@microsoft/microsoft-graph-client": "^3.0.1",
     "@next/bundle-analyzer": "^16.1.0",
-    "@prisma/client": "^6.19.0",
+    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/client": "^7.2.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",
@@ -115,7 +105,6 @@
     "nodemailer": "^7.0.10",
     "onnxruntime-web": "^1.21.0",
     "plaid": "^39.1.0",
-    "prisma": "^6.19.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
@@ -139,5 +128,14 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^4.1.12",
     "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "prisma": "^7.2.0"
+  },
+  "overrides": {
+    "diff": "^8.0.3",
+    "elliptic": "^6.5.7",
+    "hono": "^4.11.4",
+    "@hashgraph/cryptography": "^1.15.0"
   }
 }

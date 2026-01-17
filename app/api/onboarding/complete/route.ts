@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       await createAuditLog({
         action: AUDIT_ACTIONS.ONBOARDING_COMPLETION_FAILED,
         companyId: null,
-        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
         entityId: null,
         description: `Attempted onboarding completion with invalid token: ${token}`,
         metadata: { token },
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
         action: AUDIT_ACTIONS.ONBOARDING_COMPLETION_FAILED,
         userId: onboardingToken.staff.userId,
         companyId: onboardingToken.staff.companyId,
-        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
         entityId: onboardingToken.staffId,
         description: `Attempt to complete onboarding with expired token`,
         metadata: { token, expired: true },
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         action: AUDIT_ACTIONS.ONBOARDING_COMPLETION_FAILED,
         userId: onboardingToken.staff.userId,
         companyId: onboardingToken.staff.companyId,
-        entityType: ENTITY_TYPES.STAFF_MEMBER,
+        entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
         entityId: onboardingToken.staffId,
         description: `Attempted onboarding completion but missing documents: ${missingDocs.join(
           ", "
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       action: AUDIT_ACTIONS.ONBOARDING_COMPLETED,
       userId: onboardingToken.staff.userId,
       companyId: onboardingToken.staff.companyId,
-      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
       entityId: onboardingToken.staffId,
       description: `Onboarding completed for ${onboardingToken.staffId}`,
       metadata: { token: onboardingToken.token },

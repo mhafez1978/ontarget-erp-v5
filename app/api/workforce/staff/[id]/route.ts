@@ -4,7 +4,7 @@ import type {
   CompanyMemberRole,
   EmploymentType,
   EmploymentStatus,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
@@ -93,7 +93,8 @@ export async function PATCH(
     const isSuperAdmin = user.role === "SUPER_ADMIN";
     const isCompanyAdmin =
       staffMember.company.members.length > 0 &&
-      staffMember.company.members[0].role === "ADMIN";
+      (staffMember.company.members[0].role === "ADMIN_OWNER" ||
+        staffMember.company.members[0].role === "ADMIN_NONOWNER");
 
     // Check edit permissions (same as add: owner, admin, manager, or super admin)
     if (!isOwner && !isCompanyAdmin && !isSuperAdmin) {
@@ -156,10 +157,10 @@ export async function PATCH(
 
     // Create audit log entry
     await createAuditLog({
-      action: AUDIT_ACTIONS.STAFF_MEMBER_UPDATED,
+      action: AUDIT_ACTIONS.COMPANY_STAFF_MEMBER_UPDATED,
       userId,
       companyId: staffMember.companyId,
-      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
       entityId: id,
       description: `Updated staff member: ${updatedStaff.user.name} (${updatedStaff.user.email})`,
       metadata: {
@@ -233,7 +234,8 @@ export async function DELETE(
     const isSuperAdmin = user.role === "SUPER_ADMIN";
     const isCompanyAdmin =
       staffMember.company.members.length > 0 &&
-      staffMember.company.members[0].role === "ADMIN";
+      (staffMember.company.members[0].role === "ADMIN_OWNER" ||
+        staffMember.company.members[0].role === "ADMIN_NONOWNER");
     const isTargetOwner = staffMember.company.ownerId === staffMember.userId;
     const targetRole = staffMember.role;
 
@@ -246,7 +248,7 @@ export async function DELETE(
     else if (isOwner) {
       // Owner has full access to their company
     }
-    // 3. Non-owner ADMIN can delete MANAGER, STAFF, CONTRACTOR (but NOT owner or other admins)
+    // 3. Non-owner company admins can delete COMPANY_MANAGER, COMPANY_STAFF, COMPANY_CONTRACTOR (but NOT owner or other admins)
     else if (isCompanyAdmin) {
       // Cannot delete the company owner
       if (isTargetOwner) {
@@ -259,8 +261,8 @@ export async function DELETE(
         );
       }
 
-      // Cannot delete other admins
-      if (targetRole === "ADMIN") {
+      // Cannot delete other admins (owner and non-owner admins)
+      if (targetRole === "ADMIN_OWNER" || targetRole === "ADMIN_NONOWNER") {
         return NextResponse.json(
           {
             error:
@@ -270,8 +272,12 @@ export async function DELETE(
         );
       }
 
-      // Can delete MANAGER, STAFF, CONTRACTOR
-      if (!["MANAGER", "STAFF", "CONTRACTOR"].includes(targetRole)) {
+      // Can delete COMPANY_MANAGER, COMPANY_STAFF, COMPANY_CONTRACTOR
+      if (
+        !["COMPANY_MANAGER", "COMPANY_STAFF", "COMPANY_CONTRACTOR"].includes(
+          targetRole
+        )
+      ) {
         return NextResponse.json(
           { error: "You don't have permission to delete this staff member" },
           { status: 403 }
@@ -301,10 +307,10 @@ export async function DELETE(
 
     // Create audit log entry
     await createAuditLog({
-      action: AUDIT_ACTIONS.STAFF_MEMBER_DELETED,
+      action: AUDIT_ACTIONS.COMPANY_STAFF_MEMBER_DELETED,
       userId,
       companyId: staffMember.companyId,
-      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
       entityId: id,
       description: `Deleted staff member: ${staffMember.user.name} (${staffMember.user.email}) with role ${staffMember.role}`,
       metadata: {

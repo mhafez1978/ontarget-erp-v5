@@ -80,8 +80,15 @@ export async function POST(request: NextRequest) {
     if (!validation.valid) return validation.response;
     const user = validation.user;
 
-    // Only allow SUPER_ADMIN, ADMIN, MANAGER
-    if (!["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(user.role)) {
+    // Only allow SUPER_ADMIN, ADMIN_OWNER, COMPANY_MANAGER
+    if (
+      ![
+        "SUPER_ADMIN",
+        "ADMIN_OWNER",
+        "ADMIN_NONOWNER",
+        "COMPANY_MANAGER",
+      ].includes(user.role)
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

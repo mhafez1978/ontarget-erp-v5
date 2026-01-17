@@ -1,4 +1,4 @@
-import { EmailTemplateType, EmailTemplateCategory } from "@prisma/client";
+import { EmailTemplateType, EmailTemplateCategory } from "@/generated/prisma/client";
 import {
   TemplateDefinition,
   createEmailShell,

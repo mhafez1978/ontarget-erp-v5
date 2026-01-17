@@ -7,13 +7,13 @@ declare module "ethers" {
   }
 
   export namespace utils {
-    function isHexString(value: any, length?: number): boolean;
+    function isHexString(value: unknown, length?: number): boolean;
   }
 
   export function isAddress(address: string): boolean;
 
-  export const providers: any;
+  export const providers: Record<string, unknown>;
 
-  const _default: any;
+  const _default: unknown;
   export default _default;
 }

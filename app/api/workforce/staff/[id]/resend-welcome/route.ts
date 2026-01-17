@@ -50,7 +50,7 @@ export async function POST(
             members: {
               where: {
                 userId,
-                role: { in: ["ADMIN", "MANAGER"] },
+                role: { in: ["ADMIN_OWNER", "COMPANY_MANAGER"] },
               },
             },
           },
@@ -149,7 +149,7 @@ export async function POST(
           const adminMembers = await db.companyMember.findMany({
             where: {
               companyId: staff.companyId,
-              role: { in: ["ADMIN", "MANAGER"] },
+              role: { in: ["ADMIN_OWNER", "COMPANY_MANAGER"] },
             },
             include: {
               user: {

@@ -12,10 +12,10 @@ import {
   V3GenerationResult,
   V3WebsiteSchema,
 } from "./v3-types.ts";
-import { callStorefrontModel } from "./model-client.ts";
+import { callStorefrontModel } from "./model-client";
 import { z } from "zod";
-import type { PrismaClient } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
+import type { PrismaClient } from "@/generated/prisma/client";
+import Decimal from "decimal.js";
 
 // Type definitions for database records
 type DbLocation = {
@@ -204,7 +204,7 @@ export async function buildCompanyContext(
 
   // Format company locations
   const locations = (company.locations || []).map((loc: DbLocation) => ({
-    name: loc.name || "",
+    name: loc.name || "Branch",
     type: loc.type || "Office",
     address: [loc.addressLine1, loc.addressLine2].filter(Boolean).join(", "),
     city: loc.city || "",
@@ -255,13 +255,13 @@ export async function buildCompanyContext(
     staff:
       (company.staff || []).length > 0
         ? (company.staff || []).map((s: DbStaff) => ({
-            name: s.user.name || "Team Member",
+            name: s.user.name || "COMPANY_STAFF",
             role:
-              s.role === "ADMIN"
-                ? "Administrator"
-                : s.role === "MANAGER"
-                ? "Manager"
-                : "Team Member",
+              s.role === "ADMIN_OWNER" || s.role === "ADMIN_NONOWNER"
+                ? String(s.role)
+                : s.role === "COMPANY_MANAGER"
+                ? "COMPANY_MANAGER"
+                : "COMPANY_STAFF",
             image: s.user.image || undefined,
             email: s.user.email || undefined,
           }))

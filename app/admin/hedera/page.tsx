@@ -11,7 +11,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import type { HederaSetting, Company } from "@prisma/client";
+// Local Company & HederaSetting types (keeps UI decoupled from generated Prisma client types)
+type Company = {
+  id: string;
+  name: string;
+  companyHederaSetting?: { enabled?: boolean | null } | null;
+};
+
+type HederaSetting = {
+  id: string;
+  isActive?: boolean;
+  topicId?: string | null;
+  network?: string | null;
+  hederaHexKey?: string | null;
+  hederaDerKey?: string | null;
+  hederaDerPub?: string | null;
+  hashSalt?: string | null;
+  currentBalance?: string | null;
+  lowBalanceThreshold?: string | null;
+  balanceAlertSent?: boolean;
+  estimatedCostPerTx?: string | null;
+};
 
 export default function HederaAdminPage() {
   const [loading, setLoading] = useState(false);

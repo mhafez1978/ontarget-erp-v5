@@ -26,8 +26,12 @@ export async function POST(request: NextRequest) {
 
     const adminUser = validation.user;
 
-    // Only ADMIN and SUPER_ADMIN can reset passwords
-    if (adminUser.role !== "ADMIN" && adminUser.role !== "SUPER_ADMIN") {
+    // Only ADMIN_OWNER, ADMIN_NONOWNER and SUPER_ADMIN can reset passwords
+    if (
+      adminUser.role !== "ADMIN_OWNER" &&
+      adminUser.role !== "ADMIN_NONOWNER" &&
+      adminUser.role !== "SUPER_ADMIN"
+    ) {
       return NextResponse.json(
         { error: "Unauthorized. Only admins can reset passwords." },
         { status: 403 }
@@ -81,7 +85,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Authorization checks based on role
-    if (adminUser.role === "ADMIN") {
+    if (
+      adminUser.role === "ADMIN_OWNER" ||
+      adminUser.role === "ADMIN_NONOWNER"
+    ) {
       // ADMINs can only reset passwords for users in their company
       const adminCompanyStaff = await db.companyStaff.findFirst({
         where: { userId: adminUser.id },
@@ -97,7 +104,8 @@ export async function POST(request: NextRequest) {
 
       // Check if target user is in the same company
       const targetInSameCompany = targetUser.companyStaff.some(
-        (staff) => staff.companyId === adminCompanyStaff.companyId
+        (staff: { companyId: string }) =>
+          staff.companyId === adminCompanyStaff.companyId
       );
 
       if (!targetInSameCompany) {

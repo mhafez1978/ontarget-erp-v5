@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     const user = validation.user;
 
-    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN_OWNER") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

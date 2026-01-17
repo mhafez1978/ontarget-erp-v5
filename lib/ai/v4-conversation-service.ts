@@ -6,14 +6,14 @@
  */
 
 import { z } from "zod";
-import { callStorefrontModel } from "./model-client.ts";
+import { callStorefrontModel } from "./model-client";
 import type {
   V4Conversation,
   V4Message,
   V4ConversationPhase,
 } from "./v4-conversation-types.ts";
 import type { V4CompanyContext } from "./v4-types.ts";
-import type { AiProviderConfig } from "./model-client.ts";
+import type { AiProviderConfig } from "./model-client";
 
 const CONVERSATION_SYSTEM_PROMPT = `You are an expert web designer having a friendly conversation with a client to understand their website needs.
 

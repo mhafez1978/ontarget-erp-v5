@@ -97,7 +97,7 @@ export async function GET() {
           userName: session.user?.name || null,
           userEmail: session.user?.email || null,
           companyName: membership?.company?.name || null,
-          role: session.user?.role || "GUEST",
+          role: session.user?.role || "TRIAL",
           ...geoData,
           sessionIpAddress: session.sessionIpAddress,
           sessionIpv4: session.sessionIpv4,

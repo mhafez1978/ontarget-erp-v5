@@ -63,9 +63,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // If user already has a non-GUEST plan, don't allow changing
+    // If user already has a non-TRIAL plan, don't allow changing
     // (This prevents abuse - plan changes should go through settings/billing)
-    if (user.plan && user.plan !== "GUEST") {
+    if (user.plan && user.plan !== "TRIAL") {
       return NextResponse.json(
         { success: false, message: "Plan already selected" },
         { status: 400 }

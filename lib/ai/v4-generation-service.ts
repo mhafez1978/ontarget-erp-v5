@@ -14,7 +14,7 @@ import type {
   V4GenerationResult,
 } from "./v4-types.ts";
 import type { V4DesignPreferences } from "./v4-conversation-types.ts";
-import type { AiProviderConfig } from "./model-client.ts";
+import type { AiProviderConfig } from "./model-client";
 
 // Internal types for generation
 interface DesignSystem {

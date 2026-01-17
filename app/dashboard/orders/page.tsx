@@ -127,7 +127,7 @@ export default function OrdersPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
 
   // Filters
@@ -215,9 +215,12 @@ export default function OrdersPage() {
 
   const isCustomer =
     user.role === "COMPANY_CUSTOMER" || user.role === "ERP_CUSTOMER";
-  const canEditOrders = ["STAFF", "MANAGER", "ADMIN", "SUPER_ADMIN"].includes(
-    user.role
-  );
+  const canEditOrders = [
+    "COMPANY_STAFF",
+    "COMPANY_MANAGER",
+    "ADMIN_OWNER",
+    "SUPER_ADMIN",
+  ].includes(user.role);
 
   const toggleOrderSelection = (orderId: string) => {
     setSelectedOrderIds((prev) =>

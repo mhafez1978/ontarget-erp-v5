@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       user.companyMemberships.some(
         (m) =>
           m.companyId === companyId &&
-          ["ADMIN", "MANAGER"].includes(m.role as string)
+          ["ADMIN_OWNER", "ADMIN_NONOWNER"].includes(m.role as string)
       );
 
     if (!hasAccess) {

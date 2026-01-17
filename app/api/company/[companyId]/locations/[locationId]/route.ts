@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { LocationType, Prisma } from "@prisma/client";
+import { LocationType, Prisma } from "@/generated/prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
 

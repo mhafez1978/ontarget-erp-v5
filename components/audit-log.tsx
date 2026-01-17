@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import type { AuditLog, User, Company } from "@prisma/client";
+import type { AuditLog, User, Company } from "../generated/prisma/client";
 
 // Type for audit log with relations
 export type AuditEvent = AuditLog & {
@@ -80,7 +80,7 @@ const actionMeta: Record<
     icon: UserPlus,
   },
   SUPER_ADMIN_CREATED: {
-    label: "OnTarget ERP SUPER ADMIN Account Created",
+    label: "OnTarget ERP SUPER ADMIN_OWNER Account Created",
     color: "bg-purple-100 text-purple-700 border-purple-200",
     icon: UserPlus,
   },

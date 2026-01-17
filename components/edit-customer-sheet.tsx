@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Loader2, UserCog } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -14,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-;
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import { toast } from "sonner";
 import {
@@ -190,9 +188,9 @@ export function EditCustomerSheet({
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="STAFF">Staff</SelectItem>
-                  <SelectItem value="MANAGER">Manager</SelectItem>
-                  <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+                  <SelectItem value="COMPANY_STAFF">Staff</SelectItem>
+                  <SelectItem value="COMPANY_MANAGER">Manager</SelectItem>
+                  <SelectItem value="COMPANY_CONTRACTOR">Contractor</SelectItem>
                   <SelectItem value="COMPANY_CUSTOMER">
                     Company Customer
                   </SelectItem>

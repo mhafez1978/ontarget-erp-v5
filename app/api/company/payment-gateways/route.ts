@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { encrypt, decrypt } from "@/lib/encryption";
-
+import { Company, User } from "@/generated/prisma/client";
 // GET - Retrieve payment gateways for a company
 export async function GET(request: NextRequest) {
   try {
@@ -42,11 +42,15 @@ export async function GET(request: NextRequest) {
     // Check if user owns the company or is a member with appropriate role
     const hasAccess =
       user.role === "SUPER_ADMIN" ||
-      userWithCompanies.ownedCompanies.some((c) => c.id === companyId) ||
+      userWithCompanies.ownedCompanies.some(
+        (c) => c.id === (companyId as Company["id"])
+      ) ||
       userWithCompanies.companyMemberships.some(
         (m) =>
           m.companyId === companyId &&
-          ["ADMIN", "MANAGER"].includes(m.role as string)
+          ["ADMIN_OWNER", "ADMIN_NONOWNER", "COMPANY_MANAGER"].includes(
+            m.role as User["role"]
+          )
       );
 
     if (!hasAccess) {
@@ -129,17 +133,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if user owns the company or is an admin/manager
-    const hasAccess =
-      user.role === "SUPER_ADMIN" ||
-      userWithCompanies.ownedCompanies.some((c) => c.id === companyId) ||
-      userWithCompanies.companyMemberships.some(
-        (m) =>
-          m.companyId === companyId &&
-          ["ADMIN", "MANAGER"].includes(m.role as string)
-      );
-
-    if (!hasAccess) {
+    // Owner-only for configuration: verify company owner
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+      select: { ownerId: true },
+    });
+    if (
+      !company ||
+      (company.ownerId !== user.id && user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -256,33 +258,15 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Gateway not found" }, { status: 404 });
     }
 
-    // Verify user has access
-    const userWithCompanies = await db.user.findUnique({
-      where: { id: user.id },
-      include: {
-        ownedCompanies: true,
-        companyMemberships: {
-          include: { company: true },
-        },
-      },
+    // Owner-only for configuration: verify company owner
+    const company = await db.company.findUnique({
+      where: { id: gateway.companyId },
+      select: { ownerId: true },
     });
-
-    if (!userWithCompanies) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const hasAccess =
-      user.role === "SUPER_ADMIN" ||
-      userWithCompanies.ownedCompanies.some(
-        (c) => c.id === gateway.companyId
-      ) ||
-      userWithCompanies.companyMemberships.some(
-        (m) =>
-          m.companyId === gateway.companyId &&
-          ["ADMIN", "MANAGER"].includes(m.role as string)
-      );
-
-    if (!hasAccess) {
+    if (
+      !company ||
+      (company.ownerId !== user.id && user.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

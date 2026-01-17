@@ -5,7 +5,7 @@ import {
   callStorefrontModel,
   type ChatMessage,
   type AiProviderConfig,
-} from "./model-client.ts";
+} from "./model-client";
 import { randomUUID } from "crypto";
 import { getContrastRatio, makeAccessible } from "../utils/wcag-contrast.ts";
 import { db } from "../db.ts";
@@ -359,10 +359,11 @@ export async function fetchCompanyContext(
       const { vectorStore } = await import("./vector-store");
       const hits = await vectorStore.query(companyId, prompt, limit);
       if (hits && hits.length > 0) {
-        return hits.map((h: any) => scrubPII(`${h.id}: ${h.text}`));
+        type VectorHit = { id: string; text: string };
+        return hits.map((h: VectorHit) => scrubPII(`${h.id}: ${h.text}`));
       }
     } catch (err) {
-      console.warn("Vector store query failed (falling back):", err);
+      console.error("Vector store query failed (falling back):", err);
     }
 
     const entries = await db.companyVocabulary.findMany({
@@ -400,7 +401,7 @@ export async function fetchCompanyContext(
       .slice(0, limit)
       .map((e) => scrubPII(`${e.key}: ${e.pluralLabel || e.singularLabel}`));
   } catch (err) {
-    console.warn("Company context retrieval failed:", err);
+    console.error("Company context retrieval failed:", err);
     return [];
   }
 }
@@ -455,7 +456,7 @@ export async function generateSectionVariants(
       });
     }
   } catch (err) {
-    console.warn("Failed to attach company context:", err);
+    console.error("Failed to attach company context:", err);
   }
 
   // Call the storefront model with a permissive Zod schema (we'll validate in code)
@@ -468,8 +469,22 @@ export async function generateSectionVariants(
   if (!raw) return []; // no API key configured - fallback will handle
 
   // Normalize variants from raw
-  const variantsRaw = (raw as any)?.variants || [];
-  const variants: any[] = [];
+  type SectionVariant = {
+    variantId?: string;
+    layout?: string;
+    schema?: Record<string, unknown>;
+    assets?: Array<{ url: string; alt?: string }>;
+    meta?: Record<string, unknown>;
+  };
+
+  const variantsRaw = (raw as { variants?: SectionVariant[] })?.variants || [];
+  const variants: Array<{
+    variantId: string;
+    layout: string;
+    schema: Record<string, unknown>;
+    assets?: Array<{ url: string; alt?: string }>;
+    meta?: Record<string, unknown>;
+  }> = [];
   for (const v of variantsRaw) {
     const variantId =
       typeof v.variantId === "string" ? v.variantId : randomUUID();
@@ -484,8 +499,8 @@ export async function generateSectionVariants(
   try {
     const contextSnippets = await fetchCompanyContext(company.id, prompt);
 
-    function checkVariantFacts(variant: any, snippets: string[]) {
-      const text = JSON.stringify(variant.schema).toLowerCase();
+    function checkVariantFacts(variant: SectionVariant, snippets: string[]) {
+      const text = JSON.stringify(variant.schema || {}).toLowerCase();
       let matched = 0;
       for (const s of snippets) {
         const raw = s.toLowerCase();
@@ -514,7 +529,7 @@ export async function generateSectionVariants(
       };
     }
   } catch (err) {
-    console.warn("Factualness checks failed:", err);
+    console.error("Factualness checks failed:", err);
   }
 
   return variants;
@@ -1055,7 +1070,7 @@ export interface TestimonialSummary {
 // • For service businesses → emphasize reliability, experience, results
 // • Match tone and messaging to the company's actual offerings
 
-// 🎨 DESIGN CREATIVITY - RESPOND TO THE ADMIN'S REQUEST:
+// 🎨 DESIGN CREATIVITY - RESPOND TO THE ADMIN_OWNER'S REQUEST:
 // • If they want "bold colors" → use vibrant, saturated colors (e.g., #FF6B6B, #4ECDC4)
 
 // 🔒 MANDATORY REQUIREMENTS (ENFORCE ACROSS ALL PAGES):
@@ -1915,7 +1930,7 @@ export interface TestimonialSummary {
 //     `Products: ${products.length}, Services: ${services.length}, Team: ${
 //       input.team?.length || 0
 //     }\n\n` +
-//     `ADMIN'S DESIGN REQUEST:\n"${prompt}"\n\n` +
+//     `ADMIN_OWNER'S DESIGN REQUEST:\n"${prompt}"\n\n` +
 //     (isRegenerateIntent
 //       ? "IMPORTANT: Create a COMPLETELY DIFFERENT design with new colors, layout, and style. Do NOT reuse the previous design.\n\n"
 //       : "") +

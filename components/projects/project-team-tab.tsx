@@ -122,9 +122,9 @@ export function ProjectTeamTab({
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case "ADMIN":
+      case "ADMIN_OWNER":
         return <Crown className="h-4 w-4 text-yellow-600" />;
-      case "MANAGER":
+      case "COMPANY_MANAGER":
         return <Shield className="h-4 w-4 text-blue-600" />;
       default:
         return <User2 className="h-4 w-4 dark:text-gray-200" />;
@@ -133,9 +133,9 @@ export function ProjectTeamTab({
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case "ADMIN":
+      case "ADMIN_OWNER":
         return "default";
-      case "MANAGER":
+      case "COMPANY_MANAGER":
         return "secondary";
       default:
         return "outline";

@@ -1,18 +1,14 @@
-/**
- * Subscription Plan Limits
- * All limits for SUPER_USER, GUEST, COMPANY_CUSTOMER, ESSENTIAL, GROWTH, and ENTERPRISE plans
- */
+import type { SubscriptionPlan } from "@/generated/prisma/client";
 
-export type PlanType =
-  | "SUPER_USER" // SUPER_ADMIN only - free unlimited
-  | "GUEST" // Temporary - no company creation until plan selected
-  | "ERP_CUSTOMER" // ERP subscriber default plan
-  | "COMPANY_CUSTOMER" // Customers of companies - no company creation
-  | "ESSENTIAL" // Paid: 1 company
-  | "GROWTH" // Paid: 3 companies
-  | "ENTERPRISE" // Paid: Unlimited companies
-  | "COMPANY_STAFF" // Company staff internal plan
-  | "TRIAL"; // Temporary trial plan for new ERP_CUSTOMER signups
+// Re-export SubscriptionPlan type so other modules can import it through this module
+export type { SubscriptionPlan } from "@/generated/prisma/client";
+
+// Expose a local alias so other modules can import PlanType without importing Prisma directly
+export type PlanType = SubscriptionPlan;
+
+/**
+ * Limits associated with each plan
+ */
 
 export interface PlanLimits {
   companies: number;
@@ -25,8 +21,8 @@ export interface PlanLimits {
   storageGB: number; // Base storage included in plan (in GB)
 }
 
-export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
-  SUPER_USER: {
+export const PLAN_LIMITS: Record<string, PlanLimits> = {
+  SUPER_ADMIN: {
     companies: Infinity, // SUPER_ADMIN can create unlimited companies
     adminAccounts: Infinity,
     managerAccounts: Infinity,
@@ -36,8 +32,8 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     customers: Infinity,
     storageGB: Infinity, // Unlimited storage for platform admin
   },
-  GUEST: {
-    companies: 0, // GUEST users cannot create companies until they select a plan
+  TRIAL: {
+    companies: 0, // TRIAL users cannot create companies until they select a plan
     adminAccounts: 0,
     managerAccounts: 0,
     staffAccounts: 0,
@@ -76,16 +72,6 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     customers: 0,
     storageGB: 0,
   },
-  TRIAL: {
-    companies: 1,
-    adminAccounts: 2,
-    managerAccounts: 2,
-    staffAccounts: 2,
-    contractorAccounts: 2,
-    supplierAccounts: 2,
-    customers: 100,
-    storageGB: 50,
-  },
   ESSENTIAL: {
     companies: 1,
     adminAccounts: 2, // Total pool: 10 users across all roles
@@ -116,6 +102,57 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     customers: Infinity,
     storageGB: 1024, // 1 TB base storage
   },
+  // Administrative/role-like entries (some user roles are also represented as SubscriptionPlan values in the DB)
+  ADMIN_OWNER: {
+    companies: Infinity,
+    adminAccounts: Infinity,
+    managerAccounts: Infinity,
+    staffAccounts: Infinity,
+    contractorAccounts: Infinity,
+    supplierAccounts: Infinity,
+    customers: Infinity,
+    storageGB: Infinity,
+  },
+  ADMIN_NONOWNER: {
+    companies: Infinity,
+    adminAccounts: Infinity,
+    managerAccounts: Infinity,
+    staffAccounts: Infinity,
+    contractorAccounts: Infinity,
+    supplierAccounts: Infinity,
+    customers: Infinity,
+    storageGB: Infinity,
+  },
+  COMPANY_MANAGER: {
+    companies: Infinity,
+    adminAccounts: Infinity,
+    managerAccounts: Infinity,
+    staffAccounts: Infinity,
+    contractorAccounts: Infinity,
+    supplierAccounts: Infinity,
+    customers: Infinity,
+    storageGB: Infinity,
+  },
+  COMPANY_CONTRACTOR: {
+    companies: 0,
+    adminAccounts: 0,
+    managerAccounts: 0,
+    staffAccounts: 0,
+    contractorAccounts: 0,
+    supplierAccounts: 0,
+    customers: 0,
+    storageGB: 0,
+  },
+  COMPANY_SUPPLIER: {
+    companies: 0,
+    adminAccounts: 0,
+    managerAccounts: 0,
+    staffAccounts: 0,
+    contractorAccounts: 0,
+    supplierAccounts: 0,
+    customers: 0,
+    storageGB: 0,
+  },
 };
 
 /**
@@ -139,22 +176,13 @@ export interface PlanPricing {
   extraStoragePricePerGB: number; // Cost per 1GB over base
 }
 
-export const PLAN_PRICING: Record<PlanType, PlanPricing> = {
-  SUPER_USER: {
+export const PLAN_PRICING: Record<string, PlanPricing> = {
+  SUPER_ADMIN: {
     name: "Super User",
     monthlyPrice: 0,
     annualPrice: 0,
     transactionFee: "N/A",
     baseStorageGB: Infinity,
-    extraStoragePricePer100GB: 0,
-    extraStoragePricePerGB: 0,
-  },
-  GUEST: {
-    name: "Guest",
-    monthlyPrice: 0,
-    annualPrice: 0,
-    transactionFee: "N/A",
-    baseStorageGB: 0,
     extraStoragePricePer100GB: 0,
     extraStoragePricePerGB: 0,
   },
@@ -178,6 +206,52 @@ export const PLAN_PRICING: Record<PlanType, PlanPricing> = {
   },
   COMPANY_STAFF: {
     name: "Company Staff",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+    baseStorageGB: 0,
+    extraStoragePricePer100GB: 0,
+    extraStoragePricePerGB: 0,
+  },
+  // Administrative/role-like pricing defaults
+  ADMIN_OWNER: {
+    name: "Admin (Owner)",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+    baseStorageGB: Infinity,
+    extraStoragePricePer100GB: 0,
+    extraStoragePricePerGB: 0,
+  },
+  ADMIN_NONOWNER: {
+    name: "Admin (Non-owner)",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+    baseStorageGB: Infinity,
+    extraStoragePricePer100GB: 0,
+    extraStoragePricePerGB: 0,
+  },
+  COMPANY_MANAGER: {
+    name: "Company Manager",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+    baseStorageGB: Infinity,
+    extraStoragePricePer100GB: 0,
+    extraStoragePricePerGB: 0,
+  },
+  COMPANY_CONTRACTOR: {
+    name: "Company Contractor",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    transactionFee: "N/A",
+    baseStorageGB: 0,
+    extraStoragePricePer100GB: 0,
+    extraStoragePricePerGB: 0,
+  },
+  COMPANY_SUPPLIER: {
+    name: "Company Supplier",
     monthlyPrice: 0,
     annualPrice: 0,
     transactionFee: "N/A",

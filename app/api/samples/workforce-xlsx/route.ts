@@ -65,7 +65,7 @@ export async function GET() {
     <row r="2">
       <c r="A2" t="inlineStr"><is><t>Jane Employee</t></is></c>
       <c r="B2" t="inlineStr"><is><t>jane.employee@example.com</t></is></c>
-      <c r="C2" t="inlineStr"><is><t>STAFF</t></is></c>
+      <c r="C2" t="inlineStr"><is><t>COMPANY_STAFF</t></is></c>
       <c r="D2" t="inlineStr"><is><t>Engineer</t></is></c>
       <c r="E2" t="inlineStr"><is><t>FULL_TIME</t></is></c>
       <c r="F2" t="inlineStr"><is><t>TempPass123!</t></is></c>

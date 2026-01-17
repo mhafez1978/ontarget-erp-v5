@@ -1,4 +1,4 @@
-import { Prisma, ProjectEntryType } from "@prisma/client";
+import { Prisma, ProjectEntryType } from "@/generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { db } from "@/lib/db";

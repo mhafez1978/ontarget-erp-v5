@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Decimal } from "@prisma/client/runtime/library";
+import Decimal from "decimal.js";
 
 /**
  * Cost Management Service for Hedera Blockchain Integration
@@ -7,11 +7,11 @@ import { Decimal } from "@prisma/client/runtime/library";
  */
 
 export interface CostCheckResult {
-  canProceed: boolean;
-  reason?: string;
-  currentBalance?: Decimal;
-  estimatedCost?: Decimal;
-  budgetRemaining?: Decimal;
+  canProceed: boolean; // Always true for anchoring (no blocking)
+  shouldBill: boolean; // Flag for additional billing if over free tier
+  estimatedCost: Decimal;
+  billingAmount?: Decimal; // Amount to bill if applicable
+  reason?: string; // Only used for blocking cases
 }
 
 export interface BalanceInfo {
@@ -36,6 +36,8 @@ export async function canAffordTransaction(
     if (!settings) {
       return {
         canProceed: false,
+        shouldBill: false,
+        estimatedCost: new Decimal(0),
         reason: "Hedera is not configured or active",
       };
     }
@@ -43,80 +45,32 @@ export async function canAffordTransaction(
     const estimatedCost = settings.estimatedCostPerTx;
     const currentBalance = settings.currentBalance;
 
-    // Check global balance
-    if (!currentBalance || currentBalance.lessThan(estimatedCost)) {
-      return {
-        canProceed: false,
-        reason: "Insufficient global Hedera balance",
-        currentBalance: currentBalance || new Decimal(0),
-        estimatedCost,
-      };
-    }
-
-    // Check if balance is below threshold (warning but can proceed)
-    const isLowBalance = currentBalance.lessThan(settings.lowBalanceThreshold);
-    if (isLowBalance && !settings.balanceAlertSent) {
+    // Check global balance - allow but flag for billing if low
+    const isLowBalance =
+      !currentBalance || currentBalance.lessThan(estimatedCost);
+    if (isLowBalance) {
+      // Still allow anchoring but flag for urgent billing
       await createBalanceAlert(
-        "LOW_BALANCE",
-        "WARNING",
+        "BALANCE_CRITICAL",
+        "CRITICAL",
         settings.lowBalanceThreshold
       );
-      await db.hederaSetting.update({
-        where: { id: settings.id },
-        data: { balanceAlertSent: true },
-      });
     }
 
-    // Check company-specific budget if applicable
-    if (companyId) {
-      const companySetting = await db.companyHederaSetting.findUnique({
-        where: { companyId },
-      });
-
-      if (companySetting?.monthlyBudgetHbar) {
-        const budgetRemaining = companySetting.monthlyBudgetHbar.minus(
-          companySetting.currentMonthSpent
-        );
-
-        if (budgetRemaining.lessThan(estimatedCost)) {
-          return {
-            canProceed: false,
-            reason: "Company monthly budget exceeded",
-            currentBalance,
-            estimatedCost,
-            budgetRemaining,
-          };
-        }
-
-        // Check if approaching budget limit (80%)
-        const budgetUsedPercent = companySetting.currentMonthSpent
-          .dividedBy(companySetting.monthlyBudgetHbar)
-          .times(100);
-
-        if (
-          budgetUsedPercent.greaterThan(80) &&
-          !companySetting.budgetExceeded
-        ) {
-          await createCompanyBudgetAlert(
-            companyId,
-            "BUDGET_WARNING",
-            "WARNING",
-            budgetUsedPercent.toNumber()
-          );
-        }
-      }
-    }
-
+    // For now, always proceed with anchoring (usage-based billing model)
+    // Future: Add free tier logic here
     return {
       canProceed: true,
-      currentBalance,
+      shouldBill: false, // Future: calculate if over free tier
       estimatedCost,
     };
   } catch (error) {
     console.error("Cost check failed:", error);
     return {
       canProceed: false,
+      shouldBill: false,
       reason: "Cost check error: " + (error as Error).message,
+      estimatedCost: new Decimal(0),
     };
   }
 }
@@ -182,26 +136,9 @@ export async function recordTransactionCost(params: {
           where: { companyId: params.companyId },
           data: {
             transactionCount: { increment: 1 },
-            currentMonthSpent: { increment: cost },
+            currentMonthSpent: { increment: cost }, // Keep for usage tracking/billing
           },
         });
-
-        // Check if budget exceeded
-        if (companySetting.monthlyBudgetHbar) {
-          const newSpent = companySetting.currentMonthSpent.add(cost);
-          if (newSpent.greaterThanOrEqualTo(companySetting.monthlyBudgetHbar)) {
-            await db.companyHederaSetting.update({
-              where: { companyId: params.companyId },
-              data: { budgetExceeded: true },
-            });
-            await createCompanyBudgetAlert(
-              params.companyId,
-              "BUDGET_EXCEEDED",
-              "CRITICAL",
-              100
-            );
-          }
-        }
       }
     }
   } catch (error) {
@@ -277,24 +214,21 @@ export async function getBalanceInfo(): Promise<BalanceInfo | null> {
   }
 }
 
-/**
- * Reset monthly budgets for all companies
- * Should be called via cron job at the start of each month
- */
-export async function resetMonthlyBudgets(): Promise<void> {
+export async function resetMonthlyUsage(): Promise<void> {
   try {
+    // Reset usage counters for all companies with Hedera enabled
     await db.companyHederaSetting.updateMany({
       where: {
-        monthlyBudgetHbar: { not: null },
+        enabled: true,
       },
       data: {
         currentMonthSpent: new Decimal(0),
         budgetResetDate: new Date(),
-        budgetExceeded: false,
+        budgetExceeded: false, // Keep for backward compatibility
       },
     });
   } catch (error) {
-    console.error("Failed to reset monthly budgets:", error);
+    console.error("Failed to reset monthly usage:", error);
   }
 }
 
@@ -323,16 +257,10 @@ export async function getCompanyCostStats(companyId: string) {
 
     return {
       transactionCount: companySetting.transactionCount,
-      currentMonthSpent: companySetting.currentMonthSpent,
-      monthlyBudget: companySetting.monthlyBudgetHbar,
-      budgetRemaining: companySetting.monthlyBudgetHbar
-        ? companySetting.monthlyBudgetHbar.minus(
-            companySetting.currentMonthSpent
-          )
-        : null,
-      budgetExceeded: companySetting.budgetExceeded,
+      currentMonthUsage: companySetting.currentMonthSpent, // Usage for billing
       totalHistoricalCost: totalCost,
       recentTransactions: transactions,
+      // Future: Add billing tier information here
     };
   } catch (error) {
     console.error("Failed to get company cost stats:", error);

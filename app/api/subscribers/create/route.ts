@@ -159,13 +159,13 @@ export async function POST(request: NextRequest) {
 
     // Create user, company, member, and subscription in a transaction
     const result_data = await db.$transaction(async (tx) => {
-      // Create the customer user with ADMIN role
+      // Create the customer user as company owner with ADMIN_OWNER role
       const user = await tx.user.create({
         data: {
           name,
           email,
           password: hashedPassword,
-          role: "ADMIN",
+          role: "ADMIN_OWNER",
           plan,
           trialEndsAt: trialDays > 0 ? trialEndsAt : null,
           emailVerified: new Date(), // Auto-verify
@@ -192,21 +192,21 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Add user as company member with ADMIN role
+      // Add user as company member with ADMIN_OWNER role
       await tx.companyMember.create({
         data: {
           userId: user.id,
           companyId: company.id,
-          role: "ADMIN",
+          role: "ADMIN_OWNER",
         },
       });
 
-      // Add user as company staff with ADMIN role (for employee pane)
+      // Add user as company staff with ADMIN_OWNER role (for employee pane)
       await tx.companyStaff.create({
         data: {
           userId: user.id,
           companyId: company.id,
-          role: "ADMIN",
+          role: "ADMIN_OWNER",
           jobTitle: "Administrator",
           employmentType: "FULL_TIME",
           status: "ACTIVE",
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
       countryFlag: geoData?.flag || null,
     });
 
-    // Create audit log for the new subscriber customer (ADMIN)
+    // Create audit log for the new subscriber customer (ADMIN_OWNER)
     await createAuditLog({
       action: AUDIT_ACTIONS.COMPANY_CREATED,
       userId: result_data.user.id,

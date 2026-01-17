@@ -116,9 +116,10 @@ export async function callEmbeddings(
       const txt = await resp.text();
       throw new Error(`Embedding request failed: ${resp.status} ${txt}`);
     }
-    const json = await resp.json();
+    type OpenAIEmbeddingResp = { data?: Array<{ embedding: number[] }> };
+    const json = (await resp.json()) as OpenAIEmbeddingResp;
     const data = Array.isArray(json.data)
-      ? json.data.map((d: any) => d.embedding as number[])
+      ? json.data.map((d) => d.embedding)
       : [];
     return data;
   }
@@ -271,13 +272,12 @@ export async function callStorefrontModel<T>(
       );
     }
 
+    type ContentItem = { text?: unknown };
     const json = (await response.json()) as Record<string, unknown>;
     const content =
       json?.content && Array.isArray(json.content)
-        ? json.content
-            .map((c: Record<string, unknown>) =>
-              typeof c.text === "string" ? c.text : ""
-            )
+        ? (json.content as unknown as ContentItem[])
+            .map((c) => (typeof c.text === "string" ? c.text : ""))
             .join("\n")
         : null;
 

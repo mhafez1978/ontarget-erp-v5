@@ -26,7 +26,7 @@ export default function GoogleOAuthSetupArticle() {
         const response = await fetch("/api/auth/me");
         const data = await response.json();
 
-        if (!data?.authenticated || data?.user?.role === "GUEST") {
+        if (!data?.authenticated || data?.user?.role === "TRIAL") {
           router.push("/login");
           return;
         }

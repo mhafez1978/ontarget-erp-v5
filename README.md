@@ -65,6 +65,18 @@ modern workspace needing mainframe reliability.
 └─────────────────────────────────────────────────────────┘
 ```
 
+### ⛓️ BLOCKCHAIN AUDIT TRAILS 🔗
+
+```
+╔═══════════════════════════════════════════════════════╗
+║ ▸ IMMUTABLE RECORD STORAGE                            ║
+║ ▸ HEDERA HASHGRAPH INTEGRATION                        ║
+║ ▸ DIGITAL SIGNATURE CONSENT                           ║
+║ ▸ PUBLIC VERIFICATION ENDPOINTS                       ║
+║ ▸ USAGE-BASED BILLING ($0.014/ANCHOR)                 ║
+╚═══════════════════════════════════════════════════════╝
+```
+
 ### 👥 USER & ROLE MANAGEMENT 🎭
 
 ```
@@ -297,7 +309,7 @@ modern workspace needing mainframe reliability.
 └───────────────────────────────────────────────┘
 ```
 
-### 🔧 ADMIN TOOLS
+### 🔧 ADMIN_OWNER TOOLS
 
 ```
 ╔════════════════════════════════════════════════╗
@@ -396,7 +408,67 @@ modern workspace needing mainframe reliability.
 
 ---
 
-## ⛓️ Hedera Blockchain Integration 🔗
+## ⛓️ BLOCKCHAIN INTEGRATION & IMMUTABLE AUDIT TRAILS 🔗
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║ ▸ HEDERA HASHGRAPH INTEGRATION                              ║
+║ ▸ IMMUTABLE AUDIT TRAILS                                    ║
+║ ▸ DIGITAL SIGNATURES & CONSENT                              ║
+║ ▸ USAGE-BASED BILLING                                       ║
+║ ▸ PUBLIC VERIFICATION ENDPOINTS                             ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+**Complete audit trail integrity** through Hedera blockchain anchoring. Every business record, transaction, and user action can be permanently anchored to the blockchain with digital signatures, creating an immutable, verifiable record that cannot be altered or deleted.
+
+#### 🔐 Digital Consent & Legal Framework
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ ▸ Digital signature agreements for blockchain anchoring │
+│ ▸ Legal consent framework with binding contracts       │
+│ ▸ Permanent opt-in with no ability to turn off         │
+│ ▸ First anchored event is always the consent signature │
+│ ▸ Transparent cost disclosure ($0.014 per anchor)      │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### 📊 Usage-Based Billing & Cost Optimization
+
+```
+╔═══════════════════════════════════════════════════════╗
+║ ▸ No budget caps - usage-based billing only          ║
+║ ▸ Real-time HBAR price tracking via CoinGecko       ║
+║ ▸ Cost optimization through batch anchoring          ║
+║ ▸ Free tier available (X anchors per month)          ║
+║ ▸ Transparent pricing vs traditional storage costs   ║
+╚═══════════════════════════════════════════════════════╝
+```
+
+#### 🔍 Public Verification System
+
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ▸ Public verification endpoints                    ┃
+┃ ▸ Blockchain explorer integration                 ┃
+┃ ▸ QR code verification links                       ┃
+┃ ▸ Timestamped consensus proofs                     ┃
+┃ ▸ Company information display                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+```
+
+#### 🛡️ Security & Compliance
+
+```
+╔═══════════════════════════════════════════════════╗
+║ ▸ Cryptographic hash anchoring                   ║
+║ ▸ Consensus timestamp verification               ║
+║ ▸ Immutable record storage                       ║
+║ ▸ Regulatory compliance ready                    ║
+║ ▸ Audit trail export capabilities                ║
+╚═══════════════════════════════════════════════════╝
+```
 
 **Optional Hedera trust layer** for immutable anchoring of content hashes and coordinated company-level management of HBAR costs. Configuration is available via the Super Admin settings UI or environment variables; see `HEDERA_OUTBOX_STATUS.md` for current status, implementation notes, and outstanding work.
 
@@ -701,8 +773,8 @@ POST   /api/workforce/bulk-upload     # Import workforce
 
 ```
 ┏━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━┳━━━━━━━━━┳━━━━━━━┓
-┃ FEATURE         ┃ SUPER ┃ ADMIN ┃ MANAGER ┃ STAFF ┃
-┃                 ┃ ADMIN ┃       ┃         ┃       ┃
+┃ FEATURE         ┃ SUPER ┃ ADMIN_OWNER ┃ COMPANY_MANAGER ┃ COMPANY_STAFF ┃
+┃                 ┃ ADMIN_OWNER ┃       ┃         ┃       ┃
 ┣━━━━━━━━━━━━━━━━━╋━━━━━━━╋━━━━━━━╋━━━━━━━━━╋━━━━━━━┫
 ┃ System Setup    ┃   ✓   ┃       ┃         ┃       ┃
 ┃ All Companies   ┃   ✓   ┃       ┃         ┃       ┃

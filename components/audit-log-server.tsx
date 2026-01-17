@@ -342,8 +342,11 @@ export async function AuditLogServer() {
   if (userWithMemberships.role === "SUPER_ADMIN") {
     // SUPER_ADMIN sees all audit logs
     whereClause = {};
-  } else if (userWithMemberships.role === "ADMIN") {
-    // ADMIN sees logs from their company only
+  } else if (
+    userWithMemberships.role === "ADMIN_OWNER" ||
+    userWithMemberships.role === "ADMIN_NONOWNER"
+  ) {
+    // Company admins see logs from their company only
     const companyIds = userWithMemberships.companyMemberships.map(
       (m) => m.companyId
     );
@@ -360,9 +363,12 @@ export async function AuditLogServer() {
       };
     }
   } else if (
-    ["MANAGER", "STAFF", "CONTRACTOR", "SUPPLIER"].includes(
-      userWithMemberships.role
-    )
+    [
+      "COMPANY_MANAGER",
+      "COMPANY_STAFF",
+      "COMPANY_CONTRACTOR",
+      "COMPANY_SUPPLIER",
+    ].includes(userWithMemberships.role)
   ) {
     // Other roles see logs from their company
     const companyIds = userWithMemberships.companyMemberships.map(
@@ -381,7 +387,7 @@ export async function AuditLogServer() {
       };
     }
   } else {
-    // ERP_CUSTOMER, COMPANY_CUSTOMER, GUEST see only their own logs
+    // ERP_CUSTOMER, COMPANY_CUSTOMER, TRIAL see only their own logs
     whereClause = {
       userId: userWithMemberships.id,
     };

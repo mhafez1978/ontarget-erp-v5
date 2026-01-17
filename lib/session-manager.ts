@@ -22,6 +22,7 @@
 import { db } from "./db.ts";
 import crypto from "crypto";
 import type { NextRequest } from "next/server";
+import type { Session } from "../generated/prisma/client";
 
 export interface GeoLocation {
   ip?: string;
@@ -162,7 +163,7 @@ export interface ValidateSessionResult {
  */
 export async function createSession(
   options: CreateSessionOptions
-): Promise<import("@prisma/client").Session> {
+): Promise<Session> {
   const { userId, userAgent, expiresInDays = 7 } = options;
 
   let sessionGeo = options.geoLocation;

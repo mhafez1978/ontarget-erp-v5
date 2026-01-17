@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
 
     const user = validation.user;
     const body = await request.json();
-    const { companyId, enable, historicalAnchoring, monthlyBudget } = body;
+    const { companyId, enable, historicalAnchoring, digitalSignature } = body;
 
     if (!companyId) {
       return NextResponse.json(
@@ -41,7 +41,12 @@ export async function POST(request: NextRequest) {
           { ownerId: user.id },
           {
             members: {
-              some: { userId: user.id, role: { in: ["ADMIN", "MANAGER"] } },
+              some: {
+                userId: user.id,
+                role: {
+                  in: ["ADMIN_OWNER", "ADMIN_NONOWNER", "COMPANY_MANAGER"],
+                },
+              },
             },
           },
           ...(user.role === "SUPER_ADMIN" ? [{ id: companyId }] : []),
@@ -74,7 +79,7 @@ export async function POST(request: NextRequest) {
         user: { id: user.id, email: user.email },
         enable,
         historicalAnchoring,
-        monthlyBudget: monthlyBudget ? parseFloat(monthlyBudget) : null,
+        digitalSignature,
         company,
         existingSetting,
       });

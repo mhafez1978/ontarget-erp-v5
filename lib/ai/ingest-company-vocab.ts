@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { vectorStore } from "./vector-store";
+import type { Prisma } from "@/generated/prisma/client";
 
 export interface IngestOptions {
   dryRun?: boolean;
@@ -34,9 +35,9 @@ export async function ingestCompanyVocab(
     batchSize,
   });
 
-  const where: any = {};
-  if (companyId) where.id = companyId;
-  if (onlyEnabled) where.aiStorefrontEnabled = true;
+  let where: Prisma.CompanyWhereInput = {};
+  if (companyId) where = { ...where, id: companyId };
+  if (onlyEnabled) where = { ...where, aiStorefrontEnabled: true };
 
   let offset = 0;
   let processedCompanies = 0;

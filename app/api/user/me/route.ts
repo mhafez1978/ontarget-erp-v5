@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
-        // Companies where user is a member (ADMIN role in company)
+        // Companies where user is a member (ADMIN_OWNER role in company)
         companyMemberships: {
           select: {
             companyId: true,

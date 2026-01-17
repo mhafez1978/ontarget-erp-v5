@@ -4,10 +4,52 @@ import { db } from "@/lib/db";
 import type {
   PaymentWebhook,
   Invoice as PrismaInvoice,
-  Payment as PrismaPayment,
-} from "@prisma/client";
+  Prisma,
+} from "@/generated/prisma/client";
 import Stripe from "stripe";
 import { storeInvoicePDF } from "@/lib/invoice-storage";
+import type { StripeProvider } from "@/lib/payment-providers/stripe";
+
+// Typed helpers for expanded/optional Stripe webhook fields (avoid `any`)
+type InvoiceWithExtras = Stripe.Invoice & {
+  subscription?: string | Stripe.Subscription | null;
+  payment_intent?: string | Stripe.PaymentIntent | null;
+  invoice_pdf?: string | null;
+  hosted_invoice_url?: string | null;
+  amount_paid?: number | null;
+  subtotal?: number | null;
+  total?: number | null;
+  paid?: boolean | null;
+  customer_email?: string | null;
+  currency?: string | null;
+  created?: number | null;
+  due_date?: number | null;
+  number?: string | null;
+  payment_method_types?: string[] | null;
+  description?: string | null;
+  lines?: {
+    data?: Array<
+      Stripe.InvoiceLineItem & {
+        price?: Stripe.Price | null;
+        plan?: { nickname?: string } | null;
+      }
+    >;
+  } | null;
+};
+
+type LineItemWithExtras = Stripe.InvoiceLineItem & {
+  price?: Stripe.Price | null;
+  plan?: { nickname?: string } | null;
+};
+
+type PaymentIntentWithExtras = Stripe.PaymentIntent & {
+  charges?: {
+    data?: Array<
+      Stripe.Charge & { billing_details?: { email?: string | null } }
+    >;
+  };
+  invoice?: string | null;
+};
 
 export async function POST(request: NextRequest) {
   // webhook audit record (declared outer so catch can reference it)
@@ -23,8 +65,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const provider =
-      paymentsService.instantiateStripeProviderFromGateway(gateway);
+    const provider = paymentsService.instantiateStripeProviderFromGateway(
+      gateway
+    ) as StripeProvider;
 
     const payload = await request.text();
     const signature = request.headers.get("stripe-signature") || "";
@@ -60,7 +103,7 @@ export async function POST(request: NextRequest) {
               provider: "stripe",
               eventType: event.type,
               eventId: event.id,
-              payload: event as any,
+              payload: event as unknown as Prisma.InputJsonValue,
               signature,
               ipAddress:
                 request.headers.get("x-forwarded-for") ||
@@ -99,22 +142,20 @@ export async function POST(request: NextRequest) {
     try {
       switch (event.type) {
         case "invoice.payment_succeeded": {
-          const invoice = event.data.object as any; // Stripe.Invoice with expanded properties
-          const subscriptionId = invoice.subscription as string | undefined;
+          const invoice = event.data.object as Stripe.Invoice; // Stripe.Invoice with expanded properties
+          const si = invoice as InvoiceWithExtras;
+          const subVal = si.subscription;
+          const subscriptionId =
+            typeof subVal === "string" ? subVal : undefined;
 
           // Try to find userId from subscription metadata
           let userId: string | undefined;
           if (subscriptionId) {
             try {
-              const stripe = (
-                paymentsService.instantiateStripeProviderFromGateway(
-                  gateway
-                ) as any
-              ).stripe;
-              const stripeSub = await stripe.subscriptions.retrieve(
+              const stripeSub = await provider.retrieveSubscription(
                 subscriptionId
               );
-              userId = stripeSub.metadata?.userId;
+              userId = stripeSub?.metadata?.userId as string | undefined;
             } catch (err) {
               console.error("Failed to retrieve subscription for userId:", err);
             }
@@ -123,62 +164,73 @@ export async function POST(request: NextRequest) {
           // Upsert an Invoice record for this Stripe invoice
           let localInvoice: PrismaInvoice | undefined = undefined;
           try {
-            const items = (invoice.lines?.data || []).map((ln: any) => ({
-              description:
-                ln.description || (ln.plan && ln.plan.nickname) || "",
-              quantity: ln.quantity || 1,
-              unitPrice: (ln.amount || 0) / 100 || 0,
-              amount: ((ln.amount || 0) * (ln.quantity || 1)) / 100 || 0,
-            }));
+            const items = (si.lines?.data || []).map((lnRaw) => {
+              const ln = lnRaw as LineItemWithExtras;
+              return {
+                description: (() => {
+                  if (ln.description) return ln.description;
+                  const price = ln.price as unknown;
+                  if (
+                    price &&
+                    typeof price === "object" &&
+                    "nickname" in price
+                  ) {
+                    return (price as { nickname?: string }).nickname || "";
+                  }
+                  const plan = ln.plan as unknown;
+                  if (plan && typeof plan === "object" && "nickname" in plan) {
+                    return (plan as { nickname?: string }).nickname || "";
+                  }
+                  return "";
+                })(),
+                quantity: ln.quantity || 1,
+                unitPrice: (ln.amount || 0) / 100 || 0,
+                amount: ((ln.amount || 0) * (ln.quantity || 1)) / 100 || 0,
+              };
+            });
 
             // Try to find an existing invoice by externalInvoiceId (non-unique)
             const existingInv = await db.invoice.findFirst({
-              where: { externalInvoiceId: invoice.id as string },
+              where: { externalInvoiceId: si.id as string },
             });
             if (existingInv) {
               localInvoice = await db.invoice.update({
                 where: { id: existingInv.id },
                 data: {
-                  status: invoice.paid ? "PAID" : "SENT",
-                  paidAt: invoice.paid ? new Date() : undefined,
-                  total: (invoice.total || invoice.amount_paid || 0) / 100,
+                  status: si.paid ? "PAID" : "SENT",
+                  paidAt: si.paid ? new Date() : undefined,
+                  total: (si.total || si.amount_paid || 0) / 100,
                   items,
                   externalInvoiceUrl:
-                    invoice.hosted_invoice_url ||
-                    invoice.invoice_pdf ||
-                    undefined,
+                    si.hosted_invoice_url || si.invoice_pdf || undefined,
                 },
               });
             } else {
               localInvoice = await db.invoice.create({
                 data: {
-                  invoiceNumber: `STRIPE-${invoice.number || invoice.id}`,
+                  invoiceNumber: `STRIPE-${si.number || si.id}`,
                   companyId: gateway.companyId,
                   userId: userId, // Link to user if available
                   type: "SUBSCRIPTION",
-                  status: invoice.paid ? "PAID" : "SENT",
-                  customerEmail: invoice.customer_email || undefined,
-                  amount: (invoice.subtotal || 0) / 100,
+                  status: si.paid ? "PAID" : "SENT",
+                  customerEmail: si.customer_email || undefined,
+                  amount: (si.subtotal || 0) / 100,
                   tax: 0,
                   discount: 0,
-                  total: (invoice.total || invoice.amount_paid || 0) / 100,
+                  total: (si.total || si.amount_paid || 0) / 100,
                   items,
-                  issueDate: new Date(
-                    (invoice.created || Date.now() / 1000) * 1000
-                  ),
-                  dueDate: invoice.due_date
-                    ? new Date(invoice.due_date * 1000)
+                  issueDate: new Date((si.created || Date.now() / 1000) * 1000),
+                  dueDate: si.due_date
+                    ? new Date(si.due_date * 1000)
                     : new Date(),
-                  paidAt: invoice.paid ? new Date() : undefined,
-                  paymentMethod: invoice.payment_method_types
-                    ? invoice.payment_method_types[0]
+                  paidAt: si.paid ? new Date() : undefined,
+                  paymentMethod: si.payment_method_types
+                    ? si.payment_method_types[0]
                     : undefined,
-                  externalInvoiceId: invoice.id,
+                  externalInvoiceId: si.id,
                   externalInvoiceUrl:
-                    invoice.hosted_invoice_url ||
-                    invoice.invoice_pdf ||
-                    undefined,
-                  notes: invoice.description || undefined,
+                    si.hosted_invoice_url || si.invoice_pdf || undefined,
+                  notes: si.description || undefined,
                 },
               });
             }
@@ -219,27 +271,30 @@ export async function POST(request: NextRequest) {
             }
 
             // Create Payment record and mark subscription active
-            if (subscriptionId && invoice.amount_paid != null) {
-              const gatewayRef = invoice.payment_intent || invoice.id;
+            if (subscriptionId && si.amount_paid != null) {
+              const gatewayRef =
+                typeof si.payment_intent === "string"
+                  ? si.payment_intent
+                  : si.payment_intent?.id || si.id;
 
               // avoid duplicate payments for the same gateway reference
               const existingPayment = await db.payment.findFirst({
                 where: { gatewayReference: gatewayRef },
               });
 
-              let payment: PrismaPayment | null = existingPayment;
+              let payment = existingPayment;
               if (!existingPayment) {
                 payment = await db.payment.create({
                   data: {
                     companyId: gateway.companyId,
                     gatewayId: gateway.id,
-                    amount: (invoice.amount_paid || 0) / 100,
-                    currency: (invoice.currency || "USD").toUpperCase(),
+                    amount: (si.amount_paid || 0) / 100,
+                    currency: (si.currency || "USD").toUpperCase(),
                     status: "SUCCEEDED",
                     gatewayReference: gatewayRef,
-                    gatewayResponse: invoice as unknown as any,
-                    customerEmail: invoice.customer_email || undefined,
-                    description: `Invoice ${invoice.id}`,
+                    gatewayResponse: si as unknown as Prisma.InputJsonValue,
+                    customerEmail: si.customer_email || undefined,
+                    description: `Invoice ${si.id}`,
                     invoiceId: localInvoice.id,
                     processedAt: new Date(),
                   },
@@ -260,10 +315,10 @@ export async function POST(request: NextRequest) {
                     companyId: gateway.companyId,
                     entityType: "Subscription",
                     entityId: subscriptionId,
-                    description: `Invoice ${invoice.id} paid for subscription ${subscriptionId}`,
+                    description: `Invoice ${si.id} paid for subscription ${subscriptionId}`,
                     metadata: JSON.stringify({
-                      invoiceId: invoice.id,
-                      amount: invoice.amount_paid,
+                      invoiceId: si.id,
+                      amount: si.amount_paid,
                       paymentId: payment.id,
                     }),
                   },
@@ -281,19 +336,22 @@ export async function POST(request: NextRequest) {
         }
 
         case "payment_intent.succeeded": {
-          const pi = event.data.object as any; // Stripe.PaymentIntent with expanded properties
+          const pi = event.data.object as Stripe.PaymentIntent; // Stripe.PaymentIntent with expanded properties
+          const piEx = pi as PaymentIntentWithExtras;
           try {
-            const amount = (pi.amount_received || pi.amount || 0) / 100;
-            const currency = (pi.currency || "USD").toUpperCase();
-            const gatewayReference = pi.id;
+            const amount = (piEx.amount_received || piEx.amount || 0) / 100;
+            const currency = (piEx.currency || "USD").toUpperCase();
+            const gatewayReference = piEx.id;
             const customerEmail =
-              pi.receipt_email ||
-              pi.charges?.data?.[0]?.billing_details?.email ||
+              piEx.receipt_email ||
+              (pi as PaymentIntentWithExtras).charges?.data?.[0]
+                ?.billing_details?.email ||
               undefined;
 
             // Try to associate with invoice if available
             let invoiceId: string | undefined = undefined;
-            const piInvoiceId = (pi as any).invoice as string | undefined;
+            const piInvoiceId =
+              typeof piEx.invoice === "string" ? piEx.invoice : undefined;
             if (piInvoiceId) {
               const localInv = await db.invoice.findFirst({
                 where: { externalInvoiceId: piInvoiceId },
@@ -314,7 +372,7 @@ export async function POST(request: NextRequest) {
                   currency,
                   status: "SUCCEEDED",
                   gatewayReference,
-                  gatewayResponse: pi as unknown as any,
+                  gatewayResponse: pi as unknown as Prisma.InputJsonValue,
                   customerEmail,
                   description: `PaymentIntent ${pi.id}`,
                   invoiceId,
@@ -339,7 +397,7 @@ export async function POST(request: NextRequest) {
         }
 
         case "payment_intent.payment_failed": {
-          const pi = event.data.object as any; // Stripe.PaymentIntent
+          const pi = event.data.object as Stripe.PaymentIntent; // Stripe.PaymentIntent
           try {
             const subscriptionId = pi.metadata?.subscription_id || undefined;
             if (subscriptionId) {
@@ -370,10 +428,9 @@ export async function POST(request: NextRequest) {
         }
 
         case "charge.refunded": {
-          const ch = event.data.object as any; // Stripe.Charge
+          const ch = event.data.object as Stripe.Charge; // Stripe.Charge
           try {
             // Find related payment by gatewayReference (payment_intent or charge id)
-            const ref = ch.id || ch.payment_intent;
             const payments = await db.payment.findMany({
               where: {
                 OR: [
@@ -398,7 +455,7 @@ export async function POST(request: NextRequest) {
                     ch.amount_refunded < paymentAmountCents
                       ? "PARTIALLY_REFUNDED"
                       : "REFUNDED",
-                  gatewayResponse: ch as unknown as any,
+                  gatewayResponse: ch as unknown as Prisma.InputJsonValue,
                 },
               });
             }
@@ -409,8 +466,12 @@ export async function POST(request: NextRequest) {
         }
 
         case "invoice.payment_failed": {
-          const invoice = event.data.object as any; // Stripe.Invoice
-          const subscriptionId = invoice.subscription as string | undefined;
+          const invoice = event.data.object as Stripe.Invoice; // Stripe.Invoice
+          const invoiceEx = invoice as InvoiceWithExtras;
+          const subscriptionId =
+            typeof invoiceEx.subscription === "string"
+              ? invoiceEx.subscription
+              : undefined;
 
           try {
             const updated = await db.subscription.updateMany({
@@ -440,7 +501,7 @@ export async function POST(request: NextRequest) {
         }
 
         case "customer.subscription.deleted": {
-          const sub = event.data.object as any; // Stripe.Subscription
+          const sub = event.data.object as Stripe.Subscription; // Stripe.Subscription
           try {
             const updated = await db.subscription.updateMany({
               where: { externalSubscriptionId: sub.id },

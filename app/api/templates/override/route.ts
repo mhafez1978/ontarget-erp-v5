@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
 
     const { user } = validation;
 
-    // Only ADMIN can create overrides
-    if (user.role !== "ADMIN") {
+    // Only SUPER_ADMIN or company owner can create overrides
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN_OWNER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -26,31 +26,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user owns or is admin of the company
-    const companyMember = await db.companyMember.findFirst({
-      where: {
-        userId: user.id,
-        companyId: companyId,
-        role: "ADMIN",
-      },
-    });
-
-    if (!companyMember) {
-      return NextResponse.json(
-        { error: "You don't have permission for this company" },
-        { status: 403 }
-      );
-    }
-
-    // Get company name
-    const company = await db.company.findUnique({
-      where: { id: companyId },
-      select: { name: true },
+    // Verify user is the company owner and fetch its name
+    let company = await db.company.findFirst({
+      where: { id: companyId, ownerId: user.id },
+      select: { id: true, name: true },
     });
 
     if (!company) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+      if (user.role === "SUPER_ADMIN") {
+        company = await db.company.findUnique({
+          where: { id: companyId },
+          select: { id: true, name: true },
+        });
+        if (!company) {
+          return NextResponse.json(
+            { error: "Company not found" },
+            { status: 404 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { error: "You don't have permission for this company" },
+          { status: 403 }
+        );
+      }
     }
+
+    // Company is fetched with name for further processing.
 
     // Get the source template (should be a global template)
     const sourceTemplate = await db.emailTemplate.findUnique({

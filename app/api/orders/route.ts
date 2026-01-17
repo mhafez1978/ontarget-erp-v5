@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import type { StorefrontOrderStatus, PaymentStatus } from "@prisma/client";
+import type { StorefrontOrderStatus, PaymentStatus } from "@/generated/prisma/client";
 
 export type OrdersDb = {
   user: {
@@ -52,9 +52,12 @@ export async function listOrdersForUser(
 
   // Check if user has permission to view orders
   // Staff can see all company orders, customers can see their own orders
-  const isStaff = ["STAFF", "MANAGER", "ADMIN", "SUPER_ADMIN"].includes(
-    user.role
-  );
+  const isStaff = [
+    "COMPANY_STAFF",
+    "COMPANY_MANAGER",
+    "ADMIN_OWNER",
+    "SUPER_ADMIN",
+  ].includes(user.role);
   const isCustomer = ["ERP_CUSTOMER", "COMPANY_CUSTOMER"].includes(user.role);
 
   if (!isStaff && !isCustomer) {
@@ -167,7 +170,10 @@ export async function POST(request: NextRequest) {
       select: { role: true },
     });
 
-    if (!user || !["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(user.role)) {
+    if (
+      !user ||
+      !["ADMIN_OWNER", "SUPER_ADMIN", "COMPANY_MANAGER"].includes(user.role)
+    ) {
       return NextResponse.json(
         { error: "Insufficient permissions to create orders" },
         { status: 403 }

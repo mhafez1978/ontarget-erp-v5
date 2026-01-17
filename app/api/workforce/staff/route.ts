@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import type { CompanyMemberRole, EmploymentType } from "@prisma/client";
+import {
+  CompanyMemberRole,
+  EmploymentType,
+} from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
 import { createAuditLog, AUDIT_ACTIONS, ENTITY_TYPES } from "@/lib/audit-log";
 import { sendEmail } from "@/lib/email-service";
@@ -38,7 +41,9 @@ export async function GET(request: NextRequest): Promise<Response> {
             members: {
               some: {
                 userId,
-                role: { in: ["ADMIN", "MANAGER"] },
+                role: {
+                  in: ["ADMIN_OWNER", "ADMIN_NONOWNER", "COMPANY_MANAGER"],
+                },
               },
             },
           },
@@ -173,7 +178,7 @@ export async function POST(request: NextRequest): Promise<Response> {
             members: {
               some: {
                 userId,
-                role: { in: ["ADMIN", "MANAGER"] },
+                role: { in: ["ADMIN_OWNER", "COMPANY_MANAGER"] },
               },
             },
           },
@@ -192,8 +197,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       );
     }
 
-    // Check user limit (skip for SUPER_USER)
-    if ((company.owner?.plan || null) !== "SUPER_USER") {
+    // Check user limit (skip for SUPER_ADMIN)
+    if ((company.owner?.plan || null) !== "SUPER_ADMIN") {
       // Get company's subscription plan
       const subscription = await db.subscription.findFirst({
         where: {
@@ -203,8 +208,12 @@ export async function POST(request: NextRequest): Promise<Response> {
         orderBy: { createdAt: "desc" },
       });
 
-      const plan = subscription?.plan || "ESSENTIAL";
-      const totalUserLimit = getTotalUserLimit(plan);
+      const planRaw = subscription?.plan || "ESSENTIAL";
+      // Cast subscription plan (Prisma enum) to our PlanType with a safe fallback
+      const planKey =
+        (planRaw as unknown as import("@/lib/plan-limits").PlanType) ||
+        "ESSENTIAL";
+      const totalUserLimit = getTotalUserLimit(planKey);
 
       // Count all existing company members (across all roles)
       const userCount = await db.companyMember.count({
@@ -214,7 +223,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       if (totalUserLimit !== Infinity && userCount >= totalUserLimit) {
         return NextResponse.json(
           {
-            error: `User limit reached. Your ${plan} plan allows ${totalUserLimit} total users across all roles. Upgrade to add more.`,
+            error: `User limit reached. Your ${planKey} plan allows ${totalUserLimit} total users across all roles. Upgrade to add more.`,
             limit: totalUserLimit,
             current: userCount,
           },
@@ -240,16 +249,17 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Create the user
     const userPlan =
-      role === "CONTRACTOR" ? "COMPANY_CONTRACTOR" : "COMPANY_STAFF";
+      role === "COMPANY_CONTRACTOR" ? "COMPANY_CONTRACTOR" : "COMPANY_STAFF";
 
-    const userGlobalRole = role === "CONTRACTOR" ? "CONTRACTOR" : "STAFF";
+    const userGlobalRole =
+      role === "COMPANY_CONTRACTOR" ? "COMPANY_CONTRACTOR" : "COMPANY_STAFF";
 
     const newUser = await db.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: userGlobalRole, // STAFF or CONTRACTOR
+        role: userGlobalRole, // COMPANY_STAFF or COMPANY_CONTRACTOR
         plan: userPlan, // COMPANY_STAFF for staff, COMPANY_CONTRACTOR for contractors
         emailVerified: new Date(), // Auto-verify staff members created by admins
         addressLine1: addressLine1 || undefined,
@@ -266,7 +276,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       data: {
         companyId,
         userId: newUser.id,
-        role, // Company role (ADMIN, MANAGER, STAFF, CONTRACTOR)
+        role, // Company role (ADMIN_OWNER, COMPANY_MCOMPANY_STAFFR, COMPANY_STAFF, COMPANY_CONTRACTOR)
         jobTitle, // Job title (SALES_REP, CUSTOMER_SERVICE, etc.)
         employmentType,
         payRate:
@@ -296,10 +306,10 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Create audit log entry
     await createAuditLog({
-      action: AUDIT_ACTIONS.STAFF_MEMBER_ADDED,
+      action: AUDIT_ACTIONS.COMPANY_STAFF_MEMBER_ADDED,
       userId,
       companyId,
-      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
       entityId: staff.id,
       description: `Added staff member: ${name} (${email}) with role ${role}`,
       metadata: {
@@ -327,7 +337,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       action: AUDIT_ACTIONS.ONBOARDING_TOKEN_CREATED,
       userId,
       companyId,
-      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
       entityId: staff.id,
       description: `Created onboarding token for ${name} (${email})`,
       metadata: {

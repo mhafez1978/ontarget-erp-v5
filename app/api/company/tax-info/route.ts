@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { decrypt, encrypt } from "@/lib/encryption";
-import { CompanyLegalEntity, TaxIdType } from "@prisma/client";
+import {
+  CompanyLegalEntity,
+  TaxIdType,
+} from "@/generated/prisma/client";
 
 // GET - Retrieve tax info for a company (with decryption for viewing)
 export async function GET(request: NextRequest) {
@@ -23,22 +26,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify user has ADMIN access to this company (tax info is sensitive PII)
-    const company = await db.company.findFirst({
-      where: {
-        id: companyId,
-        OR: [
-          { ownerId: user.id },
-          {
-            members: {
-              some: { userId: user.id, role: "ADMIN" },
-            },
-          },
-        ],
-      },
+    // Owner-only: verify the user is the company owner
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+      select: { ownerId: true },
     });
-
-    if (!company && user.role !== "SUPER_ADMIN") {
+    if (company?.ownerId !== user.id && user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Admin access required to view tax information" },
         { status: 403 }
@@ -119,22 +112,12 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Verify user has ADMIN access to this company
-    const company = await db.company.findFirst({
-      where: {
-        id: companyId,
-        OR: [
-          { ownerId: user.id },
-          {
-            members: {
-              some: { userId: user.id, role: "ADMIN" },
-            },
-          },
-        ],
-      },
+    // Owner-only: verify the user is the company owner
+    const company = await db.company.findUnique({
+      where: { id: companyId },
+      select: { ownerId: true },
     });
-
-    if (!company && user.role !== "SUPER_ADMIN") {
+    if (company?.ownerId !== user.id && user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }
@@ -151,18 +134,49 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updateData: TaxInfoUpdateData = {};
+
+    if (legalEntity !== undefined) updateData.legalEntity = legalEntity;
+    if (taxIdType !== undefined) updateData.taxIdType = taxIdType;
+    if (taxId !== undefined) updateData.taxId = taxId ? encrypt(taxId) : "";
+    if (taxCountry !== undefined) updateData.taxCountry = taxCountry;
+    if (vatNumber !== undefined)
+      updateData.vatNumber = vatNumber ? encrypt(vatNumber) : null;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: "No fields provided to update" },
+        { status: 400 }
+      );
+    }
+
     // Upsert tax info
     const taxInfo = await db.companyTaxInfo.upsert({
       where: { companyId },
       create: {
         companyId,
-        legalEntity,
-        taxIdType,
-        taxId: encrypt(taxId),
-        taxCountry,
-        vatNumber: vatNumber ? encrypt(vatNumber) : null,
+        legalEntity: updateData.legalEntity ?? legalEntity,
+        taxIdType: updateData.taxIdType ?? taxIdType,
+        taxId: updateData.taxId ?? (taxId ? encrypt(taxId) : ""),
+        taxCountry: updateData.taxCountry ?? taxCountry,
+        vatNumber:
+          updateData.vatNumber ?? (vatNumber ? encrypt(vatNumber) : null),
       },
-      update: updateData,
+      update: {
+        ...(updateData.legalEntity !== undefined && {
+          legalEntity: updateData.legalEntity,
+        }),
+        ...(updateData.taxIdType !== undefined && {
+          taxIdType: updateData.taxIdType,
+        }),
+        ...(updateData.taxId !== undefined &&
+          updateData.taxId !== null && { taxId: updateData.taxId }),
+        ...(updateData.taxCountry !== undefined && {
+          taxCountry: { set: updateData.taxCountry },
+        }),
+        ...(updateData.vatNumber !== undefined && {
+          vatNumber: { set: updateData.vatNumber },
+        }),
+      },
     });
 
     return NextResponse.json(

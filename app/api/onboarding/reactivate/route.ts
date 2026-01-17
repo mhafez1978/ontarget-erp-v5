@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
             members: {
               some: {
                 userId,
-                role: { in: ["ADMIN"] },
+                role: { in: ["ADMIN_OWNER"] },
               },
             },
           },
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       action: AUDIT_ACTIONS.USER_UPDATED,
       userId,
       companyId: staff.companyId,
-      entityType: ENTITY_TYPES.STAFF_MEMBER,
+      entityType: ENTITY_TYPES.COMPANY_STAFF_MEMBER,
       entityId: staff.id,
       description: `Reactivated onboarding for ${staff.user.name} - New 48-hour token generated`,
       metadata: {

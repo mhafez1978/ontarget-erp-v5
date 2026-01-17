@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import type { OutboxJob } from "@prisma/client";
+import type { OutboxJob } from "@/generated/prisma/client";
 // lightweight lock id generation (avoid adding uuid types during iteration)
 function makeLockId() {
   return `lock_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -14,6 +14,8 @@ import { anchorHashToHedera } from "@/lib/hedera/service";
 
 interface HederaAnchorPayload {
   hash: string;
+  companyId?: string;
+  auditLogId?: string;
 }
 
 export async function processNextJob() {
@@ -36,7 +38,24 @@ export async function processJob(job: OutboxJob): Promise<boolean> {
         const payload = job.payload as unknown as HederaAnchorPayload;
         if (!payload?.hash) throw new Error("Missing hash in payload");
 
-        await anchorHashToHedera(payload.hash); // fire-and-forget result for now (reserve storing tx metadata for audit table)
+        const result = await anchorHashToHedera(
+          payload.hash,
+          payload.companyId
+        );
+
+        // Link the transaction to the audit log if provided
+        if (payload.auditLogId && result.transactionId) {
+          await db.hederaTransaction.updateMany({
+            where: {
+              hash: payload.hash,
+              transactionId: result.transactionId,
+            },
+            data: {
+              auditLogId: payload.auditLogId,
+            },
+          });
+        }
+
         await db.outboxJob.update({
           where: { id: job.id },
           data: { status: "COMPLETED", updatedAt: new Date() },

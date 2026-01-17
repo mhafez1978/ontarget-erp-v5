@@ -53,8 +53,11 @@ export async function getUsersForSettings(
     return { status: 404, body: { error: "User not found" } };
   }
 
-  // Only SUPER_ADMIN and ADMIN can view users
-  if (currentUser.role !== "SUPER_ADMIN" && currentUser.role !== "ADMIN") {
+  // Only SUPER_ADMIN and ADMIN_OWNER can view users
+  if (
+    currentUser.role !== "SUPER_ADMIN" &&
+    currentUser.role !== "ADMIN_OWNER"
+  ) {
     return {
       status: 403,
       body: { error: "Only super admins and admins can view users" },
@@ -91,7 +94,7 @@ export async function getUsersForSettings(
       },
     });
   } else {
-    // ADMIN: Get users only from companies they own or are members of
+    // ADMIN_OWNER: Get users only from companies they own or are members of
     // First, get all companies the admin has access to
     const adminCompanies = await dbClient.company.findMany({
       where: {

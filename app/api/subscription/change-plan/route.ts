@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
     const { user } = validation;
     const userId = user.id;
 
-    if (user.role !== "ADMIN") {
+    if (user.role !== "ADMIN_OWNER") {
       return NextResponse.json(
-        { error: "Only ADMIN users can change subscription plans" },
+        { error: "Only ADMIN_OWNER users can change subscription plans" },
         { status: 403 }
       );
     }

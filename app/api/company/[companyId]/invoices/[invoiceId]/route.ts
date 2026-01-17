@@ -32,7 +32,9 @@ export async function GET(
     );
     if (
       membership &&
-      (membership.role === "ADMIN" || membership.role === "MANAGER")
+      (membership.role === "ADMIN_OWNER" ||
+        membership.role === "ADMIN_NONOWNER" ||
+        membership.role === "COMPANY_MANAGER")
     )
       hasAccess = true;
 

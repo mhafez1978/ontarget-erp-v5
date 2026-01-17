@@ -65,7 +65,7 @@ export default function SuperAdminTemplatesView() {
 
   // Template types to generate
   const [enabledTemplates, setEnabledTemplates] = useState({
-    WELCOME_STAFF: false,
+    WELCOME_COMPANY_STAFF: false,
     WELCOME_CUSTOMER: false,
     PASSWORD_RESET: false,
     ACCOUNT_VERIFICATION: false,
@@ -162,7 +162,7 @@ export default function SuperAdminTemplatesView() {
         fetchTemplates(); // Refresh the list
         // Reset toggles
         setEnabledTemplates({
-          WELCOME_STAFF: false,
+          WELCOME_COMPANY_STAFF: false,
           WELCOME_CUSTOMER: false,
           PASSWORD_RESET: false,
           ACCOUNT_VERIFICATION: false,
@@ -185,7 +185,7 @@ export default function SuperAdminTemplatesView() {
     const colors: Record<string, string> = {
       PASSWORD_RESET: "bg-red-100 text-red-800",
       WELCOME_CUSTOMER: "bg-green-100 text-green-800",
-      WELCOME_STAFF: "bg-blue-100 text-blue-800",
+      WELCOME_COMPANY_STAFF: "bg-blue-100 text-blue-800",
       ACCOUNT_VERIFICATION: "bg-yellow-100 text-yellow-800",
       PASSWORD_CHANGED: "bg-purple-100 text-purple-800",
       INVOICE_SENT: "bg-orange-100 text-orange-800",
@@ -296,9 +296,9 @@ export default function SuperAdminTemplatesView() {
                       </div>
                       <Switch
                         id="welcome-staff"
-                        checked={enabledTemplates.WELCOME_STAFF}
+                        checked={enabledTemplates.WELCOME_COMPANY_STAFF}
                         onCheckedChange={() =>
-                          handleToggleTemplate("WELCOME_STAFF")
+                          handleToggleTemplate("WELCOME_COMPANY_STAFF")
                         }
                       />
                     </div>
@@ -618,7 +618,7 @@ export default function SuperAdminTemplatesView() {
                   </li>
                   <li>
                     <code className="bg-white px-1 rounded">{`{{role}}`}</code>{" "}
-                    - User role (ADMIN, MANAGER, etc.)
+                    - User role (ADMIN_OWNER, COMPANY_MANAGER, etc.)
                   </li>
                 </ul>
               </div>

@@ -321,7 +321,7 @@ export default function ProjectDetailPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
 
   const fetchUser = useCallback(async () => {

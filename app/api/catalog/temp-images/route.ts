@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Authorization check
     const isSuperAdmin = user.role === "SUPER_ADMIN";
-    const isManager = user.role === "MANAGER";
+    const isManager = user.role === "COMPANY_MANAGER";
     const ownsCompany = user.ownedCompanies.some((c) => c.id === companyId);
 
     if (!isSuperAdmin && !ownsCompany && !isManager) {

@@ -1,14 +1,15 @@
 import { db } from "../db.ts";
 import { enqueueOutboxJob } from "../outbox.ts";
 import { createAuditLog, AUDIT_ACTIONS } from "../audit-log.ts";
-import type { CompanyHederaSetting } from "@prisma/client";
+import { anchorHashToHedera } from "./service";
+import type { CompanyHederaSetting } from "@/generated/prisma/client";
 
 export interface EnableOptions {
   companyId: string;
   user: { id: string; email?: string | null };
   enable: boolean;
   historicalAnchoring?: boolean;
-  monthlyBudget?: number | null;
+  digitalSignature: string;
   company: { id: string; name?: string };
   existingSetting?: CompanyHederaSetting | null;
 }
@@ -19,7 +20,7 @@ export async function enableCompanyHedera(opts: EnableOptions, dbClient = db) {
     user,
     enable,
     historicalAnchoring,
-    monthlyBudget,
+    digitalSignature,
     company,
     existingSetting,
   } = opts;
@@ -32,17 +33,46 @@ export async function enableCompanyHedera(opts: EnableOptions, dbClient = db) {
       historicalAnchored: false,
       enabledById: user.id,
       enabledAt: new Date(),
-      monthlyBudgetHbar: monthlyBudget != null ? monthlyBudget : null,
-      budgetResetDate: monthlyBudget ? new Date() : null,
     },
     update: {
       enabled: !!enable,
       enabledById: user.id,
       enabledAt: new Date(),
-      monthlyBudgetHbar: monthlyBudget != null ? monthlyBudget : null,
-      budgetResetDate: monthlyBudget ? new Date() : null,
     },
   });
+
+  // If enabling, create the first anchored event with digital signature
+  if (enable) {
+    const signatureData = {
+      action: "BLOCKCHAIN_ANCHORING_ENABLED",
+      companyId,
+      companyName: company.name,
+      digitalSignature,
+      signedBy: user.email,
+      signedAt: new Date().toISOString(),
+      agreement: "Blockchain Anchoring Service Agreement v1.0",
+      costStructure: "~$0.014 per anchor event (0.0001 HBAR)",
+      permanence: "Records remain on-chain permanently",
+    };
+
+    const signatureHash = await anchorHashToHedera(
+      JSON.stringify(signatureData),
+      companyId
+    );
+
+    // Create audit log for the signature anchoring
+    await createAuditLog({
+      companyId,
+      userId: user.id,
+      action: AUDIT_ACTIONS.HEDERA_SIGNATURE_ANCHORED,
+      description: `Digital signature for blockchain anchoring agreement anchored to Hedera`,
+      metadata: {
+        signatureHash,
+        digitalSignature,
+        agreementVersion: "1.0",
+      },
+    });
+  }
 
   // Create general audit log
   await createAuditLog({
@@ -55,7 +85,7 @@ export async function enableCompanyHedera(opts: EnableOptions, dbClient = db) {
     metadata: {
       hederaEnabled: enable,
       historicalAnchoring,
-      monthlyBudget: monthlyBudget || null,
+      digitalSignature: enable ? digitalSignature : null,
       enabledBy: user.email,
     },
   });
@@ -68,7 +98,7 @@ export async function enableCompanyHedera(opts: EnableOptions, dbClient = db) {
       action: enable ? "ENABLE" : "DISABLE",
       details: {
         historicalAnchoring: !!historicalAnchoring,
-        monthlyBudget: monthlyBudget || null,
+        digitalSignature: enable ? digitalSignature : null,
         companyName: company.name,
       },
     },

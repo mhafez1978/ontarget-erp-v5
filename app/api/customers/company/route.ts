@@ -33,8 +33,14 @@ export async function GET(request: NextRequest) {
 
     const user = session.user;
 
-    // Only ADMIN, MANAGER, STAFF, CONTRACTOR can view company customers
-    const allowedRoles = ["ADMIN", "MANAGER", "STAFF", "CONTRACTOR"];
+    // Only ADMIN_OWNER, COMPANY_MANAGER, COMPANY_STAFF, COMPANY_CONTRACTOR can view company customers
+    const allowedRoles = [
+      "ADMIN_OWNER",
+      "ADMIN_NONOWNER",
+      "COMPANY_MANAGER",
+      "COMPANY_STAFF",
+      "COMPANY_CONTRACTOR",
+    ];
     if (!allowedRoles.includes(user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }

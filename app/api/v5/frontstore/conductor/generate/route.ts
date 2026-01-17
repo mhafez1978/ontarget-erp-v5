@@ -11,7 +11,7 @@ import type {
 } from "../../../../../../lib/frontstore/v5-types";
 
 import { randomUUID } from "crypto";
-import type { SectionKind, Prisma } from "@prisma/client";
+import type { SectionKind, Prisma } from "@/generated/prisma/client";
 
 // Simple keyword-based persona detector (stub)
 function detectPersona(prompt: string) {

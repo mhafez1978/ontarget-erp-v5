@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         },
       });
       hasAccess = !!company;
-    } else if (user.role === "ADMIN") {
+    } else if (user.role === "ADMIN_OWNER") {
       const company = await db.company.findFirst({
         where: {
           id: companyId,

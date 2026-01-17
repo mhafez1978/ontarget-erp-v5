@@ -16,13 +16,13 @@ function getRoleCustomerView(role: string, userName?: string | null) {
   switch (role) {
     case "SUPER_ADMIN":
       return <SuperAdminCustomerView userName={userName} />;
-    case "ADMIN":
+    case "ADMIN_OWNER":
       return <AdminCustomerView userName={userName} />;
-    case "MANAGER":
+    case "COMPANY_MANAGER":
       return <ManagerCustomerView userName={userName} />;
-    case "STAFF":
+    case "COMPANY_STAFF":
       return <StaffCustomerView userName={userName} />;
-    case "CONTRACTOR":
+    case "COMPANY_CONTRACTOR":
       return <ContractorCustomerView userName={userName} />;
     default:
       // For roles without customer access, show unauthorized message
@@ -50,7 +50,7 @@ export default function CustomersPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
 
@@ -63,10 +63,10 @@ export default function CustomersPage() {
         // Check if user has access to customers page
         const allowedRoles = [
           "SUPER_ADMIN",
-          "ADMIN",
-          "MANAGER",
-          "STAFF",
-          "CONTRACTOR",
+          "ADMIN_OWNER",
+          "COMPANY_MANAGER",
+          "COMPANY_STAFF",
+          "COMPANY_CONTRACTOR",
         ];
 
         if (!allowedRoles.includes(data.user.role)) {

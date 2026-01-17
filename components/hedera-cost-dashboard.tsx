@@ -14,7 +14,7 @@ import {
   TrendingUp,
   Loader2,
 } from "lucide-react";
-import type { HederaTransaction, HederaCostAlert } from "@prisma/client";
+import type { HederaTransaction, HederaCostAlert } from "../generated/prisma/client";
 
 interface BalanceInfo {
   currentBalance: string;

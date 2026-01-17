@@ -83,24 +83,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ provider });
     }
 
-    // ADMIN can fetch company-specific settings (only their own companies)
-    if (companyId && (user.role === "ADMIN" || user.role === "SUPER_ADMIN")) {
-      // Verify user owns this company (or is SUPER_ADMIN)
-      if (user.role === "ADMIN") {
-        const membership = await db.companyMember.findFirst({
-          where: {
-            userId,
-            companyId,
-            role: "ADMIN",
-          },
-        });
-
-        if (!membership) {
-          return NextResponse.json(
-            { error: "Access denied to this company" },
-            { status: 403 }
-          );
-        }
+    // Company-specific settings: owner-only (or SUPER_ADMIN)
+    if (companyId) {
+      const company = await db.company.findUnique({
+        where: { id: companyId },
+        select: { ownerId: true },
+      });
+      if (
+        !company ||
+        (company.ownerId !== userId && user.role !== "SUPER_ADMIN")
+      ) {
+        return NextResponse.json(
+          { error: "Access denied to this company" },
+          { status: 403 }
+        );
       }
 
       const provider = await db.emailProvider.findFirst({
@@ -324,27 +320,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ADMIN can create/update company-specific settings (only their own companies)
-    if (
-      data.companyId &&
-      (user.role === "ADMIN" || user.role === "SUPER_ADMIN")
-    ) {
-      // Verify user owns this company (or is SUPER_ADMIN)
-      if (user.role === "ADMIN") {
-        const membership = await db.companyMember.findFirst({
-          where: {
-            userId,
-            companyId: data.companyId,
-            role: "ADMIN",
-          },
-        });
-
-        if (!membership) {
-          return NextResponse.json(
-            { error: "Access denied to this company" },
-            { status: 403 }
-          );
-        }
+    // Admins can create/update company-specific settings (only their own companies)
+    if (data.companyId) {
+      // Only the company owner (or SUPER_ADMIN) can create/update company-specific providers
+      const company = await db.company.findUnique({
+        where: { id: data.companyId },
+        select: { ownerId: true },
+      });
+      if (
+        !company ||
+        (company.ownerId !== userId && user.role !== "SUPER_ADMIN")
+      ) {
+        return NextResponse.json(
+          { error: "Access denied to this company" },
+          { status: 403 }
+        );
       }
 
       // Check if company provider exists

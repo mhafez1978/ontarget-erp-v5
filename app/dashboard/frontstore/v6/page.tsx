@@ -11,7 +11,7 @@ export default function Page() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
     companyId: null,
   });
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ export default function Page() {
     try {
       const res = await fetch("/api/auth/me", { cache: "no-store" });
       const data = await res.json();
-      if (!data.authenticated || data.user.role === "GUEST") {
+      if (!data.authenticated || data.user.role === "TRIAL") {
         router.push("/");
         return;
       }

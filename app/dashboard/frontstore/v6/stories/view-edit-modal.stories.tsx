@@ -17,6 +17,7 @@ export const Open = () => (
         type: "video",
         assets: [
           {
+            id: "a1",
             type: "image",
             url: "https://source.unsplash.com/featured/800x450?sig=1",
           },

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resetMonthlyBudgets } from "@/lib/hedera/cost-manager";
+import { resetMonthlyUsage } from "@/lib/hedera/cost-manager";
 
 /**
  * POST /api/cron/reset-hedera-budgets
- * Cron endpoint to reset monthly Hedera budgets
+ * Cron endpoint to reset monthly Hedera usage counters
  *
  * Should be called at the start of each month via:
  * - Vercel Cron Job
@@ -20,18 +20,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await resetMonthlyBudgets();
+    await resetMonthlyUsage();
 
     return NextResponse.json({
       success: true,
-      message: "Monthly budgets reset successfully",
+      message: "Monthly usage counters reset successfully",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Failed to reset monthly budgets:", error);
+    console.error("Failed to reset monthly usage:", error);
     return NextResponse.json(
       {
-        error: "Failed to reset budgets",
+        error: "Failed to reset usage counters",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

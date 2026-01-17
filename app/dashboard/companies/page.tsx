@@ -13,7 +13,7 @@ function getRoleCompanyView(role: string, userName?: string | null) {
   switch (role) {
     case "SUPER_ADMIN":
       return <SuperAdminCompanyView userName={userName} />;
-    case "ADMIN":
+    case "ADMIN_OWNER":
       return <AdminCompanyView userName={userName} />;
     default:
       // For roles without company access, show unauthorized message
@@ -41,7 +41,7 @@ export default function CompaniesPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
   const [loading, setLoading] = useState(true);
 
@@ -55,10 +55,10 @@ export default function CompaniesPage() {
         // Allow platform admins plus common company-level roles (manager/staff/contractor)
         const allowedRoles = [
           "SUPER_ADMIN",
-          "ADMIN",
-          "MANAGER",
-          "STAFF",
-          "CONTRACTOR",
+          "ADMIN_OWNER",
+          "COMPANY_MANAGER",
+          "COMPANY_STAFF",
+          "COMPANY_CONTRACTOR",
         ];
 
         if (!allowedRoles.includes(data.user.role)) {

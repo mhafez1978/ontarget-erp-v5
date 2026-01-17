@@ -83,15 +83,15 @@ export async function POST(request: NextRequest) {
       // Check folder-level permissions
       if (
         (file.folder.type === "EMPLOYEE" ||
-          file.folder.type === "CONTRACTOR") &&
+          file.folder.type === "COMPANY_CONTRACTOR") &&
         file.folder.ownerId
       ) {
         if (
           !isSuperAdmin &&
           !ownsCompany &&
           file.folder.ownerId !== user.id &&
-          membership?.role !== "ADMIN" &&
-          membership?.role !== "MANAGER"
+          membership?.role !== "ADMIN_OWNER" &&
+          membership?.role !== "COMPANY_MANAGER"
         ) {
           return NextResponse.json(
             {

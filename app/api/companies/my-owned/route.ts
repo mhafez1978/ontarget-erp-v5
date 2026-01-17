@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { PLAN_LIMITS } from "@/lib/plan-limits";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
 // Single consolidated GET handler for /api/companies/my-owned
 // Returns companies the current user can manage/see and some optional plan info
@@ -52,8 +52,8 @@ export async function GET(request: NextRequest) {
 
     let companies: CompanyWithMemberCount[] = [];
 
-    // SUPER_ADMIN / ADMIN: aggregate owned, memberships, and staff companies
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+    // SUPER_ADMIN / ADMIN_OWNER: aggregate owned, memberships, and staff companies
+    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER") {
       const userWithCompanies = await db.user.findUnique({
         where: { id: user.id },
         include: {
@@ -127,7 +127,11 @@ export async function GET(request: NextRequest) {
       }
 
       // Manager/Staff/Contractor: companies via companyStaff
-    } else if (["MANAGER", "STAFF", "CONTRACTOR"].includes(user.role)) {
+    } else if (
+      ["COMPANY_MANAGER", "COMPANY_STAFF", "COMPANY_CONTRACTOR"].includes(
+        user.role
+      )
+    ) {
       const staff = await db.companyStaff.findMany({
         where: { userId: user.id },
         include: {

@@ -79,7 +79,7 @@ export async function POST(
 
     const { teamId } = await params;
     const body = await req.json();
-    const { staffId, role = "STAFF" } = body;
+    const { staffId, role = "COMPANY_STAFF" } = body;
 
     if (!staffId) {
       return NextResponse.json(
@@ -89,7 +89,12 @@ export async function POST(
     }
 
     // Validate role
-    const validRoles = ["ADMIN", "MANAGER", "STAFF", "CONTRACTOR"];
+    const validRoles = [
+      "COMPANY_ADMIN",
+      "COMPANY_MANAGER",
+      "COMPANY_STAFF",
+      "COMPANY_CONTRACTOR",
+    ];
     if (!validRoles.includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
@@ -126,11 +131,13 @@ export async function POST(
       select: { role: true },
     });
 
-    // Check permissions: Company owner, Team ADMIN/MANAGER, or SUPER_ADMIN
+    // Check permissions: Company owner, Team ADMIN_OWNER/COMPANY_MANAGER, or SUPER_ADMIN
     const isOwner = team.company.ownerId === userId;
     const userTeamRole = team.members[0]?.role;
     const canAddMembers =
-      userTeamRole === "ADMIN" || userTeamRole === "MANAGER";
+      userTeamRole === "ADMIN_OWNER" ||
+      userTeamRole === "ADMIN_NONOWNER" ||
+      userTeamRole === "COMPANY_MANAGER";
     const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
     if (!isOwner && !canAddMembers && !isSuperAdmin) {
@@ -281,11 +288,13 @@ export async function DELETE(
       select: { role: true },
     });
 
-    // Check permissions: Company owner, Team ADMIN/MANAGER, or SUPER_ADMIN
+    // Check permissions: Company owner, Team ADMIN_OWNER/COMPANY_MANAGER, or SUPER_ADMIN
     const isOwner = team.company.ownerId === userId;
     const userTeamRole = team.members[0]?.role;
     const canRemoveMembers =
-      userTeamRole === "ADMIN" || userTeamRole === "MANAGER";
+      userTeamRole === "ADMIN_OWNER" ||
+      userTeamRole === "ADMIN_NONOWNER" ||
+      userTeamRole === "COMPANY_MANAGER";
     const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
     if (!isOwner && !canRemoveMembers && !isSuperAdmin) {
@@ -370,7 +379,12 @@ export async function PATCH(
     }
 
     // Validate role
-    const validRoles = ["ADMIN", "MANAGER", "STAFF", "CONTRACTOR"];
+    const validRoles = [
+      "TEAM_ADMIN",
+      "TEAM_MANAGER",
+      "TEAM_STAFF",
+      "TEAM_CONTRACTOR",
+    ];
     if (!validRoles.includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
@@ -407,10 +421,12 @@ export async function PATCH(
       select: { role: true },
     });
 
-    // Check permissions: Only Company owner, Team ADMIN, or SUPER_ADMIN can change roles
+    // Check permissions: Only Company owner, Team ADMIN_OWNER, or SUPER_ADMIN can change roles
     const isOwner = team.company.ownerId === userId;
     const isTeamAdmin =
-      team.members.length > 0 && team.members[0].role === "ADMIN";
+      (team.members.length > 0 && team.members[0].role === "ADMIN_OWNER") ||
+      team.members[0].role === "ADMIN_NONOWNER";
+
     const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
     if (!isOwner && !isTeamAdmin && !isSuperAdmin) {

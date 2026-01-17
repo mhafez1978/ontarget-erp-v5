@@ -103,17 +103,17 @@ const STATUS_COLORS = {
 };
 
 const ROLE_LABELS = {
-  ADMIN: "Admin",
-  MANAGER: "Manager",
-  STAFF: "Staff",
-  CONTRACTOR: "Contractor",
+  ADMIN_OWNER: "Admin",
+  COMPANY_MANAGER: "Manager",
+  COMPANY_STAFF: "Staff",
+  COMPANY_CONTRACTOR: "Contractor",
 };
 
 const ROLE_COLORS = {
-  ADMIN: "bg-purple-500",
-  MANAGER: "bg-blue-500",
-  STAFF: "bg-green-500",
-  CONTRACTOR: "bg-orange-500",
+  ADMIN_OWNER: "bg-purple-500",
+  COMPANY_MANAGER: "bg-blue-500",
+  COMPANY_STAFF: "bg-green-500",
+  COMPANY_CONTRACTOR: "bg-orange-500",
 };
 
 export function SuperAdminWorkforceView() {
@@ -152,7 +152,11 @@ export function SuperAdminWorkforceView() {
     email: "",
     password: "",
     passwordConfirmation: "",
-    role: "STAFF" as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
+    role: "COMPANY_STAFF" as
+      | "ADMIN_OWNER"
+      | "COMPANY_MANAGER"
+      | "COMPANY_STAFF"
+      | "COMPANY_CONTRACTOR",
     jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     isFeatured: false,
@@ -180,7 +184,11 @@ export function SuperAdminWorkforceView() {
   const initialEditFormData = {
     name: "",
     email: "",
-    role: "STAFF" as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
+    role: "COMPANY_STAFF" as
+      | "ADMIN_OWNER"
+      | "COMPANY_MANAGER"
+      | "COMPANY_STAFF"
+      | "COMPANY_CONTRACTOR",
     jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     status: "ACTIVE" as string,
@@ -217,7 +225,11 @@ export function SuperAdminWorkforceView() {
     setEditFormData({
       name: member.user.name || "",
       email: member.user.email || "",
-      role: member.role as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
+      role: member.role as
+        | "ADMIN_OWNER"
+        | "COMPANY_MANAGER"
+        | "COMPANY_STAFF"
+        | "COMPANY_CONTRACTOR",
       jobTitle: member.jobTitle || "",
       employmentType: member.employmentType,
       status: member.status,
@@ -477,9 +489,9 @@ export function SuperAdminWorkforceView() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">All Roles</SelectItem>
-                  <SelectItem value="MANAGER">Manager</SelectItem>
-                  <SelectItem value="STAFF">Staff</SelectItem>
-                  <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+                  <SelectItem value="COMPANY_MANAGER">Manager</SelectItem>
+                  <SelectItem value="COMPANY_STAFF">Staff</SelectItem>
+                  <SelectItem value="COMPANY_CONTRACTOR">Contractor</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -971,10 +983,10 @@ export function SuperAdminWorkforceView() {
                       setFormData({
                         ...formData,
                         role: value as
-                          | "ADMIN"
-                          | "MANAGER"
-                          | "STAFF"
-                          | "CONTRACTOR",
+                          | "ADMIN_OWNER"
+                          | "COMPANY_MANAGER"
+                          | "COMPANY_STAFF"
+                          | "COMPANY_CONTRACTOR",
                       })
                     }
                   >
@@ -982,10 +994,12 @@ export function SuperAdminWorkforceView() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="MANAGER">Manager</SelectItem>
-                      <SelectItem value="STAFF">Staff</SelectItem>
-                      <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+                      <SelectItem value="ADMIN_OWNER">Admin</SelectItem>
+                      <SelectItem value="COMPANY_MANAGER">Manager</SelectItem>
+                      <SelectItem value="COMPANY_STAFF">Staff</SelectItem>
+                      <SelectItem value="COMPANY_CONTRACTOR">
+                        Contractor
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1356,10 +1370,10 @@ export function SuperAdminWorkforceView() {
                       setEditFormData({
                         ...editFormData,
                         role: value as
-                          | "ADMIN"
-                          | "MANAGER"
-                          | "STAFF"
-                          | "CONTRACTOR",
+                          | "ADMIN_OWNER"
+                          | "COMPANY_MANAGER"
+                          | "COMPANY_STAFF"
+                          | "COMPANY_CONTRACTOR",
                       })
                     }
                   >
@@ -1367,10 +1381,12 @@ export function SuperAdminWorkforceView() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="MANAGER">Manager</SelectItem>
-                      <SelectItem value="STAFF">Staff</SelectItem>
-                      <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+                      <SelectItem value="ADMIN_OWNER">Admin</SelectItem>
+                      <SelectItem value="COMPANY_MANAGER">Manager</SelectItem>
+                      <SelectItem value="COMPANY_STAFF">Staff</SelectItem>
+                      <SelectItem value="COMPANY_CONTRACTOR">
+                        Contractor
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

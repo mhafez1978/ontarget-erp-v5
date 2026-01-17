@@ -72,10 +72,10 @@ export default function PaymentsPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
   });
 
-  // Company selection for SUPER_ADMIN/ADMIN with multiple companies
+  // Company selection for SUPER_ADMIN/ADMIN_OWNER with multiple companies
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
 
@@ -317,7 +317,9 @@ export default function PaymentsPage() {
   }
 
   // Check role access
-  const canManagePayments = ["SUPER_ADMIN", "ADMIN"].includes(user?.role || "");
+  const canManagePayments = ["SUPER_ADMIN", "ADMIN_OWNER"].includes(
+    user?.role || ""
+  );
 
   if (!canManagePayments) {
     return (

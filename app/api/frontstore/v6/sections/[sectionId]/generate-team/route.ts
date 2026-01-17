@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
-import type { GeneratedSection } from "@prisma/client";
+import type { GeneratedSection } from "@/generated/prisma/client";
 
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
+import type { Prisma } from "@/generated/prisma/client";
 import { getCompanyContext } from "@/lib/frontstore/v6-data-service";
 
 export async function POST(
@@ -283,7 +284,7 @@ export async function POST(
     // Update section with new variants
     await db.generatedSection.update({
       where: { id: sectionId },
-      data: { variants: newVariants as any },
+      data: { variants: newVariants as unknown as Prisma.InputJsonValue },
     });
 
     return new Response(

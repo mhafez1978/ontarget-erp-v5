@@ -160,7 +160,9 @@ export async function canEditProject(
 
       if (
         teamMember &&
-        (teamMember.role === "ADMIN" || teamMember.role === "MANAGER")
+        (teamMember.role === "ADMIN_OWNER" ||
+          teamMember.role === "COMPANY_MANAGER" ||
+          teamMember.role === "ADMIN_NONOWNER")
       ) {
         return {
           canEdit: true,
@@ -185,8 +187,8 @@ export async function canEditProject(
       };
     }
 
-    // Admin role in company can edit
-    if (userRole === "ADMIN") {
+    // Company admins (owner or non-owner) can edit
+    if (userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") {
       return {
         canEdit: true,
       };

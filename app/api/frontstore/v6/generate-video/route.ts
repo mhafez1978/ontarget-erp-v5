@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
-import { generateAIVideo } from "@/lib/frontstore/v6-video-service";
 
 export async function POST(request: NextRequest) {
   try {

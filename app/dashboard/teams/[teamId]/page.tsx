@@ -123,13 +123,13 @@ export default function TeamDetailPage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case "ADMIN":
+      case "ADMIN_OWNER":
         return "bg-purple-500/10 text-purple-700 border-purple-200";
-      case "MANAGER":
+      case "COMPANY_MANAGER":
         return "bg-blue-500/10 text-blue-700 border-blue-200";
-      case "STAFF":
+      case "COMPANY_STAFF":
         return "bg-green-500/10 text-green-700 border-green-200";
-      case "CONTRACTOR":
+      case "COMPANY_CONTRACTOR":
         return "bg-orange-500/10 text-orange-700 border-orange-200";
       default:
         return "bg-gray-500/10 text-gray-700 border-gray-200";

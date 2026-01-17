@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
         }
       }
       companies = Array.from(companyMap.values());
-    } else if (user.role === "ADMIN") {
+    } else if (user.role === "ADMIN_OWNER") {
       // Admin sees only their own company
       const adminCompanies = await db.company.findMany({
         where: { ownerId: user.id },

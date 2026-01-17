@@ -162,10 +162,11 @@ export default function SettingsPage() {
   });
 
   const [user, setUser] = useState({
-    name: null,
-    email: null,
-    image: null,
-    role: "GUEST",
+    id: null as string | null,
+    name: null as string | null,
+    email: null as string | null,
+    image: null as string | null,
+    role: "TRIAL",
     plan: "ESSENTIAL",
     companyId: null as string | null,
   });
@@ -204,19 +205,25 @@ export default function SettingsPage() {
         const response = await fetch("/api/auth/me");
         const data = await response.json();
 
-        if (!data.authenticated || data.user.role === "GUEST") {
+        if (!data.authenticated || data.user.role === "TRIAL") {
           router.push("/");
           return;
         }
 
         // Only allow specific roles to access settings
-        const allowedRoles = ["SUPER_ADMIN", "ADMIN", "MANAGER"];
+        const allowedRoles = [
+          "SUPER_ADMIN",
+          "ADMIN_OWNER",
+          "ADMIN_NONOWNER",
+          "COMPANY_MANAGER",
+        ];
         if (!allowedRoles.includes(data.user.role)) {
           router.push("/dashboard");
           return;
         }
 
         setUser({
+          id: data.user.id,
           name: data.user.name,
           email: data.user.email,
           image: data.user.image,
@@ -225,8 +232,12 @@ export default function SettingsPage() {
           companyId: data.user.companyId || null,
         });
 
-        // Fetch companies for SUPER_ADMIN and ADMIN to manage teams
-        if (data.user.role === "SUPER_ADMIN" || data.user.role === "ADMIN") {
+        // Fetch companies for SUPER_ADMIN, ADMIN_OWNER and ADMIN_NONOWNER to manage teams and view settings
+        if (
+          data.user.role === "SUPER_ADMIN" ||
+          data.user.role === "ADMIN_OWNER" ||
+          data.user.role === "ADMIN_NONOWNER"
+        ) {
           try {
             const companiesResponse = await fetch("/api/companies/my-owned");
             const companiesData = await companiesResponse.json();
@@ -692,7 +703,7 @@ export default function SettingsPage() {
   };
 
   const saveCompanyCaptcha = async () => {
-    if (user.role !== "ADMIN") {
+    if (user.role !== "ADMIN_OWNER") {
       toast.error("Only Company Admin can manage company captcha");
       return;
     }
@@ -3131,8 +3142,8 @@ export default function SettingsPage() {
             </AccordionItem>
           )}
 
-          {/* Storage Provider Configuration - SUPER_ADMIN and ADMIN */}
-          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
+          {/* Storage Provider Configuration - SUPER_ADMIN and ADMIN_OWNER */}
+          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER") && (
             <AccordionItem value="storage-provider">
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
@@ -3142,14 +3153,14 @@ export default function SettingsPage() {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="pt-4">
-                  <StorageProviderCards userRole={user.role} />
+                  <StorageProviderCards userRole={user.role} userId={user.id} />
                 </div>
               </AccordionContent>
             </AccordionItem>
           )}
 
-          {/* Blockchain Immutable Records Configuration - SUPER_ADMIN and ADMIN */}
-          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
+          {/* Blockchain Immutable Records Configuration - SUPER_ADMIN and ADMIN_OWNER */}
+          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER") && (
             <AccordionItem value="blockchain-records">
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
@@ -3304,8 +3315,8 @@ export default function SettingsPage() {
                     </div>
                   )}
 
-                  {/* ADMIN View: Only Company List (No Global Config Access) */}
-                  {user.role === "ADMIN" && (
+                  {/* ADMIN_OWNER View: Only Company List (No Global Config Access) */}
+                  {user.role === "ADMIN_OWNER" && (
                     <div className="space-y-6">
                       <div className="rounded-lg border bg-muted/30 p-4">
                         <p className="text-sm dark:text-gray-200">
@@ -3316,7 +3327,7 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Company Enable List */}
-                      <CompanyBlockchainList userRole="ADMIN" />
+                      <CompanyBlockchainList userRole="ADMIN_OWNER" />
 
                       {/* Cost Dashboard for current company */}
                       {user.companyId && (
@@ -3337,8 +3348,8 @@ export default function SettingsPage() {
             </AccordionItem>
           )}
 
-          {/* Email Provider Configuration - SUPER_ADMIN and ADMIN */}
-          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
+          {/* Email Provider Configuration - SUPER_ADMIN and ADMIN_OWNER */}
+          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER") && (
             <AccordionItem value="email-provider">
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
@@ -3348,7 +3359,7 @@ export default function SettingsPage() {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="pt-4">
-                  <EmailProviderCards userRole={user.role} />
+                  <EmailProviderCards userRole={user.role} userId={user.id} />
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -3364,12 +3375,15 @@ export default function SettingsPage() {
             </AccordionTrigger>
             <AccordionContent>
               <div className="pt-4">
-                {/* Show config UI only to SUPER_ADMIN or ADMIN; otherwise show informative message */}
-                {user.role === "SUPER_ADMIN" || user.role === "ADMIN" ? (
+                {/* Show config UI only to SUPER_ADMIN or ADMIN_OWNER; otherwise show informative message */}
+                {user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER" ? (
                   <div className="pt-2 pl-2">
                     {/* PaymentProviderCards is client component */}
 
-                    <PaymentProviderCards userRole={user.role} />
+                    <PaymentProviderCards
+                      userRole={user.role}
+                      userId={user.id}
+                    />
                   </div>
                 ) : (
                   <div className="p-4 rounded-md bg-muted dark:text-gray-200">
@@ -3438,7 +3452,7 @@ export default function SettingsPage() {
           )}
 
           {/* Captcha Settings */}
-          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
+          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER") && (
             <AccordionItem value="captcha-config">
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
@@ -3584,7 +3598,7 @@ export default function SettingsPage() {
                     </div>
                   )}
 
-                  {user.role === "ADMIN" && (
+                  {user.role === "ADMIN_OWNER" && (
                     <div className="rounded-lg border p-4 space-y-4">
                       <div className="flex items-center justify-between">
                         <Label className="font-medium">
@@ -3643,8 +3657,8 @@ export default function SettingsPage() {
             </AccordionItem>
           )}
 
-          {/* User Management - For SUPER_ADMIN and ADMIN */}
-          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
+          {/* User Management - For SUPER_ADMIN and ADMIN_OWNER */}
+          {(user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER") && (
             <AccordionItem value="user-management">
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
@@ -3680,7 +3694,7 @@ export default function SettingsPage() {
                         Teams Management
                       </button>
                       {(user.role === "SUPER_ADMIN" ||
-                        user.role === "ADMIN") && (
+                        user.role === "ADMIN_OWNER") && (
                         <button
                           onClick={() =>
                             setActiveUserManagementTab("passwords")
@@ -3705,8 +3719,9 @@ export default function SettingsPage() {
                     <PasswordManagementTab currentUserRole={user.role} />
                   ) : (
                     <>
-                      {/* Company Selector for SUPER_ADMIN and ADMIN */}
-                      {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") &&
+                      {/* Company Selector for SUPER_ADMIN and ADMIN_OWNER */}
+                      {(user.role === "SUPER_ADMIN" ||
+                        user.role === "ADMIN_OWNER") &&
                         availableCompanies.length > 0 && (
                           <div className="mb-6 p-4 border rounded-lg bg-muted/30">
                             <Label className="text-sm font-medium mb-2 block">
@@ -3799,8 +3814,8 @@ export default function SettingsPage() {
             </AccordionItem>
           )}
 
-          {/* Subscription Plan Management - Only for ADMIN */}
-          {user.role === "ADMIN" && (
+          {/* Subscription Plan Management - Only for ADMIN_OWNER */}
+          {user.role === "ADMIN_OWNER" && (
             <AccordionItem value="subscription-plan">
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
@@ -3816,8 +3831,8 @@ export default function SettingsPage() {
             </AccordionItem>
           )}
 
-          {/* Danger Zone - Only for company owners (ADMIN) */}
-          {user.role === "ADMIN" && user.companyId && (
+          {/* Danger Zone - Only for company owners (ADMIN_OWNER) */}
+          {user.role === "ADMIN_OWNER" && user.companyId && (
             <AccordionItem value="danger-zone">
               <AccordionTrigger className="text-xl font-semibold">
                 <div className="flex items-center gap-2">
@@ -3840,14 +3855,14 @@ export default function SettingsPage() {
       </div>
 
       {/* Team Management Dialogs */}
-      {(user.role === "SUPER_ADMIN" || user.role === "ADMIN"
+      {(user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER"
         ? selectedCompanyForTeams
         : user.companyId) && (
         <CreateTeamDialog
           open={showCreateTeamDialog}
           onOpenChange={setShowCreateTeamDialog}
           companyId={
-            (user.role === "SUPER_ADMIN" || user.role === "ADMIN"
+            (user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER"
               ? selectedCompanyForTeams
               : user.companyId)!
           }

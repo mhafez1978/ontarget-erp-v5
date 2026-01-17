@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         },
         companyMemberships: {
           select: { companyId: true },
-          where: { role: "ADMIN" },
+          where: { role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] } },
           take: 1,
         },
       },
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     const userPlan = userWithCompany?.plan || "ESSENTIAL";
     const canCustomize =
       user.role === "SUPER_ADMIN" ||
-      ["GROWTH", "ENTERPRISE", "SUPER_USER"].includes(userPlan);
+      ["GROWTH", "ENTERPRISE", "SUPER_ADMIN"].includes(userPlan);
 
     return NextResponse.json({
       providers: maskedCompanyProviders,
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
         },
         companyMemberships: {
           select: { companyId: true },
-          where: { role: "ADMIN" },
+          where: { role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] } },
           take: 1,
         },
       },
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
     const plan = userWithCompany?.plan || "ESSENTIAL";
     if (
       plan === "ESSENTIAL" ||
-      plan === "GUEST" ||
+      plan === "TRIAL" ||
       plan === "COMPANY_CUSTOMER"
     ) {
       return NextResponse.json(

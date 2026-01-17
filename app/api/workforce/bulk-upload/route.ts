@@ -4,7 +4,7 @@ import {
   EmploymentStatus,
   EmploymentType,
   CompanyMemberRole,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import * as XLSX from "xlsx";
 import { z } from "zod";
@@ -98,7 +98,9 @@ export async function POST(request: NextRequest) {
     }
     const user = validation.user;
 
-    if (!["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(user.role)) {
+    if (
+      !["SUPER_ADMIN", "ADMIN_OWNER", "COMPANY_MANAGER"].includes(user.role)
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -187,7 +189,10 @@ export async function POST(request: NextRequest) {
 
     const isOwner = company.ownerId === user.id;
     const isAdminOrManager = company.members.some(
-      (m) => m.role === "ADMIN" || m.role === "MANAGER"
+      (m) =>
+        m.role === "ADMIN_OWNER" ||
+        m.role === "ADMIN_NONOWNER" ||
+        m.role === "COMPANY_MANAGER"
     );
 
     // DEBUG: log company access info
@@ -271,7 +276,7 @@ export async function POST(request: NextRequest) {
               name: row.name,
               email: row.email,
               password: hashed,
-              role: "STAFF",
+              role: "COMPANY_STAFF",
               plan: "COMPANY_STAFF",
               emailVerified: new Date(),
               city: row.city || undefined,
@@ -305,7 +310,7 @@ export async function POST(request: NextRequest) {
           // Normalize jobTitle (trim and format)
           let jobTitleVal: string | undefined = undefined;
           if (row.jobtitle && row.jobtitle.trim() !== "") {
-            // use helper to normalize common synonyms (Manager -> MANAGER, etc.)
+            // use helper to normalize common synonyms (Manager -> COMPANY_MANAGER, etc.)
             const { normalizeJobTitle } = await import(
               "@/lib/job-title-mapping"
             );
@@ -471,7 +476,8 @@ export async function POST(request: NextRequest) {
     }
 
     await createAuditLog({
-      action: AUDIT_ACTIONS.BULK_STAFF_IMPORT || "BULK_STAFF_IMPORT",
+      action:
+        AUDIT_ACTIONS.BULK_COMPANY_STAFF_IMPORT || "BULK_COMPANY_STAFF_IMPORT",
       userId: user.id,
       companyId,
       entityType: ENTITY_TYPES.COMPANY,

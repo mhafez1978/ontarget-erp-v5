@@ -175,7 +175,7 @@ export default function AdminTemplatesView() {
     const colors: Record<string, string> = {
       PASSWORD_RESET: "bg-red-100 text-red-800",
       WELCOME_CUSTOMER: "bg-green-100 text-green-800",
-      WELCOME_STAFF: "bg-blue-100 text-blue-800",
+      WELCOME_COMPANY_STAFF: "bg-blue-100 text-blue-800",
       ACCOUNT_VERIFICATION: "bg-yellow-100 text-yellow-800",
       PASSWORD_CHANGED: "bg-purple-100 text-purple-800",
       INVOICE_SENT: "bg-orange-100 text-orange-800",

@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,6 +84,12 @@ interface TimeEntry {
   notes: string | null;
   isApproved: boolean;
   approvedBy: string | null;
+  approvedAt?: string | null;
+  approvedByUser?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+  } | null;
   staff: {
     user: {
       name: string | null;
@@ -103,6 +110,10 @@ export default function TimesheetPage() {
   const [endDate, setEndDate] = useState<string>("");
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  // UI view: pending or approved
+  const [activeView, setActiveView] = useState<"pending" | "approved">(
+    "pending"
+  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -187,7 +198,7 @@ export default function TimesheetPage() {
   };
 
   const fetchTimeEntries = async () => {
-    if (!user?.companyId) return;
+    if (!selectedCompany) return;
 
     try {
       const params = new URLSearchParams({
@@ -254,7 +265,12 @@ export default function TimesheetPage() {
   };
 
   const isAdminOrManager = () => {
-    return ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(user?.role || "");
+    return [
+      "ADMIN_OWNER",
+      "ADMIN_NONOWNER",
+      "SUPER_ADMIN",
+      "COMPANY_MANAGER",
+    ].includes(user?.role || "");
   };
 
   const handleApprove = async (entryId: string) => {
@@ -319,11 +335,47 @@ export default function TimesheetPage() {
             <p className="dark:text-gray-200">
               View and manage employee time tracking records
             </p>
+
+            {/* Company tabs when multiple companies available */}
+            {companies.length > 1 && (
+              <div className="mt-2 flex items-center gap-2">
+                {companies.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedCompany(c.id)}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-sm",
+                      selectedCompany === c.id
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-muted/20"
+                    )}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <Button onClick={handleExport} variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => setActiveView("pending")}
+                variant={activeView === "pending" ? "default" : "ghost"}
+              >
+                Pending
+              </Button>
+              <Button
+                onClick={() => setActiveView("approved")}
+                variant={activeView === "approved" ? "default" : "ghost"}
+              >
+                Approved
+              </Button>
+            </div>
+            <Button onClick={handleExport} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -337,26 +389,30 @@ export default function TimesheetPage() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {/* Date Range Selector */}
-              {companies.length > 1 && (
-                <div className="space-y-2">
-                  <Label>Company</Label>
-                  <Select
-                    value={selectedCompany}
-                    onValueChange={setSelectedCompany}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map((company) => (
+              <div className="space-y-2">
+                <Label>Company</Label>
+                <Select
+                  value={selectedCompany}
+                  onValueChange={setSelectedCompany}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.length === 0 ? (
+                      <SelectItem value="no-companies" disabled>
+                        No companies
+                      </SelectItem>
+                    ) : (
+                      companies.map((company) => (
                         <SelectItem key={company.id} value={company.id}>
                           {company.name}
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>Date Range</Label>
                 <Select value={dateRange} onValueChange={setDateRange}>
@@ -466,76 +522,108 @@ export default function TimesheetPage() {
                       <TableHead>Break</TableHead>
                       <TableHead>Total Hours</TableHead>
                       <TableHead>Status</TableHead>
-                      {isAdminOrManager() && <TableHead>Actions</TableHead>}
+                      {activeView === "approved" && (
+                        <TableHead>Approved At</TableHead>
+                      )}
+                      {activeView === "approved" && (
+                        <TableHead>Approved By</TableHead>
+                      )}
+                      {isAdminOrManager() && activeView === "pending" && (
+                        <TableHead>Actions</TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {entries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell className="font-medium">
-                          {entry.staff.user.name || entry.staff.user.email}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(entry.clockIn), "MMM dd, yyyy")}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(entry.clockIn), "HH:mm")}
-                        </TableCell>
-                        <TableCell>
-                          {entry.clockOut
-                            ? format(new Date(entry.clockOut), "HH:mm")
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Coffee className="h-3 w-3 dark:text-gray-200" />
-                            {entry.breakMinutes} min
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-semibold">
-                          {entry.totalHours || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            {entry.status === "CLOCKED_OUT" ? (
-                              <Badge variant="secondary">Completed</Badge>
-                            ) : entry.status === "ON_BREAK" ? (
-                              <Badge variant="outline">On Break</Badge>
-                            ) : (
-                              <Badge variant="default">Active</Badge>
-                            )}
-                            {entry.isApproved && (
-                              <Badge variant="default" className="bg-green-600">
-                                <CheckCircle2 className="h-3 w-3 mr-1" />
-                                Approved
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        {isAdminOrManager() && (
-                          <TableCell>
-                            {!entry.isApproved &&
-                              entry.status === "CLOCKED_OUT" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleApprove(entry.id)}
-                                  disabled={approvingId === entry.id}
-                                >
-                                  {approvingId === entry.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <>
-                                      <CheckCircle2 className="h-4 w-4 mr-1" />
-                                      Approve
-                                    </>
-                                  )}
-                                </Button>
-                              )}
+                    {(entries || [])
+                      .filter((e) =>
+                        activeView === "approved" ? e.isApproved : !e.isApproved
+                      )
+                      .map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="font-medium">
+                            {entry.staff.user.name || entry.staff.user.email}
                           </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
+                          <TableCell>
+                            {format(new Date(entry.clockIn), "MMM dd, yyyy")}
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(entry.clockIn), "HH:mm")}
+                          </TableCell>
+                          <TableCell>
+                            {entry.clockOut
+                              ? format(new Date(entry.clockOut), "HH:mm")
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Coffee className="h-3 w-3 dark:text-gray-200" />
+                              {entry.breakMinutes} min
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-semibold">
+                            {entry.totalHours || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {entry.status === "CLOCKED_OUT" ? (
+                                <Badge variant="secondary">Completed</Badge>
+                              ) : entry.status === "ON_BREAK" ? (
+                                <Badge variant="outline">On Break</Badge>
+                              ) : (
+                                <Badge variant="default">Active</Badge>
+                              )}
+                              {entry.isApproved && (
+                                <Badge
+                                  variant="default"
+                                  className="bg-green-600"
+                                >
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Approved
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          {activeView === "approved" && (
+                            <TableCell>
+                              {entry.approvedAt
+                                ? format(
+                                    new Date(entry.approvedAt),
+                                    "yyyy-MM-dd HH:mm"
+                                  )
+                                : "-"}
+                            </TableCell>
+                          )}
+                          {activeView === "approved" && (
+                            <TableCell>
+                              {entry.approvedByUser?.name ||
+                                entry.approvedByUser?.email ||
+                                "-"}
+                            </TableCell>
+                          )}
+                          {isAdminOrManager() && activeView === "pending" && (
+                            <TableCell>
+                              {!entry.isApproved &&
+                                entry.status === "CLOCKED_OUT" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleApprove(entry.id)}
+                                    disabled={approvingId === entry.id}
+                                  >
+                                    {approvingId === entry.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                                        Approve
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               </div>

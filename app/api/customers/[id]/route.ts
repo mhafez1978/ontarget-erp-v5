@@ -59,7 +59,7 @@ export async function GET(
       return NextResponse.json(customer);
     }
 
-    if (userRole === "ADMIN") {
+    if (userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") {
       // Admin can only view customers in their companies
       const adminCompanies = await db.company.findMany({
         where: { ownerId: userId },
@@ -140,7 +140,11 @@ export async function PATCH(
 
     if (userRole === "SUPER_ADMIN") {
       isAuthorized = true;
-    } else if (userRole === "ADMIN") {
+    } else if (
+      userRole === "ADMIN_OWNER" ||
+      userRole === "ADMIN_NONOWNER" ||
+      userRole === "COMPANY_MANAGER"
+    ) {
       // Admin can only update customers in their companies
       const adminCompanies = await db.company.findMany({
         where: { ownerId: userId },
@@ -243,7 +247,7 @@ export async function DELETE(
 
     if (userRole === "SUPER_ADMIN") {
       isAuthorized = true;
-    } else if (userRole === "ADMIN") {
+    } else if (userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") {
       // Admin can only delete customers in their companies
       const adminCompanies = await db.company.findMany({
         where: { ownerId: userId },

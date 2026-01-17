@@ -117,13 +117,13 @@ export function EditTeamDialog({
 
             // Find and set all managers
             const managers = members
-              .filter((m: TeamMember) => m.role === "MANAGER")
+              .filter((m: TeamMember) => m.role === "COMPANY_MANAGER")
               .map((m: TeamMember) => m.staffId);
             setManagerIds(managers);
 
             // Find and set all team leads
             const leads = members
-              .filter((m: TeamMember) => m.role === "ADMIN")
+              .filter((m: TeamMember) => m.role === "TEAM_ADMIN")
               .map((m: TeamMember) => m.staffId);
             setTeamLeadIds(leads);
           }

@@ -1,7 +1,7 @@
 "use client";
 
-import { CreditCard, Wallet, Loader2, CheckCircle2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,15 +22,27 @@ interface Company {
   name: string;
 }
 
+interface PaymentProviderTestBody {
+  provider: string;
+  publicKey: string;
+  secretKey: string;
+  webhookSecret: string;
+  isTestMode: boolean;
+  companyId?: string;
+}
+
 export default function PaymentProviderCards({
   userRole,
+  userId,
 }: {
   userRole: string;
+  userId?: string | null;
 }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("GLOBAL");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<string>("stripe");
+  const [companyOwnerId, setCompanyOwnerId] = useState<string | null>(null);
 
   // Config fields
   const [publicKey, setPublicKey] = useState("");
@@ -47,7 +59,11 @@ export default function PaymentProviderCards({
   }>({ stripe: false, paypal: false });
 
   useEffect(() => {
-    if (userRole === "SUPER_ADMIN" || userRole === "ADMIN") {
+    if (
+      userRole === "SUPER_ADMIN" ||
+      userRole === "ADMIN_OWNER" ||
+      userRole === "ADMIN_NONOWNER"
+    ) {
       const fetchCompanies = async () => {
         try {
           const resp = await fetch("/api/companies/my-owned");
@@ -56,8 +72,11 @@ export default function PaymentProviderCards({
             const companiesList = data.companies || [];
             setCompanies(companiesList);
 
-            // Auto-select first company for regular ADMIN (not SUPER_ADMIN)
-            if (userRole === "ADMIN" && companiesList.length > 0) {
+            // Auto-select first company for regular ADMIN_OWNER (not SUPER_ADMIN)
+            if (
+              (userRole === "ADMIN_OWNER" || userRole === "ADMIN_NONOWNER") &&
+              companiesList.length > 0
+            ) {
               setSelectedCompanyId(companiesList[0].id);
             }
           } else {
@@ -76,7 +95,7 @@ export default function PaymentProviderCards({
   }, [userRole]);
 
   // Check active providers function (extracted for reuse)
-  const checkActiveProviders = async () => {
+  const checkActiveProviders = useCallback(async () => {
     const providers = ["stripe", "paypal"];
     const results: { stripe: boolean; paypal: boolean } = {
       stripe: false,
@@ -108,12 +127,12 @@ export default function PaymentProviderCards({
 
     console.log("Final activeProviders:", results);
     setActiveProviders(results);
-  };
+  }, [selectedCompanyId]);
 
   // Check active providers on mount and when scope changes
   useEffect(() => {
     checkActiveProviders();
-  }, [selectedCompanyId]);
+  }, [checkActiveProviders]);
 
   const openFor = async (provider: string) => {
     setSelectedProvider(provider);
@@ -127,6 +146,23 @@ export default function PaymentProviderCards({
           : `/api/settings/payment-provider?companyId=${selectedCompanyId}&provider=${provider}`;
       const resp = await fetch(url);
       const data = await resp.json();
+
+      // fetch company owner for permission checks
+      if (selectedCompanyId !== "GLOBAL") {
+        try {
+          const cResp = await fetch(`/api/company/${selectedCompanyId}`);
+          if (cResp.ok) {
+            const cJson = await cResp.json();
+
+            setCompanyOwnerId(cJson.company?.ownerId || null);
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      } else {
+        setCompanyOwnerId(null);
+      }
+
       if (resp.ok && data.provider) {
         setPublicKey(data.provider.publicKey || "");
         setStripeConnectClientId(data.provider.stripeConnectClientId || "");
@@ -197,7 +233,7 @@ export default function PaymentProviderCards({
       const data = await resp.json();
       if (resp.ok) {
         // After saving, run a connection test to ensure keys are valid.
-        const testBody: any = {
+        const testBody: PaymentProviderTestBody = {
           provider: selectedProvider,
           publicKey,
           secretKey,
@@ -390,7 +426,7 @@ export default function PaymentProviderCards({
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 space-y-3">
               <div className="flex items-start gap-2">
                 <svg
-                  className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"
+                  className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -519,7 +555,9 @@ export default function PaymentProviderCards({
               </div>
             </div>
 
-            {(userRole === "ADMIN" || userRole === "SUPER_ADMIN") && (
+            {(userRole === "ADMIN_OWNER" ||
+              userRole === "ADMIN_NONOWNER" ||
+              userRole === "SUPER_ADMIN") && (
               <div className="space-y-3">
                 <Label className="text-base font-semibold">
                   Configuration Scope
@@ -534,7 +572,7 @@ export default function PaymentProviderCards({
                         selectedCompanyId === "GLOBAL" ? "default" : "outline"
                       }
                       onClick={() => setSelectedCompanyId("GLOBAL")}
-                      className="flex-shrink-0"
+                      className="shrink-0"
                     >
                       <svg
                         className="mr-2 h-4 w-4"
@@ -561,7 +599,7 @@ export default function PaymentProviderCards({
                         selectedCompanyId === c.id ? "default" : "outline"
                       }
                       onClick={() => setSelectedCompanyId(c.id)}
-                      className="flex-shrink-0"
+                      className="shrink-0"
                     >
                       <svg
                         className="mr-2 h-4 w-4"
@@ -722,9 +760,31 @@ export default function PaymentProviderCards({
             </div>
 
             <div className="flex gap-3 pt-4 border-t">
+              {/* Owner-only: show notice when not company owner */}
+              {selectedCompanyId !== "GLOBAL" &&
+                companyOwnerId !== userId &&
+                userRole !== "SUPER_ADMIN" && (
+                  <div className="w-full">
+                    <div
+                      role="alert"
+                      className="mb-4 relative w-full rounded-lg border px-4 py-3 text-sm grid grid-cols-[0_1fr] items-start"
+                    >
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      <div className="flex-1 text-sm">
+                        Only the company owner can modify payment provider
+                        settings. You can view current configuration.
+                      </div>
+                    </div>
+                  </div>
+                )}
               <Button
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={
+                  isSaving ||
+                  (selectedCompanyId !== "GLOBAL" &&
+                    companyOwnerId !== userId &&
+                    userRole !== "SUPER_ADMIN")
+                }
                 className="flex-1"
               >
                 {isSaving ? (

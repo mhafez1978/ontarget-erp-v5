@@ -14,12 +14,12 @@ export async function GET(request: NextRequest) {
     const { user } = validation;
 
     // Fetch companies based on role
-    // SUPER_ADMIN/ADMIN: owned companies + companies they're members/staff of
-    // MANAGER/STAFF/CONTRACTOR: companies they're staff members of
+    // SUPER_ADMIN/ADMIN_OWNER: owned companies + companies they're members/staff of
+    // COMPANY_MANAGER/COMPANY_STAFF/COMPANY_CONTRACTOR: companies they're staff members of
     // Others: only companies they own
     let companies;
 
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN_OWNER") {
       // Get owned companies and companies they're members of
       const userWithCompanies = await db.user.findUnique({
         where: { id: user.id },
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
         );
       });
 
-      // Ensure root company is available only to SUPER_ADMIN (not to regular ADMIN)
+      // Ensure root company is available only to SUPER_ADMIN (not to regular ADMIN_OWNER)
       // This prevents non-super admins from seeing the root/global company in their lists.
       if (user.role === "SUPER_ADMIN") {
         const rootCompany = await db.company.findFirst({
@@ -116,9 +116,10 @@ export async function GET(request: NextRequest) {
         }
       }
     } else if (
-      user.role === "MANAGER" ||
-      user.role === "STAFF" ||
-      user.role === "CONTRACTOR"
+      user.role === "ADMIN_NONOWNER" ||
+      user.role === "COMPANY_MANAGER" ||
+      user.role === "COMPANY_STAFF" ||
+      user.role === "COMPANY_CONTRACTOR"
     ) {
       // Staff roles see companies they're staff members of
       const staffMemberships = await db.companyStaff.findMany({

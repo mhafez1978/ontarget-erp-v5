@@ -843,7 +843,6 @@ export default async function StorefrontPage({ params }: PageProps) {
                 <div key="v4-chat-widget-client">
                   <ChatWidget
                     companySlug={companyMeta?.slug || slug}
-                    companyId={companyCheck.id}
                     companyName={companyMeta?.name || ""}
                     config={websiteData.chatWidget.config}
                     mountInside={false}

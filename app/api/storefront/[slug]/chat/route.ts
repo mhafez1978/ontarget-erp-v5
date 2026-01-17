@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { callStorefrontModel } from "@/lib/ai/model-client";
 import { decrypt } from "@/lib/encryption";
 import { z } from "zod";
-import { Decimal } from "@prisma/client/runtime/library";
+import Decimal from "decimal.js";
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -211,7 +211,7 @@ Important:
       );
 
       try {
-        const lead = await (db as any).lead.create({
+        const lead = await db.lead.create({
           data: {
             companyId: company.id,
             name: undefined,
@@ -224,7 +224,7 @@ Important:
         });
 
         // Trigger webhooks for company
-        const webhooks = await (db as any).webhookConfig.findMany({
+        const webhooks = await db.webhookConfig.findMany({
           where: { companyId: company.id, isActive: true },
         });
 
@@ -234,7 +234,7 @@ Important:
         };
 
         for (const wh of webhooks || []) {
-          const delivery = await (db as any).webhookDelivery.create({
+          const delivery = await db.webhookDelivery.create({
             data: { webhookId: wh.id, payload, status: "PENDING" },
           });
 
@@ -269,7 +269,7 @@ Important:
                 });
                 const text = await res.text().catch(() => "");
                 if (res.ok) {
-                  await (db as any).webhookDelivery.update({
+                  await db.webhookDelivery.update({
                     where: { id: delivery.id },
                     data: {
                       status: "SUCCESS",
@@ -280,7 +280,7 @@ Important:
                   });
                   success = true;
                 } else {
-                  await (db as any).webhookDelivery.update({
+                  await db.webhookDelivery.update({
                     where: { id: delivery.id },
                     data: {
                       attempts,
@@ -291,7 +291,7 @@ Important:
                   });
                 }
               } catch (err) {
-                await (db as any).webhookDelivery.update({
+                await db.webhookDelivery.update({
                   where: { id: delivery.id },
                   data: {
                     attempts,
@@ -303,7 +303,7 @@ Important:
             }
 
             if (!success) {
-              await (db as any).webhookDelivery.update({
+              await db.webhookDelivery.update({
                 where: { id: delivery.id },
                 data: { status: "FAILED" },
               });

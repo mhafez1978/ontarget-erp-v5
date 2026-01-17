@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
 import { aiFrontstoreSpecSchema } from "@/lib/ai/ai-storefront-types";
+import type { AiFrontstoreSpec } from "@/lib/ai/ai-storefront-types";
+import type { SubscriptionPlan, Prisma } from "@/generated/prisma/client";
+import Decimal from "decimal.js";
 import { canUseAiStorefront } from "@/lib/billing/plan-gating";
 import { generateAiStorefront } from "@/lib/ai/ai-storefront-service";
 import type { AiProviderConfig, AiProviderType } from "@/lib/ai/model-client";
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
     // Permission check: SUPER_ADMIN or company owner or owned companies
     let isSuperAdmin = false;
     let ownsCompany = false;
-    let userPlan: string | undefined;
+    let userPlan: SubscriptionPlan | undefined;
 
     if (!isPublic) {
       const userWithCompanies = await db.user.findUnique({
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
       userPlan = userWithCompanies?.plan;
 
       // Plan gating: only allowed plans can use AI storefront (unless SUPER_ADMIN)
-      if (!isSuperAdmin && !canUseAiStorefront(userPlan as any)) {
+      if (!isSuperAdmin && !canUseAiStorefront(userPlan)) {
         return NextResponse.json(
           { error: "AI Storefront is not available for your plan" },
           { status: 403 }
@@ -129,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     // Load conversation history if continuing an existing conversation
     let conversationHistory: Array<{ role: string; content: string }> = [];
-    let previousSpec: any = null;
+    let previousSpec: AiFrontstoreSpec | null = null;
 
     if (conversationId) {
       const previousMessages = await db.storefrontMessage.findMany({
@@ -158,7 +161,11 @@ export async function POST(request: NextRequest) {
       });
 
       if (lastSpecVersion) {
-        previousSpec = lastSpecVersion.spec;
+        // Validate and parse previous spec (stored as JSON) into typed AiFrontstoreSpec
+        const parsed = aiFrontstoreSpecSchema.safeParse(
+          lastSpecVersion.spec as unknown
+        );
+        previousSpec = parsed.success ? parsed.data : null;
       }
     }
 
@@ -202,21 +209,38 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Map to AiStorefrontInput summaries
-    const mappedProducts = products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description ?? null,
-      price: Number((p as any).price ?? 0),
-      category: p.category ?? null,
-    }));
-    const mappedServices = services.map((s) => ({
-      id: s.id,
-      name: s.name,
-      description: s.description ?? null,
-      price: Number((s as any).price ?? 0),
-      category: s.category ?? null,
-      duration: s.duration ? Number(s.duration) : null,
-    }));
+    const mappedProducts = products.map(
+      (p: {
+        id: string;
+        name: string;
+        description: string | null;
+        price: Decimal | null;
+        category: string | null;
+      }) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description ?? null,
+        price: p.price ? Number(p.price.toNumber()) : 0,
+        category: p.category ?? null,
+      })
+    );
+    const mappedServices = services.map(
+      (s: {
+        id: string;
+        name: string;
+        description: string | null;
+        price: Decimal | null;
+        category: string | null;
+        duration: string | number | null;
+      }) => ({
+        id: s.id,
+        name: s.name,
+        description: s.description ?? null,
+        price: s.price ? Number(s.price.toNumber()) : 0,
+        category: s.category ?? null,
+        duration: s.duration ? Number(s.duration) : null,
+      })
+    );
     const mappedTestimonials = testimonials.map((t) => ({
       id: t.id,
       customerName: t.customerName,
@@ -245,6 +269,21 @@ export async function POST(request: NextRequest) {
     // Prepare AI input
     const heroLayout: "center" | "left" | undefined =
       intentHints?.style === "center" ? "center" : "left";
+
+    // Ensure previous spec has required display defaults for the AI generator
+    const previousSpecSafe = previousSpec
+      ? {
+          ...previousSpec,
+          meta: {
+            ...previousSpec.meta,
+            backgroundColor: previousSpec.meta.backgroundColor || "#FFFFFF",
+            primaryColor: previousSpec.meta.primaryColor || "#000000",
+            secondaryColor: previousSpec.meta.secondaryColor || "#666666",
+            accentColor: previousSpec.meta.accentColor || "#1976D2",
+            textColor: previousSpec.meta.textColor || "#000000",
+          },
+        }
+      : null;
 
     const aiInput = {
       company: {
@@ -285,7 +324,7 @@ export async function POST(request: NextRequest) {
       includeServices: intentHints?.emphasis === "services" || true,
       includePosts: !!company.storeBlogEnabled,
       conversationHistory,
-      previousSpec,
+      previousSpec: previousSpecSafe,
     };
 
     // Load global AI provider config, if any (so admin settings apply)
@@ -442,13 +481,22 @@ export async function POST(request: NextRequest) {
         "[AI Storefront V2] Spec keys:",
         Object.keys(result.spec || {})
       );
+      const _spec = result.spec as unknown;
+      let sectionsCount: number | "not array" = "not array";
+      if (
+        _spec &&
+        typeof _spec === "object" &&
+        Array.isArray((_spec as { sections?: unknown }).sections as unknown[])
+      ) {
+        sectionsCount = (
+          (_spec as { sections?: unknown[] }).sections as unknown[]
+        ).length;
+      }
       console.error("[AI Storefront V2] Spec structure:", {
         hasVersion: "version" in (result.spec || {}),
         hasMeta: "meta" in (result.spec || {}),
         hasSections: "sections" in (result.spec || {}),
-        sectionsCount: Array.isArray((result.spec as any)?.sections)
-          ? (result.spec as any).sections.length
-          : "not array",
+        sectionsCount,
       });
       return NextResponse.json(
         {
@@ -467,7 +515,7 @@ export async function POST(request: NextRequest) {
     const specVersion = await db.storefrontSpecVersion.create({
       data: {
         companyId,
-        spec: validatedSpec as unknown as import("@prisma/client").Prisma.InputJsonValue,
+        spec: validatedSpec as unknown as Prisma.InputJsonValue,
         createdBy: user.id,
         messageId: null,
       },

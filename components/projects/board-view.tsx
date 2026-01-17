@@ -11,12 +11,10 @@ import {
   useSensor,
   useSensors,
   closestCenter,
-  DragOverEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
 } from "@dnd-kit/sortable";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -40,6 +38,7 @@ interface Project {
   teamId: string;
   managerId: string | null;
   leadId: string | null;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
   team: {
@@ -112,9 +111,6 @@ export function BoardView({
 }: BoardViewProps) {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [activeStatus, setActiveStatus] = useState<Project["status"] | null>(
-    null
-  );
 
   // Configure drag sensors
   const sensors = useSensors(
@@ -137,8 +133,8 @@ export function BoardView({
   // Sort projects within each status by sortOrder
   Object.keys(projectsByStatus).forEach((status) => {
     projectsByStatus[status].sort((a, b) => {
-      const aOrder = (a as any).sortOrder ?? 0;
-      const bOrder = (b as any).sortOrder ?? 0;
+      const aOrder = a.sortOrder ?? 0;
+      const bOrder = b.sortOrder ?? 0;
       return aOrder - bOrder;
     });
   });
@@ -147,14 +143,12 @@ export function BoardView({
     const project = projects.find((p) => p.id === event.active.id);
     if (project) {
       setActiveProject(project);
-      setActiveStatus(project.status);
     }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveProject(null);
-    setActiveStatus(null);
 
     if (!over) {
       return;

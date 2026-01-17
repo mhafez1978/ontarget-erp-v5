@@ -167,13 +167,13 @@ export default function LedgerPage() {
       const response = await fetch("/api/auth/me");
       const data = await response.json();
 
-      if (!data.authenticated || data.user?.role === "GUEST") {
+      if (!data.authenticated || data.user?.role === "TRIAL") {
         router.push("/");
         return;
       }
 
-      // LEDGER ACCESS CONTROL: Only ADMIN and SUPER_ADMIN allowed
-      const allowedRoles = ["ADMIN", "SUPER_ADMIN"];
+      // LEDGER ACCESS CONTROL: Only ADMIN_OWNER and SUPER_ADMIN allowed
+      const allowedRoles = ["ADMIN_OWNER", "SUPER_ADMIN"];
       if (!allowedRoles.includes(data.user?.role)) {
         toast.error(
           "Access Denied: Ledger is only accessible to company administrators"

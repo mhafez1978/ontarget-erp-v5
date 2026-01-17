@@ -73,7 +73,7 @@
 // //       try {
 // //         const res = await fetch("/api/auth/me");
 // //         const data = await res.json();
-// //         if (!data?.authenticated || data?.user?.role === "GUEST") {
+// //         if (!data?.authenticated || data?.user?.role === "TRIAL") {
 // //           router.push("/login");
 // //           return;
 // //         }
@@ -394,7 +394,7 @@
 // //       try {
 // //         const res = await fetch("/api/auth/me");
 // //         const data = await res.json();
-// //         if (!data?.authenticated || data?.user?.role === "GUEST") {
+// //         if (!data?.authenticated || data?.user?.role === "TRIAL") {
 // //           router.push("/login");
 // //           return;
 // //         }
@@ -982,7 +982,7 @@
 //       try {
 //         const res = await fetch("/api/auth/me");
 //         const data = await res.json();
-//         if (!data?.authenticated || data?.user?.role === "GUEST") {
+//         if (!data?.authenticated || data?.user?.role === "TRIAL") {
 //           router.push("/login");
 //           return;
 //         }
@@ -1439,7 +1439,7 @@
 //       try {
 //         const res = await fetch("/api/auth/me");
 //         const data = await res.json();
-//         if (!data?.authenticated || data?.user?.role === "GUEST") {
+//         if (!data?.authenticated || data?.user?.role === "TRIAL") {
 //           router.push("/login");
 //           return;
 //         }
@@ -2084,7 +2084,7 @@
 //       try {
 //         const res = await fetch("/api/auth/me");
 //         const data = await res.json();
-//         if (!data?.authenticated || data?.user?.role === "GUEST") {
+//         if (!data?.authenticated || data?.user?.role === "TRIAL") {
 //           router.push("/login");
 //           return;
 //         }
@@ -3022,7 +3022,7 @@
 //       try {
 //         const res = await fetch("/api/auth/me");
 //         const data = await res.json();
-//         if (!data?.authenticated || data?.user?.role === "GUEST") {
+//         if (!data?.authenticated || data?.user?.role === "TRIAL") {
 //           router.push("/login");
 //           return;
 //         }
@@ -4074,7 +4074,7 @@ export default function SupportArticlePage() {
       try {
         const res = await fetch("/api/auth/me");
         const data = await res.json();
-        if (!data?.authenticated || data?.user?.role === "GUEST") {
+        if (!data?.authenticated || data?.user?.role === "TRIAL") {
           router.push("/login");
           return;
         }
@@ -4410,7 +4410,7 @@ export default function SupportArticlePage() {
                     {formData.featuredImage ? (
                       <div className="relative group">
                         <div className="h-32 w-48 rounded-md border overflow-hidden bg-muted">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          { }
                           <Image
                             width={900}
                             height={600}
@@ -4540,7 +4540,7 @@ export default function SupportArticlePage() {
               {/* Display Featured Image if exists */}
               {article.featuredImage && (
                 <div className="rounded-lg overflow-hidden border bg-muted/20">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  { }
                   <Image
                     width={900}
                     height={600}

@@ -8,15 +8,25 @@ export async function GET(
     | { params: { jobId: string } }
     | { params: Promise<{ jobId: string }> }
 ) {
-  const params = ("params" in __context ? __context.params : undefined) as any;
-  // If params is a promise (newer Next types), await it
-  const resolvedParams =
-    params && typeof params.then === "function" ? await params : params;
+  const paramsOrPromise = "params" in __context ? __context.params : undefined;
+  // Normalize params whether it's a value or a promise
+  let params: { jobId: string } | undefined;
+  if (paramsOrPromise) {
+    if (typeof (paramsOrPromise as any).then === "function") {
+      params = (await paramsOrPromise) as { jobId: string };
+    } else {
+      params = paramsOrPromise as { jobId: string };
+    }
+  }
   try {
     const validation = await validateSessionForAPI(request);
     if (!validation.valid) return validation.response;
 
     const user = validation.user;
+    if (!params?.jobId) {
+      return NextResponse.json({ error: "Missing jobId" }, { status: 400 });
+    }
+
     const job = await db.videoGenerationJob.findUnique({
       where: { id: params.jobId },
       include: { logs: true },
@@ -26,9 +36,11 @@ export async function GET(
 
     if (user.role !== "SUPER_ADMIN") {
       // owners only
-      const owns = (user as any).ownedCompanies?.some(
-        (c: any) => c.id === job.companyId
-      );
+      const ownedCompanies = (user as { ownedCompanies?: { id: string }[] })
+        .ownedCompanies;
+      const owns =
+        Array.isArray(ownedCompanies) &&
+        ownedCompanies.some((c) => c.id === job.companyId);
       if (!owns)
         return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }

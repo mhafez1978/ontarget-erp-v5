@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Decimal } from "@prisma/client/runtime/library";
+import Decimal from "decimal.js";
 import { decrypt } from "@/lib/encryption";
 import {
   canAffordTransaction,

@@ -45,7 +45,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { AuditLog, User, Company } from "@prisma/client";
+import type { AuditLog, User, Company } from "../generated/prisma/client";
 
 // JSON Tree Viewer Component
 // const JsonTreeViewer = ({ data, level = 2 }: { data: any; level?: number }) => {

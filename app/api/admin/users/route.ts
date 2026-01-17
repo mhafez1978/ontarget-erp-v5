@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import type { User } from "@/generated/prisma/client";
+
+type UserSelect = Pick<
+  User,
+  | "id"
+  | "name"
+  | "email"
+  | "role"
+  | "plan"
+  | "authMethod"
+  | "password"
+  | "createdAt"
+  | "updatedAt"
+>;
 
 // GET /api/admin/users
 // Super Admin can fetch all users
@@ -35,13 +49,13 @@ export async function GET(request: NextRequest) {
         updatedAt: true,
       },
       orderBy: [
-        { role: "asc" }, // SUPER_ADMIN first, then ADMIN, etc.
+        { role: "asc" }, // SUPER_ADMIN first, then ADMIN_OWNER, etc.
         { name: "asc" },
       ],
     });
 
     // Add hasPassword field and remove actual password hash
-    const usersWithPasswordStatus = users.map((user) => ({
+    const usersWithPasswordStatus = users.map((user: UserSelect) => ({
       ...user,
       hasPassword: !!user.password,
       password: undefined,

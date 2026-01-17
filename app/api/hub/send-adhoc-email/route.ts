@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Only SUPER_ADMIN and ADMIN can send ad-hoc emails
-    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
+    // Only SUPER_ADMIN and ADMIN_OWNER can send ad-hoc emails
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN_OWNER") {
       return NextResponse.json(
         { error: "Insufficient permissions" },
         { status: 403 }

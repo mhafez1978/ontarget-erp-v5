@@ -50,7 +50,7 @@ interface EmailTemplate {
 const templateTypes = [
   { value: "PASSWORD_RESET", label: "Password Reset" },
   { value: "WELCOME_CUSTOMER", label: "Welcome Customer" },
-  { value: "WELCOME_STAFF", label: "Welcome Staff" },
+  { value: "WELCOME_COMPANY_STAFF", label: "Welcome Staff" },
   { value: "ACCOUNT_VERIFICATION", label: "Account Verification" },
   { value: "PASSWORD_CHANGED", label: "Password Changed" },
   { value: "INVOICE_SENT", label: "Invoice Sent" },

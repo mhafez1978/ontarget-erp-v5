@@ -29,23 +29,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Must be an ADMIN with a company membership
-    const adminMembership = user.companyMemberships.find(
-      (m) => m.role === "ADMIN"
-    );
-
-    if (user.role !== "ADMIN" || !adminMembership) {
-      return NextResponse.json(
-        { error: "Access denied. Admin role required." },
-        { status: 403 }
-      );
-    }
-
-    const companyId = adminMembership.companyId;
-
-    // Fetch the company
-    const company = await db.company.findUnique({
-      where: { id: companyId },
+    // Owner-only: must own a company to manage white-label
+    const company = await db.company.findFirst({
+      where: { ownerId: userId },
       select: {
         id: true,
         name: true,
@@ -59,6 +45,15 @@ export async function GET(request: NextRequest) {
         website: true,
       },
     });
+
+    if (!company) {
+      return NextResponse.json(
+        { error: "Access denied. Company owner required." },
+        { status: 403 }
+      );
+    }
+
+    const companyId = company.id;
 
     if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });

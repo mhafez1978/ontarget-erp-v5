@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { validateSessionForAPI } from "@/lib/validate-session";
 
 type EmailTemplate = Prisma.EmailTemplateGetPayload<{
@@ -107,8 +107,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ADMIN can see templates for their owned companies
-    if (role === "ADMIN") {
+    // ADMIN_OWNER can see templates for their owned companies
+    if (role === "ADMIN_OWNER") {
       // Verify company ownership
       if (companyId && companyId !== "GLOBAL") {
         const company = await db.company.findFirst({
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
           templates: Array.from(templateMap.values()).map(normalizeTemplate),
         });
       } else {
-        // Fetch only system default templates (read-only for ADMIN)
+        // Fetch only system default templates (read-only for ADMIN_OWNER)
         const templates = await db.emailTemplate.findMany({
           where: {
             scope: "GLOBAL",
@@ -169,8 +169,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // MANAGER and below - read-only access to company templates
-    if (["MANAGER", "STAFF"].includes(role)) {
+    // COMPANY_MANAGER and below - read-only access to company templates
+    if (["COMPANY_MANAGER", "COMPANY_STAFF"].includes(role)) {
       // Get user's company memberships
       const memberships = await db.companyMember.findMany({
         where: { userId: userId },
@@ -229,7 +229,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/templates
- * Create a new email template (SUPER_ADMIN for global, ADMIN for company-specific)
+ * Create a new email template (SUPER_ADMIN for global, ADMIN_OWNER for company-specific)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -285,8 +285,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ template }, { status: 201 });
     }
 
-    // ADMIN can create company-specific templates
-    if (role === "ADMIN") {
+    // ADMIN_OWNER can create company-specific templates
+    if (role === "ADMIN_OWNER") {
       if (!companyId) {
         return NextResponse.json(
           { error: "Company ID required for admin users" },

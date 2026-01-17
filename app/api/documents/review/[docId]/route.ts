@@ -34,13 +34,13 @@ export async function POST(
       );
     }
 
-    // Verify user is ADMIN or SUPER_ADMIN
+    // Verify user is ADMIN_OWNER or SUPER_ADMIN
     const user = await db.user.findUnique({
       where: { id: userId },
       select: { id: true, role: true, name: true },
     });
 
-    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    if (!user || !["ADMIN_OWNER", "SUPER_ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Only Admins can review documents" },
         { status: 403 }
@@ -91,7 +91,7 @@ export async function POST(
         },
       });
       hasAccess = !!company;
-    } else if (user.role === "ADMIN") {
+    } else if (user.role === "ADMIN_OWNER") {
       const company = await db.company.findFirst({
         where: {
           id: document.staff.companyId,

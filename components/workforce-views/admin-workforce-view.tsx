@@ -55,7 +55,7 @@ import {
 import { useFormDirty, getPulsateClassName } from "@/lib/hooks/use-form-dirty";
 import { PendingDocumentsReview } from "@/components/pending-documents-review";
 import { BulkImportWorkforce } from "@/components/bulk-import-workforce";
-import type { Company, CompanyStaff, User } from "@prisma/client";
+import type { Company, CompanyStaff, User } from "../../generated/prisma/client";
 
 type StaffMember = CompanyStaff & {
   user: User;
@@ -67,13 +67,13 @@ type StaffMember = CompanyStaff & {
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
-  ADMIN: "Admin",
-  MANAGER: "Manager",
+  ADMIN_OWNER: "Admin",
+  COMPANY_MANAGER: "Manager",
   SALES_REP: "Sales Rep",
   CUSTOMER_SERVICE: "Customer Service",
   FIELD_TECH: "Field Tech",
   BACK_OFFICE: "Back Office",
-  GUEST: "Guest",
+  TRIAL: "Guest",
 };
 
 const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
@@ -92,13 +92,13 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ROLE_COLORS: Record<string, string> = {
   SUPER_ADMIN: "bg-purple-500",
-  ADMIN: "bg-blue-500",
-  MANAGER: "bg-cyan-500",
+  ADMIN_OWNER: "bg-blue-500",
+  COMPANY_MANAGER: "bg-cyan-500",
   SALES_REP: "bg-green-500",
   CUSTOMER_SERVICE: "bg-orange-500",
   FIELD_TECH: "bg-yellow-500",
   BACK_OFFICE: "bg-gray-500",
-  GUEST: "bg-slate-500",
+  TRIAL: "bg-slate-500",
 };
 
 export function AdminWorkforceView() {
@@ -139,7 +139,11 @@ export function AdminWorkforceView() {
     email: "",
     password: "",
     passwordConfirmation: "",
-    role: "STAFF" as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
+    role: "COMPANY_STAFF" as
+      | "ADMIN_OWNER"
+      | "COMPANY_MANAGER"
+      | "COMPANY_STAFF"
+      | "COMPANY_CONTRACTOR",
     jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     isFeatured: false,
@@ -168,7 +172,11 @@ export function AdminWorkforceView() {
   const initialEditFormData = {
     name: "",
     email: "",
-    role: "STAFF" as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
+    role: "COMPANY_STAFF" as
+      | "ADMIN_OWNER"
+      | "COMPANY_MANAGER"
+      | "COMPANY_STAFF"
+      | "COMPANY_CONTRACTOR",
     jobTitle: "" as string,
     employmentType: "FULL_TIME" as string,
     status: "ACTIVE" as string,
@@ -206,7 +214,11 @@ export function AdminWorkforceView() {
     setEditFormData({
       name: member.user.name || "",
       email: member.user.email || "",
-      role: member.role as "ADMIN" | "MANAGER" | "STAFF" | "CONTRACTOR",
+      role: member.role as
+        | "ADMIN_OWNER"
+        | "COMPANY_MANAGER"
+        | "COMPANY_STAFF"
+        | "COMPANY_CONTRACTOR",
       jobTitle: member.jobTitle || "",
       employmentType: member.employmentType,
       status: member.status,
@@ -1061,10 +1073,10 @@ export function AdminWorkforceView() {
                       setFormData({
                         ...formData,
                         role: value as
-                          | "ADMIN"
-                          | "MANAGER"
-                          | "STAFF"
-                          | "CONTRACTOR",
+                          | "ADMIN_OWNER"
+                          | "COMPANY_MANAGER"
+                          | "COMPANY_STAFF"
+                          | "COMPANY_CONTRACTOR",
                       })
                     }
                   >
@@ -1072,10 +1084,12 @@ export function AdminWorkforceView() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="MANAGER">Manager</SelectItem>
-                      <SelectItem value="STAFF">Staff</SelectItem>
-                      <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+                      <SelectItem value="ADMIN_OWNER">Admin</SelectItem>
+                      <SelectItem value="COMPANY_MANAGER">Manager</SelectItem>
+                      <SelectItem value="COMPANY_STAFF">Staff</SelectItem>
+                      <SelectItem value="COMPANY_CONTRACTOR">
+                        Contractor
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1215,7 +1229,7 @@ export function AdminWorkforceView() {
                     email: "",
                     password: "",
                     passwordConfirmation: "",
-                    role: "STAFF",
+                    role: "COMPANY_STAFF",
                     jobTitle: "",
                     employmentType: "FULL_TIME",
                     isFeatured: false,
@@ -1356,7 +1370,7 @@ export function AdminWorkforceView() {
                         email: "",
                         password: "",
                         passwordConfirmation: "",
-                        role: "STAFF",
+                        role: "COMPANY_STAFF",
                         jobTitle: "",
                         employmentType: "FULL_TIME",
                         isFeatured: false,
@@ -1514,10 +1528,10 @@ export function AdminWorkforceView() {
                       setEditFormData({
                         ...editFormData,
                         role: value as
-                          | "ADMIN"
-                          | "MANAGER"
-                          | "STAFF"
-                          | "CONTRACTOR",
+                          | "ADMIN_OWNER"
+                          | "COMPANY_MANAGER"
+                          | "COMPANY_STAFF"
+                          | "COMPANY_CONTRACTOR",
                       })
                     }
                   >
@@ -1525,10 +1539,12 @@ export function AdminWorkforceView() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="MANAGER">Manager</SelectItem>
-                      <SelectItem value="STAFF">Staff</SelectItem>
-                      <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+                      <SelectItem value="ADMIN_OWNER">Admin</SelectItem>
+                      <SelectItem value="COMPANY_MANAGER">Manager</SelectItem>
+                      <SelectItem value="COMPANY_STAFF">Staff</SelectItem>
+                      <SelectItem value="COMPANY_CONTRACTOR">
+                        Contractor
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

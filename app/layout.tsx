@@ -61,14 +61,19 @@ const montserrat = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "OnTarget ERP v5 - Transform Your Business",
+  title: "OnTarget ERP - AI-POWERED ENTERPRISE RESOURCE PLANNING",
   description:
-    "Streamline operations, boost productivity, and drive growth with our comprehensive enterprise resource planning platform.",
+    "Streamline operations, boost productivity, and drive growth with our AI-Driven comprehensive enterprise resource planning platform.",
   keywords: [
     "ERP",
     "Enterprise Resource Planning",
     "Business Management",
     "Productivity",
+    "Immutable Ledger",
+    "Immutable records",
+    "Blockchain",
+    "Business Growth",
+    "OnTarget ERP",
   ],
   authors: [{ name: "OnTarget ERP" }],
   creator: "OnTarget ERP",
@@ -82,9 +87,9 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   ),
   openGraph: {
-    title: "OnTarget ERP v5 - Transform Your Business",
+    title: "OnTarget ERP - AI-POWERED ENTERPRISE RESOURCE PLANNING",
     description:
-      "Streamline operations, boost productivity, and drive growth with our comprehensive enterprise resource planning platform.",
+      "Streamline operations, boost productivity, and drive growth with our AI-Driven comprehensive enterprise resource planning platform.",
     type: "website",
     locale: "en_US",
   },
@@ -121,7 +126,7 @@ export default function RootLayout({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "OnTarget ERP v5",
+    name: "OnTarget ERP - AI-POWERED ENTERPRISE RESOURCE PLANNING",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     offers: {
@@ -130,7 +135,7 @@ export default function RootLayout({
       priceCurrency: "USD",
     },
     description:
-      "Streamline operations, boost productivity, and drive growth with our comprehensive enterprise resource planning platform.",
+      "Streamline operations, boost productivity, and drive growth with our AI-Driven comprehensive enterprise resource planning platform.",
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
     provider: {
       "@type": "Organization",

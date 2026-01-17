@@ -45,7 +45,7 @@ import {
   COMPANY_INDUSTRY_LABELS,
   getIndustriesByCategory,
 } from "@/lib/validations/company-industry";
-import { CompanyIndustry } from "@prisma/client";
+import { CompanyIndustry } from "../generated/prisma/client";
 interface CreateCompanyModalProps {
   onSuccess: (company: unknown, user: unknown) => void;
   onClose: () => void;

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import paymentsService from "@/lib/payments/service";
 import { db } from "@/lib/db";
 import { createAuditLog, AUDIT_ACTIONS } from "@/lib/audit-log";
+import type { StripeProvider } from "@/lib/payment-providers/stripe";
+import type { Prisma, SubscriptionPlan } from "@/generated/prisma/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,13 +23,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
 
-    const provider =
-      paymentsService.instantiateStripeProviderFromGateway(gateway);
+    const provider = paymentsService.instantiateStripeProviderFromGateway(
+      gateway
+    ) as StripeProvider;
 
     // Retrieve subscription from Stripe
-    const stripeSub = await (provider as any).stripe.subscriptions.retrieve(
-      subscriptionId
-    );
+    const stripeSub = await provider.retrieveSubscription(subscriptionId);
     if (!stripeSub)
       return NextResponse.json(
         { error: "Subscription not found" },
@@ -52,14 +53,14 @@ export async function POST(request: NextRequest) {
 
     const status = statusMap[stripeSub.status] || "TRIAL";
 
-    const trialEndsAt = stripeSub.trial_end
-      ? new Date(stripeSub.trial_end * 1000)
+    const trialEndsAt = (stripeSub as any).trial_end
+      ? new Date((stripeSub as any).trial_end * 1000)
       : null;
-    const billingCycleStart = stripeSub.current_period_start
-      ? new Date(stripeSub.current_period_start * 1000)
+    const billingCycleStart = (stripeSub as any).current_period_start
+      ? new Date((stripeSub as any).current_period_start * 1000)
       : null;
-    const billingCycleEnd = stripeSub.current_period_end
-      ? new Date(stripeSub.current_period_end * 1000)
+    const billingCycleEnd = (stripeSub as any).current_period_end
+      ? new Date((stripeSub as any).current_period_end * 1000)
       : null;
 
     // Validate subscriber company exists
@@ -79,7 +80,12 @@ export async function POST(request: NextRequest) {
     if (existing) {
       // If exists, update externalSubscriptionId if missing
       const updated = await db.subscription.update({
-        where: { id: existing.id },
+        where: {
+          rootCompanyId_subscriberCompanyId: {
+            rootCompanyId: existing.rootCompanyId,
+            subscriberCompanyId: existing.subscriberCompanyId,
+          },
+        },
         data: { externalSubscriptionId: subscriptionId },
       });
 
@@ -87,14 +93,14 @@ export async function POST(request: NextRequest) {
         action: AUDIT_ACTIONS.SUBSCRIPTION_PLAN_CHANGED,
         companyId: gateway.companyId,
         entityType: "Subscription",
-        entityId: updated.id,
-        description: `Linked Stripe subscription ${subscriptionId} to existing subscription ${updated.id}`,
+        entityId: `${existing.rootCompanyId}-${existing.subscriberCompanyId}`,
+        description: `Linked Stripe subscription ${subscriptionId} to existing subscription`,
         metadata: { stripeSubscriptionId: subscriptionId, subscriberCompanyId },
       });
 
       return NextResponse.json({
         success: true,
-        subscriptionId: existing.id,
+        subscriptionId: `${existing.rootCompanyId}-${existing.subscriberCompanyId}`,
         updated: true,
       });
     }
@@ -103,7 +109,7 @@ export async function POST(request: NextRequest) {
       data: {
         rootCompanyId: gateway.companyId,
         subscriberCompanyId,
-        plan: (plan as any) || "ESSENTIAL",
+        plan: (plan || "ESSENTIAL") as SubscriptionPlan,
         status: status as "ACTIVE" | "PAST_DUE" | "CANCELLED" | "TRIAL",
         trialEndsAt,
         billingCycleStart,
@@ -116,14 +122,14 @@ export async function POST(request: NextRequest) {
       action: AUDIT_ACTIONS.SUBSCRIPTION_PLAN_CHANGED,
       companyId: gateway.companyId,
       entityType: "Subscription",
-      entityId: created.id,
+      entityId: `${created.rootCompanyId}-${created.subscriberCompanyId}`,
       description: `Created subscription for company ${subscriberCompanyId} from Stripe subscription ${subscriptionId}`,
       metadata: { stripeSubscriptionId: subscriptionId, subscriberCompanyId },
     });
 
     return NextResponse.json({
       success: true,
-      subscriptionId: created.id,
+      subscriptionId: `${created.rootCompanyId}-${created.subscriberCompanyId}`,
       plan: created.plan,
     });
   } catch (error) {

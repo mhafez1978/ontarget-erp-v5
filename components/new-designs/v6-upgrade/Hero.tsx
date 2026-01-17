@@ -27,17 +27,18 @@ const Hero: React.FC = () => {
           CHAPTER I: THE VISION
         </div>
         <h1 className="text-6xl md:text-6xl font-display font-black tracking-tight mb-6 text-black dark:dark:text-gray-200">
-          All-in-One Business{" "}
+          Immutable Business{" "}
           <span className="text-purple-500 dark:text-[#2bee79] mr-4">
-            Powerhouse
+            Records
           </span>{" "}
+          That Last Forever
         </h1>
         <p className="w-full px-4 mx-auto text-base text-black mb-12 leading-relaxed font-body dark:text-gray-300 md:max-w-4xl md:text-lg">
-          Tired of switching between websites, tools and plugins to run your
-          business? Sign up for a free trial and discover OnTarget ERP the
-          all-in‑one, AI-powered platform that helps you streamline your
-          business operations, boost productivity, and drive growth — all from a
-          single, easy-to-use interface.
+          Every transaction, every audit log, every business decision —
+          permanently anchored to the blockchain with Hedera Hashgraph. No more
+          data tampering, no more lost records, no more compliance nightmares.
+          Your business history becomes mathematically verifiable, legally
+          binding, and eternally accessible.
         </p>
         <div className="flex flex-wrap justify-center gap-6">
           <Link

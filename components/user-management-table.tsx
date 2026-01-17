@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../generated/prisma/client";
 
 type User = Prisma.UserGetPayload<{
   select: {
@@ -162,10 +162,10 @@ export function UserManagementTable({
     // Only SUPER_ADMIN can delete users
     if (currentUserRole !== "SUPER_ADMIN") return false;
 
-    // Can only delete ERP_CUSTOMER role with ERP_CUSTOMER or GUEST plan
+    // Can only delete ERP_CUSTOMER role with ERP_CUSTOMER or TRIAL plan
     return (
       user.role === "ERP_CUSTOMER" &&
-      (user.plan === "ERP_CUSTOMER" || user.plan === "GUEST")
+      (user.plan === "ERP_CUSTOMER" || user.plan === "TRIAL")
     );
   };
 
@@ -173,13 +173,15 @@ export function UserManagementTable({
     switch (role) {
       case "SUPER_ADMIN":
         return <Badge variant="destructive">Super Admin</Badge>;
-      case "ADMIN":
+      case "ADMIN_OWNER":
+        return <Badge variant="default">Admin (Owner)</Badge>;
+      case "ADMIN_NONOWNER":
         return <Badge variant="default">Admin</Badge>;
-      case "MANAGER":
+      case "COMPANY_MANAGER":
         return <Badge variant="secondary">Manager</Badge>;
-      case "STAFF":
+      case "COMPANY_STAFF":
         return <Badge variant="outline">Staff</Badge>;
-      case "CONTRACTOR":
+      case "COMPANY_CONTRACTOR":
         return <Badge variant="outline">Contractor</Badge>;
       default:
         return <Badge variant="outline">{role}</Badge>;

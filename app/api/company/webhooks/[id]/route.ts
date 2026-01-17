@@ -3,7 +3,7 @@ import { validateSessionForAPI } from "@/lib/validate-session";
 import { db } from "@/lib/db";
 import crypto from "crypto";
 import { z } from "zod";
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 
 const PatchSchema = z.object({
   url: z.string().url().optional(),

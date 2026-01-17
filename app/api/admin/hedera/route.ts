@@ -10,8 +10,12 @@ export async function GET(request: NextRequest) {
 
     const user = validation.user;
 
-    // Only SUPER_ADMIN and ADMIN may access; ADMINs see only companies they own
-    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
+    // Only SUPER_ADMIN and ADMIN_OWNER may access; ADMINs see only companies they own
+    if (
+      user.role !== "SUPER_ADMIN" &&
+      user.role !== "ADMIN_OWNER" &&
+      user.role !== "ADMIN_NONOWNER"
+    ) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -42,7 +46,7 @@ export async function GET(request: NextRequest) {
         orderBy: { name: "asc" },
       });
     } else {
-      // ADMIN: only companies owned by this admin
+      // ADMIN_OWNER: only companies owned by this admin
       companies = await db.company.findMany({
         where: { ownerId: user.id },
         select: {
@@ -53,7 +57,7 @@ export async function GET(request: NextRequest) {
         orderBy: { name: "asc" },
       });
 
-      // If ADMIN doesn't own any companies, deny access to the admin hedra page
+      // If ADMIN_OWNER doesn't own any companies, deny access to the admin hedra page
       if (!companies || companies.length === 0) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { validateSessionForAPI } from "@/lib/validate-session";
-import type { StorefrontOrderStatus, PaymentStatus } from "@prisma/client";
+import type { StorefrontOrderStatus, PaymentStatus } from "@/generated/prisma/client";
 
 export type OrdersDetailDb = {
   user: {
@@ -120,9 +120,11 @@ export async function updateOrderForUser(
 
   const companyId = user.companyMemberships[0].companyId;
 
-  const canUpdateOrders = ["MANAGER", "ADMIN", "SUPER_ADMIN"].includes(
-    user.role
-  );
+  const canUpdateOrders = [
+    "COMPANY_MANAGER",
+    "ADMIN_OWNER",
+    "SUPER_ADMIN",
+  ].includes(user.role);
   if (!canUpdateOrders) {
     return { status: 403, body: { error: "Insufficient permissions" } };
   }

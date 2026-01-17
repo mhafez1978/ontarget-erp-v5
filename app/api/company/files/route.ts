@@ -12,15 +12,26 @@ export async function GET(req: NextRequest) {
 
     const userId = validation.user.id;
 
-    // Get user and verify they're ADMIN or SUPER_ADMIN
+    // Get user and verify they're ADMIN_OWNER or SUPER_ADMIN
     const user = await db.user.findUnique({
       where: { id: userId },
       select: { id: true, role: true },
     });
 
-    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.role)) {
+    if (
+      !user ||
+      ![
+        "ADMIN_OWNER",
+        "ADMIN_NONOWNER",
+        "COMPANY_MANAGER",
+        "SUPER_ADMIN",
+      ].includes(user.role)
+    ) {
       return NextResponse.json(
-        { error: "Access Denied: Only admins can view files" },
+        {
+          error:
+            "Access Denied: Only company admins or super admin can view files",
+        },
         { status: 403 }
       );
     }
@@ -47,7 +58,7 @@ export async function GET(req: NextRequest) {
             members: {
               some: {
                 userId: user.id,
-                role: "ADMIN",
+                role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] },
               },
             },
           },

@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
 
     const { user } = validation;
 
-    // Only ADMIN and SUPER_ADMIN can view company sessions
-    if (!hasRole(user, ["ADMIN", "SUPER_ADMIN"])) {
+    // Only company admins and SUPER_ADMIN can view company sessions
+    if (!hasRole(user, ["ADMIN_OWNER", "ADMIN_NONOWNER", "SUPER_ADMIN"])) {
       return NextResponse.json(
         { error: "Forbidden - Admin access required" },
         { status: 403 }
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      const formattedSessions = sessions.map((s) => ({
+      const formattedSessions = sessions.map((s: any) => ({
         id: s.id,
         isCurrent:
           s.userId === user.id &&
@@ -70,19 +70,19 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // For ADMIN, get sessions for users in their companies
+    // For ADMIN_OWNER, get sessions for users in their companies
     // First, find all companies where the admin is a member
     const adminCompanies = await db.companyMember.findMany({
       where: {
         userId: user.id,
-        role: "ADMIN",
+        role: { in: ["ADMIN_OWNER", "ADMIN_NONOWNER"] },
       },
       select: {
         companyId: true,
       },
     });
 
-    const companyIds = adminCompanies.map((cm) => cm.companyId);
+    const companyIds = adminCompanies.map((cm: any) => cm.companyId);
 
     if (companyIds.length === 0) {
       return NextResponse.json({
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const userIds = [...new Set(companyMembers.map((cm) => cm.userId))];
+    const userIds = [...new Set(companyMembers.map((cm: any) => cm.userId))];
 
     // Get active sessions for these users
     const sessions = await db.session.findMany({
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format sessions
-    const formattedSessions = sessions.map((s) => ({
+    const formattedSessions = sessions.map((s: any) => ({
       id: s.id,
       isCurrent:
         s.userId === user.id &&

@@ -48,9 +48,30 @@ const Blockchain: React.FC = () => {
               CHAPTER IV: FUTURE-PROOF INTEGRITY
             </div>
             <h3 className="max-w-4xl mx-auto text-4xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
-              Verifiable Immutable{" "}
+              The Problem with{" "}
+              <span className="text-red-500 dark:text-red-400">
+                Traditional Records
+              </span>
+            </h3>
+            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg p-6 mb-8">
+              <h4 className="text-xl font-bold text-red-800 dark:text-red-300 mb-4">
+                ❌ Current Reality
+              </h4>
+              <ul className="space-y-2 text-red-700 dark:text-red-400">
+                <li>
+                  • Database records can be accidentally deleted or corrupted
+                </li>
+                <li>• Audit logs can be modified by malicious actors</li>
+                <li>• Legal disputes require expensive forensic analysis</li>
+                <li>• Compliance audits are time-consuming and costly</li>
+                <li>• No way to prove data integrity to third parties</li>
+              </ul>
+            </div>
+
+            <h3 className="max-w-4xl mx-auto text-4xl md:text-6xl font-display font-black tracking-tight mb-8 dark:dark:text-gray-200">
+              The Blockchain{" "}
               <span className="text-purple-500 dark:text-[#2bee79]">
-                Business Records
+                Solution
               </span>
             </h3>
             <p className="w-full px-4 mx-auto text-base md:text-lg text-black dark:text-gray-50 text-left leading-relaxed font-body md:max-w-4xl mb-6">
@@ -96,11 +117,11 @@ const Blockchain: React.FC = () => {
               </div>
             </div>
             <div className="mt-8 flex items-center gap-4">
-              <span className="px-4 py-2 bg-purple-500 text-white dark:bg-[#2bee79] dark:text-black text-xs font-black uppercase tracking-widest rounded-full">
-                Coming Soon
+              <span className="px-4 py-2 bg-green-500 text-white dark:bg-[#2bee79] dark:text-black text-xs font-black uppercase tracking-widest rounded-full">
+                Now Available
               </span>
               <p className="dark:text-[#2bee79] text-sm font-bold font-display italic">
-                Arriving in v6 Q4 2026
+                Enterprise-Grade Blockchain Security
               </p>
             </div>
           </div>

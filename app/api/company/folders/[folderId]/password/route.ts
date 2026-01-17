@@ -96,12 +96,13 @@ export async function POST(
         (m) => m.companyId === companyId
       );
 
-      // Only SUPER_ADMIN, company owner, or ADMIN/MANAGER can set passwords
+      // Only SUPER_ADMIN, company owner, or ADMIN_OWNER/ADMIN_NONOWNER/COMPANY_MANAGER can set passwords
       if (
         !isSuperAdmin &&
         !ownsCompany &&
-        membership?.role !== "ADMIN" &&
-        membership?.role !== "MANAGER"
+        membership?.role !== "ADMIN_OWNER" &&
+        membership?.role !== "ADMIN_NONOWNER" &&
+        membership?.role !== "COMPANY_MANAGER"
       ) {
         return NextResponse.json(
           {
@@ -202,8 +203,9 @@ export async function DELETE(
     if (
       !isSuperAdmin &&
       !ownsCompany &&
-      membership?.role !== "ADMIN" &&
-      membership?.role !== "MANAGER"
+      membership?.role !== "ADMIN_OWNER" &&
+      membership?.role !== "ADMIN_NONOWNER" &&
+      membership?.role !== "COMPANY_MANAGER"
     ) {
       return NextResponse.json(
         {

@@ -64,6 +64,7 @@ interface Project {
   customerId: string | null;
   managerId: string | null;
   leadId: string | null;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
   team: {

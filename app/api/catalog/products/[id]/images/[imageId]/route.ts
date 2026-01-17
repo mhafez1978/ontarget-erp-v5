@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { unlink } from "fs/promises";
 import { join } from "path";
 import { validateSessionForAPI } from "@/lib/validate-session";
+import { Company, Product, User } from "@/generated/prisma/client";
 
 // DELETE - Delete a product image
 export async function DELETE(
@@ -19,23 +20,23 @@ export async function DELETE(
     const userId = validation.user.id;
 
     // Get user and check permissions
-    const user = await db.user.findUnique({
+    const user = (await db.user.findUnique({
       where: { id: userId },
       select: {
         role: true,
         ownedCompanies: { select: { id: true } },
       },
-    });
+    })) as User & { ownedCompanies: Company[] };
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Check if product exists
-    const product = await db.product.findUnique({
+    const product = (await db.product.findUnique({
       where: { id },
       select: { companyId: true },
-    });
+    })) as Product | null;
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -43,9 +44,9 @@ export async function DELETE(
 
     // Authorization check
     const isSuperAdmin = user.role === "SUPER_ADMIN";
-    const isManager = user.role === "MANAGER";
+    const isManager = user.role === "COMPANY_MANAGER";
     const ownsCompany = user.ownedCompanies.some(
-      (c) => c.id === product.companyId
+      (c) => c.id === (product.companyId as string)
     );
 
     if (!isSuperAdmin && !ownsCompany && !isManager) {

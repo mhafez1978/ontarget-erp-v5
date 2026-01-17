@@ -16,7 +16,10 @@ async function safeFetch(url: string, options: RequestInit = {}) {
     const res = await fetch(url, { ...options, signal: controller.signal });
     return res;
   } catch (err) {
-    console.log(err instanceof Error ? err.message : JSON.stringify(err));
+    console.error(
+      "safeFetch error:",
+      err instanceof Error ? err.message : JSON.stringify(err)
+    );
     // normalize the error so callers can inspect it without throwing
     return null;
   } finally {

@@ -1,50 +1,37 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
-// NextAuth.js Models
 model Account {
-  id                String  @id @default(cuid())
+  id                String    @id @default(cuid())
   userId            String
-  type              String // 'oauth' or 'credentials' or 'email'
-  provider          String // 'google', 'github', 'credentials', 'azure', etc.
+  type              String
+  provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  // Extended tracking fields
-  isPrimary  Boolean   @default(false) // Is this the primary login method?
-  isActive   Boolean   @default(true) // Can this method be used to login?
-  lastUsedAt DateTime? // Last time this account was used to login
-  timesUsed  Int       @default(0) // How many times used to login
-  linkedAt   DateTime  @default(now()) // When was this account linked
-
-  // Metadata
-  email       String? // Email from OAuth provider (for reference)
-  displayName String? // Name from OAuth provider
-  profileUrl  String? // OAuth profile URL
-  avatarUrl   String? // OAuth avatar URL
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  isPrimary         Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  lastUsedAt        DateTime?
+  timesUsed         Int       @default(0)
+  linkedAt          DateTime  @default(now())
+  email             String?
+  displayName       String?
+  profileUrl        String?
+  avatarUrl         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now()) @updatedAt
+  user              User      @relation(fields: [userId], references: [id], onDelete: NoAction)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -54,12 +41,10 @@ model Account {
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-
-  // Current session location tracking
+  id                 String   @id @default(cuid())
+  sessionToken       String   @unique
+  userId             String
+  expires            DateTime
   sessionIpAddress   String?
   sessionIpv4        String?
   sessionIpv6        String?
@@ -67,119 +52,131 @@ model Session {
   sessionState       String?
   sessionCountry     String?
   sessionCountryFlag String?
-  sessionUserAgent   String? // Browser/OS info for device detection
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionUserAgent   String?
+  user               User     @relation(fields: [userId], references: [id], onDelete: NoAction)
 
   @@index([userId])
-  // composite: quick lookup for sessions for a user and expiry checks
   @@index([userId, expires])
 }
 
 model User {
-  id                    String           @id @default(cuid())
-  name                  String?
-  email                 String?          @unique
-  emailVerified         DateTime?
-  image                 String?          @db.LongText
-  password              String? // For credentials login
-  authMethod            String           @default("credentials") // 'credentials', 'oauth', 'both' - tracks how user can authenticate
-  role                  UserRole         @default(ERP_CUSTOMER) // Default to ERP_CUSTOMER for new signups
-  plan                  SubscriptionPlan @default(GUEST) // GUEST until they select a plan (ERP_CUSTOMER) or assigned role-specific plan
-  billingCycle          BillingCycle     @default(MONTHLY) // Monthly or Annual billing preference
-  trialEndsAt           DateTime? // 30-day trial period end date
-  isActive              Boolean          @default(true) // Account status (can be disabled by super admin)
-  canSetupPersonalEmail Boolean          @default(false) // Allow user to connect personal email provider (Office365, Gmail)
-
-  // Email verification fields
-  verificationToken        String?   @unique
+  id                       String                      @id @default(cuid())
+  name                     String?
+  email                    String?                     @unique
+  emailVerified            DateTime?
+  image                    String?
+  password                 String?
+  authMethod               String                      @default("credentials")
+  role                     UserRole                    @default(ERP_CUSTOMER)
+  plan                     SubscriptionPlan            @default(TRIAL)
+  billingCycle             BillingCycle                @default(MONTHLY)
+  trialEndsAt              DateTime?
+  isActive                 Boolean                     @default(true)
+  canSetupPersonalEmail    Boolean                     @default(false)
+  verificationToken        String?                     @unique
   verificationTokenExpires DateTime?
-
-  // MFA/2FA fields
-  mfaEnabled     Boolean   @default(false)
-  mfaSecret      String? // TOTP secret (encrypted)
-  mfaBackupCodes Json? // Array of backup codes (hashed)
-  mfaSetupAt     DateTime? // When MFA was enabled
-
-  // Address fields
-  addressLine1 String?
-  addressLine2 String?
-  city         String?
-  state        String?
-  country      String?
-  countryCode  String? // ISO 2-letter code (US, CA, FR, etc.)
-  postalCode   String?
-  latitude     Float?
-  longitude    Float?
-
-  // Current/Last location tracking fields
-  capturedIpAddress   String?
-  capturedCity        String?
-  capturedState       String?
-  capturedCountry     String?
-  capturedCountryFlag String?
-
-  // Last login tracking fields (from previous session)
-  lastLoginIpAddress   String?
-  lastLoginCity        String?
-  lastLoginState       String?
-  lastLoginCountry     String?
-  lastLoginCountryFlag String?
-  lastLoginAt          DateTime?
-
-  accounts            Account[]
-  sessions            Session[]
-  passwordResets      PasswordReset[]
-  auditLogs           AuditLog[]
-  ownedCompanies      Company[]            @relation("CompanyOwner")
-  companyMemberships  CompanyMember[]
-  companyStaff        CompanyStaff[]
-  failedLoginAttempts FailedLoginAttempt[]
-  blockedIps          IpBlacklist[]        @relation("BlockedBy")
-  emailTemplates      EmailTemplate[] // Created email templates
-  emailProviders      UserEmailProvider[] // Personal email providers (Office365, Gmail OAuth)
-  uploadedFiles       FileRecord[] // Files uploaded by user
-
-  // Storefront relations
-  storefrontOrders StorefrontOrder[] @relation("StorefrontOrders")
-  carts            Cart[]
-
-  // Project relations (as customer)
-  customerProjects Project[] @relation("ProjectCustomer") // Projects where this user is the customer
-
-  // Storefront blog posts authored by this user
-  storefrontPosts StorefrontPost[]
-
-  // AI storefront generation logs
-  aiStorefrontGenerations AiStorefrontGenerationLog[]
-
-  // V4 conversations and websites
-  v4Conversations V4Conversation[]
-  v4Websites      V4Website[]
-
-  // Support / Knowledge Base articles authored by this user
-  supportArticles SupportArticle[]
-
-  // Payment system relations
-  invoices Invoice[]
-
-  // OAuth onboarding relation (single token for OAuth-driven new users)
-  oauthOnboarding OAuthOnboarding?
-
+  mfaEnabled               Boolean                     @default(false)
+  mfaSecret                String?
+  mfaBackupCodes           Json?
+  mfaSetupAt               DateTime?
+  addressLine1             String?
+  addressLine2             String?
+  city                     String?
+  state                    String?
+  country                  String?
+  countryCode              String?
+  postalCode               String?
+  latitude                 Float?
+  longitude                Float?
+  capturedIpAddress        String?
+  capturedCity             String?
+  capturedState            String?
+  capturedCountry          String?
+  capturedCountryFlag      String?
+  lastLoginIpAddress       String?
+  lastLoginCity            String?
+  lastLoginState           String?
+  lastLoginCountry         String?
+  lastLoginCountryFlag     String?
+  lastLoginAt              DateTime?
+  createdAt                DateTime                    @default(now())
+  updatedAt                DateTime                    @updatedAt
+  deletedAt                DateTime?
+  primaryAddressId         String?                     @unique
+  accounts                 Account[]
+  addresses                Address[]                   @relation("UserAddresses")
+  aiStorefrontGenerations  AiStorefrontGenerationLog[]
+  auditLogs                AuditLog[]
+  carts                    Cart[]
+  ownedCompanies           Company[]                   @relation("CompanyOwner")
+  companyMemberships       CompanyMember[]
+  companyStaff             CompanyStaff[]
   customerPaymentProviders CustomerPaymentProvider[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  emailTemplates           EmailTemplate[]
+  failedLoginAttempts      FailedLoginAttempt[]
+  uploadedFiles            FileRecord[]
+  invoices                 Invoice[]
+  blockedIps               IpBlacklist[]               @relation("BlockedBy")
+  oauthOnboarding          OAuthOnboarding?
+  passwordResets           PasswordReset[]
+  customerProjects         Project[]                   @relation("ProjectCustomer")
+  sessions                 Session[]
+  storefrontOrders         StorefrontOrder[]           @relation("StorefrontOrders")
+  storefrontPosts          StorefrontPost[]
+  supportArticles          SupportArticle[]
+  primaryAddress           Address?                    @relation("UserPrimaryAddress", fields: [primaryAddressId], references: [id])
+  emailProviders           UserEmailProvider[]
+  profile                  UserProfile?
+  v4Conversations          V4Conversation[]
+  v4Websites               V4Website[]
 
   @@index([role])
   @@index([email])
 }
 
-// Payment provider enum and mapping table for external customer IDs
-enum PaymentProvider {
-  STRIPE
-  PAYPAL
-  OTHER
+model UserProfile {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  settings  Json?
+  metrics   Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: NoAction)
+}
+
+model Address {
+  id                        String           @id @default(cuid())
+  line1                     String
+  line2                     String?
+  city                      String?
+  state                     String?
+  postalCode                String?
+  country                   String?
+  countryCode               String?
+  latitude                  Float?
+  longitude                 Float?
+  label                     AddressLabel?
+  isPrimary                 Boolean          @default(false)
+  userId                    String?
+  companyId                 String?
+  companyLocationId         String?
+  metadata                  Json?
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+  deletedAt                 DateTime?
+  company                   Company?         @relation("CompanyAddresses", fields: [companyId], references: [id], onDelete: NoAction)
+  companyLocation           CompanyLocation? @relation("CompanyLocationAddresses", fields: [companyLocationId], references: [id], onDelete: NoAction)
+  user                      User?            @relation("UserAddresses", fields: [userId], references: [id])
+  primaryForCompany         Company?         @relation("CompanyPrimaryAddress")
+  primaryForCompanyLocation CompanyLocation? @relation("CompanyLocationPrimary")
+  primaryForUser            User?            @relation("UserPrimaryAddress")
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([companyLocationId])
+  @@index([countryCode])
+  @@index([postalCode])
 }
 
 model CustomerPaymentProvider {
@@ -189,8 +186,7 @@ model CustomerPaymentProvider {
   externalId String
   metadata   Json?
   createdAt  DateTime        @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User            @relation(fields: [userId], references: [id], onDelete: NoAction)
 
   @@unique([provider, externalId])
   @@index([userId])
@@ -204,7 +200,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Password Reset Token
 model PasswordReset {
   id        String   @id @default(cuid())
   userId    String
@@ -212,558 +207,212 @@ model PasswordReset {
   expires   DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // (no composite indexes here) - keep token/expiry indexes only
+  user      User     @relation(fields: [userId], references: [id], onDelete: NoAction)
 
   @@index([userId])
   @@index([token])
   @@index([expires])
 }
 
-// Company Model
 model Company {
-  id            String  @id @default(cuid())
-  name          String
-  slogan        String?
-  description   String? @db.Text
-  industry      CompanyIndustry? // Company industry/vertical classification
-  logo          String? @db.LongText // Can store file path or base64 data URL
-  logoLight     String? @db.LongText // Logo for light theme (path or base64)
-  logoDark      String? @db.LongText // Logo for dark theme (path or base64)
-  uploadedLogos Json?   @db.Json // Temporary storage for uploaded base64 logos before assignment
-  website       String?
-  phone         String?
-  email         String?
-  salesEmail    String? // Sales inquiries email
-  supportEmail  String? // Customer support email
-  isRoot        Boolean @default(false) // True for OnTarget ERP (the SaaS provider)
-  isActive      Boolean @default(true) // Company active status (disabled if trial expired and invoice unpaid)
-
-  // Storefront fields
-  slug              String?   @unique // URL-friendly slug: "my-company-name" -> /store/my-company-name
-  subdomain         String?   @unique // Custom subdomain: "mycompany.ontarget-erp.com"
-  customDomain      String?   @unique // Custom domain: "shop.mycompany.com"
-  isStoreEnabled    Boolean   @default(false) // Enable/disable public storefront
-  storeTheme        String?   @default("default") // "default", "minimal", "modern", "classic"
-  storeBanner       String? // Hero banner image for store homepage
-  storeMetadata     Json? // SEO metadata, social links, store hours, etc.
-  storeBlogEnabled  Boolean   @default(false) // Enable/disable blog/posts section for storefront
-  storeConfiguredAt DateTime?
-  storeConfiguredBy String? // User ID who configured the store
-
-  // AI Storefront (Growth / Enterprise plans)
-  aiStorefrontEnabled Boolean @default(false) // If true, render storefront from AI spec
-  aiStorefrontSpec    Json? // Full AI storefront specification (AiFrontstoreSpec)
-
-  // Hedera company opt-in setting (one-to-one)
-  companyHederaSetting CompanyHederaSetting?
-
-
-  // Address fields
-  addressLine1 String?
-  addressLine2 String?
-  city         String?
-  state        String?
-  country      String?
-  countryCode  String? // ISO 2-letter code (US, CA, FR, etc.)
-  postalCode   String?
-  latitude     Float?
-  longitude    Float?
-
-  ownerId   String
-  owner     User            @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  members   CompanyMember[]
-  staff     CompanyStaff[]
-  auditLogs AuditLog[]
-
-  // Subscription relations
-  rootSubscriptions       Subscription[] @relation("RootCompany")
-  subscriberSubscriptions Subscription[] @relation("SubscriberCompany")
-
-  // Catalog relations
-  products Product[]
-  services Service[]
-
-  // Storefront relations
-  storefrontOrders StorefrontOrder[] @relation("StorefrontOrders")
-  carts            Cart[]
-  storefrontPosts  StorefrontPost[]
-
-  // Project Management relations
-  teams            Team[]
-  projects         Project[]
-  customerProjects Project[] @relation("ProjectSubscriberCustomer") // Projects where this company is the customer
-
-  // Financial relations
-  ledger Ledger?
-
-  // Payment system relations
-  paymentGateways PaymentGateway[]
-  plaidAccounts   PlaidAccount[]
-  invoices        Invoice[]
-  payments        Payment[]
-
-  // Stripe Connect (for marketplace platform fees)
-  stripeConnectedAccountId String?   @unique // Stripe Connected Account ID
-  stripeAccountStatus      String?   @default("not_connected") // "not_connected", "pending", "active", "restricted"
-  stripeOnboardedAt        DateTime? // When they completed Stripe Connect onboarding
-  customPlatformFeePercent Decimal?  @db.Decimal(5, 2) // Override platform fee (null = use plan default)
-
-  // AI storefront usage
-  aiStorefrontGenerations AiStorefrontGenerationLog[]
-  storefrontConversations StorefrontConversation[]
-  storefrontSpecVersions  StorefrontSpecVersion[]
-  storefrontWebsitesV3    StorefrontWebsiteV3[] // V3 multi-page websites
-
-  // V4 conversations and generated websites
-  v4Conversations V4Conversation[]
-  v4Websites      V4Website[]
-
-  // Storage configuration - NEW SYSTEM: Uses StorageProvider table
-  // Subscription-based backup: ESSENTIAL (uses global), PROFESSIONAL (optional backup), ENTERPRISE (no backup)
-  storageBackupEnabled Boolean @default(true) // If true and has custom storage, also backup to global storage (charged feature)
-  storageUsedGB        Float   @default(0) // Track storage usage for plan limit enforcement
-
-  // DEPRECATED: Legacy storage config - kept for backward compatibility, use StorageProvider table instead
-  storageProvider     String?   @default("INHERIT") // DEPRECATED: Use StorageProvider table
-  storageConfig       Json? // DEPRECATED: Use StorageProvider table
-  storageConfiguredAt DateTime?
-  storageConfiguredBy String? // User ID who configured it
-
-  // OAuth configuration (company can override global OAuth settings)
-  oauthSettings CompanyOAuthSetting[] @relation("CompanyOAuthSettings")
-
-  // File system relations
-  folders FileFolder[] // Company folder structure
-
-  // Time tracking
-  timeEntries TimeEntry[]
-
-  // Payroll
-  payrollJurisdictions PayrollJurisdiction[]
-
-  // Testimonial relations
-  testimonials Testimonial[]
-
-  // Multi-location support
-  locations CompanyLocation[]
-
-  // Tax and legal entity information
-  taxInfo CompanyTaxInfo?
-
-  // Back-relations for models referencing Company
-  telemetryEvents TelemetryEvent[]
-  leads           Lead[]
-  webhookConfigs  WebhookConfig[]
-
-  // Support / Knowledge Base articles for this company
-  supportArticles SupportArticle[]
-
-  // Social proof & metrics (for V4 AI generation)
-  foundedYear        Int?
-  employeeCount      Int?
-  instagramFollowers Int?
-  facebookLikes      Int?
-  linkedinFollowers  Int?
-  youtubeSubscribers Int?
-  trustpilotRating   Float?
-  googleRating       Float?
-  certifications     Json? // Array of certification names
-  awards             Json? // Array of award names
-
-  // Social media links
-  facebookUrl  String?
-  twitterUrl   String?
-  instagramUrl String?
-  linkedinUrl  String?
-  youtubeUrl   String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  // (no composite indexes added here by accident)
+  id                       String                      @id @default(cuid())
+  name                     String
+  legalName                String?
+  slogan                   String?
+  description              String?
+  industry                 CompanyIndustry?
+  logo                     String?
+  logoLight                String?
+  logoDark                 String?
+  uploadedLogos            Json?
+  website                  String?
+  phone                    String?
+  email                    String?
+  salesEmail               String?
+  supportEmail             String?
+  isRoot                   Boolean                     @default(false)
+  isActive                 Boolean                     @default(true)
+  slug                     String?                     @unique
+  subdomain                String?                     @unique
+  customDomain             String?                     @unique
+  isStoreEnabled           Boolean                     @default(false)
+  storeTheme               String?                     @default("default")
+  storeBanner              String?
+  storeMetadata            Json?
+  storeBlogEnabled         Boolean                     @default(false)
+  storeConfiguredAt        DateTime?
+  storeConfiguredBy        String?
+  aiStorefrontEnabled      Boolean                     @default(false)
+  aiStorefrontSpec         Json?
+  addressLine1             String?
+  addressLine2             String?
+  city                     String?
+  state                    String?
+  country                  String?
+  countryCode              String?
+  postalCode               String?
+  latitude                 Float?
+  longitude                Float?
+  ownerId                  String
+  stripeConnectedAccountId String?                     @unique
+  stripeAccountStatus      String?                     @default("not_connected")
+  stripeOnboardedAt        DateTime?
+  customPlatformFeePercent Decimal?                    @db.Decimal(5, 2)
+  storageBackupEnabled     Boolean                     @default(true)
+  storageUsedGB            Float                       @default(0)
+  storageProvider          String?                     @default("INHERIT")
+  storageConfig            Json?
+  storageConfiguredAt      DateTime?
+  storageConfiguredBy      String?
+  foundedYear              Int?
+  employeeCount            Int?
+  instagramFollowers       Int?
+  facebookLikes            Int?
+  linkedinFollowers        Int?
+  youtubeSubscribers       Int?
+  trustpilotRating         Float?
+  googleRating             Float?
+  certifications           Json?
+  awards                   Json?
+  facebookUrl              String?
+  twitterUrl               String?
+  instagramUrl             String?
+  linkedinUrl              String?
+  youtubeUrl               String?
+  createdAt                DateTime                    @default(now())
+  updatedAt                DateTime                    @updatedAt
+  deletedAt                DateTime?
+  primaryAddressId         String?                     @unique
+  addresses                Address[]                   @relation("CompanyAddresses")
+  aiStorefrontGenerations  AiStorefrontGenerationLog[]
+  auditLogs                AuditLog[]
+  carts                    Cart[]
+  owner                    User                        @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: NoAction)
+  primaryAddress           Address?                    @relation("CompanyPrimaryAddress", fields: [primaryAddressId], references: [id])
+  companyHederaSetting     CompanyHederaSetting?
+  hederaTransactions       HederaTransaction[]
+  locations                CompanyLocation[]
+  members                  CompanyMember[]
+  oauthSettings            CompanyOAuthSetting[]       @relation("CompanyOAuthSettings")
+  staff                    CompanyStaff[]
+  taxInfo                  CompanyTaxInfo?
+  folders                  FileFolder[]
+  invoices                 Invoice[]
+  leads                    Lead[]
+  ledger                   Ledger?
+  payments                 Payment[]
+  paymentGateways          PaymentGateway[]
+  plaidAccounts            PlaidAccount[]
+  products                 Product[]
+  projects                 Project[]
+  customerProjects         Project[]                   @relation("ProjectSubscriberCustomer")
+  services                 Service[]
+  storefrontConversations  StorefrontConversation[]
+  storefrontOrders         StorefrontOrder[]           @relation("StorefrontOrders")
+  storefrontPosts          StorefrontPost[]
+  storefrontSpecVersions   StorefrontSpecVersion[]
+  storefrontWebsitesV3     StorefrontWebsiteV3[]
+  rootSubscriptions        Subscription[]              @relation("RootCompany")
+  subscriberSubscriptions  Subscription[]              @relation("SubscriberCompany")
+  supportArticles          SupportArticle[]
+  teams                    Team[]
+  telemetryEvents          TelemetryEvent[]
+  testimonials             Testimonial[]
+  timeEntries              TimeEntry[]
+  v4Conversations          V4Conversation[]
+  v4Websites               V4Website[]
+  webhookConfigs           WebhookConfig[]
+  payrollJurisdictions     PayrollJurisdiction[]       @relation("CompanyToPayrollJurisdiction")
 
   @@index([ownerId])
   @@index([name])
   @@index([isRoot])
 }
 
-// Legal Entity Type Enum - Global business structures
-enum CompanyLegalEntity {
-  // Individual/Self-Employed
-  SOLE_PROPRIETOR // Sole Proprietorship / Self-Employed / Individual Entrepreneur
-  
-  // United States
-  SINGLE_MEMBER_LLC // Single Member LLC (US)
-  LLC // Limited Liability Company (US)
-  S_CORP // S-Corporation (US)
-  C_CORP // C-Corporation (US)
-  GENERAL_PARTNERSHIP // General Partnership (US)
-  LIMITED_PARTNERSHIP // Limited Partnership (US)
-  LLP // Limited Liability Partnership (US)
-  NON_PROFIT // Non-Profit Organization (US)
-  
-  // United Kingdom & Ireland
-  LTD // Private Limited Company (UK, Ireland, Commonwealth)
-  PLC // Public Limited Company (UK, Ireland)
-  
-  // Germany & Austria
-  GMBH // Gesellschaft mit beschränkter Haftung (Germany, Austria, Switzerland)
-  AG // Aktiengesellschaft (Germany, Austria, Switzerland)
-  UG // Unternehmergesellschaft (Germany)
-  KG // Kommanditgesellschaft (Germany, Austria)
-  OHG // Offene Handelsgesellschaft (Germany, Austria)
-  
-  // France & Belgium
-  SARL // Société à Responsabilité Limitée (France, Belgium, Luxembourg)
-  SA // Société Anonyme (France, Belgium, Switzerland)
-  SAS // Société par Actions Simplifiée (France)
-  SASU // Société par Actions Simplifiée Unipersonnelle (France)
-  EURL // Entreprise Unipersonnelle à Responsabilité Limitée (France)
-  SNC // Société en Nom Collectif (France)
-  
-  // Spain & Portugal
-  SL // Sociedad Limitada (Spain)
-  SA_SPAIN // Sociedad Anónima (Spain)
-  LDA // Sociedade por Quotas (Portugal)
-  SA_PORTUGAL // Sociedade Anónima (Portugal)
-  
-  // Italy
-  SRL // Società a Responsabilità Limitata (Italy, Romania)
-  SPA // Società per Azioni (Italy)
-  SRLS // Società a Responsabilità Limitata Semplificata (Italy)
-  
-  // Netherlands
-  BV // Besloten Vennootschap (Netherlands, Belgium)
-  NV // Naamloze Vennootschap (Netherlands, Belgium)
-  VOF // Vennootschap onder Firma (Netherlands)
-  
-  // Nordic Countries
-  AB // Aktiebolag (Sweden)
-  AS // Aksjeselskap (Norway)
-  APS // Anpartsselskab (Denmark)
-  AS_DENMARK // Aktieselskab (Denmark)
-  OY // Osakeyhtiö (Finland)
-  
-  // Eastern Europe
-  SPZOO // Spółka z ograniczoną odpowiedzialnością (Poland)
-  SA_POLAND // Spółka Akcyjna (Poland)
-  SRO // Společnost s ručením omezeným (Czech Republic)
-  AS_CZECH // Akciová společnost (Czech Republic)
-  
-  // Asia-Pacific
-  PTY_LTD // Proprietary Limited (Australia, South Africa)
-  PVT_LTD // Private Limited (India, Pakistan, Bangladesh, Sri Lanka)
-  PUBLIC_LTD // Public Limited Company (India, Singapore, Hong Kong)
-  SDN_BHD // Sendirian Berhad (Malaysia, Brunei)
-  BHD // Berhad (Malaysia)
-  PTE_LTD // Private Limited (Singapore)
-  KK // Kabushiki Kaisha (Japan - 株式会社)
-  GK // Godo Kaisha (Japan - 合同会社)
-  
-  // Latin America
-  SA_LATIN // Sociedad Anónima (Latin America - General)
-  SRL_LATIN // Sociedad de Responsabilidad Limitada (Latin America - General)
-  LTDA // Limitada (Brazil, Latin America)
-  SA_BRAZIL // Sociedade Anônima (Brazil)
-  EIRELI // Empresa Individual de Responsabilidade Limitada (Brazil)
-  MEI // Microempreendedor Individual (Brazil)
-  
-  // Middle East & Africa
-  LLC_MENA // Limited Liability Company (Middle East & North Africa)
-  FZE // Free Zone Establishment (UAE)
-  FZCO // Free Zone Company (UAE)
-  WLL // With Limited Liability (Bahrain, Kuwait)
-  
-  // Other Common Structures
-  COOPERATIVE // Cooperative / Co-operative Society
-  TRUST // Trust
-  FOUNDATION // Foundation / Stiftung
-  ASSOCIATION // Association / Verein
-  JOINT_VENTURE // Joint Venture
-  BRANCH // Branch Office / Representative Office
-  OTHER // Other Entity Type
-}
-
-// Company Industry Enum
-enum CompanyIndustry {
-  // Technology & Software
-  SOFTWARE_DEVELOPMENT // Software Development & Engineering
-  SAAS // Software as a Service (SaaS)
-  IT_SERVICES // IT Services & Consulting
-  CYBERSECURITY // Cybersecurity & Information Security
-  AI_ML // Artificial Intelligence & Machine Learning
-  CLOUD_COMPUTING // Cloud Computing & Infrastructure
-  MOBILE_APPS // Mobile App Development
-  WEB_DEVELOPMENT // Web Development & Design
-  GAME_DEVELOPMENT // Game Development
-  BLOCKCHAIN // Blockchain & Cryptocurrency
-  
-  // Healthcare & Medical
-  HEALTHCARE // Healthcare Services
-  MEDICAL_DEVICES // Medical Devices & Equipment
-  PHARMACEUTICALS // Pharmaceuticals & Biotechnology
-  TELEHEALTH // Telemedicine & Digital Health
-  HEALTH_INSURANCE // Health Insurance
-  DENTAL // Dental Services
-  VETERINARY // Veterinary Services
-  FITNESS // Fitness & Wellness
-  
-  // Finance & Banking
-  BANKING // Banking & Financial Services
-  FINTECH // Financial Technology (FinTech)
-  INSURANCE // Insurance Services
-  ACCOUNTING // Accounting & Bookkeeping
-  INVESTMENT // Investment Management
-  CRYPTOCURRENCY // Cryptocurrency & Digital Assets
-  PAYMENT_PROCESSING // Payment Processing
-  
-  // Retail & E-commerce
-  ECOMMERCE // E-commerce & Online Retail
-  RETAIL // Retail Stores
-  FASHION // Fashion & Apparel
-  JEWELRY // Jewelry & Accessories
-  BEAUTY // Beauty & Cosmetics
-  GROCERY // Grocery & Food Retail
-  FURNITURE // Furniture & Home Goods
-  ELECTRONICS // Consumer Electronics
-  
-  // Manufacturing & Industrial
-  MANUFACTURING // General Manufacturing
-  AUTOMOTIVE // Automotive Manufacturing
-  AEROSPACE // Aerospace & Defense
-  CONSTRUCTION // Construction & Building Materials
-  INDUSTRIAL_EQUIPMENT // Industrial Equipment & Machinery
-  CHEMICALS // Chemicals & Materials
-  TEXTILES // Textiles & Fabrics
-  PACKAGING // Packaging & Containers
-  
-  // Food & Beverage
-  RESTAURANT // Restaurants & Food Service
-  CAFE // Cafes & Coffee Shops
-  CATERING // Catering Services
-  FOOD_PRODUCTION // Food Production & Processing
-  BREWERY // Brewery & Distillery
-  
-  // Real Estate & Property
-  REAL_ESTATE // Real Estate Services
-  PROPERTY_MANAGEMENT // Property Management
-  CONSTRUCTION_DEVELOPMENT // Construction & Development
-  ARCHITECTURE // Architecture & Design
-  INTERIOR_DESIGN // Interior Design
-  
-  // Professional Services
-  CONSULTING // Business Consulting
-  LEGAL // Legal Services
-  MARKETING // Marketing & Advertising
-  PR // Public Relations
-  HR // Human Resources Services
-  RECRUITMENT // Recruitment & Staffing
-  BUSINESS_SERVICES // General Business Services
-  
-  // Education & Training
-  EDUCATION // Education Services
-  ELEARNING // E-Learning & Online Courses
-  TRAINING // Training & Professional Development
-  TUTORING // Tutoring Services
-  CHILDCARE // Childcare & Early Education
-  
-  // Media & Entertainment
-  MEDIA // Media & Publishing
-  ENTERTAINMENT // Entertainment Services
-  FILM // Film & Video Production
-  MUSIC // Music Production & Distribution
-  GAMING // Gaming & Esports
-  PODCASTING // Podcasting & Audio Content
-  
-  // Transportation & Logistics
-  LOGISTICS // Logistics & Supply Chain
-  SHIPPING // Shipping & Freight
-  TRANSPORTATION // Transportation Services
-  DELIVERY // Delivery & Courier Services
-  WAREHOUSING // Warehousing & Distribution
-  
-  // Hospitality & Travel
-  HOTEL // Hotels & Accommodations
-  TRAVEL // Travel & Tourism
-  EVENT_PLANNING // Event Planning & Management
-  
-  // Energy & Utilities
-  ENERGY // Energy & Utilities
-  RENEWABLE_ENERGY // Renewable Energy
-  OIL_GAS // Oil & Gas
-  SOLAR // Solar Energy
-  
-  // Agriculture & Environment
-  AGRICULTURE // Agriculture & Farming
-  ENVIRONMENTAL // Environmental Services
-  SUSTAINABILITY // Sustainability Consulting
-  
-  // Telecommunications
-  TELECOM // Telecommunications
-  ISP // Internet Service Provider
-  
-  // Non-Profit & Social
-  NON_PROFIT // Non-Profit Organization
-  CHARITY // Charity & Philanthropy
-  SOCIAL_ENTERPRISE // Social Enterprise
-  
-  // Other
-  OTHER // Other Industry
-}
-
-// Tax ID Type Enum
-enum TaxIdType {
-  SSN // Social Security Number (US - Individual)
-  EIN // Employer Identification Number (US - Business)
-  ITIN // Individual Taxpayer Identification Number (US - Foreign Individual)
-  VAT // Value Added Tax Number (EU and many countries)
-  GST // Goods and Services Tax (Australia, India, Canada, etc.)
-  ABN // Australian Business Number
-  ACN // Australian Company Number
-  TFN // Tax File Number (Australia)
-  NINO // National Insurance Number (UK)
-  UTR // Unique Taxpayer Reference (UK)
-  CRN // Company Registration Number (UK and others)
-  TVA // Numéro de TVA (France)
-  NIF // Número de Identificación Fiscal (Spain, Portugal)
-  CIF // Código de Identificación Fiscal (Spain)
-  SIREN // Système d'Identification du Répertoire des Entreprises (France - 9 digits)
-  SIRET // Système d'Identification du Répertoire des Établissements (France - 14 digits)
-  CNPJ // Cadastro Nacional da Pessoa Jurídica (Brazil - Business)
-  CPF // Cadastro de Pessoas Físicas (Brazil - Individual)
-  RFC // Registro Federal de Contribuyentes (Mexico)
-  RUT // Rol Único Tributario (Chile, Colombia)
-  CUIT // Clave Única de Identificación Tributaria (Argentina)
-  PAN // Permanent Account Number (India)
-  GSTIN // GST Identification Number (India)
-  TIN // Tax Identification Number (Generic)
-  TRN // Tax Registration Number (UAE, Middle East)
-  OTHER // Other Tax ID Type
-}
-
-// Company Tax Information (Separate table for sensitive data)
 model CompanyTaxInfo {
-  id        String             @id @default(cuid())
-  companyId String             @unique
-  
-  // Legal entity classification
+  id          String             @id @default(cuid())
+  companyId   String             @unique
   legalEntity CompanyLegalEntity
-  
-  // Tax identification
   taxIdType   TaxIdType
-  taxId       String // Encrypted - store encrypted value for security
-  
-  // Additional tax info
-  taxCountry  String? // ISO country code where tax is registered
-  vatNumber   String? // Additional VAT number if applicable
-  
-  // Metadata
-  verifiedAt  DateTime? // When tax info was verified
-  verifiedBy  String? // User ID who verified
-  
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  taxId       String
+  taxCountry  String?
+  vatNumber   String?
+  verifiedAt  DateTime?
+  verifiedBy  String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
   @@index([companyId])
   @@index([taxCountry])
 }
 
-// AI storefront generation usage tracking
 model AiStorefrontGenerationLog {
   id        String           @id @default(cuid())
   companyId String
   userId    String
   plan      SubscriptionPlan
   createdAt DateTime         @default(now())
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([companyId, createdAt])
   @@index([userId, createdAt])
 }
 
-// V4 Conversation - Interactive design chat sessions
 model V4Conversation {
-  id        String @id @default(cuid())
-  companyId String
-  userId    String
-  phase     String @default("greeting") // Current conversation phase
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Design preferences collected during conversation
+  id             String      @id @default(cuid())
+  companyId      String
+  userId         String
+  phase          String      @default("greeting")
   heroStyle      String?
   primaryColor   String?
   secondaryColor String?
   accentColor    String?
   fontPairing    String?
   designStyle    String?
-
-  // Sections to include (JSON array of section names)
-  sections Json? // {hero: true, products: true, services: false, ...}
-
-  // Metadata
-  isComplete Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Relations
-  messages V4Message[]
-  websites V4Website[]
+  sections       Json?
+  isComplete     Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  company        Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       V4Message[]
+  websites       V4Website[]
 
   @@index([companyId])
   @@index([userId])
   @@index([companyId, isComplete])
 }
 
-// V4 Message - Individual messages in conversation
 model V4Message {
-  id             String @id @default(cuid())
+  id             String         @id @default(cuid())
   conversationId String
-  role           String // "user" or "assistant"
-  content        String @db.Text
-  phase          String // Phase when message was sent
-
-  conversation V4Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  role           String
+  content        String
+  phase          String
+  createdAt      DateTime       @default(now())
+  conversation   V4Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
 }
 
-// V4 Website - Generated websites from conversations
 model V4Website {
-  id             String  @id @default(cuid())
-  companyId      String
-  conversationId String?
-  userId         String
-
-  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  conversation V4Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Generated website data (JSON)
-  websiteData Json // Full V4Website object with pages and components
-
-  // Design preferences used
-  preferences Json // V4DesignPreferences object
-
-  // Quality metrics
-  qualityScore    Float @default(0)
-  creativityScore Float @default(0)
-
-  // Status
-  isActive    Boolean   @default(false) // Is this the live version?
-  publishedAt DateTime?
-
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String          @id @default(cuid())
+  companyId       String
+  conversationId  String?
+  userId          String
+  websiteData     Json
+  preferences     Json
+  qualityScore    Float           @default(0)
+  creativityScore Float           @default(0)
+  isActive        Boolean         @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  conversation    V4Conversation? @relation(fields: [conversationId], references: [id])
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([conversationId])
@@ -771,63 +420,48 @@ model V4Website {
   @@index([companyId, isActive])
 }
 
-// Storefront blog posts (optional blogroll for company storefronts)
 model StorefrontPost {
-  id        String  @id @default(cuid())
-  companyId String
-  authorId  String?
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  author  User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
-
-  title     String
-  slug      String
-  excerpt   String? @db.Text
-  content   String  @db.Text
-  heroImage String?
-
-  status String  @default("DRAFT") // DRAFT, PUBLISHED
-  tags   String? @db.Text // Comma-separated tags for now
-
+  id             String    @id @default(cuid())
+  companyId      String
+  authorId       String?
+  title          String
+  slug           String
+  excerpt        String?
+  content        String
+  heroImage      String?
+  status         String    @default("DRAFT")
+  tags           String?
   seoTitle       String?
-  seoDescription String? @db.Text
-
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  seoDescription String?
+  publishedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  author         User?     @relation(fields: [authorId], references: [id])
+  company        Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, slug])
   @@index([companyId])
   @@index([status])
 }
 
-// Support / Knowledge Base articles
 model SupportArticle {
-  id        String  @id @default(cuid())
-  companyId String?
-  authorId  String
-
-  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  author  User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  title    String
-  slug     String
-  summary  String? @db.Text
-  category String?
-  tags     String? @db.Text
-
-  // --- ADD THIS LINE ---
-  featuredImage String? @db.LongText
-  // ---------------------
-
-  content String @db.LongText
-
-  isGlobal        Boolean @default(false)
-  readTimeMinutes Int     @default(5)
-  status          String  @default("PUBLISHED")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  companyId       String?
+  authorId        String
+  title           String
+  slug            String
+  summary         String?
+  category        String?
+  tags            String?
+  featuredImage   String?
+  content         String
+  isGlobal        Boolean  @default(false)
+  readTimeMinutes Int      @default(5)
+  status          String   @default("PUBLISHED")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  company         Company? @relation(fields: [companyId], references: [id])
 
   @@unique([companyId, slug])
   @@index([companyId])
@@ -835,73 +469,47 @@ model SupportArticle {
   @@index([status])
 }
 
-// Testimonial Model (customer reviews/testimonials for storefront)
 model Testimonial {
-  id        String  @id @default(cuid())
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Customer info
+  id            String    @id @default(cuid())
+  companyId     String
   customerName  String
   customerEmail String
-  customerTitle String? // e.g., "CEO at TechCorp"
-  customerPhoto String? @db.LongText // Optional photo URL (base64 or long URL)
-
-  // Testimonial content
-  rating      Int    @default(5) // 1-5 stars
-  testimonial String @db.Text
-
-  // Approval workflow
-  status     String    @default("PENDING") // PENDING, APPROVED, REJECTED
-  approvedBy String? // User ID who approved/rejected
-  approvedAt DateTime?
-
-  // Display settings
-  isFeatured   Boolean @default(false) // Show on homepage
-  displayOrder Int     @default(0) // Order to display testimonials
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  customerTitle String?
+  customerPhoto String?
+  rating        Int       @default(5)
+  testimonial   String
+  status        String    @default("PENDING")
+  approvedBy    String?
+  approvedAt    DateTime?
+  isFeatured    Boolean   @default(false)
+  displayOrder  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([status])
   @@index([isFeatured])
+  @@unique([customerEmail, companyId])
 }
 
-// Subscription Model (tracks root company ↔ subscriber company relationship)
 model Subscription {
-  id String @id @default(cuid())
-
-  // Root company (OnTarget ERP - the SaaS provider)
-  rootCompanyId String
-  rootCompany   Company @relation("RootCompany", fields: [rootCompanyId], references: [id], onDelete: Cascade)
-
-  // Subscriber company (customer company like "Ghada Co")
-  subscriberCompanyId String
-  subscriberCompany   Company @relation("SubscriberCompany", fields: [subscriberCompanyId], references: [id], onDelete: Cascade)
-
-  // Subscription details
-  plan         SubscriptionPlan   @default(ESSENTIAL)
-  status       SubscriptionStatus @default(TRIAL)
-  billingCycle BillingCycle       @default(MONTHLY) // Monthly or Annual billing
-
-  // Trial and billing dates
-  trialEndsAt       DateTime? // 30 days from creation by default
-  billingCycleStart DateTime? // When active subscription starts
-  billingCycleEnd   DateTime? // Next billing date
-
-  // External provider reference (Stripe subscription id, etc.)
+  rootCompanyId          String
+  subscriberCompanyId    String
+  plan                   SubscriptionPlan   @default(ESSENTIAL)
+  status                 SubscriptionStatus @default(TRIAL)
+  billingCycle           BillingCycle       @default(MONTHLY)
+  trialEndsAt            DateTime?
+  billingCycleStart      DateTime?
+  billingCycleEnd        DateTime?
   externalSubscriptionId String?
-
-  // Promo code applied
-  promoCodeId String?
-  promoCode   PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
-
-  // Metadata
-  notes String? @db.Text
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  promoCodeId            String?
+  notes                  String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  promoCode              PromoCode?         @relation(fields: [promoCodeId], references: [id])
+  rootCompany            Company            @relation("RootCompany", fields: [rootCompanyId], references: [id], onDelete: Cascade)
+  subscriberCompany      Company            @relation("SubscriberCompany", fields: [subscriberCompanyId], references: [id], onDelete: Cascade)
 
   @@unique([rootCompanyId, subscriberCompanyId])
   @@index([rootCompanyId])
@@ -910,181 +518,103 @@ model Subscription {
   @@index([plan])
   @@index([trialEndsAt])
   @@index([promoCodeId])
-  // composite index to quickly find the subscription for a subscriber by status
   @@index([subscriberCompanyId, status])
 }
 
-// Subscription Status Enum
-enum SubscriptionStatus {
-  TRIAL // In trial period (30 days default)
-  ACTIVE // Paid and active
-  PAST_DUE // Payment failed/overdue
-  SUSPENDED // Suspended by admin or system
-  CANCELLED // Cancelled subscription
-}
-
-// Billing Cycle Enum
-enum BillingCycle {
-  MONTHLY // Billed monthly
-  ANNUAL // Billed annually (discounted)
-}
-
-// Location Type Enum
-enum LocationType {
-  HEADQUARTERS // Main office
-  BRANCH // Branch office
-  OFFICE // Additional office
-  WAREHOUSE // Warehouse/Distribution center
-}
-
-// Company Locations (multi-location support for branches, offices, etc.)
 model CompanyLocation {
-  id        String  @id @default(cuid())
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Location info
-  name   String // e.g., "Headquarters", "Los Angeles Branch"
-  type   LocationType @default(BRANCH) // Type of location
-  isMain Boolean      @default(false) // Is this the main/primary location?
-
-  // Address fields
-  addressLine1 String
-  addressLine2 String?
-  city         String
-  state        String?
-  country      String
-  postalCode   String?
-
-  // Geolocation data (from Photon API or manual entry)
-  latitude  Float
-  longitude Float
-
-  // Metadata
-  phone String?
-  email String?
-  hours String? @db.Text // Business hours (formatted text or JSON)
-  notes String? @db.Text // Additional notes about this location
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String       @id @default(cuid())
+  companyId        String
+  name             String
+  type             LocationType @default(BRANCH)
+  isMain           Boolean      @default(false)
+  addressLine1     String
+  addressLine2     String?
+  city             String
+  state            String?
+  country          String
+  postalCode       String?
+  latitude         Float
+  longitude        Float
+  phone            String?
+  email            String?
+  hours            String?
+  notes            String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  primaryAddressId String?      @unique
+  addresses        Address[]    @relation("CompanyLocationAddresses")
+  company          Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  primaryAddress   Address?     @relation("CompanyLocationPrimary", fields: [primaryAddressId], references: [id])
+  products         Product[]
 
   @@index([companyId])
   @@index([isMain])
-  // Composite: quick lookup of main location for a company
   @@index([companyId, isMain])
 }
 
-// Company Member (Junction table for User-Company relationship)
 model CompanyMember {
   id        String            @id @default(cuid())
   userId    String
   companyId String
-  role      CompanyMemberRole @default(STAFF)
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  joinedAt  DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      CompanyMemberRole @default(COMPANY_STAFF)
+  joinedAt  DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, companyId])
   @@index([userId])
   @@index([companyId])
   @@index([role])
-  // composite: quick queries for members by company and role
   @@index([companyId, role])
 }
 
-// Company Member Role Enum (separate from UserRole)
-enum CompanyMemberRole {
-  ADMIN
-  MANAGER
-  STAFF
-  CONTRACTOR
-  SUPPLIER
-  COMPANY_CUSTOMER
-  ERP_CUSTOMER
-  GUEST
-  AUDITOR
-}
-
-// Company Staff (Enhanced employee tracking)
 model CompanyStaff {
-  id String @id @default(cuid())
-
-  // Links to User and Company
-  userId    String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Employment details
-  role           CompanyMemberRole @default(STAFF)
-  jobTitle       String? // Job title (free text - e.g., Sales Rep, Manager, Developer)
-  employmentType EmploymentType    @default(FULL_TIME)
-  status         EmploymentStatus  @default(ACTIVE)
-
-  // Dates
-  hireDate        DateTime  @default(now())
-  terminationDate DateTime?
-
-  // Location (captured from user at time of hiring)
-  city        String?
-  state       String?
-  country     String?
-  countryCode String?
-  countryFlag String?
-
-  // Metadata
-  notes String? @db.Text
-
-  // Storefront/Public Profile
-  isFeatured   Boolean @default(false) // Show in "Meet the Team" section
-  bio          String? @db.Text // Public bio for storefront
-  displayOrder Int?    @default(0) // Order in team section
-
-  // Project Management relations
-  teamMemberships         TeamMember[]
-  managedProjects         Project[]               @relation("ProjectManager")
-  ledProjects             Project[]               @relation("TeamLead")
-  createdTasks            Task[]                  @relation("TaskCreator")
-  assignedTasks           Task[]                  @relation("TaskAssignee")
-  projectNotes            ProjectNote[]
-  projectDocuments        ProjectDocument[]       @relation("ProjectDocumentUploader")
-  projectFinancialEntries ProjectFinancialEntry[] @relation("ProjectFinancialEntryCreator")
-
-  // Financial relations
-  payrollEntries PayrollEntry[]
-  expenseEntries ExpenseEntry[]
-
-  // HR/Onboarding relations
-  employmentDocuments EmploymentDocument[]
-  onboardingComplete  Boolean              @default(false)
-  canReceivePayroll   Boolean              @default(false) // Requires approved docs
-  onboardingToken     OnboardingToken? // One-to-one relation
-  isActive            Boolean              @default(true) // Account active status (disabled after 48h if onboarding incomplete)
-
-  // Time tracking
-  timeEntries TimeEntry[]
-
-  // Payroll jurisdiction
-  payrollJurisdictionId String?
-  payrollJurisdiction   PayrollJurisdiction? @relation(fields: [payrollJurisdictionId], references: [id])
-
-  // Employment classification
-  employmentClassification String? // "W2_EMPLOYEE", "1099_CONTRACTOR", "INTERNATIONAL_CONTRACTOR"
-
-  // Compensation
-  payRate      Decimal? @db.Decimal(10, 2) // Hourly or annual
-  payFrequency String?  @default("HOURLY") // "HOURLY", "SALARY_ANNUAL", "SALARY_BIWEEKLY"
-  currency     String?  @default("USD") // ISO currency code
-
-  // Tax withholding (from W-4 or equivalent)
-  taxWithholdingConfig Json? // Marital status, allowances, additional withholding
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                       String                  @id @default(cuid())
+  userId                   String
+  companyId                String
+  role                     CompanyMemberRole       @default(COMPANY_STAFF)
+  jobTitle                 String?
+  employmentType           EmploymentType          @default(FULL_TIME)
+  status                   EmploymentStatus        @default(ACTIVE)
+  hireDate                 DateTime                @default(now())
+  terminationDate          DateTime?
+  city                     String?
+  state                    String?
+  country                  String?
+  countryCode              String?
+  countryFlag              String?
+  notes                    String?
+  isFeatured               Boolean                 @default(false)
+  bio                      String?
+  displayOrder             Int?                    @default(0)
+  onboardingComplete       Boolean                 @default(false)
+  canReceivePayroll        Boolean                 @default(false)
+  isActive                 Boolean                 @default(true)
+  payrollJurisdictionId    String?
+  employmentClassification String?
+  payRate                  Decimal?                @db.Decimal(10, 2)
+  payFrequency             String?                 @default("HOURLY")
+  currency                 String?                 @default("USD")
+  taxWithholdingConfig     Json?
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  company                  Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payrollJurisdiction      PayrollJurisdiction?    @relation(fields: [payrollJurisdictionId], references: [id])
+  user                     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employmentDocuments      EmploymentDocument[]
+  expenseEntries           ExpenseEntry[]
+  onboardingToken          OnboardingToken?
+  payrollEntries           PayrollEntry[]
+  managedProjects          Project[]               @relation("ProjectManager")
+  ledProjects              Project[]               @relation("TeamLead")
+  projectDocuments         ProjectDocument[]       @relation("ProjectDocumentUploader")
+  projectFinancialEntries  ProjectFinancialEntry[] @relation("ProjectFinancialEntryCreator")
+  projectNotes             ProjectNote[]
+  assignedTasks            Task[]                  @relation("TaskAssignee")
+  createdTasks             Task[]                  @relation("TaskCreator")
+  teamMemberships          TeamMember[]
+  timeEntries              TimeEntry[]
 
   @@unique([userId, companyId])
   @@index([userId])
@@ -1094,69 +624,44 @@ model CompanyStaff {
   @@index([status])
   @@index([hireDate])
   @@index([payrollJurisdictionId])
-  @@index([jobTitle]) // Index for grouping/filtering by job title
+  @@index([jobTitle])
 }
 
-// Employment Type Enum
-enum EmploymentType {
-  FULL_TIME // FT
-  PART_TIME // PT
-  CONTRACTOR_1099 // 1099
-  SEASONAL // Seasonal
-}
-
-// Employment Status Enum
-enum EmploymentStatus {
-  ACTIVE
-  ON_LEAVE
-  TERMINATED
-  SUSPENDED
-}
-
-// Audit Log
 model AuditLog {
-  id          String  @id @default(cuid())
-  action      String // Action type (e.g., "CREATED", "EDITED", "DELETED", "LOGIN", etc.)
-  entityType  String? // Type of entity affected (e.g., "Product", "Service", "Order")
-  entityId    String? // ID of the affected entity
-  description String? @db.Text
-  metadata    String? @db.Text // JSON string for additional data
-
-  // User who performed the action (optional for system-level actions)
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Company context (null for SUPER_ADMIN actions that aren't company-specific)
-  companyId String?
-  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Location tracking (from session/request)
+  id          String    @id @default(cuid())
+  action      String
+  entityType  String?
+  entityId    String?
+  description String?
+  metadata    String?
+  userId      String?
+  companyId   String?
   ipAddress   String?
+  deletedAt   DateTime?
   ipv4        String?
   ipv6        String?
   city        String?
   state       String?
   country     String?
   countryFlag String?
-
-  createdAt DateTime @default(now())
+  createdAt   DateTime  @default(now())
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: NoAction)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: NoAction)
 
   @@index([userId])
   @@index([companyId])
   @@index([action])
   @@index([entityType])
   @@index([createdAt])
-  // composite index to enable fast retrieval of recent logs for a company
   @@index([companyId, createdAt])
 }
 
-// Geo Tracking Settings
 model GeoTrackingSetting {
   id        String   @id @default(cuid())
   enabled   Boolean  @default(false)
-  provider  String   @default("IP_API") // "IP_API", "IPINFO", "IPGEOLOCATION"
-  apiKey    String?  @db.Text // Encrypted API key (required for IPINFO and IPGEOLOCATION)
-  apiUrl    String? // Custom API URL override
+  provider  String   @default("IP_API")
+  apiKey    String?
+  apiUrl    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1164,54 +669,45 @@ model GeoTrackingSetting {
   @@index([provider])
 }
 
-// Persisted enriched geolocation records for IPs
 model GeoLocationRecord {
-  id          String   @id @default(cuid())
-  ip          String
-  ipv4        String?
-  ipv6        String?
-  provider    String
-  providerRaw Json?   @db.Json
-
-  city        String?
-  region      String?
-  regionName  String?
-  district    String?
-  zip         String?
-
-  countryName String?
-  countryCode String?
-  continent   String?
+  id            String   @id @default(cuid())
+  ip            String
+  ipv4          String?
+  ipv6          String?
+  provider      String
+  providerRaw   Json?
+  city          String?
+  region        String?
+  regionName    String?
+  district      String?
+  zip           String?
+  countryName   String?
+  countryCode   String?
+  continent     String?
   continentCode String?
-
-  isp         String?
-  org         String?
-  as          String?
-  asName      String?
-
-  mobile      Boolean?
-  proxy       Boolean?
-  hosting     Boolean?
-
-  dnsGeo      String?
-  dnsIp       String?
-
-  latitude    Decimal? @db.Decimal(9,6)
-  longitude   Decimal? @db.Decimal(9,6)
-  timezone    String?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isp           String?
+  org           String?
+  as            String?
+  asName        String?
+  mobile        Boolean?
+  proxy         Boolean?
+  hosting       Boolean?
+  dnsGeo        String?
+  dnsIp         String?
+  latitude      Decimal? @db.Decimal(9, 6)
+  longitude     Decimal? @db.Decimal(9, 6)
+  timezone      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([ip])
   @@index([countryCode])
   @@index([createdAt])
 }
 
-// OAuth Provider Settings (currently system-wide, can be made per-company in future)
 model OAuthProviderSetting {
   id           String   @id @default(cuid())
-  provider     String   @unique // "google" or "microsoft"
+  provider     String   @unique
   enabled      Boolean  @default(false)
   clientId     String?
   clientSecret String?
@@ -1222,26 +718,23 @@ model OAuthProviderSetting {
   @@index([enabled])
 }
 
-// Company-specific OAuth Settings (overrides global settings for specific company)
 model CompanyOAuthSetting {
   id           String   @id @default(cuid())
   companyId    String
-  provider     String // "google" or "microsoft"
+  provider     String
   enabled      Boolean  @default(false)
   clientId     String?
   clientSecret String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  company      Company  @relation("CompanyOAuthSettings", fields: [companyId], references: [id], onDelete: Cascade)
 
-  company Company @relation("CompanyOAuthSettings", fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@unique([companyId, provider]) // One OAuth setting per provider per company
+  @@unique([companyId, provider])
   @@index([companyId])
   @@index([provider])
   @@index([enabled])
 }
 
-// Visitor Tracking (for non-logged in visitors)
 model VisitorTracking {
   id          String   @id @default(cuid())
   ipAddress   String
@@ -1260,51 +753,42 @@ model VisitorTracking {
   @@index([visitedAt])
 }
 
-// Product Model
 model Product {
-  id                  String   @id @default(cuid())
-  name                String
-  description         String?  @db.Text
-  price               Decimal  @db.Decimal(10, 2)
-  unitCost            Decimal? @db.Decimal(13, 2)
-  markupPercent       Decimal? @db.Decimal(5, 2)
-  markupAmount        Decimal? @db.Decimal(13, 2)
-  profitMarginPercent Decimal? @db.Decimal(5, 2)
-  sku                 String?
-  category            String?
-  isPublished         Boolean  @default(true)
-  isFeatured          Boolean  @default(false)
-  isActive            Boolean  @default(true)
-
-  // Inventory fields
-  quantity       Int     @default(0)
-  lowStockAlert  Int?    @default(10)
-  trackInventory Boolean @default(true)
-
-  // Address fields
-  addressLine1 String?
-  addressLine2 String?
-  city         String?
-  state        String?
-  country      String?
-  countryCode  String?
-  postalCode   String?
-  latitude     Float?
-  longitude    Float?
-
-  // Company relationship
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Images
-  images ProductImage[]
-
-  // Storefront relations
+  id                   String                @id @default(cuid())
+  name                 String
+  slug                 String?               @unique
+  description          String?
+  price                Decimal               @db.Decimal(10, 2)
+  unitCost             Decimal?              @db.Decimal(13, 2)
+  markupPercent        Decimal?              @db.Decimal(5, 2)
+  markupAmount         Decimal?              @db.Decimal(13, 2)
+  profitMarginPercent  Decimal?              @db.Decimal(5, 2)
+  sku                  String?
+  category             String?
+  isPublished          Boolean               @default(true)
+  isFeatured           Boolean               @default(false)
+  isActive             Boolean               @default(true)
+  quantity             Int                   @default(0)
+  lowStockAlert        Int?                  @default(10)
+  trackInventory       Boolean               @default(true)
+  addressLine1         String?
+  addressLine2         String?
+  city                 String?
+  state                String?
+  country              String?
+  countryCode          String?
+  postalCode           String?
+  latitude             Float?
+  longitude            Float?
+  companyLocationId    String?
+  companyId            String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
   cartItems            CartItem[]
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyLocation      CompanyLocation?      @relation(fields: [companyLocationId], references: [id], onDelete: Cascade)
+  images               ProductImage[]
   storefrontOrderItems StorefrontOrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@index([name])
@@ -1314,62 +798,51 @@ model Product {
   @@index([isActive])
 }
 
-// Product Image Model
 model ProductImage {
-  id         String  @id @default(cuid())
-  url        String  @db.LongText // Support base64 data URLs and file paths
-  isFeatured Boolean @default(false)
-  order      Int     @default(0)
-
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  url        String
+  isFeatured Boolean  @default(false)
+  order      Int      @default(0)
+  altText    String?
+  productId  String
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id], onDelete: NoAction)
 
   @@index([productId])
   @@index([isFeatured])
 }
 
-// Service Model
 model Service {
-  id                  String   @id @default(cuid())
-  name                String
-  description         String?  @db.Text
-  price               Decimal  @db.Decimal(10, 2)
-  unitCost            Decimal? @db.Decimal(13, 2)
-  markupPercent       Decimal? @db.Decimal(5, 2)
-  markupAmount        Decimal? @db.Decimal(13, 2)
-  profitMarginPercent Decimal? @db.Decimal(5, 2)
-  duration            String? // e.g., "1 hour", "2 days", etc.
-  category            String?
-  isPublished         Boolean  @default(true)
-  isFeatured          Boolean  @default(false)
-  isActive            Boolean  @default(true)
-
-  // Address fields (where service is provided)
-  addressLine1 String?
-  addressLine2 String?
-  city         String?
-  state        String?
-  country      String?
-  countryCode  String?
-  postalCode   String?
-  latitude     Float?
-  longitude    Float?
-
-  // Company relationship
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Images
-  images ServiceImage[]
-
-  // Storefront relations
+  id                   String                @id @default(cuid())
+  name                 String
+  slug                 String?               @unique
+  description          String?
+  price                Decimal               @db.Decimal(10, 2)
+  unitCost             Decimal?              @db.Decimal(13, 2)
+  markupPercent        Decimal?              @db.Decimal(5, 2)
+  markupAmount         Decimal?              @db.Decimal(13, 2)
+  profitMarginPercent  Decimal?              @db.Decimal(5, 2)
+  duration             String?
+  category             String?
+  isPublished          Boolean               @default(true)
+  isFeatured           Boolean               @default(false)
+  isActive             Boolean               @default(true)
+  addressLine1         String?
+  addressLine2         String?
+  city                 String?
+  state                String?
+  country              String?
+  countryCode          String?
+  postalCode           String?
+  latitude             Float?
+  longitude            Float?
+  companyId            String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
   cartItems            CartItem[]
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  images               ServiceImage[]
   storefrontOrderItems StorefrontOrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@index([name])
@@ -1379,118 +852,87 @@ model Service {
   @@index([isActive])
 }
 
-// Service Image Model
 model ServiceImage {
-  id         String  @id @default(cuid())
-  url        String  @db.LongText // Support base64 data URLs and file paths
-  isFeatured Boolean @default(false)
-  order      Int     @default(0)
-
-  serviceId String
-  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  url        String
+  isFeatured Boolean  @default(false)
+  order      Int      @default(0)
+  altText    String?
+  serviceId  String
+  createdAt  DateTime @default(now())
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@index([serviceId])
   @@index([isFeatured])
 }
 
-// ==========================================
-// STOREFRONT MODELS
-// ==========================================
-
-// Shopping Cart Model
 model Cart {
-  id        String  @id @default(cuid())
-  sessionId String? @unique // For guest users (anonymous cart)
-  userId    String? // For logged-in users
-  companyId String // Company whose store this cart belongs to
-
-  company Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user    User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items   CartItem[]
-
-  expiresAt DateTime? // Auto-cleanup old carts
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id        String     @id @default(cuid())
+  sessionId String?    @unique
+  userId    String?
+  companyId String
+  expiresAt DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
 
   @@index([sessionId])
   @@index([userId])
   @@index([companyId])
   @@index([expiresAt])
-  // composite: fast lookup for user carts scoped to a company
   @@index([userId, companyId])
 }
 
-// Cart Item Model
 model CartItem {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   cartId    String
   productId String?
   serviceId String?
-  quantity  Int     @default(1)
-  price     Decimal @db.Decimal(10, 2) // Price at time of adding to cart
-
-  cart    Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
-  service Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
+  quantity  Int      @default(1)
+  price     Decimal  @db.Decimal(10, 2)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  service   Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@index([cartId])
   @@index([productId])
   @@index([serviceId])
 }
 
-// Storefront Order Model
 model StorefrontOrder {
-  id          String  @id @default(cuid())
-  orderNumber String  @unique // Human-readable: "ORD-2024-001234"
-  companyId   String // Company receiving the order
-  userId      String? // NULL for guest orders
-
-  // Customer information (for guest orders or snapshot for logged-in)
-  customerEmail String
-  customerName  String
-  customerPhone String?
-
-  // Shipping/Billing address
-  shippingAddress Json? // { line1, line2, city, state, country, postalCode }
-  billingAddress  Json? // Same structure
-
-  // Order status
-  status        StorefrontOrderStatus @default(PENDING)
-  paymentStatus PaymentStatus         @default(PENDING)
-
-  // Financial
-  subtotal Decimal @db.Decimal(10, 2)
-  tax      Decimal @default(0) @db.Decimal(10, 2)
-  shipping Decimal @default(0) @db.Decimal(10, 2)
-  discount Decimal @default(0) @db.Decimal(10, 2)
-  total    Decimal @db.Decimal(10, 2)
-
-  // Payment details
-  paymentMethod String? // "credit_card", "paypal", "stripe", etc.
-  paymentId     String? // External payment provider transaction ID
-
-  // Fulfillment
-  shippedAt   DateTime?
-  deliveredAt DateTime?
-  canceledAt  DateTime?
-
-  // Notes
-  customerNotes String? @db.Text
-  internalNotes String? @db.Text
-
-  // Relations
-  company  Company               @relation("StorefrontOrders", fields: [companyId], references: [id], onDelete: Cascade)
-  user     User?                 @relation("StorefrontOrders", fields: [userId], references: [id], onDelete: SetNull)
-  items    StorefrontOrderItem[]
-  payments Payment[] // Payment transactions for this order
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String                @id @default(cuid())
+  orderNumber     String                @unique
+  companyId       String
+  userId          String?
+  customerEmail   String
+  customerName    String
+  customerPhone   String?
+  shippingAddress Json?
+  billingAddress  Json?
+  status          StorefrontOrderStatus @default(PENDING)
+  paymentStatus   PaymentStatus         @default(PENDING)
+  subtotal        Decimal               @db.Decimal(10, 2)
+  tax             Decimal               @default(0) @db.Decimal(10, 2)
+  shipping        Decimal               @default(0) @db.Decimal(10, 2)
+  discount        Decimal               @default(0) @db.Decimal(10, 2)
+  total           Decimal               @db.Decimal(10, 2)
+  paymentMethod   String?
+  paymentId       String?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  canceledAt      DateTime?
+  customerNotes   String?
+  internalNotes   String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  payments        Payment[]
+  company         Company               @relation("StorefrontOrders", fields: [companyId], references: [id], onDelete: Cascade)
+  user            User?                 @relation("StorefrontOrders", fields: [userId], references: [id])
+  items           StorefrontOrderItem[]
 
   @@index([companyId])
   @@index([userId])
@@ -1499,174 +941,112 @@ model StorefrontOrder {
   @@index([paymentStatus])
   @@index([customerEmail])
   @@index([createdAt])
-  // composite indexes to improve company-scoped status filters and recent order queries
   @@index([companyId, status])
   @@index([companyId, createdAt])
 }
 
-// Storefront Order Item Model
 model StorefrontOrderItem {
-  id        String  @id @default(cuid())
+  id        String          @id @default(cuid())
   orderId   String
   productId String?
   serviceId String?
-
-  // Snapshot at time of order (in case product/service changes later)
-  itemName String
-  itemSku  String?
-  quantity Int
-  price    Decimal @db.Decimal(10, 2) // Unit price
-  total    Decimal @db.Decimal(10, 2) // quantity * price
-
-  // Relations
-  order   StorefrontOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
-  service Service?        @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
+  itemName  String
+  itemSku   String?
+  quantity  Int
+  price     Decimal         @db.Decimal(10, 2)
+  total     Decimal         @db.Decimal(10, 2)
+  createdAt DateTime        @default(now())
+  order     StorefrontOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product?        @relation(fields: [productId], references: [id])
+  service   Service?        @relation(fields: [serviceId], references: [id])
 
   @@index([orderId])
   @@index([productId])
   @@index([serviceId])
 }
 
-// ============================================
-// PAYMENT SYSTEM MODELS
-// ============================================
-
-// Payment Gateway Configuration (per company)
 model PaymentGateway {
-  id        String @id @default(cuid())
-  companyId String
-
-  // Provider details
-  provider   String // "stripe", "paypal", "square", "authorize_net"
-  isEnabled  Boolean @default(false)
-  isTestMode Boolean @default(true) // Test vs Production environment
-
-  // Encrypted credentials (use encryption library before storing)
-  publicKey             String? @db.Text // Publishable/Public key (less sensitive)
-  secretKey             String? @db.Text // Secret/Private key (ENCRYPTED)
-  webhookSecret         String? @db.Text // Webhook signing secret (ENCRYPTED)
-  merchantId            String? // Additional provider-specific ID
-  stripeConnectClientId String? @db.Text // Stripe Connect OAuth Client ID (for marketplace platform fees)
-
-  // Configuration
-  config Json? // Provider-specific settings: { currency: "USD", statementDescriptor: "MyStore" }
-
-  // Audit
-  configuredBy   String? // User ID who configured
-  lastTestedAt   DateTime?
-  lastTestResult String? // "success", "failed"
-
-  // Relations
-  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  payments Payment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String    @id @default(cuid())
+  companyId             String
+  provider              String
+  isEnabled             Boolean   @default(false)
+  isTestMode            Boolean   @default(true)
+  publicKey             String?
+  secretKey             String?
+  webhookSecret         String?
+  merchantId            String?
+  stripeConnectClientId String?
+  config                Json?
+  configuredBy          String?
+  lastTestedAt          DateTime?
+  lastTestResult        String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  payments              Payment[]
+  company               Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([provider])
   @@index([isEnabled])
 }
 
-// Plaid Bank Account (per company)
 model PlaidAccount {
-  id        String @id @default(cuid())
-  companyId String
-
-  // Plaid tokens (ENCRYPTED before storing)
-  accessToken String @db.Text // Plaid access token (ENCRYPTED)
-  itemId      String // Plaid item ID
-
-  // Bank account details
-  accountId      String
-  accountName    String? // "Business Checking"
-  accountMask    String? // Last 4 digits
-  accountType    String? // "checking", "savings"
-  accountSubtype String? // "business_checking"
-
-  // Institution info
+  id              String    @id @default(cuid())
+  companyId       String
+  accessToken     String
+  itemId          String
+  accountId       String
+  accountName     String?
+  accountMask     String?
+  accountType     String?
+  accountSubtype  String?
   institutionId   String?
   institutionName String?
-
-  // Status
-  isActive Boolean @default(true)
-
-  // Audit
-  linkedBy   String? // User ID who linked
-  lastSyncAt DateTime?
-
-  // Relations
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive        Boolean   @default(true)
+  linkedBy        String?
+  lastSyncAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([accountId])
 }
 
-// Invoice Model (subscription billing, custom invoices)
 model Invoice {
-  id            String  @id @default(cuid())
-  invoiceNumber String  @unique // "INV-2024-001234"
-  companyId     String // Company issuing the invoice
-  userId        String? // User/customer receiving the invoice (NULL for external customers)
+  id                 String        @id @default(cuid())
+  invoiceNumber      String        @unique
+  companyId          String
+  userId             String?
+  externalInvoiceId  String?       @unique
+  externalInvoiceUrl String?
+  type               InvoiceType   @default(CUSTOM)
+  status             InvoiceStatus @default(DRAFT)
+  customerEmail      String?
+  customerName       String?
+  customerPhone      String?
+  amount             Decimal       @db.Decimal(10, 2)
+  tax                Decimal       @default(0) @db.Decimal(10, 2)
+  discount           Decimal       @default(0) @db.Decimal(10, 2)
+  total              Decimal       @db.Decimal(10, 2)
+  items              Json
+  issueDate          DateTime      @default(now())
+  dueDate            DateTime
+  paidAt             DateTime?
+  paymentMethod      String?
+  notes              String?
+  terms              String?
+  internalNotes      String?
+  createdBy          String?
+  sentAt             DateTime?
+  fileRecordId       String?       @unique
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  company            Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  fileRecord         FileRecord?   @relation(fields: [fileRecordId], references: [id])
+  user               User?         @relation(fields: [userId], references: [id])
+  payments           Payment[]
 
-  // External provider linkage
-  externalInvoiceId  String? // External provider invoice id (Stripe invoice id)
-  externalInvoiceUrl String? // Hosted invoice URL or PDF
-
-  // Invoice type and status
-  type   InvoiceType   @default(CUSTOM)
-  status InvoiceStatus @default(DRAFT)
-
-  // Customer information (for external customers)
-  customerEmail String?
-  customerName  String?
-  customerPhone String?
-
-  // Financial
-  amount   Decimal @db.Decimal(10, 2) // Subtotal before tax
-  tax      Decimal @default(0) @db.Decimal(10, 2)
-  discount Decimal @default(0) @db.Decimal(10, 2)
-  total    Decimal @db.Decimal(10, 2) // Final amount due
-
-  // Line items
-  items Json // [{ description, quantity, unitPrice, amount }]
-
-  // Dates
-  issueDate DateTime  @default(now())
-  dueDate   DateTime
-  paidAt    DateTime?
-
-  // Payment tracking
-  paymentMethod String? // How was it paid
-
-  // Metadata
-  notes         String? @db.Text // Customer-visible notes
-  terms         String? @db.Text // Payment terms
-  internalNotes String? @db.Text // Staff notes (not visible to customer)
-
-  // Audit
-  createdBy String? // User ID who created
-  sentAt    DateTime?
-
-  // File storage relation
-  fileRecordId String?     @unique // Link to PDF file in file tree
-  fileRecord   FileRecord? @relation(fields: [fileRecordId], references: [id], onDelete: SetNull)
-
-  // Relations
-  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  payments Payment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([externalInvoiceId])
   @@index([companyId])
   @@index([userId])
   @@index([invoiceNumber])
@@ -1676,53 +1056,36 @@ model Invoice {
   @@index([fileRecordId])
 }
 
-// Payment Transaction Model (universal payment records)
 model Payment {
-  id        String @id @default(cuid())
-  companyId String // Company receiving the payment
-
-  // Payment source
-  gatewayId String? // Payment gateway used (NULL for cash/check/ACH)
-  invoiceId String? // Invoice being paid (NULL for direct storefront orders)
-  orderId   String? // Storefront order (NULL for invoice payments)
-
-  // Payment details
-  amount        Decimal                  @db.Decimal(10, 2)
-  currency      String                   @default("USD")
-  status        PaymentTransactionStatus @default(PENDING)
-  paymentMethod String? // "credit_card", "debit_card", "paypal", "ach", "cash", "check"
-
-  // External provider details
-  gatewayReference String? // Provider's transaction ID (Stripe charge ID, PayPal transaction ID)
-  gatewayResponse  Json? // Full provider response
-
-  // Customer info (snapshot)
-  customerEmail String?
-  customerName  String?
-
-  // Processing details
-  processedAt DateTime?
-  failedAt    DateTime?
-  refundedAt  DateTime?
-
-  // Refund details
-  refundAmount    Decimal? @db.Decimal(10, 2)
-  refundReason    String?
-  refundReference String? // Provider's refund ID
-
-  // Metadata
-  description String? // Payment description
-  metadata    Json? // Additional data
-  notes       String? @db.Text
-
-  // Relations
-  company Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  gateway PaymentGateway?  @relation(fields: [gatewayId], references: [id], onDelete: SetNull)
-  invoice Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
-  order   StorefrontOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String                   @id @default(cuid())
+  companyId        String
+  gatewayId        String?
+  invoiceId        String?
+  orderId          String?
+  amount           Decimal                  @db.Decimal(10, 2)
+  currency         String                   @default("USD")
+  status           PaymentTransactionStatus @default(PENDING)
+  paymentMethod    String?
+  gatewayReference String?
+  gatewayResponse  Json?
+  customerEmail    String?
+  customerName     String?
+  deletedAt        DateTime?
+  processedAt      DateTime?
+  failedAt         DateTime?
+  refundedAt       DateTime?
+  refundAmount     Decimal?                 @db.Decimal(10, 2)
+  refundReason     String?
+  refundReference  String?
+  description      String?
+  metadata         Json?
+  notes            String?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  company          Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  gateway          PaymentGateway?          @relation(fields: [gatewayId], references: [id])
+  invoice          Invoice?                 @relation(fields: [invoiceId], references: [id])
+  order            StorefrontOrder?         @relation(fields: [orderId], references: [id])
 
   @@index([companyId])
   @@index([gatewayId])
@@ -1733,32 +1096,20 @@ model Payment {
   @@index([gatewayReference])
 }
 
-// Payment Webhook Model (audit trail for webhook events)
 model PaymentWebhook {
-  id String @id @default(cuid())
-
-  // Provider info
-  provider  String // "stripe", "paypal", "square"
-  eventType String // "payment.succeeded", "payment.failed", etc.
-  eventId   String? @unique // Provider's event ID
-
-  // Webhook data
-  payload   Json // Full webhook payload
-  signature String? // Webhook signature for verification
-
-  // Processing status
+  id              String    @id @default(cuid())
+  provider        String
+  eventType       String
+  eventId         String?   @unique
+  payload         Json
+  signature       String?
   processed       Boolean   @default(false)
   processedAt     DateTime?
-  processingError String?   @db.Text
-
-  // Matched payment
-  paymentId String? // Payment record created/updated from this webhook
-
-  // Request details
-  ipAddress String?
-  userAgent String?
-
-  createdAt DateTime @default(now())
+  processingError String?
+  paymentId       String?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime  @default(now())
 
   @@index([provider])
   @@index([eventType])
@@ -1766,80 +1117,10 @@ model PaymentWebhook {
   @@index([eventId])
 }
 
-// Invoice Type Enum
-enum InvoiceType {
-  SUBSCRIPTION // Subscription billing (Essential, Growth, Enterprise plans)
-  TRIAL_SUBSCRIPTION // Trial subscription invoice (generated after trial expires)
-  STOREFRONT // Storefront order invoice
-  CUSTOM // Custom invoice created by staff
-  RECURRING // Recurring invoice (auto-generated)
-}
-
-// Payment Transaction Status Enum
-enum PaymentTransactionStatus {
-  PENDING // Payment initiated
-  PROCESSING // Being processed by gateway
-  SUCCEEDED // Payment successful
-  FAILED // Payment failed
-  CANCELED // Payment canceled
-  REFUNDED // Fully refunded
-  PARTIALLY_REFUNDED // Partially refunded
-}
-
-// Storefront Order Status Enum
-enum StorefrontOrderStatus {
-  PENDING // Order placed, awaiting payment
-  CONFIRMED // Payment received
-  PROCESSING // Being prepared/packed
-  SHIPPED // On the way
-  DELIVERED // Completed
-  CANCELED // Canceled by customer or company
-  REFUNDED // Payment refunded
-}
-
-// Payment Status Enum
-enum PaymentStatus {
-  PENDING // Awaiting payment
-  PAID // Payment successful
-  FAILED // Payment failed
-  REFUNDED // Refunded to customer
-}
-
-// Security: Failed Login Attempt Tracking
 model FailedLoginAttempt {
   id          String   @id @default(cuid())
-  email       String // Email attempted (even if doesn't exist)
-  ipAddress   String // Primary IP
-  ipv4        String?
-  ipv6        String?
-  city        String?
-  state       String?
-  country     String?
-  countryCode String?
-  countryFlag String? // Flag emoji
-  latitude    Float?
-  longitude   Float?
-  timezone    String?
-  userAgent   String? // Browser info
-  attemptedAt DateTime @default(now())
-
-  // If user exists, link to them
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([email])
-  @@index([ipAddress])
-  @@index([attemptedAt])
-  @@index([userId])
-  // Composite: search attempts for an IP or email over a time range
-  @@index([ipAddress, attemptedAt])
-  @@index([email, attemptedAt])
-}
-
-// Security: IP Blacklist
-model IpBlacklist {
-  id          String  @id @default(cuid())
-  ipAddress   String  @unique
+  email       String
+  ipAddress   String
   ipv4        String?
   ipv6        String?
   city        String?
@@ -1849,49 +1130,59 @@ model IpBlacklist {
   countryFlag String?
   latitude    Float?
   longitude   Float?
+  timezone    String?
+  userAgent   String?
+  attemptedAt DateTime @default(now())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  reason         String // "Brute force", "Manual block", etc.
+  @@index([email])
+  @@index([ipAddress])
+  @@index([attemptedAt])
+  @@index([userId])
+  @@index([ipAddress, attemptedAt])
+  @@index([email, attemptedAt])
+}
+
+model IpBlacklist {
+  id             String   @id @default(cuid())
+  ipAddress      String   @unique
+  ipv4           String?
+  ipv6           String?
+  city           String?
+  state          String?
+  country        String?
+  countryCode    String?
+  countryFlag    String?
+  latitude       Float?
+  longitude      Float?
+  reason         String
   failedAttempts Int      @default(0)
   blockedAt      DateTime @default(now())
-  blockedUntil   DateTime // Auto-unlock time (1 hour from block)
-
-  // Who blocked it (if manual)
-  blockedById String?
-  blockedBy   User?   @relation("BlockedBy", fields: [blockedById], references: [id])
-
-  isAutoBlocked Boolean @default(true) // Auto vs manual block
-  isPermanent   Boolean @default(false) // Permanent block
+  blockedUntil   DateTime
+  blockedById    String?
+  isAutoBlocked  Boolean  @default(true)
+  isPermanent    Boolean  @default(false)
+  blockedBy      User?    @relation("BlockedBy", fields: [blockedById], references: [id])
 
   @@index([ipAddress])
   @@index([blockedUntil])
 }
 
-// Storage Provider Configuration
 model StorageProvider {
-  id       String              @id @default(cuid())
-  provider StorageProviderType @default(LOCAL) // Provider type
-  isActive Boolean             @default(false) // Currently active provider
-
-  // Configuration (encrypted JSON)
-  config String? @db.Text // JSON with provider-specific config
-
-  // Connection test status
-  lastTestedAt DateTime?
-  isConnected  Boolean   @default(false)
-  lastError    String?   @db.Text
-
-  // Scope - global (super admin) or company-specific
-  scope     String  @default("GLOBAL") // "GLOBAL" or company ID
-  companyId String? // If company-specific
-
-  // Backup configuration (for PROFESSIONAL plan add-on)
-  // If company has custom storage and this is true, files also backup to global storage
-  enableGlobalBackup Boolean @default(false)
-
-  // Metadata
-  createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String              @id @default(cuid())
+  provider           StorageProviderType @default(LOCAL)
+  isActive           Boolean             @default(false)
+  config             String?
+  lastTestedAt       DateTime?
+  isConnected        Boolean             @default(false)
+  lastError          String?
+  scope              String              @default("GLOBAL")
+  companyId          String?
+  enableGlobalBackup Boolean             @default(false)
+  createdById        String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([provider])
   @@index([isActive])
@@ -1899,59 +1190,42 @@ model StorageProvider {
   @@index([companyId])
 }
 
-// Video provider configuration for AI-generated videos
 model VideoProviderConfig {
-  id              String   @id @default(cuid())
-  scope           String   @default("GLOBAL") // GLOBAL only for now
-
-  // Lightricks LTX
-  ltxApiKey       String?  @db.Text
-  ltxSecret       String?  @db.Text
-  ltxEnabled      Boolean  @default(false)
-
-  // Hugging Face
-  hfApiToken      String?  @db.Text
-  hfEnabled       Boolean  @default(false)
-
-  // Provider priority: 'ltx' | 'huggingface'
-  primaryProvider String?  @default("ltx")
-
-  // Connection status
+  id              String    @id @default(cuid())
+  scope           String    @default("GLOBAL")
+  ltxApiKey       String?
+  ltxSecret       String?
+  ltxEnabled      Boolean   @default(false)
+  hfApiToken      String?
+  hfEnabled       Boolean   @default(false)
+  primaryProvider String?   @default("ltx")
   lastTestedAt    DateTime?
-  isConnected     Boolean  @default(false)
-  lastError       String?  @db.Text
-
+  isConnected     Boolean   @default(false)
+  lastError       String?
   createdById     String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([scope])
 }
 
-// Jobs table for video generation background processing
 model VideoGenerationJob {
-  id          String   @id @default(cuid())
+  id          String               @id @default(cuid())
   companyId   String
   sectionId   String
   variantId   String
-  prompt      String   @db.Text
-  duration    Int?     @default(4)
-  resolution  String?  @default("1920x1080")
-
-  // Job status
-  status      String   @default("QUEUED") // QUEUED, PROCESSING, SUCCEEDED, FAILED
-  attempts    Int      @default(0)
-  provider    String?  // provider that processed (ltx/huggingface/sample)
-  resultUrl   String?  @db.Text
-  error       String?  @db.Text
-
+  prompt      String
+  duration    Int?                 @default(4)
+  resolution  String?              @default("1920x1080")
+  status      String               @default("QUEUED")
+  attempts    Int                  @default(0)
+  provider    String?
+  resultUrl   String?
+  error       String?
   startedAt   DateTime?
   completedAt DateTime?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
   logs        VideoGenerationLog[]
 
   @@index([companyId])
@@ -1959,78 +1233,70 @@ model VideoGenerationJob {
 }
 
 model VideoGenerationLog {
-  id        String   @id @default(cuid())
+  id        String             @id @default(cuid())
   jobId     String
-  level     String   @default("info") // info, warn, error
-  message   String   @db.Text
-
-  createdAt DateTime @default(now())
-
+  level     String             @default("info")
+  message   String
+  createdAt DateTime           @default(now())
   job       VideoGenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@index([jobId])
 }
 
-// Chat-driven AI storefront MVP models
 model StorefrontConversation {
-  id            String    @id @default(cuid())
+  id            String              @id @default(cuid())
   companyId     String
-  createdBy     String? // userId of the initiator (nullable for system)
-  status        String    @default("OPEN")
+  createdBy     String?
+  status        String              @default("OPEN")
   lastMessageAt DateTime?
-  createdAt     DateTime  @default(now())
-
-  // Relations
-  company  Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  messages StorefrontMessage[]
+  createdAt     DateTime            @default(now())
+  company       Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  messages      StorefrontMessage[]
 
   @@index([companyId])
 }
 
 model StorefrontMessage {
-  id             String   @id @default(cuid())
+  id             String                 @id @default(cuid())
   conversationId String
-  role           String // 'user' | 'ai' | 'system'
-  content        String?  @db.Text
-  toolsUsed      Json?    @db.Json
-  specVersionId  String? // optional pointer to a created spec version
-  isApplied      Boolean  @default(false)
-  isPreviewOnly  Boolean  @default(true)
-  createdAt      DateTime @default(now())
-
-  conversation StorefrontConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  specVersion  StorefrontSpecVersion? @relation(fields: [specVersionId], references: [id], onDelete: SetNull)
+  role           String
+  content        String?
+  toolsUsed      Json?
+  specVersionId  String?
+  isApplied      Boolean                @default(false)
+  isPreviewOnly  Boolean                @default(true)
+  createdAt      DateTime               @default(now())
+  conversation   StorefrontConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  specVersion    StorefrontSpecVersion? @relation(fields: [specVersionId], references: [id])
 
   @@index([conversationId])
   @@index([specVersionId])
 }
 
 model StorefrontSpecVersion {
-  id        String    @id @default(cuid())
+  id        String              @id @default(cuid())
   companyId String
-  spec      Json?     @db.Json
-  createdBy String? // userId
+  spec      Json?
+  createdBy String?
   messageId String?
-  createdAt DateTime  @default(now())
+  createdAt DateTime            @default(now())
   appliedAt DateTime?
   title     String?
-  source    String?   @default("ai")
-
-  company  Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  messages StorefrontMessage[]
+  source    String?             @default("ai")
+  messages  StorefrontMessage[]
+  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
 }
 
-// Analytics & Lead models for storefront chat and webhooks
 model TelemetryEvent {
-  id        String   @id @default(cuid())
-  companyId String? // nullable for system events
+  id        String    @id @default(cuid())
+  companyId String?
   eventType String
-  payload   Json     @db.Json
-  createdAt DateTime @default(now())
-
-  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payload   Json
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: NoAction)
 
   @@index([companyId])
   @@index([eventType])
@@ -2038,18 +1304,19 @@ model TelemetryEvent {
 }
 
 model Lead {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   companyId String
   name      String?
   email     String?
   phone     String?
-  source    String? // e.g., 'chat', 'contact-form'
-  message   String?  @db.Text
-  data      Json?    @db.Json
-  status    String   @default("NEW")
-  createdAt DateTime @default(now())
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  source    String?
+  message   String?
+  data      Json?
+  status    String     @default("NEW")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  staus     LeadStatus @default(NEW)
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([email])
@@ -2057,14 +1324,13 @@ model Lead {
 }
 
 model WebhookConfig {
-  id        String   @id @default(cuid())
-  companyId String
-  url       String   @db.Text
-  isActive  Boolean  @default(true)
-  secret    String?  @db.Text // optional HMAC secret for signing
-  events    Json?    @db.Json // array of event names to subscribe
-  createdAt DateTime @default(now())
-
+  id         String            @id @default(cuid())
+  companyId  String
+  url        String
+  isActive   Boolean           @default(true)
+  secret     String?
+  events     Json?
+  createdAt  DateTime          @default(now())
   company    Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   deliveries WebhookDelivery[]
 
@@ -2073,137 +1339,90 @@ model WebhookConfig {
 }
 
 model WebhookDelivery {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   webhookId     String
-  payload       Json      @db.Json
-  status        String    @default("PENDING") // PENDING, SUCCESS, FAILED
+  payload       Json          @db.Json
+  status        String        @default("PENDING")
   responseCode  Int?
-  responseBody  String?   @db.Text
-  attempts      Int       @default(0)
+  responseBody  String?
+  attempts      Int           @default(0)
   lastAttemptAt DateTime?
-  createdAt     DateTime  @default(now())
-
-  webhook WebhookConfig @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  createdAt     DateTime      @default(now())
+  webhook       WebhookConfig @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 
   @@index([webhookId])
   @@index([status])
 }
 
-// AI Storefront V3 - Multi-page SEO-optimized websites
 model StorefrontWebsiteV3 {
   id                     String    @id @default(cuid())
   companyId              String
-  websiteData            Json      @db.Json // Full V3Website object
-  qualityScore           Int // 0-100 quality score
+  websiteData            Json      @db.Json
+  qualityScore           Int
   seoCompliant           Boolean   @default(false)
   accessibilityCompliant Boolean   @default(false)
-  validationWarnings     Json?     @db.Json // Array of warning strings
-  isActive               Boolean   @default(false) // Is this the active/published version
-  generatedBy            String // userId who generated it
+  validationWarnings     Json?     @db.Json
+  isActive               Boolean   @default(false)
+  generatedBy            String
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
-  publishedAt            DateTime? // When it was made active
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  publishedAt            DateTime?
+  company                Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([companyId, isActive])
 }
 
-// Storage Provider Type Enum
-enum StorageProviderType {
-  LOCAL // Coolify/Hetzner server
-  GOOGLE_DRIVE // Google Drive
-  ONEDRIVE // Microsoft OneDrive
-  AWS_S3 // Amazon S3
-  DIGITALOCEAN // DigitalOcean Spaces
-}
-
-// Captcha Provider Type Enum
-enum CaptchaProviderType {
-  GOOGLE_RECAPTCHA
-}
-
-// Image Provider Type Enum
-enum ImageProviderType {
-  UNSPLASH
-  PEXELS
-}
-
-// Image Provider Configuration
 model ImageProvider {
-  id         String            @id @default(cuid())
-  provider   ImageProviderType
-  isActive   Boolean           @default(false)
-  scope      String            // either 'GLOBAL' or companyId
-  companyId  String?
-  apiKey     String?           @db.Text
-  apiSecret  String?           @db.Text
+  id          String            @id @default(cuid())
+  provider    ImageProviderType
+  isActive    Boolean           @default(false)
+  scope       String
+  companyId   String?
+  apiKey      String?
+  apiSecret   String?
   createdById String?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   @@index([companyId])
 }
 
-// Email Provider Configuration
 model EmailProvider {
-  id       String            @id @default(cuid())
-  provider EmailProviderType @default(SMTP) // Provider type
-  isActive Boolean           @default(false) // Currently active provider
-
-  // SMTP Configuration
-  smtpHost     String?
-  smtpPort     Int?    @default(587)
-  smtpUsername String?
-  smtpPassword String? @db.Text // Encrypted
-  smtpSecure   Boolean @default(true) // TLS/SSL
-
-  // SendGrid Configuration
-  sendgridApiKey String? @db.Text // Encrypted
-
-  // Mailgun Configuration
-  mailgunApiKey String? @db.Text // Encrypted
-  mailgunDomain String?
-
-  // AWS SES Configuration
-  awsRegion    String?
-  awsAccessKey String? @db.Text // Encrypted
-  awsSecretKey String? @db.Text // Encrypted
-
-  // Resend Configuration
-  resendApiKey String? @db.Text // Encrypted
-
-  // Office 365 OAuth Configuration
-  office365TenantId     String? // Azure AD Tenant ID
-  office365ClientId     String? // Application (client) ID
-  office365ClientSecret String? @db.Text // Client secret (encrypted)
-  office365FromEmail    String? // Email address to send from
-
-  // Google OAuth Configuration
-  googleClientId     String? // OAuth 2.0 Client ID
-  googleClientSecret String? @db.Text // OAuth 2.0 Client Secret (encrypted)
-  googleFromEmail    String? // Gmail address to send from
-  googleRefreshToken String? @db.Text // OAuth 2.0 Refresh Token (encrypted)
-
-  // Common settings
-  fromEmail    String?
-  fromName     String?
-  replyToEmail String?
-
-  // Connection test status
-  lastTestedAt DateTime?
-  isConnected  Boolean   @default(false)
-  lastError    String?   @db.Text
-
-  // Scope - global (super admin) or company-specific
-  scope     String  @default("GLOBAL") // "GLOBAL" or company ID
-  companyId String? // If company-specific
-
-  // Metadata
-  createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                    String            @id @default(cuid())
+  provider              EmailProviderType @default(SMTP)
+  isActive              Boolean           @default(false)
+  smtpHost              String?
+  smtpPort              Int?              @default(587)
+  smtpUsername          String?
+  smtpPassword          String?
+  smtpSecure            Boolean           @default(true)
+  sendgridApiKey        String?
+  mailgunApiKey         String?
+  mailgunDomain         String?
+  awsRegion             String?
+  awsAccessKey          String?
+  awsSecretKey          String?
+  resendApiKey          String?
+  office365TenantId     String?
+  office365ClientId     String?
+  office365ClientSecret String?
+  office365FromEmail    String?
+  googleClientId        String?
+  googleClientSecret    String?
+  googleFromEmail       String?
+  googleRefreshToken    String?
+  fromEmail             String?
+  fromName              String?
+  replyToEmail          String?
+  lastTestedAt          DateTime?
+  isConnected           Boolean           @default(false)
+  lastError             String?
+  scope                 String            @default("GLOBAL")
+  companyId             String?
+  createdById           String
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
   @@index([provider])
   @@index([isActive])
@@ -2211,24 +1430,17 @@ model EmailProvider {
   @@index([companyId])
 }
 
-// Captcha Provider Configuration
 model CaptchaProvider {
-  id       String              @id @default(cuid())
-  provider CaptchaProviderType @default(GOOGLE_RECAPTCHA)
-  isActive Boolean             @default(false)
-
-  // Keys
-  siteKey   String?
-  secretKey String? @db.Text // Encrypted
-
-  // Scope - global (super admin) or company-specific
-  scope     String  @default("GLOBAL") // "GLOBAL" or company ID
-  companyId String?
-
-  // Metadata
+  id          String              @id @default(cuid())
+  provider    CaptchaProviderType @default(GOOGLE_RECAPTCHA)
+  isActive    Boolean             @default(false)
+  siteKey     String?
+  secretKey   String?
+  scope       String              @default("GLOBAL")
+  companyId   String?
   createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 
   @@index([provider])
   @@index([isActive])
@@ -2236,73 +1448,55 @@ model CaptchaProvider {
   @@index([companyId])
 }
 
-// User Email Provider Model - Individual staff members can link their personal email accounts
-// Priority: User Provider > Company Provider > Global Provider
 model UserEmailProvider {
-  id     String @id @default(cuid())
-  userId String // User who owns this provider
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String            @id @default(cuid())
+  userId                String
+  provider              EmailProviderType @default(SMTP)
+  isActive              Boolean           @default(true)
+  canSendAdHoc          Boolean           @default(true)
+  canSendMarketing      Boolean           @default(false)
+  smtpHost              String?
+  smtpPort              Int?              @default(587)
+  smtpUsername          String?
+  smtpPassword          String?
+  smtpSecure            Boolean           @default(true)
+  office365TenantId     String?
+  office365ClientId     String?
+  office365ClientSecret String?
+  office365AccessToken  String?
+  office365RefreshToken String?
+  office365TokenExpiry  DateTime?
+  office365FromEmail    String?
+  googleClientId        String?
+  googleClientSecret    String?
+  googleAccessToken     String?
+  googleRefreshToken    String?
+  googleTokenExpiry     DateTime?
+  googleFromEmail       String?
+  fromEmail             String?
+  fromName              String?
+  replyToEmail          String?
+  lastTestedAt          DateTime?
+  isConnected           Boolean           @default(false)
+  lastError             String?
+  lastUsedAt            DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  provider EmailProviderType @default(SMTP) // Provider type
-  isActive Boolean           @default(true) // Is this provider active for the user?
-
-  // Use Cases
-  canSendAdHoc     Boolean @default(true) // Can send ad-hoc emails to staff/customers
-  canSendMarketing Boolean @default(false) // Can send marketing emails (requires permission)
-
-  // SMTP Configuration
-  smtpHost     String?
-  smtpPort     Int?    @default(587)
-  smtpUsername String?
-  smtpPassword String? @db.Text // Encrypted
-  smtpSecure   Boolean @default(true)
-
-  // Office 365 OAuth Configuration
-  office365TenantId     String? // Azure AD Tenant ID
-  office365ClientId     String? // Application (client) ID
-  office365ClientSecret String?   @db.Text // Client secret (encrypted)
-  office365AccessToken  String?   @db.Text // OAuth access token (encrypted)
-  office365RefreshToken String?   @db.Text // OAuth refresh token (encrypted)
-  office365TokenExpiry  DateTime? // When the access token expires
-  office365FromEmail    String? // Email address to send from
-
-  // Google OAuth Configuration
-  googleClientId     String? // OAuth 2.0 Client ID
-  googleClientSecret String?   @db.Text // OAuth 2.0 Client Secret (encrypted)
-  googleAccessToken  String?   @db.Text // OAuth access token (encrypted)
-  googleRefreshToken String?   @db.Text // OAuth 2.0 Refresh Token (encrypted)
-  googleTokenExpiry  DateTime? // When the access token expires
-  googleFromEmail    String? // Gmail address to send from
-
-  // Common settings
-  fromEmail    String? // Sender email address
-  fromName     String? // Sender name
-  replyToEmail String? // Reply-to address
-
-  // Connection status
-  lastTestedAt DateTime?
-  isConnected  Boolean   @default(false)
-  lastError    String?   @db.Text
-  lastUsedAt   DateTime? // Track when last used for sending
-
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, provider]) // One provider type per user
+  @@unique([userId, provider])
   @@index([userId])
   @@index([isActive])
   @@index([provider])
 }
 
-// Global AI Provider Settings (for AI storefront and other AI services)
 model AiProviderSetting {
   id        String   @id @default(cuid())
-  provider  String   @default("openai") // e.g., "openai", "anthropic", etc.
-  scope     String   @default("GLOBAL") // "GLOBAL" for platform-wide settings (future: per-company)
-  apiKey    String   @db.Text // Encrypted API key
-  model     String? // Model name, e.g., "gpt-4o-mini"
-  apiBase   String? // Optional custom API base URL
+  provider  String   @default("openai")
+  scope     String   @default("GLOBAL")
+  apiKey    String
+  model     String?
+  apiBase   String?
   isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2310,97 +1504,76 @@ model AiProviderSetting {
   @@index([scope, provider])
 }
 
-// Hedera global settings (accessible to SUPER_ADMIN only)
 model HederaSetting {
-  id             String   @id @default(cuid())
-  scope          String   @default("GLOBAL")
-  hederaAccount  String?  @db.Text // Encrypted account id
-  topicId        String?  // Hedera Topic ID
-  evmAddress     String?  // Optional EVM address derived from ECDSA public key
-  keyType        String?  // ECDSA | ED25519
-  hederaHexKey   String?  @db.Text // Encrypted HEX encoded private key (ECDSA)
-  hederaDerKey   String?  @db.Text // Encrypted DER encoded private key
-  hederaDerPub   String?  @db.Text // Encrypted DER encoded public key
-  hashSalt       String?  @db.Text // Encrypted salt or KMS reference
-  isActive       Boolean  @default(false)
-  network        HederaNetwork @default(TESTNET)  
-  // Cost Management
-  currentBalance       Decimal? @db.Decimal(20, 8) // Current HBAR balance
-  lowBalanceThreshold  Decimal  @default(10) @db.Decimal(20, 8) // Alert when balance drops below
-  lastBalanceCheck     DateTime?
-  balanceAlertSent     Boolean  @default(false)
-  
-  // Transaction Cost Tracking
-  estimatedCostPerTx   Decimal  @default(0.0001) @db.Decimal(20, 8) // Estimated HBAR per transaction
-  totalTransactions    Int      @default(0)
-  totalCostHbar        Decimal  @default(0) @db.Decimal(20, 8)
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                  String        @id @default(cuid())
+  scope               String        @default("GLOBAL")
+  hederaAccount       String?
+  topicId             String?
+  evmAddress          String?
+  keyType             String?
+  hederaHexKey        String?
+  hederaDerKey        String?
+  hederaDerPub        String?
+  hashSalt            String?
+  isActive            Boolean       @default(false)
+  network             HederaNetwork @default(TESTNET)
+  currentBalance      Decimal?      @db.Decimal(20, 8)
+  lowBalanceThreshold Decimal       @default(10) @db.Decimal(20, 8)
+  lastBalanceCheck    DateTime?
+  balanceAlertSent    Boolean       @default(false)
+  estimatedCostPerTx  Decimal       @default(0.0001) @db.Decimal(20, 8)
+  totalTransactions   Int           @default(0)
+  totalCostHbar       Decimal       @default(0) @db.Decimal(20, 8)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   @@index([scope])
 }
 
-enum HederaNetwork {
-  MAINNET
-  PREVIEWNET
-  TESTNET
-}
-
-// Per-company opt-in and historical anchoring settings
 model CompanyHederaSetting {
-  id                   String   @id @default(cuid())
-  companyId            String   @unique
-  enabled              Boolean  @default(false)
-  historicalAnchored   Boolean  @default(false) // have past records been anchored
-  historicalJobId      String?  // optional job id for the historical anchoring batch
-  enabledById          String?  // user who enabled
-  enabledAt            DateTime?
-  
-  // Cost Management per Company
-  monthlyBudgetHbar    Decimal? @db.Decimal(20, 8) // Optional budget limit
-  currentMonthSpent    Decimal  @default(0) @db.Decimal(20, 8)
-  budgetResetDate      DateTime? // When to reset monthly budget
-  budgetExceeded       Boolean  @default(false)
-  transactionCount     Int      @default(0)
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id                 String    @id @default(cuid())
+  companyId          String    @unique
+  enabled            Boolean   @default(false)
+  historicalAnchored Boolean   @default(false)
+  historicalJobId    String?
+  enabledById        String?
+  enabledAt          DateTime?
+  monthlyBudgetHbar  Decimal?  @db.Decimal(20, 8)
+  currentMonthSpent  Decimal   @default(0) @db.Decimal(20, 8)
+  budgetResetDate    DateTime?
+  budgetExceeded     Boolean   @default(false)
+  transactionCount   Int       @default(0)
+  company            Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
 }
 
-// Audit log for enable/disable/historical actions
 model HederaCompanyAudit {
-  id         String   @id @default(cuid())
-  companyId  String?
-  actorId    String   // who performed the action
-  action     String   // ENABLE | DISABLE | HISTORICAL_REQUEST | HISTORICAL_COMPLETE
-  details    Json?
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  companyId String?
+  actorId   String
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
 
   @@index([companyId])
 }
 
-// Transaction cost tracking
 model HederaTransaction {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   companyId          String?
-  hash               String   @unique // The data hash anchored
+  hash               String    @unique
   topicId            String
-  transactionId      String?  // Hedera transaction ID
+  transactionId      String?
   consensusTimestamp DateTime?
-  
-  // Cost tracking
-  costHbar           Decimal? @db.Decimal(20, 8)
-  balanceAfter       Decimal? @db.Decimal(20, 8)
-  
-  // Metadata
-  auditLogId         String?  // Link to source audit log
-  outboxJobId        String?  // Link to outbox job
-  status             String   @default("PENDING") // PENDING | CONFIRMED | FAILED
-  
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  costHbar           Decimal?  @db.Decimal(20, 8)
+  balanceAfter       Decimal?  @db.Decimal(20, 8)
+  auditLogId         String?
+  outboxJobId        String?
+  status             String    @default("PENDING")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  company            Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   @@index([companyId])
   @@index([hash])
@@ -2408,74 +1581,60 @@ model HederaTransaction {
   @@index([createdAt])
 }
 
-// Cost alerts and notifications
 model HederaCostAlert {
   id           String   @id @default(cuid())
-  alertType    String   // LOW_BALANCE | BUDGET_EXCEEDED | BALANCE_CRITICAL
-  severity     String   // INFO | WARNING | CRITICAL
-  message      String   @db.Text
-  companyId    String?  // Null for global alerts
+  alertType    String
+  severity     String
+  message      String
+  companyId    String?
   acknowledged Boolean  @default(false)
   createdAt    DateTime @default(now())
-  
+
   @@index([alertType])
   @@index([acknowledged])
   @@index([companyId])
 }
 
-// Outbox job table for async background processing (e.g., historical anchoring)
 model OutboxJob {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   type      String
   payload   Json
-  status    String   @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | FAILED
-  attempts  Int      @default(0)
-  lastError String?  @db.Text
-  runAt     DateTime? // scheduled time to run
+  status    String    @default("PENDING")
+  attempts  Int       @default(0)
+  lastError String?
+  runAt     DateTime?
   lockedAt  DateTime?
   lockId    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([status])
   @@index([runAt])
 }
 
 model EmailTemplate {
-  id          String                @id @default(cuid())
-  type        EmailTemplateType // Template type (PASSWORD_RESET, WELCOME_CUSTOMER, etc.)
-  category    EmailTemplateCategory @default(TRANSACTIONAL) // Template category
-  name        String // Friendly name for the template
-  description String?               @db.Text
+  id            String                @id @default(cuid())
+  type          EmailTemplateType
+  category      EmailTemplateCategory @default(TRANSACTIONAL)
+  name          String
+  description   String?
+  subject       String
+  bodyHtml      String
+  bodyText      String?
+  contentBlocks Json?
+  variables     Json?
+  scope         String                @default("GLOBAL")
+  companyId     String?
+  isActive      Boolean               @default(true)
+  isDefault     Boolean               @default(false)
+  isSystem      Boolean               @default(false)
+  isCustomHtml  Boolean               @default(false)
+  createdById   String
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  createdBy     User                  @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
-  // Email content
-  subject  String // Email subject line
-  bodyHtml String  @db.Text // HTML version of email body
-  bodyText String? @db.Text // Plain text fallback
-
-  // Content blocks (for structured templates with editable sections)
-  contentBlocks Json? // Editable content sections for non-custom templates
-
-  // Template variables
-  variables Json? // Array of available variables (e.g., ["userName", "resetUrl"])
-
-  // Scope - global (super admin) or company-specific override
-  scope     String  @default("GLOBAL") // "GLOBAL" or company ID
-  companyId String? // If company-specific override
-
-  // Status
-  isActive     Boolean @default(true)
-  isDefault    Boolean @default(false) // System default templates
-  isSystem     Boolean @default(false) // System-generated templates (structure locked)
-  isCustomHtml Boolean @default(false) // Custom HTML template (full control)
-
-  // Metadata
-  createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([type, scope, companyId]) // One template per type per scope
+  @@unique([type, scope, companyId])
   @@index([type])
   @@index([category])
   @@index([isActive])
@@ -2483,163 +1642,70 @@ model EmailTemplate {
   @@index([companyId])
 }
 
-// Email Template Type Enum
-enum EmailTemplateType {
-  PASSWORD_RESET // Password reset email
-  WELCOME_CUSTOMER // Welcome email for new customers
-  WELCOME_STAFF // Welcome email for new staff members
-  ACCOUNT_VERIFICATION // Email verification
-  VERIFY_EMAIL // Email address verification (same as ACCOUNT_VERIFICATION, kept for compatibility)
-  PASSWORD_CHANGED // Password change notification
-  INVOICE_SENT // Invoice notification
-  PAYMENT_RECEIVED // Payment confirmation
-  APPOINTMENT_REMINDER // Appointment reminder
-
-  // Seasonal/Marketing Templates
-  BLACK_FRIDAY_SALE // Black Friday sale template
-  CHRISTMAS_SALE // Christmas/Holiday sale template
-  NEW_YEAR_SALE // New Year sale template
-  VALENTINES_DAY_SALE // Valentine's Day sale template
-  SPRING_SALE // Spring sale template
-  SUMMER_SALE // Summer sale template
-  FALL_SALE // Fall/Autumn sale template
-  CYBER_MONDAY_SALE // Cyber Monday sale template
-  MEMORIAL_DAY_SALE // Memorial Day sale template
-  INDEPENDENCE_DAY_SALE // 4th of July sale template
-  LABOR_DAY_SALE // Labor Day sale template
-  THANKSGIVING_SALE // Thanksgiving sale template
-
-  CUSTOM // Custom template
-}
-
-// Email Template Category Enum
-enum EmailTemplateCategory {
-  TRANSACTIONAL // System emails (password reset, verification, etc.)
-  MARKETING // Marketing and promotional emails
-  SEASONAL // Holiday and seasonal campaigns
-  BUSINESS // Business communications (invoices, receipts)
-  CUSTOM // Custom user-created templates
-}
-
-// Email Provider Type Enum
-enum EmailProviderType {
-  NODEMAILER // Nodemailer with SMTP (Default ERP provider)
-  SMTP // Generic SMTP
-  GMAIL // Gmail (Google Workspace) - Legacy, use GOOGLE_OAUTH instead
-  GOOGLE_OAUTH // Google OAuth 2.0 with Gmail API (recommended)
-  OFFICE365 // Office 365 / Outlook with Microsoft Graph OAuth
-  SENDGRID // SendGrid
-  MAILGUN // Mailgun
-  AWS_SES // Amazon SES
-  RESEND // Resend
-}
-
-// Team Model - Company can have many teams
 model Team {
-  id          String  @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
-  description String? @db.Text
-
-  // Company relation
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Team members
-  members TeamMember[]
-
-  // Projects
-  projects Project[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  description String?
+  companyId   String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  projects    Project[]
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
 
   @@index([companyId])
   @@index([name])
 }
 
-// Team Member Model - Links CompanyStaff to Teams with roles
 model TeamMember {
-  id String @id @default(cuid())
+  id        String         @id @default(cuid())
+  teamId    String
+  staffId   String
+  role      TeamMemberRole @default(COMPANY_STAFF)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  staff     CompanyStaff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  team      Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
-  // Team relation
-  teamId String
-  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  // Company staff relation
-  staffId String
-  staff   CompanyStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
-
-  // Role in team (ADMIN, MANAGER, STAFF, CONTRACTOR)
-  role TeamMemberRole @default(STAFF)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([teamId, staffId]) // Each staff member can only be in a team once
+  @@unique([teamId, staffId])
   @@index([teamId])
   @@index([staffId])
   @@index([role])
 }
 
-// Project Model - Teams have many projects
 model Project {
-  id          String  @id @default(cuid())
-  name        String
-  description String? @db.Text
-
-  // Team relation (optional - project can be unassigned)
-  teamId String?
-  team   Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
-
-  // Company relation (for easy querying)
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Customer relations (optional - for billable projects)
-  // For SUPER_ADMIN: subscriberCompanyId links to ERP customer company
+  id                  String                  @id @default(cuid())
+  name                String
+  description         String?
+  teamId              String?
+  companyId           String
   subscriberCompanyId String?
-  subscriberCompany   Company? @relation("ProjectSubscriberCustomer", fields: [subscriberCompanyId], references: [id], onDelete: SetNull)
-
-  // For ADMIN: customerId links to COMPANY_CUSTOMER user
-  customerId String?
-  customer   User?   @relation("ProjectCustomer", fields: [customerId], references: [id], onDelete: SetNull)
-
-  // Project Manager (must be from the same company)
-  projectManagerId String?
-  projectManager   CompanyStaff? @relation("ProjectManager", fields: [projectManagerId], references: [id], onDelete: SetNull)
-
-  // Team Lead (must be from the same company)
-  teamLeadId String?
-  teamLead   CompanyStaff? @relation("TeamLead", fields: [teamLeadId], references: [id], onDelete: SetNull)
-
-  // Status
-  status ProjectStatus @default(PLANNING)
-
-  projectType     ProjectType     @default(INTERNAL)
-  category        ProjectCategory @default(INTERNAL)
-  isFeatured      Boolean         @default(false)
-  currency        String          @default("USD")
-  estimatedCost   Decimal?        @db.Decimal(13, 2)
-  estimatedMarkup Decimal?        @db.Decimal(13, 2)
-  featuredImage   String?         @db.LongText
-
-  // Sort order for kanban board (within each status lane)
-  sortOrder Int @default(0)
-
-  // Dates
-  startDate DateTime?
-  endDate   DateTime?
-
-  // Tasks
-  tasks Task[]
-
-  // Notes
-  notes            ProjectNote[]
-  documents        ProjectDocument[]
-  financialEntries ProjectFinancialEntry[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  customerId          String?
+  projectManagerId    String?
+  teamLeadId          String?
+  status              ProjectStatus           @default(PLANNING)
+  projectType         ProjectType             @default(INTERNAL)
+  category            ProjectCategory         @default(INTERNAL)
+  isFeatured          Boolean                 @default(false)
+  currency            String                  @default("USD")
+  estimatedCost       Decimal?                @db.Decimal(13, 2)
+  estimatedMarkup     Decimal?                @db.Decimal(13, 2)
+  featuredImage       String?
+  sortOrder           Int                     @default(0)
+  startDate           DateTime?
+  endDate             DateTime?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  company             Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer            User?                   @relation("ProjectCustomer", fields: [customerId], references: [id])
+  projectManager      CompanyStaff?           @relation("ProjectManager", fields: [projectManagerId], references: [id])
+  subscriberCompany   Company?                @relation("ProjectSubscriberCustomer", fields: [subscriberCompanyId], references: [id])
+  team                Team?                   @relation(fields: [teamId], references: [id])
+  teamLead            CompanyStaff?           @relation("TeamLead", fields: [teamLeadId], references: [id])
+  documents           ProjectDocument[]
+  financialEntries    ProjectFinancialEntry[]
+  notes               ProjectNote[]
+  tasks               Task[]
 
   @@index([teamId])
   @@index([companyId])
@@ -2648,51 +1714,31 @@ model Project {
   @@index([projectManagerId])
   @@index([teamLeadId])
   @@index([status])
-  // composite index to accelerate queries for projects by company and status
   @@index([companyId, status])
-  // composite index for ordering projects within status lanes
   @@index([companyId, status, sortOrder])
   @@index([projectType])
   @@index([isFeatured])
 }
 
-// Task Model - Projects have many tasks
 model Task {
-  id          String  @id @default(cuid())
-  title       String
-  description String? @db.Text
-
-  // Project relation
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  // Created by (task owner/assignee - person creating the task)
-  createdById String
-  createdBy   CompanyStaff @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
-
-  // Assigned to (person who will work on the task - optional)
+  id           String        @id @default(cuid())
+  title        String
+  description  String?
+  projectId    String
+  createdById  String
   assignedToId String?
-  assignedTo   CompanyStaff? @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
-
-  // Status
-  status   TaskStatus   @default(TODO)
-  priority TaskPriority @default(MEDIUM)
-
-  // Dates
-  dueDate     DateTime?
-  completedAt DateTime?
-
-  // Time tracking (in minutes)
-  timeEntry Int @default(0)
-
-  // Privacy flag - private tasks only visible to team members, not company customers
-  isPrivate Boolean @default(false)
-
-  // Order for display
-  order Int @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status       TaskStatus    @default(TODO)
+  priority     TaskPriority  @default(MEDIUM)
+  dueDate      DateTime?
+  completedAt  DateTime?
+  timeEntry    Int           @default(0)
+  isPrivate    Boolean       @default(false)
+  order        Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  assignedTo   CompanyStaff? @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdBy    CompanyStaff  @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([createdById])
@@ -2702,122 +1748,87 @@ model Task {
   @@index([order])
 }
 
-// Project Note Model - Projects have many notes with time tracking
 model ProjectNote {
-  id      String @id @default(cuid())
-  content String @db.Text
-
-  // Project relation
+  id        String       @id @default(cuid())
+  content   String
   projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  // Author (must be from the same company)
-  authorId String
-  author   CompanyStaff @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  // Time tracking (in minutes)
-  timeEntry Int @default(0)
-
-  // Privacy flag - private notes only visible to team members, not company customers
-  isPrivate Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  authorId  String
+  timeEntry Int          @default(0)
+  isPrivate Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  author    CompanyStaff @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([authorId])
   @@index([createdAt])
 }
 
-// Project Document uploads for supporting files, receipts, etc.
 model ProjectDocument {
-  id        String  @id @default(cuid())
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
+  id              String        @id @default(cuid())
+  projectId       String
   fileName        String
-  url             String        @db.LongText
+  url             String
   storageProvider String
   documentType    DocumentType?
-  notes           String?       @db.Text
-
-  uploadedById String?
-  uploadedBy   CompanyStaff? @relation("ProjectDocumentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  notes           String?
+  uploadedById    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedBy      CompanyStaff? @relation("ProjectDocumentUploader", fields: [uploadedById], references: [id])
 
   @@index([projectId])
   @@index([uploadedById])
   @@index([storageProvider])
 }
 
-// Financial entries attached to projects (expenses/purchases)
 model ProjectFinancialEntry {
-  id        String  @id @default(cuid())
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  entryType   ProjectEntryType
-  description String?          @db.Text
-  vendor      String?
-  referenceId String? // PO, receipt, invoice number
-
-  amount        Decimal  @db.Decimal(13, 2)
-  cost          Decimal  @db.Decimal(13, 2)
-  markupPercent Decimal? @db.Decimal(5, 2)
-  markupAmount  Decimal? @db.Decimal(13, 2)
-  currency      String   @default("USD")
-
-  occurrenceDate DateTime @default(now())
-  receiptUrl     String?  @db.LongText
-  notes          String?  @db.Text
-
-  createdById String?
-  createdBy   CompanyStaff? @relation("ProjectFinancialEntryCreator", fields: [createdById], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String           @id @default(cuid())
+  projectId      String
+  entryType      ProjectEntryType
+  description    String?
+  vendor         String?
+  referenceId    String?
+  amount         Decimal          @db.Decimal(13, 2)
+  cost           Decimal          @db.Decimal(13, 2)
+  markupPercent  Decimal?         @db.Decimal(5, 2)
+  markupAmount   Decimal?         @db.Decimal(13, 2)
+  currency       String           @default("USD")
+  occurrenceDate DateTime         @default(now())
+  receiptUrl     String?
+  notes          String?
+  createdById    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  createdBy      CompanyStaff?    @relation("ProjectFinancialEntryCreator", fields: [createdById], references: [id])
+  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([entryType])
   @@index([createdById])
 }
 
-// ===================================
-// HR & ONBOARDING SYSTEM
-// ===================================
-
-// Employment Document - Stores uploaded HR documents
 model EmploymentDocument {
-  id String @id @default(cuid())
-
-  staffId String
-  staff   CompanyStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
-
-  // Document details
-  docType  DocumentType
-  fileName String
-  fileSize Int // bytes
-  mimeType String
-
-  // Storage paths
-  primaryPath     String // Primary storage location (company override or super admin)
-  backupPath      String? // Backup in super admin storage (if company override exists)
-  storageProvider String // LOCAL, AWS_S3, GOOGLE_DRIVE, etc.
-
-  // Approval workflow
+  id              String         @id @default(cuid())
+  staffId         String
+  docType         DocumentType
+  fileName        String
+  fileSize        Int
+  mimeType        String
+  primaryPath     String
+  backupPath      String?
+  storageProvider String
   status          DocumentStatus @default(PENDING)
   uploadedAt      DateTime       @default(now())
   reviewedAt      DateTime?
-  reviewedBy      String? // User ID of reviewer
-  rejectionReason String?        @db.Text
-
-  // Metadata
-  notes String? @db.Text
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  reviewedBy      String?
+  rejectionReason String?
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  staff           CompanyStaff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
   @@index([staffId])
   @@index([status])
@@ -2825,27 +1836,20 @@ model EmploymentDocument {
   @@index([uploadedAt])
 }
 
-// Onboarding Token - Secure token for new staff onboarding
 model OnboardingToken {
-  id    String @id @default(cuid())
-  token String @unique @default(cuid()) // Secure random token
-
-  staffId String       @unique
-  staff   CompanyStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
-
-  // Token lifecycle
-  expiresAt DateTime // Token expiration (48 hours from creation)
-  usedAt    DateTime? // When token was used
-  isUsed    Boolean   @default(false)
-
-  // Onboarding progress tracking
-  step1Complete Boolean @default(false) // Personal info verified
-  step2Complete Boolean @default(false) // Tax forms submitted
-  step3Complete Boolean @default(false) // Documents uploaded
-  step4Complete Boolean @default(false) // Direct deposit configured
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String       @id @default(cuid())
+  token         String       @unique @default(cuid())
+  staffId       String       @unique
+  expiresAt     DateTime
+  usedAt        DateTime?
+  isUsed        Boolean      @default(false)
+  step1Complete Boolean      @default(false)
+  step2Complete Boolean      @default(false)
+  step3Complete Boolean      @default(false)
+  step4Complete Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  staff         CompanyStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([staffId])
@@ -2853,28 +1857,20 @@ model OnboardingToken {
   @@index([isUsed])
 }
 
-// OAuth Onboarding Token for root platform customers
 model OAuthOnboarding {
-  id    String @id @default(cuid())
-  token String @unique @default(cuid())
-
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Requested plan passed during OAuth flow (ESSENTIAL|GROWTH|ENTERPRISE|null)
+  id            String    @id @default(cuid())
+  token         String    @unique @default(cuid())
+  userId        String    @unique
   requestedPlan String?
-  context       String  @default("root") // root | storefront
-  companyId     String? // present when context is storefront
-
-  // Token lifecycle
-  expiresAt   DateTime
-  usedAt      DateTime?
-  isUsed      Boolean   @default(false)
-  completedAt DateTime?
-
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  context       String    @default("root")
+  companyId     String?
+  expiresAt     DateTime
+  usedAt        DateTime?
+  isUsed        Boolean   @default(false)
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([userId])
@@ -2882,48 +1878,30 @@ model OAuthOnboarding {
   @@index([isUsed])
 }
 
-// Time Entry - Employee clock in/out tracking
 model TimeEntry {
-  id String @id @default(cuid())
-
-  staffId String
-  staff   CompanyStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
-
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Clock times
-  clockIn  DateTime
-  clockOut DateTime?
-
-  // Break tracking
-  breakStart   DateTime?
-  breakEnd     DateTime?
-  breakMinutes Int       @default(0) // Total break time in minutes
-
-  // Calculated fields
-  totalMinutes Int? // Total minutes worked (clockOut - clockIn - breaks)
-  totalHours   Decimal? @db.Decimal(5, 2) // Total hours worked (for display)
-
-  // Status
-  status TimeEntryStatus @default(CLOCKED_IN)
-
-  // Notes and location
-  notes     String? @db.Text
-  ipAddress String?
-  location  String? // Optional: GPS coordinates or office location
-
-  // Approval workflow
-  isApproved Boolean   @default(false)
-  approvedBy String?
-  approvedAt DateTime?
-
-  // Link to payroll entry (when time is processed for payment)
+  id             String        @id @default(cuid())
+  staffId        String
+  companyId      String
+  clockIn        DateTime
+  clockOut       DateTime?
+  breakStart     DateTime?
+  breakEnd       DateTime?
+  breakMinutes   Int           @default(0)
+  totalMinutes   Int?
+  totalHours     Decimal?      @db.Decimal(5, 2)
+  status         String        @default("PENDING")
+  notes          String?
+  ipAddress      String?
+  location       String?
+  isApproved     Boolean       @default(false)
+  approvedBy     String?
+  approvedAt     DateTime?
   payrollEntryId String?
-  payrollEntry   PayrollEntry? @relation(fields: [payrollEntryId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  company        Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payrollEntry   PayrollEntry? @relation(fields: [payrollEntryId], references: [id])
+  staff          CompanyStaff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
   @@index([staffId])
   @@index([companyId])
@@ -2931,45 +1909,26 @@ model TimeEntry {
   @@index([status])
   @@index([isApproved])
   @@index([payrollEntryId])
+  @@unique([staffId, clockIn])
 }
 
-// Time Entry Status Enum
-enum TimeEntryStatus {
-  CLOCKED_IN // Currently working
-  ON_BREAK // On break
-  CLOCKED_OUT // Finished for the day
-}
-
-// File/Folder System - Hierarchical file storage
 model FileFolder {
-  id String @id @default(cuid())
-
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Folder structure
-  name     String // Folder name
-  path     String // Full path: /company-store/Shared or /company-store/Employees/john-doe
-  parentId String? // Parent folder (null for root folders)
-  parent   FileFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children FileFolder[] @relation("FolderHierarchy")
-
-  // Folder type
-  type FolderType @default(CUSTOM) // SHARED, EMPLOYEE, CONTRACTOR, CUSTOM
-
-  // Access control
-  ownerId             String? // Staff member ID for personal folders (EMPLOYEE/CONTRACTOR)
-  isPasswordProtected Boolean @default(false)
-  passwordHash        String? // Encrypted folder password
-
-  // Files in this folder
-  files FileRecord[]
-
-  // Metadata
-  fileCount Int @default(0) // Number of files in folder
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String       @id @default(cuid())
+  companyId           String
+  name                String
+  path                String
+  parentId            String?
+  type                FolderType   @default(CUSTOM)
+  ownerId             String?
+  isPasswordProtected Boolean      @default(false)
+  passwordHash        String?
+  fileCount           Int          @default(0)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  company             Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parent              FileFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children            FileFolder[] @relation("FolderHierarchy")
+  files               FileRecord[]
 
   @@unique([companyId, path])
   @@index([companyId])
@@ -2978,162 +1937,106 @@ model FileFolder {
   @@index([ownerId])
 }
 
-// File Record - Individual files in folder system
 model FileRecord {
-  id String @id @default(cuid())
-
-  folderId String
-  folder   FileFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
-
-  // File details
-  fileName String
-  fileSize Int // bytes
-  mimeType String
-
-  // Storage
+  id              String     @id @default(cuid())
+  folderId        String
+  fileName        String
+  fileSize        Int
+  mimeType        String
   primaryPath     String
   backupPath      String?
   storageProvider String
-
-  // Uploader
-  uploadedById String?
-  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
-
-  // Invoice link (if this file is an invoice PDF)
-  invoice Invoice?
-
-  // Metadata
-  description String? @db.Text
-  tags        Json? // Searchable tags array stored as JSON
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  uploadedById    String?
+  description     String?
+  tags            Json?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  folder          FileFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  uploadedBy      User?      @relation(fields: [uploadedById], references: [id])
+  invoice         Invoice?
 
   @@index([folderId])
   @@index([uploadedById])
   @@index([fileName])
 }
 
-// ===================================
-// LEDGER & FINANCIAL MANAGEMENT
-// ===================================
-
-// Company Ledger - Main financial ledger for each company
 model Ledger {
-  id        String  @id @default(cuid())
-  companyId String  @unique
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Financial summary fields
-  totalRevenue   Decimal @default(0) @db.Decimal(15, 2)
-  totalExpenses  Decimal @default(0) @db.Decimal(15, 2)
-  totalPayroll   Decimal @default(0) @db.Decimal(15, 2)
-  currentBalance Decimal @default(0) @db.Decimal(15, 2)
-
-  // Bank account linking (Plaid)
-  plaidAccessToken String? @db.Text
-  plaidItemId      String?
-  plaidAccountId   String?
-  bankName         String?
-  accountLast4     String?
-  accountType      String? // checking, savings, etc.
-
-  // Stripe configuration
-  stripeAccountId   String?   @unique
+  id                String            @id @default(cuid())
+  companyId         String            @unique
+  totalRevenue      Decimal           @default(0) @db.Decimal(15, 2)
+  totalExpenses     Decimal           @default(0) @db.Decimal(15, 2)
+  totalPayroll      Decimal           @default(0) @db.Decimal(15, 2)
+  currentBalance    Decimal           @default(0) @db.Decimal(15, 2)
+  plaidAccessToken  String?
+  plaidItemId       String?
+  plaidAccountId    String?
+  bankName          String?
+  accountLast4      String?
+  accountType       String?
+  stripeAccountId   String?           @unique
   stripeConnectedAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  orders            Order[]
-  ledgerInvoices    LedgerInvoice[]
-  payrollEntries    PayrollEntry[]
-  expenseEntries    ExpenseEntry[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
   accountingEntries AccountingEntry[]
+  expenseEntries    ExpenseEntry[]
+  company           Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ledgerInvoices    LedgerInvoice[]
+  orders            Order[]
+  payrollEntries    PayrollEntry[]
 
   @@index([companyId])
 }
 
-// Order Model - Customer orders
 model Order {
-  id          String @id @default(cuid())
-  orderNumber String @unique // Auto-generated order number (ORD-XXXX)
-
-  ledgerId String
-  ledger   Ledger @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
-
-  // Customer reference (to be added when Customer model is created)
-  customerEmail String?
-  customerName  String?
-
-  // Order details
-  status      OrderStatus @default(PENDING)
-  totalAmount Decimal     @default(0) @db.Decimal(15, 2)
-  taxAmount   Decimal     @default(0) @db.Decimal(15, 2)
-
-  // Tax calculation details
-  taxRegion String? // US, EU, ASIA
-  taxRate   Decimal? @db.Decimal(5, 2)
-
-  // Items (stored as JSON for flexibility)
-  items Json // Array of {productId, name, quantity, price, tax}
-
-  notes String? @db.Text
-
-  orderedAt   DateTime  @default(now())
-  fulfilledAt DateTime?
-  cancelledAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
+  id             String          @id @default(cuid())
+  orderNumber    String          @unique
+  ledgerId       String
+  customerEmail  String?
+  customerName   String?
+  status         OrderStatus     @default(PENDING)
+  totalAmount    Decimal         @default(0) @db.Decimal(15, 2)
+  taxAmount      Decimal         @default(0) @db.Decimal(15, 2)
+  taxRegion      String?
+  taxRate        Decimal?        @db.Decimal(5, 2)
+  items          Json
+  notes          String?
+  orderedAt      DateTime        @default(now())
+  fulfilledAt    DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
   ledgerInvoices LedgerInvoice[]
+  ledger         Ledger          @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
 
-  @@index([ledgerId])
+  @@index([ledgerId, status, orderedAt])
   @@index([status])
   @@index([orderedAt])
 }
 
-// LedgerInvoice Model - Generated from orders or standalone (ledger system)
 model LedgerInvoice {
-  id            String @id @default(cuid())
-  invoiceNumber String @unique // Auto-generated invoice number (INV-XXXX)
-
-  ledgerId String
-  ledger   Ledger @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
-
-  orderId String?
-  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  // Customer reference (to be added when Customer model is created)
-  customerEmail String?
-  customerName  String?
-
-  // Invoice details
-  status      InvoiceStatus @default(DRAFT)
-  totalAmount Decimal       @default(0) @db.Decimal(15, 2)
-  paidAmount  Decimal       @default(0) @db.Decimal(15, 2)
-  taxAmount   Decimal       @default(0) @db.Decimal(15, 2)
-
-  // Payment details
-  paymentMethod String? // stripe, bank_transfer, cash, check
-  paidAt        DateTime?
-  dueDate       DateTime?
-
-  // Stripe payment tracking
+  id                    String        @id @default(cuid())
+  invoiceNumber         String        @unique
+  ledgerId              String
+  orderId               String?
+  customerEmail         String?
+  customerName          String?
+  status                InvoiceStatus @default(DRAFT)
+  totalAmount           Decimal       @default(0) @db.Decimal(15, 2)
+  paidAmount            Decimal       @default(0) @db.Decimal(15, 2)
+  taxAmount             Decimal       @default(0) @db.Decimal(15, 2)
+  paymentMethod         String?
+  paidAt                DateTime?
+  dueDate               DateTime?
   stripePaymentIntentId String?
   stripeChargeId        String?
-
-  // PDF generation
-  pdfUrl String?
-
-  notes String? @db.Text
-
-  issuedAt  DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  pdfUrl                String?
+  notes                 String?
+  issuedAt              DateTime      @default(now())
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  ledger                Ledger        @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
+  order                 Order?        @relation(fields: [orderId], references: [id])
 
   @@index([ledgerId])
   @@index([orderId])
@@ -3141,190 +2044,484 @@ model LedgerInvoice {
   @@index([dueDate])
 }
 
-// Payroll Jurisdiction - Tax rules per country/region
 model PayrollJurisdiction {
-  id          String  @id @default(cuid())
-  code        String  @unique // "US-CA", "US-NY", "CA-ON", "UK", "FR"
-  name        String // "California, USA", "Ontario, Canada"
-  countryCode String // ISO 2-letter: "US", "CA", "GB", "FR"
-  regionCode  String? // State/province code: "CA", "ON", "QC"
-
-  // Tax configuration (JSON for flexibility)
-  taxConfig Json // Income tax brackets, payroll taxes, deductions
-
-  // Compliance requirements
-  requiredForms   Json? // ["W-4", "State_W-4", "I-9"]
-  filingFrequency String? // "WEEKLY", "BIWEEKLY", "MONTHLY", "QUARTERLY"
-
-  // Status
-  isActive Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  companies      Company[]
-  staff          CompanyStaff[]
-  payrollEntries PayrollEntry[]
+  id              String         @id @default(cuid())
+  code            String         @unique
+  name            String
+  countryCode     String
+  regionCode      String?
+  taxConfig       Json
+  requiredForms   Json?
+  filingFrequency String?
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  staff           CompanyStaff[]
+  payrollEntries  PayrollEntry[]
+  companies       Company[]      @relation("CompanyToPayrollJurisdiction")
 
   @@index([countryCode])
   @@index([code])
 }
 
-// Payroll Entry - Employee payment records
 model PayrollEntry {
-  id String @id @default(cuid())
-
-  ledgerId String
-  ledger   Ledger @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
-
-  staffId String
-  staff   CompanyStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
-
-  // Payroll period
-  periodStart DateTime
-  periodEnd   DateTime
-  payDate     DateTime
-
-  // Payment amounts
-  grossAmount Decimal @default(0) @db.Decimal(15, 2)
-  taxWithheld Decimal @default(0) @db.Decimal(15, 2)
-  deductions  Decimal @default(0) @db.Decimal(15, 2)
-  netAmount   Decimal @default(0) @db.Decimal(15, 2)
-
-  // Tax details (region-specific)
-  taxRegion    String? // DEPRECATED: Use jurisdictionId instead
-  taxBreakdown Json? // Detailed tax calculations {federal, state, local, social_security, etc}
-
-  // Payment status
-  status PayrollStatus @default(PENDING)
-  paidAt DateTime?
-
-  // Stripe transfer tracking
-  stripeTransferId String?
-
-  notes String? @db.Text
-
-  // Jurisdiction
-  jurisdictionId String?
-  jurisdiction   PayrollJurisdiction? @relation(fields: [jurisdictionId], references: [id])
-
-  // Currency
-  currency String @default("USD")
-
-  // Hours worked (from TimeEntry)
-  hoursWorked   Decimal? @db.Decimal(8, 2)
-  overtimeHours Decimal? @db.Decimal(8, 2)
-
-  // Deductions
-  deductionsBreakdown Json? // Health insurance, 401k, etc.
-
-  // Linked time entries (hours from time tracking system)
-  timeEntries TimeEntry[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String               @id @default(cuid())
+  ledgerId            String
+  staffId             String
+  periodStart         DateTime
+  periodEnd           DateTime
+  payDate             DateTime
+  grossAmount         Decimal              @default(0) @db.Decimal(15, 2)
+  taxWithheld         Decimal              @default(0) @db.Decimal(15, 2)
+  deductions          Decimal              @default(0) @db.Decimal(15, 2)
+  netAmount           Decimal              @default(0) @db.Decimal(15, 2)
+  taxRegion           String?
+  taxBreakdown        Json?
+  status              PayrollStatus        @default(PENDING)
+  paidAt              DateTime?
+  stripeTransferId    String?
+  notes               String?
+  jurisdictionId      String?
+  currency            String               @default("USD")
+  hoursWorked         Decimal?             @db.Decimal(8, 2)
+  overtimeHours       Decimal?             @db.Decimal(8, 2)
+  deductionsBreakdown Json?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  jurisdiction        PayrollJurisdiction? @relation(fields: [jurisdictionId], references: [id])
+  ledger              Ledger               @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
+  staff               CompanyStaff         @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  timeEntries         TimeEntry[]
 
   @@index([ledgerId])
   @@index([staffId])
   @@index([periodStart, periodEnd])
   @@index([status])
   @@index([jurisdictionId])
+  @@unique([ledgerId, staffId, periodStart, periodEnd])
 }
 
-// Expense Entry - Business expense tracking
 model ExpenseEntry {
-  id String @id @default(cuid())
-
-  ledgerId String
-  ledger   Ledger @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
-
-  staffId String?
-  staff   CompanyStaff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
-
-  // Expense details
+  id          String          @id @default(cuid())
+  ledgerId    String
+  staffId     String?
   category    ExpenseCategory
   amount      Decimal         @default(0) @db.Decimal(15, 2)
   description String
-  notes       String?         @db.Text
-
-  // Receipt tracking
+  notes       String?
   receiptUrl  String?
-  receiptUrls Json? // Array of receipt URLs for multiple receipts
-
-  // Date tracking
+  receiptUrls Json?
   expenseDate DateTime
-  submittedAt DateTime  @default(now())
+  submittedAt DateTime        @default(now())
   approvedAt  DateTime?
   rejectedAt  DateTime?
-
-  // Approval workflow
-  status     ExpenseStatus @default(PENDING)
-  approvedBy String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status      ExpenseStatus   @default(PENDING)
+  approvedBy  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  ledger      Ledger          @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
+  staff       CompanyStaff?   @relation(fields: [staffId], references: [id])
 
   @@index([ledgerId])
   @@index([staffId])
   @@index([category])
   @@index([status])
   @@index([expenseDate])
+  @@unique([ledgerId, staffId, expenseDate, description])
 }
 
-// Accounting Entry - Double-entry bookkeeping
 model AccountingEntry {
-  id String @id @default(cuid())
-
-  ledgerId String
-  ledger   Ledger @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
-
-  // Entry details
-  entryDate       DateTime @default(now())
+  id              String      @id @default(cuid())
+  ledgerId        String
+  entryDate       DateTime    @default(now())
   description     String
-  referenceNumber String? // Reference to order, invoice, payroll, etc.
-
-  // Account classification
-  accountType AccountType
-  accountName String
-
-  // Double-entry amounts
-  debitAmount  Decimal @default(0) @db.Decimal(15, 2)
-  creditAmount Decimal @default(0) @db.Decimal(15, 2)
-
-  // Entry metadata
-  category String? // Additional categorization
-  notes    String? @db.Text
-
-  // Audit trail
-  createdBy String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  referenceNumber String?
+  accountType     AccountType
+  accountName     String
+  debitAmount     Decimal     @default(0) @db.Decimal(15, 2)
+  creditAmount    Decimal     @default(0) @db.Decimal(15, 2)
+  category        String?
+  notes           String?
+  createdBy       String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  ledger          Ledger      @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
 
   @@index([ledgerId])
   @@index([entryDate])
   @@index([accountType])
 }
 
-// Team Member Role Enum (roles allowed in teams)
-enum TeamMemberRole {
-  ADMIN
-  MANAGER
-  STAFF
-  CONTRACTOR
+model PlanPricing {
+  id                        String   @id @default(cuid())
+  plan                      String   @unique
+  monthlyPrice              Float
+  monthlyPromoPrice         Float?
+  annualPrice               Float
+  annualPriceMonthly        Float
+  transactionFeePercent     Float
+  transactionFeeFixed       Float
+  baseStorageGB             Int
+  extraStoragePricePer100GB Float
+  extraStoragePricePerGB    Float
+  isPopular                 Boolean  @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  createdBy                 String?
+
+  @@index([plan])
 }
 
-// Document Type Enum
+model PromoCode {
+  id            String         @id @default(cuid())
+  code          String         @unique
+  description   String?
+  discountType  String
+  flatFeeAmount Decimal?       @db.Decimal(10, 2)
+  percentageOff Int?
+  freeTrialDays Int?
+  isActive      Boolean        @default(true)
+  expiresAt     DateTime?
+  maxUses       Int?
+  timesUsed     Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  createdBy     String?
+  subscriptions Subscription[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+model Persona {
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  promptTemplate String?
+  defaultModel   String?
+  promptVersion  String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model CompanyVocabulary {
+  id              String   @id @default(cuid())
+  companyId       String
+  key             String
+  singularLabel   String
+  pluralLabel     String
+  schemaOverrides Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([companyId, key])
+  @@index([companyId])
+}
+
+model GeneratedSection {
+  id               String           @id @default(cuid())
+  companyId        String
+  pageId           String?
+  personaId        String?
+  kind             SectionKind
+  layout           SectionLayout?
+  background       BackgroundStyle?
+  backgroundConfig Json?
+  componentName    String?
+  schema           Json
+  props            Json?
+  variants         Json?
+  assets           Json?
+  status           SectionStatus    @default(PENDING)
+  generatedBy      String?
+  generatedAt      DateTime?
+  acceptedAt       DateTime?
+  version          Int              @default(1)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([companyId])
+  @@index([pageId])
+}
+
+model GeneratedPageDraft {
+  id        String      @id @default(cuid())
+  companyId String
+  pageId    String?
+  pageSlug  String?
+  pageTitle String?
+  name      String?
+  sections  Json
+  meta      Json?
+  version   Int         @default(1)
+  createdBy String?
+  status    DraftStatus @default(DRAFT)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([companyId])
+  @@index([pageId])
+}
+
+model GenerationJob {
+  id          String      @id @default(cuid())
+  companyId   String
+  sectionKind SectionKind
+  personaId   String?
+  inputPrompt String
+  status      JobStatus   @default(QUEUED)
+  logs        Json?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@index([companyId])
+}
+
+model Page {
+  id               String   @id @default(cuid())
+  companyId        String
+  slug             String
+  title            String
+  meta             Json?
+  publishedDraftId String?
+  createdBy        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId])
+}
+
+model NavigationItem {
+  id        String   @id @default(cuid())
+  companyId String
+  label     String
+  pageId    String?
+  url       String?
+  order     Int      @default(0)
+  parentId  String?
+  visible   Boolean  @default(true)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([pageId])
+}
+
+model ServiceSchedule {
+  id         String   @id @default(cuid())
+  companyId  String
+  serviceId  String?
+  title      String
+  timezone   String?
+  recurrence Json?
+  slots      Json?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  scheduleId    String
+  customerName  String
+  customerEmail String
+  slotStart     DateTime
+  slotEnd       DateTime
+  status        BookingStatus @default(PENDING)
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([scheduleId])
+}
+
+model Asset {
+  id        String   @id @default(cuid())
+  companyId String
+  url       String
+  type      String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+enum AddressLabel {
+  PRIMARY
+  BILLING
+  SHIPPING
+  OFFICE
+  HOME
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+  OTHER
+}
+
+enum SectionLayout {
+  IMAGE_LEFT
+  IMAGE_RIGHT
+  IMAGE_CENTER
+  SPLIT
+  TEXT_ONLY
+  CTA_GRID
+  MEDIA_COVER
+}
+
+enum BackgroundStyle {
+  SOLID_COLOR
+  GRADIENT
+  IMAGE_COVER
+  IMAGE_COVER_OVERLAY
+  TRANSPARENT
+}
+
+enum SectionKind {
+  HERO
+  ABOUT
+  FOOD_MENU
+  LOGGED_IN_TOP_NAVBAR
+  LOGGED_OUT_TOP_NAVBAR
+  LOGGED_IN_SIDE_NAVBAR
+  LOGGED_OUT_SIDE_NAVBAR
+  LOGGED_IN_MOBILE_NAVBAR
+  LOGGED_OUT_MOBILE_NAVBAR
+  TESTIMONIAL
+  CTA
+  GALLERY
+  SERVICES
+  FEEDBACK
+  CUSTOM
+  PRODUCTS
+  TEAM
+  PRICING
+  FAQ
+  CONTACT
+  VALUE_PROP
+  CTA_PRIMARY
+  LEAD_CAPTURE
+  COMPARISON
+  CASE_STUDIES
+  CLIENT_LOGOS
+}
+
+enum SectionStatus {
+  PENDING
+  GENERATED
+  ACCEPTED
+  REJECTED
+  EDITED
+}
+
+enum DraftStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum JobStatus {
+  QUEUED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+enum PayrollStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REIMBURSED
+}
+
+enum ExpenseCategory {
+  TRAVEL
+  MEALS
+  OFFICE_SUPPLIES
+  EQUIPMENT
+  SOFTWARE
+  UTILITIES
+  RENT
+  INSURANCE
+  MARKETING
+  PROFESSIONAL_SERVICES
+  TAXES
+  PAYROLL
+  OTHER
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum SubscriptionPlan {
+  SUPER_ADMIN
+  ADMIN_OWNER
+  ADMIN_NONOWNER
+  COMPANY_MANAGER
+  COMPANY_STAFF
+  ERP_CUSTOMER
+  COMPANY_CUSTOMER
+  COMPANY_CONTRACTOR
+  COMPANY_SUPPLIER
+  ESSENTIAL
+  GROWTH
+  ENTERPRISE
+  TRIAL
+}
+
+enum TeamMemberRole {
+  SUPER_ADMIN
+  ERP_CUSTOMER
+  ADMIN_OWNER
+  ADMIN_NONOWNER
+  COMPANY_MANAGER
+  COMPANY_STAFF
+  COMPANY_CONTRACTOR
+  COMPANY_SUPPLIER
+  COMPANY_CUSTOMER
+}
+
 enum DocumentType {
-  SSN_CARD // Social Security Card
+  SSN_CARD
   DRIVERS_LICENSE
   PASSPORT
   BIRTH_CERTIFICATE
-  WORK_AUTHORIZATION // I-9, Work Permit, Visa
-  W4_TAX_FORM // Federal withholding
-  STATE_TAX_FORM // State withholding
-  I9_FORM // Employment eligibility
+  WORK_AUTHORIZATION
+  W4_TAX_FORM
+  STATE_TAX_FORM
+  I9_FORM
   DIRECT_DEPOSIT_FORM
   EMPLOYEE_HANDBOOK_SIGNED
   NDA_SIGNED
@@ -3333,25 +2530,27 @@ enum DocumentType {
   OTHER
 }
 
-// Document Status Enum
 enum DocumentStatus {
-  PENDING // Awaiting review
-  APPROVED // Approved by admin
-  REJECTED // Rejected - needs reupload
-  EXPIRED // Document has expired
+  IN_PROGRESS
+  PENDING
+  IN_REVIEW
+  NEEDS_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELED
 }
 
-// Folder Type Enum
 enum FolderType {
-  SHARED // Shared company folder
-  EMPLOYEE // Employee personal folder
-  CONTRACTOR // Contractor personal folder
-  CUSTOM // Custom folder created by admin
+  SHARED
+  EMPLOYEE
+  COMPANY_CONTRACTOR
+  SUPPLIER
+  CUSTOM
 }
 
-// Project Status Enum
 enum ProjectStatus {
   PLANNING
+  PLANNED
   IN_PROGRESS
   ON_HOLD
   BLOCKED
@@ -3397,10 +2596,13 @@ enum ProjectCategory {
 
 enum ProjectEntryType {
   EXPENSE
+  PRODUCT
+  SERVICE
   PURCHASE
+  SUBSCRIPTION_SERVICE
+  HOURS_WORKED
 }
 
-// Task Status Enum
 enum TaskStatus {
   TODO
   IN_PROGRESS
@@ -3410,15 +2612,14 @@ enum TaskStatus {
   CANCELLED
 }
 
-// Task Priority Enum
 enum TaskPriority {
+  BACKLOG
   LOW
   MEDIUM
   HIGH
   URGENT
 }
 
-// Order Status Enum
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -3428,212 +2629,12 @@ enum OrderStatus {
   REFUNDED
 }
 
-// Invoice Status Enum
-enum InvoiceStatus {
-  DRAFT
-  SENT
-  VIEWED
-  PARTIALLY_PAID
-  PAID
-  OVERDUE
-  CANCELLED
-  REFUNDED
-}
-
-// Payroll Status Enum
-enum PayrollStatus {
-  PENDING
-  PROCESSING
-  PAID
-  FAILED
-  CANCELLED
-}
-
-// Expense Status Enum
-enum ExpenseStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  REIMBURSED
-}
-
-// Expense Category Enum
-enum ExpenseCategory {
-  TRAVEL
-  MEALS
-  OFFICE_SUPPLIES
-  EQUIPMENT
-  SOFTWARE
-  UTILITIES
-  RENT
-  INSURANCE
-  MARKETING
-  PROFESSIONAL_SERVICES
-  TAXES
-  PAYROLL
-  OTHER
-}
-
-// Account Type Enum (for double-entry bookkeeping)
-enum AccountType {
-  ASSET
-  LIABILITY
-  EQUITY
-  REVENUE
-  EXPENSE
-}
-
-// Subscription Plan Enum
-enum SubscriptionPlan {
-  SUPER_USER // Free unlimited plan for SUPER_ADMIN users only - manages the root company
-  GUEST // Temporary plan - requires plan selection before creating companies (for ERP_CUSTOMER signups)
-  ERP_CUSTOMER // Paid plans for ERP subscribers
-  COMPANY_CUSTOMER // Free plan for customers of subscriber companies (added by company staff or via e-commerce frontstore)
-  ESSENTIAL // Paid: 1 company limit - for ERP subscribers
-  GROWTH // Paid: 3 companies limit - for ERP subscribers
-  ENTERPRISE // Paid: Unlimited companies - for ERP subscribers
-  COMPANY_STAFF // Free plan for company staff users - no company creation rights
-  COMPANY_CONTRACTOR // Free plan for company contractors - limited access
-  TRIAL // Temporary trial plan for new ERP_CUSTOMER signups
-}
-
-// User Role Enum
-// NOTE: No GUEST role - unauthenticated users are not in the database
-enum UserRole {
-  SUPER_ADMIN // Root admin - owns the SaaS platform which is root company and possibly other companis
-  ADMIN_OWNER // Company admin - owner of the company
-  ADMIN_NONOWNER // Company admin - non-owner with full permissions
-  COMPANY_MANAGER // Company manager - can manage staff and operations
-  COMPANY_STAFF // Company staff - limited permissions within company
-  ERP_CUSTOMER // Paying ERP subscriber - can create companies per their plan
-  COMPANY_CUSTOMER // Customer of a subscriber company - added by company or via store
-  COMPANY_CONTRACTOR // External contractor working with company
-  COMPANY_SUPPLIER // Supplier/vendor of a company
-}
-
-// Plan Pricing Configuration - allows dynamic pricing management
-model PlanPricing {
-  id   String @id @default(cuid())
-  plan String @unique // ESSENTIAL, GROWTH, ENTERPRISE
-
-  // Monthly pricing
-  monthlyPrice      Float
-  monthlyPromoPrice Float?
-
-  // Annual pricing
-  annualPrice        Float
-  annualPriceMonthly Float
-
-  // Transaction fees
-  transactionFeePercent Float
-  transactionFeeFixed   Float
-
-  // Storage
-  baseStorageGB             Int
-  extraStoragePricePer100GB Float
-  extraStoragePricePerGB    Float
-
-  // Marketing
-  isPopular Boolean @default(false)
-
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String? // User ID who created/updated
-
-  @@index([plan])
-}
-
-// Promo Code Model - for special pricing offers like beta testing
-model PromoCode {
-  id          String   @id @default(cuid())
-  code        String   @unique // e.g., "OnTargetLove"
-  description String?  @db.Text
-  
-  // Discount type and amounts
-  discountType String // "FLAT_FEE", "PERCENTAGE", "FREE_TRIAL"
-  flatFeeAmount Decimal? @db.Decimal(10, 2) // Fixed monthly fee (e.g., 0.99)
-  percentageOff Int? // Percentage discount (0-100)
-  freeTrialDays Int? // Days of free trial
-  
-  // Validity
-  isActive   Boolean   @default(true)
-  expiresAt  DateTime?
-  
-  // Usage limits
-  maxUses    Int? // null = unlimited uses
-  timesUsed  Int       @default(0)
-  
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String? // User ID who created it
-  
-  // Relations
-  subscriptions Subscription[]
-  
-  @@index([code])
-  @@index([isActive])
-  @@index([expiresAt])
-}
-// Frontstore V5: Persona-driven generation models
-
-enum SectionKind {
-  HERO
-  ABOUT
-  FOOD_MENU         // food/restaurant menu
-
-  // Top navbars (explicit logged-in / logged-out variants)
-  LOGGED_IN_TOP_NAVBAR
-  LOGGED_OUT_TOP_NAVBAR
-
-  // Side navbars
-  LOGGED_IN_SIDE_NAVBAR
-  LOGGED_OUT_SIDE_NAVBAR
-
-  // Mobile navbars (hamburger/drawer)
-  LOGGED_IN_MOBILE_NAVBAR
-  LOGGED_OUT_MOBILE_NAVBAR
-
-  TESTIMONIAL
-  CTA
-  GALLERY
-  SERVICES
-  FEEDBACK
-  CUSTOM
-  
-  // V6 Enhanced Sections
-  PRODUCTS          // Product showcase/grid
-  TEAM              // Team/staff members
-  PRICING           // Pricing plans/tiers
-  FAQ               // Frequently asked questions
-  CONTACT           // Contact form/details
-  VALUE_PROP        // Value proposition
-  CTA_PRIMARY       // Primary call-to-action
-  LEAD_CAPTURE      // Lead generation form
-  COMPARISON        // Feature comparison table
-  CASE_STUDIES      // Case studies/success stories
-  CLIENT_LOGOS      // Client/partner logos
-}
-
-enum SectionStatus {
-  PENDING
-  GENERATED
-  ACCEPTED
-  REJECTED
-  EDITED
-}
-
-enum DraftStatus {
-  DRAFT
-  PUBLISHED
-}
-
-enum JobStatus {
-  QUEUED
-  IN_PROGRESS
-  COMPLETED
-  FAILED
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  UNQUALIFIED
 }
 
 enum BookingStatus {
@@ -3642,182 +2643,372 @@ enum BookingStatus {
   CANCELLED
 }
 
-model Persona {
-  id            String   @id @default(cuid())
-  name          String
-  slug          String   @unique
-  promptTemplate String? @db.Text
-  defaultModel  String?
-  promptVersion String?
-  metadata      Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+enum UserRole {
+  SUPER_ADMIN
+  ERP_CUSTOMER
+  ADMIN_OWNER
+  ADMIN_NONOWNER
+  COMPANY_MANAGER
+  COMPANY_STAFF
+  COMPANY_CONTRACTOR
+  COMPANY_SUPPLIER
+  COMPANY_CUSTOMER
 }
 
-model CompanyVocabulary {
-  id            String   @id @default(cuid())
-  companyId     String
-  key           String   // e.g., "product", "service", "menu"
-  singularLabel String
-  pluralLabel   String
-  schemaOverrides Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@unique([companyId, key])
-  @@index([companyId])
+enum EmailProviderType {
+  NODEMAILER
+  SMTP
+  GMAIL
+  GOOGLE_OAUTH
+  OFFICE365
+  SENDGRID
+  MAILGUN
+  AWS_SES
+  RESEND
 }
 
-enum SectionLayout {
-  IMAGE_LEFT
-  IMAGE_RIGHT
-  IMAGE_CENTER
-  SPLIT
-  TEXT_ONLY
-  CTA_GRID
-  MEDIA_COVER
+enum StorageProviderType {
+  LOCAL
+  GOOGLE_DRIVE
+  ONEDRIVE
+  AWS_S3
+  DIGITAL_OCEAN
 }
 
-enum BackgroundStyle {
-  SOLID_COLOR
-  GRADIENT
-  IMAGE_COVER
-  IMAGE_COVER_OVERLAY
-  TRANSPARENT
+enum CaptchaProviderType {
+  GOOGLE_RECAPTCHA
 }
 
-model GeneratedSection {
-  id             String         @id @default(cuid())
-  companyId      String
-  pageId         String?        // optional page-scoped section
-  personaId      String?
-  kind           SectionKind
-  layout         SectionLayout? // layout variant for rendering (image-left, split, etc.)
-  background     BackgroundStyle? // background style (solid, gradient, image)
-  backgroundConfig Json?         // color, gradient stops, overlay opacity
-  componentName  String?        // optional: TSX component key to render
-  schema         Json           // structured content for the section
-  props          Json?          // optional explicit props for component rendering
-  variants       Json?          // array of variant objects { variantId, layout, schema, assets, meta }
-  assets         Json?          // array of asset objects { url, alt, type }
-  status         SectionStatus  @default(PENDING)
-  generatedBy    String?        // user id
-  generatedAt    DateTime?
-  acceptedAt     DateTime?
-  version        Int            @default(1)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  @@index([companyId])
-  @@index([pageId])
+enum ImageProviderType {
+  UNSPLASH
+  PEXELS
 }
 
-model GeneratedPageDraft {
-  id         String   @id @default(cuid())
-  companyId  String
-  pageId     String?  // reference to Page model when draft is page-scoped
-  pageSlug   String?
-  pageTitle  String?
-  name       String?
-  sections   Json     // ordered array of section IDs
-  meta       Json?
-  version    Int      @default(1)
-  createdBy  String?
-  status     DraftStatus @default(DRAFT)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([companyId])
-  @@index([pageId])
+enum HederaNetwork {
+  MAINNET
+  PREVIEWNET
+  TESTNET
 }
 
-model GenerationJob {
-  id         String   @id @default(cuid())
-  companyId  String
-  sectionKind SectionKind
-  personaId  String?
-  inputPrompt String  @db.Text
-  status     JobStatus @default(QUEUED)
-  logs       Json?
-  startedAt  DateTime?
-  finishedAt DateTime?
-  createdAt  DateTime @default(now())
-
-  @@index([companyId])
+enum EmailTemplateType {
+  PASSWORD_RESET
+  WELCOME_CUSTOMER
+  WELCOME_STAFF
+  ACCOUNT_VERIFICATION
+  VERIFY_EMAIL
+  PASSWORD_CHANGED
+  INVOICE_SENT
+  PAYMENT_RECEIVED
+  APPOINTMENT_REMINDER
+  BLACK_FRIDAY_SALE
+  CHRISTMAS_SALE
+  NEW_YEAR_SALE
+  VALENTINES_DAY_SALE
+  SPRING_SALE
+  SUMMER_SALE
+  FALL_SALE
+  CYBER_MONDAY_SALE
+  MEMORIAL_DAY_SALE
+  INDEPENDENCE_DAY_SALE
+  LABOR_DAY_SALE
+  THANKSGIVING_SALE
+  CUSTOM
 }
 
-// Page model for multi-page sites
-model Page {
-  id             String   @id @default(cuid())
-  companyId      String
-  slug           String
-  title          String
-  meta           Json?
-  publishedDraftId String?
-  createdBy      String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([companyId])
-  @@unique([companyId, slug])
+enum EmailTemplateCategory {
+  TRANSACTIONAL
+  INTERNAL_ONLY
+  PRESS_RELEASE
+  NEWSLETTER
+  EMAIL_MARKETING
+  SEASONAL
+  BUSINESS
+  CUSTOM
 }
 
-model NavigationItem {
-  id         String  @id @default(cuid())
-  companyId  String
-  label      String
-  pageId     String?
-  url        String?
-  order      Int     @default(0)
-  parentId   String?
-  visible    Boolean @default(true)
-  metadata   Json?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([companyId])
-  @@index([pageId])
+enum InvoiceType {
+  SUBSCRIPTION
+  TRIAL_SUBSCRIPTION
+  STOREFRONT
+  ERP_CUSTOMER
+  COMPANY_CUSTOMER
+  ERP_VENDOR
+  COMPANY_VENDOR
+  ROOT_COMPANY_CONTRACTOR
+  ROOT_COMPANY_VENDOR
+  COMPANY_CONTRACTOR
+  CUSTOM
+  RECURRING
+  TEST_INVOICE
 }
 
-model ServiceSchedule {
-  id         String  @id @default(cuid())
-  companyId  String
-  serviceId  String? // link to product/service if applicable
-  title      String
-  timezone   String?
-  recurrence Json?   // e.g., rrule or recurrence rules
-  slots      Json?   // array of {start, end, capacity}
-  metadata   Json?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([companyId])
+enum PaymentTransactionStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  CHAIN_ANCHORED
 }
 
-model Booking {
-  id        String       @id @default(cuid())
-  scheduleId String
-  customerName String
-  customerEmail String
-  slotStart DateTime
-  slotEnd   DateTime
-  status    BookingStatus @default(PENDING)
-  metadata  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([scheduleId])
+enum StorefrontOrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELED
+  REFUNDED
 }
 
-model Asset {
-  id        String  @id @default(cuid())
-  companyId String
-  url       String
-  type      String? // image, video, svg, generated
-  metadata  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([companyId])
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
 }
 
+enum CompanyLegalEntity {
+  SOLE_PROPRIETOR
+  SINGLE_MEMBER_LLC
+  LLC
+  S_CORP
+  C_CORP
+  GENERAL_PARTNERSHIP
+  LIMITED_PARTNERSHIP
+  LLP
+  NON_PROFIT
+  LTD
+  PLC
+  GMBH
+  AG
+  UG
+  KG
+  OHG
+  SARL
+  SA
+  SAS
+  SASU
+  EURL
+  SNC
+  SL
+  SA_SPAIN
+  LDA
+  SA_PORTUGAL
+  SRL
+  SPA
+  SRLS
+  BV
+  NV
+  VOF
+  AB
+  AS
+  APS
+  AS_DENMARK
+  OY
+  SPZOO
+  SA_POLAND
+  SRO
+  AS_CZECH
+  PTY_LTD
+  PVT_LTD
+  PUBLIC_LTD
+  SDN_BHD
+  BHD
+  PTE_LTD
+  KK
+  GK
+  SA_LATIN
+  SRL_LATIN
+  LTDA
+  SA_BRAZIL
+  EIRELI
+  MEI
+  LLC_MENA
+  FZE
+  FZCO
+  WLL
+  COOPERATIVE
+  TRUST
+  FOUNDATION
+  ASSOCIATION
+  JOINT_VENTURE
+  BRANCH
+  OTHER
+}
+
+enum CompanyIndustry {
+  SOFTWARE_DEVELOPMENT
+  SAAS
+  IT_SERVICES
+  CYBERSECURITY
+  AI_ML
+  CLOUD_COMPUTING
+  MOBILE_APPS
+  WEB_DEVELOPMENT
+  GAME_DEVELOPMENT
+  BLOCKCHAIN
+  HEALTHCARE
+  MEDICAL_DEVICES
+  PHARMACEUTICALS
+  TELEHEALTH
+  HEALTH_INSURANCE
+  DENTAL
+  VETERINARY
+  FITNESS
+  BANKING
+  FINTECH
+  INSURANCE
+  ACCOUNTING
+  INVESTMENT
+  CRYPTOCURRENCY
+  PAYMENT_PROCESSING
+  ECOMMERCE
+  RETAIL
+  FASHION
+  JEWELRY
+  BEAUTY
+  GROCERY
+  FURNITURE
+  ELECTRONICS
+  MANUFACTURING
+  AUTOMOTIVE
+  AEROSPACE
+  CONSTRUCTION
+  INDUSTRIAL_EQUIPMENT
+  CHEMICALS
+  TEXTILES
+  PACKAGING
+  RESTAURANT
+  CAFE
+  CATERING
+  FOOD_PRODUCTION
+  BREWERY
+  REAL_ESTATE
+  PROPERTY_MANAGEMENT
+  CONSTRUCTION_DEVELOPMENT
+  ARCHITECTURE
+  INTERIOR_DESIGN
+  CONSULTING
+  LEGAL
+  MARKETING
+  PR
+  HR
+  RECRUITMENT
+  BUSINESS_SERVICES
+  EDUCATION
+  ELEARNING
+  TRAINING
+  TUTORING
+  CHILDCARE
+  MEDIA
+  ENTERTAINMENT
+  FILM
+  MUSIC
+  GAMING
+  PODCASTING
+  LOGISTICS
+  SHIPPING
+  TRANSPORTATION
+  DELIVERY
+  WAREHOUSING
+  HOTEL
+  TRAVEL
+  EVENT_PLANNING
+  ENERGY
+  RENEWABLE_ENERGY
+  OIL_GAS
+  SOLAR
+  AGRICULTURE
+  ENVIRONMENTAL
+  SUSTAINABILITY
+  TELECOM
+  ISP
+  NON_PROFIT
+  CHARITY
+  SOCIAL_ENTERPRISE
+  OTHER
+}
+
+enum TaxIdType {
+  SSN
+  EIN
+  ITIN
+  VAT
+  GST
+  ABN
+  ACN
+  TFN
+  NINO
+  UTR
+  CRN
+  TVA
+  NIF
+  CIF
+  SIREN
+  SIRET
+  CNPJ
+  CPF
+  RFC
+  RUT
+  CUIT
+  PAN
+  GSTIN
+  TIN
+  TRN
+  OTHER
+}
+
+enum CompanyMemberRole {
+  SUPER_ADMIN
+  ERP_CUSTOMER
+  ADMIN_OWNER
+  ADMIN_NONOWNER
+  COMPANY_MANAGER
+  COMPANY_STAFF
+  COMPANY_CONTRACTOR
+  COMPANY_SUPPLIER
+  COMPANY_CUSTOMER
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACTOR_1099
+  HOURLY
+  INTERN
+  TEMPORARY
+  SEASONAL
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+  SUSPENDED
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELLED
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum LocationType {
+  HEADQUARTERS
+  BRANCH
+  OFFICE
+  WAREHOUSE
+  STORE
+  REMOTE
+  OTHER
+}

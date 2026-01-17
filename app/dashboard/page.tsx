@@ -25,11 +25,11 @@ function getRoleView(
   switch (role) {
     case "SUPER_ADMIN":
       return <SuperAdminView userName={userName} companyId={companyId} />;
-    case "ADMIN":
+    case "ADMIN_OWNER":
       return <AdminView userName={userName} companyId={companyId} />;
-    case "MANAGER":
+    case "COMPANY_MANAGER":
       return <ManagerView userName={userName} companyId={companyId} />;
-    case "STAFF":
+    case "COMPANY_STAFF":
       return <StaffView userName={userName} companyId={companyId} />;
     case "ERP_CUSTOMER":
       return (
@@ -37,11 +37,11 @@ function getRoleView(
       );
     case "COMPANY_CUSTOMER":
       return <CompanyCustomerView userName={userName} />;
-    case "CONTRACTOR":
+    case "COMPANY_CONTRACTOR":
       return <ContractorView userName={userName} companyId={companyId} />;
-    case "SUPPLIER":
+    case "COMPANY_SUPPLIER":
       return <SupplierView userName={userName} />;
-    case "GUEST":
+    case "TRIAL":
     default:
       return <GuestView userName={userName} />;
   }
@@ -59,7 +59,7 @@ export default function DashboardPage() {
     name: null,
     email: null,
     image: null,
-    role: "GUEST",
+    role: "TRIAL",
     companyId: null,
   });
   const [loading, setLoading] = useState(true);
@@ -72,8 +72,8 @@ export default function DashboardPage() {
       const data = await response.json();
 
       if (data.authenticated && data.user) {
-        // Redirect GUEST users away from dashboard
-        if (data.user.role === "GUEST") {
+        // Redirect TRIAL users away from dashboard
+        if (data.user.role === "TRIAL") {
           router.push("/");
           return;
         }

@@ -68,8 +68,11 @@ export function PasswordManagementTab({
         // Fetch users based on role
         let usersEndpoint = "/api/admin/users"; // Default for SUPER_ADMIN
 
-        if (currentUserRole === "ADMIN") {
-          // For ADMIN, fetch all users in their companies (owner + members + staff)
+        if (
+          currentUserRole === "ADMIN_OWNER" ||
+          currentUserRole === "ADMIN_NONOWNER"
+        ) {
+          // For ADMIN_OWNER, fetch all users in their companies (owner + members + staff)
           usersEndpoint = "/api/admin/company-users";
         }
 
@@ -269,7 +272,8 @@ export function PasswordManagementTab({
                       variant={
                         user.role === "SUPER_ADMIN"
                           ? "destructive"
-                          : user.role === "ADMIN"
+                          : user.role === "ADMIN_OWNER" ||
+                            user.role === "ADMIN_NONOWNER"
                           ? "default"
                           : "secondary"
                       }
@@ -297,7 +301,8 @@ export function PasswordManagementTab({
                       variant="outline"
                       onClick={() => handleOpenDialog(user)}
                       disabled={
-                        currentUserRole === "ADMIN" &&
+                        (currentUserRole === "ADMIN_OWNER" ||
+                          currentUserRole === "ADMIN_NONOWNER") &&
                         user.role === "SUPER_ADMIN"
                       }
                     >

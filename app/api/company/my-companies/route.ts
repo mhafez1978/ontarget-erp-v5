@@ -53,18 +53,34 @@ export async function GET(request: NextRequest) {
 
     // Policy: return companies depending on user role
     // - SUPER_ADMIN: only companies they OWN (including root company)
-    // - ADMIN: owned companies + member companies (deduplicated)
-    // - MANAGER / STAFF / others: only member companies
+    // - ADMIN_OWNER: owned companies + member companies (deduplicated)
+    // - ADMIN_NONOWNER: only member companies
+    // - COMPANY_MANAGER / COMPANY_STAFF / others: only member companies
 
     let companies: Array<any> = [];
 
     if (user.role === "SUPER_ADMIN") {
-      // Only return owned companies for super admins (privacy / SOC compliance)
-      companies = user.ownedCompanies.map((company) => ({
-        ...company,
-        isOwner: true,
+      // SUPER_ADMIN: return all companies so they can manage timesheets across the platform
+      const allCompanies = await db.company.findMany({
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          logo: true,
+          email: true,
+          phone: true,
+          website: true,
+          createdAt: true,
+        },
+      });
+
+      // Mark owned companies accordingly
+      const ownedSet = new Set(user.ownedCompanies.map((c) => c.id));
+      companies = allCompanies.map((c) => ({
+        ...c,
+        isOwner: ownedSet.has(c.id),
       }));
-    } else if (user.role === "ADMIN") {
+    } else if (user.role === "ADMIN_OWNER") {
       const companyMap = new Map<string, any>();
 
       user.ownedCompanies.forEach((company) => {
@@ -82,7 +98,7 @@ export async function GET(request: NextRequest) {
 
       companies = Array.from(companyMap.values());
     } else {
-      // For managers/staff/other roles only return companies they are a member of
+      // For ADMIN_NONOWNER /COMPANY_MANAGER / COMPANY_STAFFNY_COMPANY_STAFF / other roles only return companies they are a member of
       companies = user.companyMemberships.map((m) => ({
         ...m.company,
         isOwner: false,

@@ -375,4 +375,21 @@ export class StripeProvider extends PaymentProvider {
       };
     }
   }
+
+  // Retrieve a subscription by id
+  async retrieveSubscription(
+    subscriptionId: string
+  ): Promise<Stripe.Subscription | null> {
+    try {
+      const resp = await this.stripe.subscriptions.retrieve(subscriptionId);
+      return resp as unknown as Stripe.Subscription;
+    } catch (error) {
+      const err = error as Error;
+      logger.error("Failed to retrieve Stripe subscription", {
+        subscriptionId,
+        error: err.message,
+      });
+      return null;
+    }
+  }
 }
